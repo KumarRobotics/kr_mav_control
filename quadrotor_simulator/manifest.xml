@@ -1,0 +1,16 @@
+<package>
+  <description brief="quadrotor_simulator">
+
+     quadrotor_simulator
+
+  </description>
+  <author>Kartik Mohta</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/quadrotor_simulator</url>
+  <depend package="roscpp"/>
+  <depend package="quadrotor_msgs"/>
+
+</package>
+
+

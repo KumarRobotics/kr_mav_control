@@ -1,0 +1,11 @@
+<launch>
+  <node pkg="so3_control"
+    type="so3_control_node"
+    name="so3_control"
+    output="screen">
+    <rosparam param="gains">
+      rot: [2.0, 2.0, 2.0]
+      ang: [0.15, 0.15, 0.15]
+    </rosparam>
+  </node>
+</launch>

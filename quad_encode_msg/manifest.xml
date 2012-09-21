@@ -1,0 +1,16 @@
+<package>
+  <description brief="quad_encode_msg">
+
+     quad_encode_msg
+
+  </description>
+  <author>Kartik Mohta</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/quad_encode_msg</url>
+  <depend package="roscpp"/>
+  <depend package="quadrotor_msgs"/>
+
+</package>
+
+

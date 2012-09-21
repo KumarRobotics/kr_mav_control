@@ -1,0 +1,17 @@
+*~
+*.pyc
+_*.py
+*.o
+*.so
+*.swp
+ROS_NOBUILD
+
+build
+bin
+lib
+
+msg_gen
+srv_gen
+
+CMakeCache.txt
+*.bag

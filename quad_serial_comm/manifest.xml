@@ -1,0 +1,18 @@
+<package>
+  <description brief="quad_serial_comm">
+
+     quad_serial_comm
+     GPL license since asio-serial-device is under GPL and we link to it.
+
+  </description>
+  <author>Kartik Mohta</author>
+  <license>GPL</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/quad_serial_comm</url>
+  <depend package="roscpp"/>
+  <depend package="quadrotor_msgs"/>
+  <depend package="asio-serial-device"/>
+
+</package>
+
+
