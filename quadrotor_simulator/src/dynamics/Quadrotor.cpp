@@ -21,7 +21,7 @@ Quadrotor::Quadrotor(void)
   // km_ = 2.5e-9; // from Nate
   // km = (Cq/Ct)*Dia*kf
   // Cq/Ct for 8 inch props from UIUC prop db ~ 0.07
-  km_ = 0.075*(2*prop_radius_)*kf_;
+  km_ = 0.07*(2*prop_radius_)*kf_;
 
   arm_length_ = 0.17;
   motor_time_constant_ = 1.0/20;

@@ -43,6 +43,6 @@ rosbuild_add_link_flags(quadrotor_dynamics -Wl,--as-needed)
 #target_link_libraries(test_dynamics quadrotor_dynamics rt)
 
 rosbuild_add_executable(quadrotor_simulator_so3
-  src/attitude_control_so3/attitude_control_so3.cpp)
+  src/quadrotor_simulator_so3.cpp)
 target_link_libraries(quadrotor_simulator_so3 quadrotor_dynamics)
 rosbuild_add_link_flags(quadrotor_simulator_so3 -Wl,--as-needed)
