@@ -15,6 +15,7 @@ typedef struct _Command
   float qx, qy, qz, qw;
   float kR[3];
   float kOm[3];
+  float corrections[3];
 } Command;
 
 static Command command;
@@ -26,8 +27,11 @@ void stateToOdomMsg(const QuadrotorSimulator::Quadrotor::State &state,
 static Control getControl(const QuadrotorSimulator::Quadrotor &quad,
                           const Command &cmd)
 {
-  const double kf = quad.getPropellerThrustCoefficient();
-  const double km = quad.getPropellerMomentCoefficient();
+  const double _kf = quad.getPropellerThrustCoefficient();
+  const double _km = quad.getPropellerMomentCoefficient();
+  const double kf = _kf - cmd.corrections[0];
+  const double km = _km/_kf*kf;
+
   const double d = quad.getArmLength();
   const Eigen::Matrix3f J = quad.getInertia().cast<float>();
   const float I[3][3] = {{J(0,0), J(0,1), J(0,2)},
@@ -118,6 +122,9 @@ static void cmd_callback(const quadrotor_msgs::SO3Command::ConstPtr &cmd)
   command.kOm[0] = cmd->kOm[0];
   command.kOm[1] = cmd->kOm[1];
   command.kOm[2] = cmd->kOm[2];
+  command.corrections[0] = cmd->aux.corrections[0];
+  command.corrections[1] = cmd->aux.corrections[1];
+  command.corrections[2] = cmd->aux.corrections[2];
 }
 
 int main(int argc, char **argv)
