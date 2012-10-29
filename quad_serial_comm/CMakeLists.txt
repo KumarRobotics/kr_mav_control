@@ -29,6 +29,10 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_executable(quad_serial_comm src/quad_serial_comm.cpp
-                                         src/asctec_serial_interface.cpp)
-rosbuild_add_link_flags(quad_serial_comm -Wl,--as-needed)
+#rosbuild_add_executable(quad_serial_comm src/quad_serial_comm.cpp
+#  src/asctec_serial_interface.cpp)
+#rosbuild_add_link_flags(quad_serial_comm -Wl,--as-needed)
+
+rosbuild_add_library(quad_serial_comm_nodelet src/quad_serial_comm_nodelet.cpp
+  src/asctec_serial_interface.cpp)
+rosbuild_add_link_flags(quad_serial_comm_nodelet -Wl,--as-needed)

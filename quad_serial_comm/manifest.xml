@@ -12,7 +12,11 @@
   <depend package="roscpp"/>
   <depend package="quadrotor_msgs"/>
   <depend package="asio-serial-device"/>
+  <depend package="nodelet"/>
 
+  <export>
+    <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
+  </export>
 </package>
 
 

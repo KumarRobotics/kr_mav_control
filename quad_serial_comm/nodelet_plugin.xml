@@ -1,0 +1,7 @@
+<library path="lib/libquad_serial_comm_nodelet">
+  <class name="quad_serial_comm/QuadSerialComm" type="QuadSerialComm" base_class_type="nodelet::Nodelet">
+    <description>
+      This sends the packed data over the serial port. It also receives data from the quad and unpacks the payload from the received packet.
+    </description>
+  </class>
+</library>

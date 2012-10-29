@@ -37,7 +37,11 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 rosbuild_add_library(SO3Control src/SO3Control.cpp)
 rosbuild_add_link_flags(SO3Control -Wl,--as-needed)
 
-rosbuild_add_executable(so3_control src/so3_control_node.cpp)
-target_link_libraries(so3_control SO3Control)
+#rosbuild_add_executable(so3_control src/so3_control_node.cpp)
+#target_link_libraries(so3_control SO3Control)
+
+rosbuild_add_library(so3_control_nodelet src/so3_control_nodelet.cpp)
+target_link_libraries(so3_control_nodelet SO3Control)
+rosbuild_add_link_flags(so3_control_nodelet -Wl,--as-needed)
 
 #rosbuild_add_executable(test_timer src/test_timer.cpp)
