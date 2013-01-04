@@ -90,8 +90,7 @@ void SO3ControlNodelet::position_cmd_callback(const quadrotor_msgs::PositionComm
 {
   des_pos_ = Eigen::Vector3d(cmd->position.x, cmd->position.y, cmd->position.z);
   des_vel_ = Eigen::Vector3d(cmd->velocity.x, cmd->velocity.y, cmd->velocity.z);
-  des_acc_ = Eigen::Vector3d(cmd->acceleration.x, cmd->acceleration.y,
-                            cmd->acceleration.z);
+  des_acc_ = Eigen::Vector3d(cmd->acceleration.x, cmd->acceleration.y, cmd->acceleration.z);
   kx_ = Eigen::Vector3d(cmd->kx[0], cmd->kx[1], cmd->kx[2]);
   kv_ = Eigen::Vector3d(cmd->kv[0], cmd->kv[1], cmd->kv[2]);
 
@@ -162,22 +161,12 @@ void SO3ControlNodelet::onInit(void)
   n.param("use_external_yaw", use_external_yaw_, true);
   n.param("use_angle_corrections", use_angle_corrections_, false);
 
-  XmlRpc::XmlRpcValue gains_rot, gains_ang;
-  n.getParam("gains/rot", gains_rot);
-  n.getParam("gains/ang", gains_ang);
-  if(gains_rot.getType() != XmlRpc::XmlRpcValue::TypeArray ||
-     gains_ang.getType() != XmlRpc::XmlRpcValue::TypeArray ||
-     gains_rot.size() != 3 || gains_ang.size() != 3)
-  {
-    ROS_FATAL("%s: Error parsing gains", ros::this_node::getName().c_str());
-    n.shutdown();
-    return;
-  }
-  for(int i = 0; i < 3; i++)
-  {
-    kR_[i] = static_cast<double>(gains_rot[i]);
-    kOm_[i] = static_cast<double>(gains_ang[i]);
-  }
+  n.param("gains/rot/x", kR_[0], 1.5);
+  n.param("gains/rot/y", kR_[1], 1.5);
+  n.param("gains/rot/z", kR_[2], 1.0);
+  n.param("gains/ang/x", kOm_[0], 0.13);
+  n.param("gains/ang/y", kOm_[1], 0.13);
+  n.param("gains/ang/z", kOm_[2], 0.1);
 
   n.param("corrections/z", corrections_[0], 0.0);
   n.param("corrections/r", corrections_[1], 0.0);

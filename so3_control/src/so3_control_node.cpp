@@ -123,22 +123,12 @@ int main(int argc, char **argv)
   n.param("use_external_yaw", use_external_yaw, true);
   n.param("use_angle_corrections", use_angle_corrections, false);
 
-  XmlRpc::XmlRpcValue gains_rot, gains_ang;
-  n.getParam("gains/rot", gains_rot);
-  n.getParam("gains/ang", gains_ang);
-  if(gains_rot.getType() != XmlRpc::XmlRpcValue::TypeArray ||
-     gains_ang.getType() != XmlRpc::XmlRpcValue::TypeArray ||
-     gains_rot.size() != 3 || gains_ang.size() != 3)
-  {
-    ROS_FATAL("%s: Error parsing gains", ros::this_node::getName().c_str());
-    n.shutdown();
-    return -1;
-  }
-  for(int i = 0; i < 3; i++)
-  {
-    so3_command.kR[i] = static_cast<double>(gains_rot[i]);
-    so3_command.kOm[i] = static_cast<double>(gains_ang[i]);
-  }
+  n.param("gains/rot/x", so3_command.kR[0], 1.5);
+  n.param("gains/rot/y", so3_command.kR[1], 1.5);
+  n.param("gains/rot/z", so3_command.kR[2], 1.0);
+  n.param("gains/ang/x", so3_command.kOm[0], 0.13);
+  n.param("gains/ang/y", so3_command.kOm[1], 0.13);
+  n.param("gains/ang/z", so3_command.kOm[2], 0.1);
 
   n.param("corrections/z", corrections[0], 0.0);
   n.param("corrections/r", corrections[1], 0.0);
