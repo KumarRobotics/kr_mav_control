@@ -31,3 +31,10 @@ rosbuild_genmsg()
 
 rosbuild_add_library(encode_msgs src/encode_msgs.cpp)
 rosbuild_add_link_flags(encode_msgs -Wl,--as-needed)
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package(Eigen3 REQUIRED)
+
+include_directories(${EIGEN3_INCLUDE_DIR})
+rosbuild_add_library(decode_msgs src/decode_msgs.cpp)
+rosbuild_add_link_flags(decode_msgs -Wl,--as-needed)
