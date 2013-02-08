@@ -152,29 +152,13 @@ int main(int argc, char **argv)
   QuadrotorSimulator::Quadrotor::State state = quad.getState();
 
   ros::Rate r(simulation_rate);
-  const double dt = 1/simulation_rate;
+  const double simulation_dt = 1/simulation_rate;
 
   Control control;
 
   nav_msgs::Odometry odom_msg;
   odom_msg.header.frame_id = "/simulator";
   odom_msg.child_frame_id = "/" + quad_name;
-
-  /*
-  command.force[0] = 0;
-  command.force[1] = 0;
-  command.force[2] = quad.getMass()*quad.getGravity() + 0.1;
-  command.qx = 0;
-  command.qy = 0;
-  command.qz = 0;
-  command.qw = 1;
-  command.kR[0] = 2;
-  command.kR[1] = 2;
-  command.kR[2] = 2;
-  command.kOm[0] = 0.15;
-  command.kOm[1] = 0.15;
-  command.kOm[2] = 0.15;
-  */
 
   ros::Time next_odom_pub_time = ros::Time::now();
   while(n.ok())
@@ -183,7 +167,7 @@ int main(int argc, char **argv)
 
     control = getControl(quad, command);
     quad.setInput(control.rpm[0], control.rpm[1], control.rpm[2], control.rpm[3]);
-    quad.step(dt);
+    quad.step(simulation_dt);
 
     ros::Time tnow = ros::Time::now();
 

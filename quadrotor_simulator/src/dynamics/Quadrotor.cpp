@@ -88,9 +88,6 @@ void Quadrotor::operator()(const Quadrotor::InternalState &x, Quadrotor::Interna
     cur_state.motor_rpm(i) = x[18 + i];
   }
 
-  //std::cout << "Omega: " << cur_state.omega << std::endl;
-  //std::cout << "motor_rpm: " << cur_state.motor_rpm << std::endl;
-
   // Re-orthonormalize R (polar decomposition)
   Eigen::LLT<Eigen::Matrix3d> llt(cur_state.R.transpose()*cur_state.R);
   Eigen::Matrix3d P = llt.matrixL();
@@ -113,16 +110,14 @@ void Quadrotor::operator()(const Quadrotor::InternalState &x, Quadrotor::Interna
 
   double thrust = kf_*motor_rpm_sq.sum();
   Eigen::Vector3d moments;
-  moments(0) = kf_*(motor_rpm_sq(2) - motor_rpm_sq(3))*arm_length_;
-  moments(1) = kf_*(motor_rpm_sq(1) - motor_rpm_sq(0))*arm_length_;
-  moments(2) = km_*(motor_rpm_sq(0) + motor_rpm_sq(1) -
-                    motor_rpm_sq(2) - motor_rpm_sq(3));
+  moments(0) = kf_*(motor_rpm_sq(2) - motor_rpm_sq(3)) * arm_length_;
+  moments(1) = kf_*(motor_rpm_sq(1) - motor_rpm_sq(0)) * arm_length_;
+  moments(2) = km_*(motor_rpm_sq(0) + motor_rpm_sq(1) - motor_rpm_sq(2) - motor_rpm_sq(3));
 
   x_dot = cur_state.v;
   v_dot = -Eigen::Vector3d(0,0,g_) + thrust*R.col(2)/mass_ + external_force_/mass_;
-  R_dot = R*omega_vee;
-  omega_dot = J_.inverse() *
-      (moments - cur_state.omega.cross(J_*cur_state.omega) + external_moment_);
+  R_dot = omega_vee*R;
+  omega_dot = J_.inverse()*(moments - cur_state.omega.cross(J_*cur_state.omega) + external_moment_);
   motor_rpm_dot = (input_ - cur_state.motor_rpm)/motor_time_constant_;
 
 
