@@ -16,9 +16,10 @@ bool decodeOutputData(const std::vector<uint8_t> &data,
   memcpy(&output_data, &data[0], sizeof(output_data));
   output.cpu_load = output_data.cpu_load;
   output.voltage = output_data.voltage/1e3;
-  const double roll = output_data.roll/1e3 * M_PI/180;
-  const double pitch = output_data.pitch/1e3 * M_PI/180;
-  const double yaw = output_data.yaw/1e3 * M_PI/180;
+
+  const double roll = output_data.roll/1e2 * M_PI/180;
+  const double pitch = output_data.pitch/1e2 * M_PI/180;
+  const double yaw = output_data.yaw/1e2 * M_PI/180;
   // Asctec (2012 firmware) uses  Z-Y-X convention
   Eigen::Quaterniond q = Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ()) *
       Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
