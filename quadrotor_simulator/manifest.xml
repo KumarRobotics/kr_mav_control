@@ -10,6 +10,8 @@
   <url>http://ros.org/wiki/quadrotor_simulator</url>
   <depend package="roscpp"/>
   <depend package="quadrotor_msgs"/>
+  <depend package="nav_msgs"/>
+  <depend package="sensor_msgs"/>
 
 </package>
 

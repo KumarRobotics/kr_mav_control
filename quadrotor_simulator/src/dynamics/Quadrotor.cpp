@@ -106,7 +106,7 @@ void Quadrotor::operator()(const Quadrotor::InternalState &x, Quadrotor::Interna
   omega_vee(1,0) = cur_state.omega(2);
   omega_vee(0,1) = -cur_state.omega(2);
 
-  motor_rpm_sq = cur_state.motor_rpm.array().square();
+  motor_rpm_sq = cur_state.motor_rpm.square();
 
   double thrust = kf_*motor_rpm_sq.sum();
   Eigen::Vector3d moments;

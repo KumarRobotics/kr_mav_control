@@ -1,13 +1,14 @@
 #include <ros/ros.h>
 #include <Eigen/Geometry>
 #include <nav_msgs/Odometry.h>
+#include <sensor_msgs/Imu.h>
 #include <quadrotor_msgs/SO3Command.h>
 #include <quadrotor_simulator/Quadrotor.h>
 
-typedef struct _Control
+typedef struct _ControlInput
 {
   double rpm[4];
-} Control;
+} ControlInput;
 
 typedef struct _Command
 {
@@ -20,12 +21,11 @@ typedef struct _Command
 
 static Command command;
 
-void stateToOdomMsg(const QuadrotorSimulator::Quadrotor::State &state,
-                    nav_msgs::Odometry &odom);
+void stateToOdomMsg(const QuadrotorSimulator::Quadrotor::State &state, nav_msgs::Odometry &odom);
+void quadToImuMsg(const QuadrotorSimulator::Quadrotor &quad, sensor_msgs::Imu &imu);
 
 
-static Control getControl(const QuadrotorSimulator::Quadrotor &quad,
-                          const Command &cmd)
+static ControlInput getControl(const QuadrotorSimulator::Quadrotor &quad, const Command &cmd)
 {
   const double _kf = quad.getPropellerThrustCoefficient();
   const double _km = quad.getPropellerMomentCoefficient();
@@ -79,12 +79,9 @@ static Control getControl(const QuadrotorSimulator::Quadrotor &quad,
   float eOm2 = Om2;
   float eOm3 = Om3;
 
-  float in1 = Om2*(I[2][0]*Om1 + I[2][1]*Om2 + I[2][2]*Om3) -
-      Om3*(I[1][0]*Om1 + I[1][1]*Om2 + I[1][2]*Om3);
-  float in2 = Om3*(I[0][0]*Om1 + I[0][1]*Om2 + I[0][2]*Om3) -
-      Om1*(I[2][0]*Om1 + I[2][1]*Om2 + I[2][2]*Om3);
-  float in3 = Om1*(I[1][0]*Om1 + I[1][1]*Om2 + I[1][2]*Om3) -
-      Om2*(I[0][0]*Om1 + I[0][1]*Om2 + I[0][2]*Om3);
+  float in1 = Om2*(I[2][0]*Om1 + I[2][1]*Om2 + I[2][2]*Om3) - Om3*(I[1][0]*Om1 + I[1][1]*Om2 + I[1][2]*Om3);
+  float in2 = Om3*(I[0][0]*Om1 + I[0][1]*Om2 + I[0][2]*Om3) - Om1*(I[2][0]*Om1 + I[2][1]*Om2 + I[2][2]*Om3);
+  float in3 = Om1*(I[1][0]*Om1 + I[1][1]*Om2 + I[1][2]*Om3) - Om2*(I[0][0]*Om1 + I[0][1]*Om2 + I[0][2]*Om3);
 
   float M1 = -cmd.kR[0]*eR1 - cmd.kOm[0]*eOm1 + in1;
   float M2 = -cmd.kR[1]*eR2 - cmd.kOm[1]*eOm2 + in2;
@@ -96,7 +93,7 @@ static Control getControl(const QuadrotorSimulator::Quadrotor &quad,
   w_sq[2] = force/(4*kf) + M1/(2*d*kf) - M3/(4*km);
   w_sq[3] = force/(4*kf) - M1/(2*d*kf) - M3/(4*km);
 
-  Control control;
+  ControlInput control;
   for(int i = 0; i < 4; i++)
   {
     if(w_sq[i] < 0)
@@ -134,8 +131,8 @@ int main(int argc, char **argv)
   ros::NodeHandle n("~");
 
   ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 100);
-  ros::Subscriber cmd_sub = n.subscribe("cmd", 100, &cmd_callback,
-                                        ros::TransportHints().tcpNoDelay());
+  ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("imu", 100);
+  ros::Subscriber cmd_sub = n.subscribe("cmd", 100, &cmd_callback, ros::TransportHints().tcpNoDelay());
 
   double simulation_rate;
   n.param("rate/simulation", simulation_rate, 1000.0);
@@ -154,11 +151,13 @@ int main(int argc, char **argv)
   ros::Rate r(simulation_rate);
   const double simulation_dt = 1/simulation_rate;
 
-  Control control;
+  ControlInput control;
 
   nav_msgs::Odometry odom_msg;
+  sensor_msgs::Imu imu_msg;
   odom_msg.header.frame_id = "/simulator";
   odom_msg.child_frame_id = "/" + quad_name;
+  imu_msg.header.frame_id = "/" + quad_name;
 
   ros::Time next_odom_pub_time = ros::Time::now();
   while(n.ok())
@@ -174,10 +173,13 @@ int main(int argc, char **argv)
     if(tnow >= next_odom_pub_time)
     {
       next_odom_pub_time += odom_pub_duration;
-      odom_msg.header.stamp = tnow;
       state = quad.getState();
       stateToOdomMsg(state, odom_msg);
+      quadToImuMsg(quad, imu_msg);
+      odom_msg.header.stamp = tnow;
+      imu_msg.header.stamp = tnow;
       odom_pub.publish(odom_msg);
+      imu_pub.publish(imu_msg);
     }
 
     r.sleep();
@@ -186,8 +188,7 @@ int main(int argc, char **argv)
   return 0;
 }
 
-void stateToOdomMsg(const QuadrotorSimulator::Quadrotor::State &state,
-                     nav_msgs::Odometry &odom)
+void stateToOdomMsg(const QuadrotorSimulator::Quadrotor::State &state, nav_msgs::Odometry &odom)
 {
   odom.pose.pose.position.x = state.x(0);
   odom.pose.pose.position.y = state.x(1);
@@ -206,4 +207,37 @@ void stateToOdomMsg(const QuadrotorSimulator::Quadrotor::State &state,
   odom.twist.twist.angular.x = state.omega(0);
   odom.twist.twist.angular.y = state.omega(1);
   odom.twist.twist.angular.z = state.omega(2);
+}
+
+void quadToImuMsg(const QuadrotorSimulator::Quadrotor &quad, sensor_msgs::Imu &imu)
+{
+  const QuadrotorSimulator::Quadrotor::State state = quad.getState();
+  Eigen::Quaterniond q(state.R);
+  imu.orientation.x = q.x();
+  imu.orientation.y = q.y();
+  imu.orientation.z = q.z();
+  imu.orientation.w = q.w();
+
+  imu.angular_velocity.x = state.omega(0);
+  imu.angular_velocity.y = state.omega(1);
+  imu.angular_velocity.z = state.omega(2);
+
+  const double kf = quad.getPropellerThrustCoefficient();
+  const double m = quad.getMass();
+  const Eigen::Vector3d &external_force = quad.getExternalForce();
+  const double g = quad.getGravity();
+  const double thrust = kf*state.motor_rpm.square().sum();
+  Eigen::Vector3d acc;
+  if(state.x(2) < 1e-4)
+  {
+    acc = state.R*(external_force/m + Eigen::Vector3d(0,0,g));
+  }
+  else
+  {
+    acc = thrust/m*Eigen::Vector3d(0,0,1) + state.R*external_force/m;
+  }
+
+  imu.linear_acceleration.x = acc(0);
+  imu.linear_acceleration.y = acc(1);
+  imu.linear_acceleration.z = acc(2);
 }
