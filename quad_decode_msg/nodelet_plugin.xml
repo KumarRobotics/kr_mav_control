@@ -1,0 +1,7 @@
+<library path="lib/libquad_decode_msg_nodelet">
+  <class name="quad_decode_msg/QuadDecodeMsg" type="QuadDecodeMsg" base_class_type="nodelet::Nodelet">
+    <description>
+      This unpacks the data being sent from the quad into a ROS message.
+    </description>
+  </class>
+</library>
