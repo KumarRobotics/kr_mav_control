@@ -1,5 +1,4 @@
 #include "quadrotor_msgs/decode_msgs.h"
-#include <quadrotor_msgs/OutputData.h>
 #include <quadrotor_msgs/comm_types.h>
 #include <Eigen/Geometry>
 
@@ -14,7 +13,7 @@ bool decodeOutputData(const std::vector<uint8_t> &data,
     return false;
 
   memcpy(&output_data, &data[0], sizeof(output_data));
-  output.cpu_load = output_data.cpu_load;
+  output.loop_rate = output_data.loop_rate;
   output.voltage = output_data.voltage/1e3;
 
   const double roll = output_data.roll/1e2 * M_PI/180;
@@ -48,10 +47,26 @@ bool decodeOutputData(const std::vector<uint8_t> &data,
   {
     output.radio_channel[i] = output_data.radio[i];
   }
-  for(int i = 0; i < 4; i++)
-  {
-    output.motor_rpm[i] = output_data.rpm[i];
-  }
+  //for(int i = 0; i < 4; i++)
+  //  output.motor_rpm[i] = output_data.rpm[i];
+
+  output.seq = output_data.seq;
+
+  return true;
+}
+
+bool decodeStatusData(const std::vector<uint8_t> &data,
+                      quadrotor_msgs::StatusData &status)
+{
+  struct STATUS_DATA status_data;
+  if(data.size() != sizeof(status_data))
+    return false;
+  memcpy(&status_data, &data[0], sizeof(status_data));
+
+  status.loop_rate = status_data.loop_rate;
+  status.voltage = status_data.voltage/1e3;
+  status.seq = status_data.seq;
+
   return true;
 }
 

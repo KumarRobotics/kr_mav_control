@@ -39,10 +39,6 @@ rosbuild_add_boost_directories()
 rosbuild_add_library(quadrotor_dynamics src/dynamics/Quadrotor.cpp)
 rosbuild_add_link_flags(quadrotor_dynamics -Wl,--as-needed)
 
-#rosbuild_add_executable(test_dynamics src/test_dynamics/test_dynamics.cpp)
-#target_link_libraries(test_dynamics quadrotor_dynamics rt)
-
-rosbuild_add_executable(quadrotor_simulator_so3
-  src/quadrotor_simulator_so3.cpp)
+rosbuild_add_executable(quadrotor_simulator_so3 src/quadrotor_simulator_so3.cpp)
 target_link_libraries(quadrotor_simulator_so3 quadrotor_dynamics)
 rosbuild_add_link_flags(quadrotor_simulator_so3 -Wl,--as-needed)

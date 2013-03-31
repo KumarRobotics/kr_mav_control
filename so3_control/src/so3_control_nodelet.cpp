@@ -19,8 +19,7 @@ class SO3ControlNodelet : public nodelet::Nodelet
       des_yaw_dot_(0),
       current_yaw_(0),
       enable_motors_(false),
-      use_external_yaw_(false),
-      use_angle_corrections_(false)
+      use_external_yaw_(false)
   {
   }
 
@@ -48,7 +47,6 @@ class SO3ControlNodelet : public nodelet::Nodelet
   double current_yaw_;
   bool enable_motors_;
   bool use_external_yaw_;
-  bool use_angle_corrections_;
   double kR_[3], kOm_[3], corrections_[3];
 };
 
@@ -77,12 +75,11 @@ void SO3ControlNodelet::publishSO3Command(void)
     so3_command->kOm[i] = kOm_[i];
   }
   so3_command->aux.current_yaw = current_yaw_;
-  so3_command->aux.corrections[0] = corrections_[0];
-  so3_command->aux.corrections[1] = corrections_[1];
-  so3_command->aux.corrections[2] = corrections_[2];
+  so3_command->aux.kf_correction = corrections_[0];
+  so3_command->aux.angle_corrections[0] = corrections_[1];
+  so3_command->aux.angle_corrections[1] = corrections_[2];
   so3_command->aux.enable_motors = enable_motors_;
   so3_command->aux.use_external_yaw = use_external_yaw_;
-  so3_command->aux.use_angle_corrections = use_angle_corrections_;
   so3_command_pub_.publish(so3_command);
 }
 
@@ -141,9 +138,9 @@ void SO3ControlNodelet::enable_motors_callback(const std_msgs::Bool::ConstPtr &m
 
 void SO3ControlNodelet::corrections_callback(const quadrotor_msgs::Corrections::ConstPtr &msg)
 {
-  corrections_[0] = msg->corrections[0];
-  corrections_[1] = msg->corrections[1];
-  corrections_[2] = msg->corrections[2];
+  corrections_[0] = msg->kf_correction;
+  corrections_[1] = msg->angle_corrections[0];
+  corrections_[2] = msg->angle_corrections[1];
 }
 
 void SO3ControlNodelet::onInit(void)
@@ -159,7 +156,6 @@ void SO3ControlNodelet::onInit(void)
   controller_.setMass(mass);
 
   n.param("use_external_yaw", use_external_yaw_, true);
-  n.param("use_angle_corrections", use_angle_corrections_, false);
 
   n.param("gains/rot/x", kR_[0], 1.5);
   n.param("gains/rot/y", kR_[1], 1.5);
@@ -168,7 +164,7 @@ void SO3ControlNodelet::onInit(void)
   n.param("gains/ang/y", kOm_[1], 0.13);
   n.param("gains/ang/z", kOm_[2], 0.1);
 
-  n.param("corrections/z", corrections_[0], 0.0);
+  n.param("corrections/kf", corrections_[0], 0.0);
   n.param("corrections/r", corrections_[1], 0.0);
   n.param("corrections/p", corrections_[2], 0.0);
 
