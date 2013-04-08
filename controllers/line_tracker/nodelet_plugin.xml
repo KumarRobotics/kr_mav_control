@@ -1,0 +1,7 @@
+<library path="lib/libline_tracker_nodelet">
+  <class name="line_tracker/LineTracker" type="LineTracker" base_class_type="nodelet::Nodelet">
+    <description>
+      This is a controller which follows a line from the current position to a given goal position.
+    </description>
+  </class>
+</library>

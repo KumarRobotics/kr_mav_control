@@ -1,0 +1,7 @@
+<library path="lib/libvelocity_tracker_plugin">
+  <class name="velocity_tracker/VelocityTracker" type="VelocityTracker" base_class_type="controllers_manager::Controller">
+    <description>
+      This controller commands a desired velocity for the robot.
+    </description>
+  </class>
+</library>

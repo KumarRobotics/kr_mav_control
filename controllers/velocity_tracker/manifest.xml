@@ -1,0 +1,23 @@
+<package>
+  <description brief="velocity_tracker">
+
+     velocity_tracker
+
+  </description>
+  <author>Kartik Mohta</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/velocity_tracker</url>
+  <depend package="roscpp"/>
+  <depend package="quadrotor_msgs"/>
+  <depend package="nav_msgs"/>
+  <depend package="geometry_msgs"/>
+  <depend package="controllers_manager"/>
+  <depend package="tf"/>
+
+  <export>
+    <controllers_manager plugin="${prefix}/plugin.xml"/>
+  </export>
+</package>
+
+
