@@ -26,7 +26,7 @@ Quadrotor::Quadrotor(void)
   arm_length_ = 0.17;
   motor_time_constant_ = 1.0/20;
   min_rpm_ = 1500;
-  max_rpm_ = 6500;
+  max_rpm_ = 7500;
 
   state_.x = Eigen::Vector3d::Zero();
   state_.v = Eigen::Vector3d::Zero();
@@ -97,14 +97,14 @@ void Quadrotor::operator()(const Quadrotor::InternalState &x, Quadrotor::Interna
   Eigen::Matrix3d R_dot;
   Eigen::Array4d motor_rpm_dot;
   Eigen::Array4d motor_rpm_sq;
-  Eigen::Matrix3d omega_vee(Eigen::Matrix3d::Zero());
+  Eigen::Matrix3d omega_hat(Eigen::Matrix3d::Zero());
 
-  omega_vee(2,1) = cur_state.omega(0);
-  omega_vee(1,2) = -cur_state.omega(0);
-  omega_vee(0,2) = cur_state.omega(1);
-  omega_vee(2,0) = -cur_state.omega(1);
-  omega_vee(1,0) = cur_state.omega(2);
-  omega_vee(0,1) = -cur_state.omega(2);
+  omega_hat(2,1) = cur_state.omega(0);
+  omega_hat(1,2) = -cur_state.omega(0);
+  omega_hat(0,2) = cur_state.omega(1);
+  omega_hat(2,0) = -cur_state.omega(1);
+  omega_hat(1,0) = cur_state.omega(2);
+  omega_hat(0,1) = -cur_state.omega(2);
 
   motor_rpm_sq = cur_state.motor_rpm.square();
 
@@ -116,10 +116,9 @@ void Quadrotor::operator()(const Quadrotor::InternalState &x, Quadrotor::Interna
 
   x_dot = cur_state.v;
   v_dot = -Eigen::Vector3d(0,0,g_) + thrust*R.col(2)/mass_ + external_force_/mass_;
-  R_dot = omega_vee*R;
+  R_dot = R*omega_hat;
   omega_dot = J_.inverse()*(moments - cur_state.omega.cross(J_*cur_state.omega) + external_moment_);
   motor_rpm_dot = (input_ - cur_state.motor_rpm)/motor_time_constant_;
-
 
   for(int i = 0; i < 3; i++)
   {
