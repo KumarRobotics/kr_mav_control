@@ -1,10 +1,11 @@
 <launch>
-  <node pkg="quad_serial_comm"
-    type="quad_serial_comm"
+  <node pkg="nodelet"
+    type="nodelet"
     name="quad_serial_comm"
+    args="standalone quad_serial_comm/QuadSerialComm"
     output="screen">
     <param name="device" value="/dev/ttyUSB0"/>
-    <param name="baud_rate" value="57600"/>
+    <param name="baud_rate" value="230400"/>
     <remap from="~to_robot" to="to_robot"/>
     <remap from="~from_robot" to="from_robot"/>
   </node>

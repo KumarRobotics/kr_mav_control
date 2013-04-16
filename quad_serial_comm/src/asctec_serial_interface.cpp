@@ -118,13 +118,15 @@ void process_serial_data(const uint8_t *data, const uint8_t count,
   }
 }
 
+// CRC-16-ITU-T
 static uint16_t crc_update(uint16_t crc, uint8_t data)
 {
-  data ^= (crc & 0xff);
-  data ^= data << 4;
+  uint16_t x = ((crc >> 8) ^ data);
+  x ^= x >> 4;
 
-  return ((((uint16_t)data << 8) | ((crc>>8)&0xff)) ^ (uint8_t)(data >> 4)
-          ^ ((uint16_t)data << 3));
+  crc = (crc << 8) ^ (x << 12) ^ (x <<5) ^ x;
+
+  return crc;
 }
 
 static uint16_t crc16(const uint8_t *data, int count)
