@@ -25,6 +25,8 @@ class SO3ControlNodelet : public nodelet::Nodelet
 
   void onInit(void);
 
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW; // Need this since we have SO3Control which needs aligned pointer
+
  private:
   void publishSO3Command(void);
   void position_cmd_callback(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
