@@ -26,9 +26,9 @@ void encodeSO3Command(const quadrotor_msgs::SO3Command &so3_command,
   so3_cmd_input.kOm[1] = so3_command.kOm[1]*100;
   so3_cmd_input.kOm[2] = so3_command.kOm[2]*100;
 
-  so3_cmd_input.cur_yaw = so3_command.aux.current_yaw*1e4;
+  so3_cmd_input.cur_yaw = so3_command.aux.current_yaw*1e4f;
 
-  so3_cmd_input.kf_correction = so3_command.aux.kf_correction*1e11;
+  so3_cmd_input.kf_correction = so3_command.aux.kf_correction*1e11f;
   so3_cmd_input.angle_corrections[0] = so3_command.aux.angle_corrections[0]*2500;
   so3_cmd_input.angle_corrections[1] = so3_command.aux.angle_corrections[1]*2500;
 
