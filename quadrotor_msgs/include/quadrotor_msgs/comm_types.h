@@ -41,4 +41,16 @@ struct OUTPUT_DATA
   uint8_t seq;
 };
 
+#define TYPE_TRPY_CMD 'p'
+struct TRPY_CMD
+{
+  int16_t thrust;
+  int16_t roll;
+  int16_t pitch;
+  int16_t yaw;
+  int16_t current_yaw;
+  uint8_t enable_motors:1;
+  uint8_t use_external_yaw:1;
+};
+
 #endif

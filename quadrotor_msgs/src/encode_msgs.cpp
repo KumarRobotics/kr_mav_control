@@ -41,4 +41,20 @@ void encodeSO3Command(const quadrotor_msgs::SO3Command &so3_command,
   memcpy(&output[0], &so3_cmd_input, sizeof(so3_cmd_input));
 }
 
+void encodeTRPYCommand(const quadrotor_msgs::TRPYCommand &trpy_command,
+                        std::vector<uint8_t> &output)
+{
+  struct TRPY_CMD trpy_cmd_input;
+  trpy_cmd_input.thrust = trpy_command.thrust*1e4f;
+  trpy_cmd_input.roll = trpy_command.roll*1e4f;
+  trpy_cmd_input.pitch = trpy_command.pitch*1e4f;
+  trpy_cmd_input.yaw = trpy_command.yaw*1e4f;
+  trpy_cmd_input.current_yaw = trpy_command.aux.current_yaw*1e4f;
+  trpy_cmd_input.enable_motors = trpy_command.aux.enable_motors;
+  trpy_cmd_input.use_external_yaw = trpy_command.aux.use_external_yaw;
+
+  output.resize(sizeof(trpy_cmd_input));
+  memcpy(&output[0], &trpy_cmd_input, sizeof(trpy_cmd_input));
+}
+
 }

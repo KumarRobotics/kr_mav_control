@@ -42,3 +42,7 @@ rosbuild_add_link_flags(quadrotor_dynamics -Wl,--as-needed)
 rosbuild_add_executable(quadrotor_simulator_so3 src/quadrotor_simulator_so3.cpp)
 target_link_libraries(quadrotor_simulator_so3 quadrotor_dynamics)
 rosbuild_add_link_flags(quadrotor_simulator_so3 -Wl,--as-needed)
+
+rosbuild_add_executable(quadrotor_simulator_trpy src/quadrotor_simulator_trpy.cpp)
+target_link_libraries(quadrotor_simulator_trpy quadrotor_dynamics)
+rosbuild_add_link_flags(quadrotor_simulator_trpy -Wl,--as-needed)
