@@ -1,0 +1,7 @@
+<library path="lib/libpid_control_nodelet">
+  <class name="pid_control/PIDControlNodelet" type="PIDControlNodelet" base_class_type="nodelet::Nodelet">
+    <description>
+      pid_control
+    </description>
+  </class>
+</library>

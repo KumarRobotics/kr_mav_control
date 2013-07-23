@@ -1,0 +1,23 @@
+<package>
+  <description brief="pid_control">
+
+     pid_control
+
+  </description>
+  <author>Kartik Mohta</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pid_control</url>
+  <depend package="roscpp"/>
+  <depend package="nav_msgs"/>
+  <depend package="quadrotor_msgs"/>
+  <depend package="std_msgs"/>
+  <depend package="nodelet"/>
+  <depend package="tf"/>
+
+  <export>
+    <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
+  </export>
+</package>
+
+
