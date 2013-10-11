@@ -17,7 +17,6 @@
   <depend package="controllers_manager"/>
 
   <export>
-    <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
     <controllers_manager plugin="${prefix}/plugin.xml"/>
   </export>
 </package>

@@ -214,4 +214,4 @@ bool LineTrackerDistance::set_des_vel_acc(line_tracker::DesVelAcc::Request &req,
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_DECLARE_CLASS(line_tracker_distance, LineTrackerDistance, LineTrackerDistance, controllers_manager::Controller);
+PLUGINLIB_DECLARE_CLASS(line_tracker, LineTrackerDistance, LineTrackerDistance, controllers_manager::Controller);

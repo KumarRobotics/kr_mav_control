@@ -1,7 +1,6 @@
 <library path="lib/libcontrollers_manager">
   <class name="controllers_manager/ControllersManager" type="ControllersManager" base_class_type="nodelet::Nodelet">
     <description>
-
     </description>
   </class>
 </library>
