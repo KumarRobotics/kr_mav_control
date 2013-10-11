@@ -7,10 +7,10 @@
 #include <tf/transform_datatypes.h>
 #include <line_tracker/DesVelAcc.h>
 
-class LineTracker : public controllers_manager::Controller
+class LineTrackerDistance : public controllers_manager::Controller
 {
  public:
-  LineTracker(void);
+  LineTrackerDistance(void);
 
   void Initialize(const ros::NodeHandle &nh);
   bool Activate(void);
@@ -35,7 +35,7 @@ class LineTracker : public controllers_manager::Controller
   double kx_[3], kv_[3];
 };
 
-LineTracker::LineTracker(void) :
+LineTrackerDistance::LineTrackerDistance(void) :
     pos_set_(false),
     goal_set_(false),
     goal_reached_(true),
@@ -43,7 +43,7 @@ LineTracker::LineTracker(void) :
 {
 }
 
-void LineTracker::Initialize(const ros::NodeHandle &nh)
+void LineTrackerDistance::Initialize(const ros::NodeHandle &nh)
 {
   nh.param("gains/pos/x", kx_[0], 2.5);
   nh.param("gains/pos/y", kx_[1], 2.5);
@@ -52,7 +52,7 @@ void LineTracker::Initialize(const ros::NodeHandle &nh)
   nh.param("gains/vel/y", kv_[1], 2.2);
   nh.param("gains/vel/z", kv_[2], 4.0);
 
-  ros::NodeHandle priv_nh(nh, "line_tracker");
+  ros::NodeHandle priv_nh(nh, "line_tracker_distance");
 
   priv_nh.param("default_v_des", default_v_des_, 0.5);
   priv_nh.param("default_a_des", default_a_des_, 0.5);
@@ -61,12 +61,12 @@ void LineTracker::Initialize(const ros::NodeHandle &nh)
   v_des_ = default_v_des_;
   a_des_ = default_a_des_;
 
-  sub_goal_ = priv_nh.subscribe("goal", 10, &LineTracker::goal_callback, this,
+  sub_goal_ = priv_nh.subscribe("goal", 10, &LineTrackerDistance::goal_callback, this,
                                 ros::TransportHints().tcpNoDelay());
-  srv_param_ = priv_nh.advertiseService("set_des_vel_acc", &LineTracker::set_des_vel_acc, this);
+  srv_param_ = priv_nh.advertiseService("set_des_vel_acc", &LineTrackerDistance::set_des_vel_acc, this);
 }
 
-bool LineTracker::Activate(void)
+bool LineTrackerDistance::Activate(void)
 {
   // Only allow activation if a goal has been set
   if(goal_set_ && pos_set_)
@@ -80,13 +80,13 @@ bool LineTracker::Activate(void)
   return active_;
 }
 
-void LineTracker::Deactivate(void)
+void LineTrackerDistance::Deactivate(void)
 {
   goal_set_ = false;
   active_ = false;
 }
 
-const quadrotor_msgs::PositionCommand::Ptr LineTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
+const quadrotor_msgs::PositionCommand::Ptr LineTrackerDistance::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   pos_(0) = msg->pose.pose.position.x;
   pos_(1) = msg->pose.pose.position.y;
@@ -140,7 +140,7 @@ const quadrotor_msgs::PositionCommand::Ptr LineTracker::update(const nav_msgs::O
     ROS_DEBUG_THROTTLE(1, "Overshoot");
     a = -a_des_*dir;
     v = Eigen::Vector3f::Zero();
-    x = proj;//goal_;
+    x = goal_;
   }
   else if(d >= (total_dist - ramp_dist) && d <= total_dist) // Decelerate
   {
@@ -168,7 +168,7 @@ const quadrotor_msgs::PositionCommand::Ptr LineTracker::update(const nav_msgs::O
     ROS_DEBUG_THROTTLE(1, "Undershoot");
     a = a_des_*dir;
     v = Eigen::Vector3f::Zero();
-    x = proj;//start_;
+    x = start_ + 0.5*a*dT*dT;
   }
   cmd->position.x = x(0), cmd->position.y = x(1), cmd->position.z = x(2);
   cmd->velocity.x = v(0), cmd->velocity.y = v(1), cmd->velocity.z = v(2);
@@ -176,7 +176,7 @@ const quadrotor_msgs::PositionCommand::Ptr LineTracker::update(const nav_msgs::O
   return cmd;
 }
 
-void LineTracker::goal_callback(const geometry_msgs::Vector3::ConstPtr &msg)
+void LineTrackerDistance::goal_callback(const geometry_msgs::Vector3::ConstPtr &msg)
 {
   goal_(0) = msg->x;
   goal_(1) = msg->y;
@@ -189,8 +189,8 @@ void LineTracker::goal_callback(const geometry_msgs::Vector3::ConstPtr &msg)
   goal_reached_ = false;
 }
 
-bool LineTracker::set_des_vel_acc(line_tracker::DesVelAcc::Request &req,
-                                  line_tracker::DesVelAcc::Response &res)
+bool LineTrackerDistance::set_des_vel_acc(line_tracker::DesVelAcc::Request &req,
+                                          line_tracker::DesVelAcc::Response &res)
 {
   // Don't allow changes while already following a line
   if(!goal_reached_)
@@ -214,4 +214,4 @@ bool LineTracker::set_des_vel_acc(line_tracker::DesVelAcc::Request &req,
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_DECLARE_CLASS(line_tracker, LineTracker, LineTracker, controllers_manager::Controller);
+PLUGINLIB_DECLARE_CLASS(line_tracker_distance, LineTrackerDistance, LineTrackerDistance, controllers_manager::Controller);

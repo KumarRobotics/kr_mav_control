@@ -1,7 +1,21 @@
-<library path="lib/libline_tracker_plugin">
+<library path="lib/libline_tracker_min_jerk">
   <class name="line_tracker/LineTracker" type="LineTracker" base_class_type="controllers_manager::Controller">
     <description>
-      This is a controller which follows a line from the current position to a given goal position.
+      This is a controller which follows a line from the current position to a given goal position using min jerk trajectory.
+    </description>
+  </class>
+</library>
+<library path="lib/libline_tracker_trapezoid">
+  <class name="line_tracker/LineTrackerTrapezoid" type="LineTrackerTrapezoid" base_class_type="controllers_manager::Controller">
+    <description>
+      This is a controller which follows a line from the current position to a given goal position using a trapezoidal trajectory.
+    </description>
+  </class>
+</library>
+<library path="lib/libline_tracker_distance">
+  <class name="line_tracker/LineTrackerDistance" type="LineTrackerDistance" base_class_type="controllers_manager::Controller">
+    <description>
+      This is a controller which follows a line from the current position to a given goal position using a trapezoidal trajectory with distance along the trajectory as the parameter instead of time.
     </description>
   </class>
 </library>

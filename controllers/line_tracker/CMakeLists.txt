@@ -34,11 +34,11 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-#rosbuild_add_executable(line_tracker src/line_tracker.cpp)
-#rosbuild_add_link_flags(line_tracker -Wl,--as-needed)
+rosbuild_add_library(line_tracker_min_jerk src/line_tracker_min_jerk.cpp)
+rosbuild_add_link_flags(line_tracker_min_jerk -Wl,--as-needed)
 
-#rosbuild_add_library(line_tracker_nodelet src/line_tracker_nodelet.cpp)
-#rosbuild_add_link_flags(line_tracker_nodelet -Wl,--as-needed)
+rosbuild_add_library(line_tracker_trapezoid src/line_tracker_trapezoid.cpp)
+rosbuild_add_link_flags(line_tracker_trapezoid -Wl,--as-needed)
 
-rosbuild_add_library(line_tracker_plugin src/line_tracker_plugin.cpp)
-rosbuild_add_link_flags(line_tracker_plugin -Wl,--as-needed)
+rosbuild_add_library(line_tracker_distance src/line_tracker_distance.cpp)
+rosbuild_add_link_flags(line_tracker_distance -Wl,--as-needed)
