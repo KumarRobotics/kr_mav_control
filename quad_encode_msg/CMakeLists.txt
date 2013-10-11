@@ -34,5 +34,4 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_link_flags(quad_encode_msg -Wl,--as-needed)
 
 rosbuild_add_library(quad_encode_msg_nodelet src/quad_encode_msg_nodelet.cpp)
-target_link_libraries(quad_encode_msg_nodelet encode_msgs)
 rosbuild_add_link_flags(quad_encode_msg_nodelet -Wl,--as-needed)

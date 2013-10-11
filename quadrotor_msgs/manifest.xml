@@ -13,7 +13,7 @@
 
    <export>
      <cpp cflags="-I${prefix}/include"
-          lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib"/>
+          lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -ldecode_msgs -lencode_msgs"/>
    </export>
 </package>
 

@@ -30,5 +30,4 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #target_link_libraries(example ${PROJECT_NAME})
 
 rosbuild_add_library(quad_decode_msg_nodelet src/quad_decode_msg_nodelet.cpp)
-target_link_libraries(quad_decode_msg_nodelet decode_msgs)
 rosbuild_add_link_flags(quad_decode_msg_nodelet -Wl,--as-needed)
