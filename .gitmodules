@@ -1,0 +1,3 @@
+[submodule "quadrotor_simulator/include/odeint-v2"]
+	path = quadrotor_simulator/include/odeint-v2
+	url = git@github.com:headmyshoulder/odeint-v2.git
