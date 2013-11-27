@@ -175,8 +175,17 @@ int main(int argc, char **argv)
   std::string quad_name;
   n.param("quadrotor_name", quad_name, std::string("quadrotor"));
 
+  double initial_pos_x, initial_pos_y, initial_pos_z;
+  n.param("initial_position/x", initial_pos_x, 0.0);
+  n.param("initial_position/y", initial_pos_y, 0.0);
+  n.param("initial_position/z", initial_pos_z, 0.0);
+
   QuadrotorSimulator::Quadrotor quad;
   QuadrotorSimulator::Quadrotor::State state = quad.getState();
+  state.x(0) = initial_pos_x;
+  state.x(1) = initial_pos_y;
+  state.x(2) = initial_pos_z;
+  quad.setState(state);
 
   ros::Rate r(simulation_rate);
   const double simulation_dt = 1/simulation_rate;
