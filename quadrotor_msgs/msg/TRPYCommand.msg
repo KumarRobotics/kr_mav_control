@@ -1,6 +1,9 @@
 Header header
-float32 thrust
-float32 roll
-float32 pitch
-float32 yaw
+float64 thrust
+float64 roll
+float64 pitch
+float64 yaw
+geometry_msgs/Vector3 angular_velocity
+float64[3] kR
+float64[3] kOm
 quadrotor_msgs/AuxCommand aux

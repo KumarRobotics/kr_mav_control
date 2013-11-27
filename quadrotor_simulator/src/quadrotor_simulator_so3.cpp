@@ -14,10 +14,12 @@ typedef struct _Command
 {
   float force[3];
   float qx, qy, qz, qw;
+  float angular_velocity[3];
   float kR[3];
   float kOm[3];
   float kf_correction;
   float angle_corrections[2];
+  bool enable_motors;
 } Command;
 
 static Command command;
@@ -76,13 +78,29 @@ static ControlInput getControl(const QuadrotorSimulator::Quadrotor &quad, const 
   float eR2 = 0.5f*(R13*Rd11 - R11*Rd13 - R21*Rd23 + R23*Rd21 - R31*Rd33 + R33*Rd31);
   float eR3 = 0.5f*(R11*Rd12 - R12*Rd11 + R21*Rd22 - R22*Rd21 + R31*Rd32 - R32*Rd31);
 
-  float eOm1 = Om1;
-  float eOm2 = Om2;
-  float eOm3 = Om3;
+  float Omd1 = cmd.angular_velocity[0]*(R11*Rd11 + R21*Rd21 + R31*Rd31) +
+      cmd.angular_velocity[1]*(R11*Rd12 + R21*Rd22 + R31*Rd32) +
+      cmd.angular_velocity[2]*(R11*Rd13 + R21*Rd23 + R31*Rd33);
+  float Omd2 = cmd.angular_velocity[0]*(R12*Rd11 + R22*Rd21 + R32*Rd31) +
+      cmd.angular_velocity[1]*(R12*Rd12 + R22*Rd22 + R32*Rd32) +
+      cmd.angular_velocity[2]*(R12*Rd13 + R22*Rd23 + R32*Rd33);
+  float Omd3 = cmd.angular_velocity[0]*(R13*Rd11 + R23*Rd21 + R33*Rd31) +
+      cmd.angular_velocity[1]*(R13*Rd12 + R23*Rd22 + R33*Rd32) +
+      cmd.angular_velocity[2]*(R13*Rd13 + R23*Rd23 + R33*Rd33);
 
+  float eOm1 = Om1 - Omd1;
+  float eOm2 = Om2 - Omd2;
+  float eOm3 = Om3 - Omd3;
+
+#if 0
   float in1 = Om2*(I[2][0]*Om1 + I[2][1]*Om2 + I[2][2]*Om3) - Om3*(I[1][0]*Om1 + I[1][1]*Om2 + I[1][2]*Om3);
   float in2 = Om3*(I[0][0]*Om1 + I[0][1]*Om2 + I[0][2]*Om3) - Om1*(I[2][0]*Om1 + I[2][1]*Om2 + I[2][2]*Om3);
   float in3 = Om1*(I[1][0]*Om1 + I[1][1]*Om2 + I[1][2]*Om3) - Om2*(I[0][0]*Om1 + I[0][1]*Om2 + I[0][2]*Om3);
+#else
+  float in1 = Omd2*(I[2][0]*Omd1 + I[2][1]*Omd2 + I[2][2]*Omd3) - Omd3*(I[1][0]*Omd1 + I[1][1]*Omd2 + I[1][2]*Omd3);
+  float in2 = Omd3*(I[0][0]*Omd1 + I[0][1]*Omd2 + I[0][2]*Omd3) - Omd1*(I[2][0]*Omd1 + I[2][1]*Omd2 + I[2][2]*Omd3);
+  float in3 = Omd1*(I[1][0]*Omd1 + I[1][1]*Omd2 + I[1][2]*Omd3) - Omd2*(I[0][0]*Omd1 + I[0][1]*Omd2 + I[0][2]*Omd3);
+#endif
 
   float M1 = -cmd.kR[0]*eR1 - cmd.kOm[0]*eOm1 + in1;
   float M2 = -cmd.kR[1]*eR2 - cmd.kOm[1]*eOm2 + in2;
@@ -97,10 +115,17 @@ static ControlInput getControl(const QuadrotorSimulator::Quadrotor &quad, const 
   ControlInput control;
   for(int i = 0; i < 4; i++)
   {
+    if(cmd.enable_motors)
+    {
     if(w_sq[i] < 0)
       w_sq[i] = 0;
 
     control.rpm[i] = sqrtf(w_sq[i]);
+    }
+    else
+    {
+      control.rpm[i] = 0;
+    }
   }
   return control;
 }
@@ -114,6 +139,9 @@ static void cmd_callback(const quadrotor_msgs::SO3Command::ConstPtr &cmd)
   command.qy = cmd->orientation.y;
   command.qz = cmd->orientation.z;
   command.qw = cmd->orientation.w;
+  command.angular_velocity[0] = cmd->angular_velocity.x;
+  command.angular_velocity[1] = cmd->angular_velocity.y;
+  command.angular_velocity[2] = cmd->angular_velocity.z;
   command.kR[0] = cmd->kR[0];
   command.kR[1] = cmd->kR[1];
   command.kR[2] = cmd->kR[2];
@@ -123,6 +151,7 @@ static void cmd_callback(const quadrotor_msgs::SO3Command::ConstPtr &cmd)
   command.kf_correction = cmd->aux.kf_correction;
   command.angle_corrections[0] = cmd->aux.angle_corrections[0]; // Not used yet
   command.angle_corrections[1] = cmd->aux.angle_corrections[1]; // Not used yet
+  command.enable_motors = cmd->aux.enable_motors;
 }
 
 int main(int argc, char **argv)

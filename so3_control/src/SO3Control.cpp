@@ -3,66 +3,113 @@
 
 SO3Control::SO3Control()
   : mass_(0.5),
-    g_(9.81)
+    g_(9.81),
+    max_pos_int_(0.5)
 {
 }
 
-void SO3Control::setMass(const double mass)
+void SO3Control::setMass(const float mass)
 {
   mass_ = mass;
 }
 
-void SO3Control::setGravity(const double g)
+void SO3Control::setGravity(const float g)
 {
   g_ = g;
 }
 
-void SO3Control::setPosition(const Eigen::Vector3d &position)
+void SO3Control::setPosition(const Eigen::Vector3f &position)
 {
   pos_ = position;
 }
 
-void SO3Control::setVelocity(const Eigen::Vector3d &velocity)
+void SO3Control::setVelocity(const Eigen::Vector3f &velocity)
 {
   vel_ = velocity;
 }
 
-void SO3Control::calculateControl(const Eigen::Vector3d &des_pos,
-                                  const Eigen::Vector3d &des_vel,
-                                  const Eigen::Vector3d &des_acc,
-                                  const double des_yaw,
-                                  const double des_yaw_dot,
-                                  const Eigen::Vector3d &kx,
-                                  const Eigen::Vector3d &kv)
+void SO3Control::setMaxIntegral(const float max_integral)
 {
-  force_.noalias() = kx.asDiagonal() * (des_pos - pos_) +
-                     kv.asDiagonal() * (des_vel - vel_) +
-                     mass_ * g_ * Eigen::Vector3d(0, 0, 1) +
-                     mass_ * des_acc;
+  max_pos_int_ = max_integral;
+}
 
-  Eigen::Vector3d b1c, b2c, b3c;
-  Eigen::Vector3d b1d(cos(des_yaw), sin(des_yaw), 0);
+void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
+                                  const Eigen::Vector3f &des_vel,
+                                  const Eigen::Vector3f &des_acc,
+                                  const Eigen::Vector3f &des_jerk,
+                                  const float des_yaw,
+                                  const float des_yaw_dot,
+                                  const Eigen::Vector3f &kx,
+                                  const Eigen::Vector3f &kv,
+                                  const Eigen::Vector3f &ki)
+{
+  const Eigen::Vector3f e_pos = des_pos - pos_;
+  const Eigen::Vector3f e_vel = des_vel - vel_;
+
+  for(int i = 0; i < 3; i++)
+  {
+    if(kx(i) != 0)
+      pos_int_(i) += ki(i)*e_pos(i);
+
+    // Limit integral term
+    if(pos_int_(i) > max_pos_int_)
+      pos_int_(i) = max_pos_int_;
+    else if(pos_int_(i) < -max_pos_int_)
+      pos_int_(i) = -max_pos_int_;
+  }
+
+  //std::cout << "pos_int: " << pos_int_.transpose() << std::endl;
+
+  force_.noalias() = kx.asDiagonal()*e_pos  + kv.asDiagonal()*e_vel + pos_int_ + mass_*g_*Eigen::Vector3f(0, 0, 1) +
+      mass_ * des_acc;
+
+  //std::cout << "Force: " << force_.transpose() << std::endl;
+
+  Eigen::Vector3f b1c, b2c, b3c;
+  Eigen::Vector3f b1d(cos(des_yaw), sin(des_yaw), 0);
 
   if(force_.norm() > 1e-6)
     b3c.noalias() = force_.normalized();
   else
-    b3c.noalias() = Eigen::Vector3d(0, 0, 1);
+    b3c.noalias() = Eigen::Vector3f(0, 0, 1);
 
   b2c.noalias() = b3c.cross(b1d).normalized();
   b1c.noalias() = b2c.cross(b3c).normalized();
 
-  Eigen::Matrix3d R;
-  R << b1c, b2c, b3c;
+  const Eigen::Vector3f force_dot = kx.asDiagonal()*e_vel + mass_*des_jerk; // Ignoring kv*e_acc and ki*e_pos terms
+  const Eigen::Vector3f b3c_dot = b3c.cross(force_dot/force_.norm()).cross(b3c);
+  const Eigen::Vector3f b1d_dot(-sin(des_yaw)*des_yaw_dot, cos(des_yaw)*des_yaw_dot, 0);
+  const Eigen::Vector3f b2c_dot = b3c_dot.cross(b1d) + b3c.cross(b1d_dot);
+  const Eigen::Vector3f b1c_dot = b2c_dot.cross(b3c) + b2c.cross(b3c_dot);
 
-  orientation_ = Eigen::Quaterniond(R);
+  Eigen::Matrix3f R;
+  R << b1c, b2c, b3c;
+  orientation_ = Eigen::Quaternionf(R);
+
+  Eigen::Matrix3f R_dot;
+  R_dot << b1c_dot, b2c_dot, b3c_dot;
+
+  const Eigen::Matrix3f omega_hat = R.transpose()*R_dot;
+  angular_velocity_ = Eigen::Vector3f(omega_hat(2,1), omega_hat(0,2), omega_hat(1,0));
+
 }
 
-const Eigen::Vector3d &SO3Control::getComputedForce(void)
+const Eigen::Vector3f &SO3Control::getComputedForce(void)
 {
   return force_;
 }
 
-const Eigen::Quaterniond &SO3Control::getComputedOrientation(void)
+const Eigen::Quaternionf &SO3Control::getComputedOrientation(void)
 {
   return orientation_;
+}
+
+const Eigen::Vector3f &SO3Control::getComputedAngularVelocity(void)
+{
+  return angular_velocity_;
+}
+
+void SO3Control::resetIntegrals(void)
+{
+  pos_int_ = Eigen::Vector3f::Zero();
 }

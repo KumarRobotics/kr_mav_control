@@ -36,6 +36,8 @@ Quadrotor::Quadrotor(void)
   updateInternalState();
 
   input_ = Eigen::Array4d::Zero();
+  external_force_ = Eigen::Vector3d::Zero();
+  external_moment_ = Eigen::Vector3d::Zero();
 }
 
 void Quadrotor::step(double dt)

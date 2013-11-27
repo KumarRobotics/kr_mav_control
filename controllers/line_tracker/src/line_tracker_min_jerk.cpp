@@ -137,12 +137,13 @@ const quadrotor_msgs::PositionCommand::Ptr LineTracker::update(const nav_msgs::O
     return cmd;
   }
 
-  Eigen::Vector3f x(pos_), v(Eigen::Vector3f::Zero()), a(Eigen::Vector3f::Zero());
+  Eigen::Vector3f x(pos_), v(Eigen::Vector3f::Zero()), a(Eigen::Vector3f::Zero()), j(Eigen::Vector3f::Zero());
 
   const float traj_time = (t_now - traj_start_).toSec();
   if(/*((pos_ - goal_).norm() <= epsilon_) ||*/ (traj_time >= traj_duration_) || (traj_duration_ < 0.3)) // Reached goal
   {
     ROS_DEBUG_THROTTLE(1, "Reached goal");
+    j = Eigen::Vector3f::Zero();
     a = Eigen::Vector3f::Zero();
     v = Eigen::Vector3f::Zero();
     x = goal_;
@@ -154,11 +155,13 @@ const quadrotor_msgs::PositionCommand::Ptr LineTracker::update(const nav_msgs::O
     x = coeffs_[0] + t*(coeffs_[1] + t*(coeffs_[2] + t*(coeffs_[3] + t*(coeffs_[4] + t*coeffs_[5]))));
     v = coeffs_[1] + t*(2*coeffs_[2] + t*(3*coeffs_[3] + t*(4*coeffs_[4] + t*5*coeffs_[5])));
     a = 2*coeffs_[2] + t*(6*coeffs_[3] + t*(12*coeffs_[4] + t*20*coeffs_[5]));
+    j = 6*coeffs_[3] + t*(24*coeffs_[4] + t*60*coeffs_[5]);
   }
 
   cmd->position.x = x(0), cmd->position.y = x(1), cmd->position.z = x(2);
   cmd->velocity.x = v(0), cmd->velocity.y = v(1), cmd->velocity.z = v(2);
   cmd->acceleration.x = a(0), cmd->acceleration.y = a(1), cmd->acceleration.z = a(2);
+  cmd->jerk.x = j(0), cmd->jerk.y = j(1), cmd->jerk.z = j(2);
   return cmd;
 }
 

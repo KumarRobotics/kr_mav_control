@@ -5,3 +5,10 @@
     </description>
   </class>
 </library>
+<library path="lib/libso3_trpy_control">
+  <class name="so3_control/SO3TRPYControlNodelet" type="SO3TRPYControlNodelet" base_class_type="nodelet::Nodelet">
+    <description>
+      so3_control with thrust, roll, pitch, yaw output
+    </description>
+  </class>
+</library>

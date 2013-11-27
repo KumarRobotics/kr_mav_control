@@ -41,4 +41,6 @@ rosbuild_add_library(so3_control_nodelet src/so3_control_nodelet.cpp)
 target_link_libraries(so3_control_nodelet SO3Control)
 rosbuild_add_link_flags(so3_control_nodelet -Wl,--as-needed)
 
-#rosbuild_add_executable(test_timer src/test_timer.cpp)
+rosbuild_add_library(so3_trpy_control src/so3_trpy_control.cpp)
+target_link_libraries(so3_trpy_control SO3Control)
+rosbuild_add_link_flags(so3_trpy_control -Wl,--as-needed)
