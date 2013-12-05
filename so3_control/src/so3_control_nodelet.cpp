@@ -43,7 +43,7 @@ class SO3ControlNodelet : public nodelet::Nodelet
   bool position_cmd_updated_, position_cmd_init_;
   std::string frame_id_;
 
-  Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, kx_, kv_;
+  Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, kx_, kv_, ki_;
   float des_yaw_, des_yaw_dot_;
   float current_yaw_;
   bool enable_motors_, use_external_yaw_;
@@ -55,11 +55,16 @@ class SO3ControlNodelet : public nodelet::Nodelet
 
 void SO3ControlNodelet::publishSO3Command(void)
 {
-  controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_yaw_, des_yaw_dot_,
-                              kx_, kv_);
+  Eigen::Vector3f ki = Eigen::Vector3f::Zero();
+  if(enable_motors_)
+  {
+    ki = ki_;
+  }
+  controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki_);
 
-  const Eigen::Vector3d &force = controller_.getComputedForce();
-  const Eigen::Quaterniond &orientation = controller_.getComputedOrientation();
+  const Eigen::Vector3f &force = controller_.getComputedForce();
+  const Eigen::Quaternionf &orientation = controller_.getComputedOrientation();
+  const Eigen::Vector3f &ang_vel = controller_.getComputedAngularVelocity();
 
   quadrotor_msgs::SO3Command::Ptr so3_command(new quadrotor_msgs::SO3Command);
   so3_command->header.stamp = ros::Time::now();
@@ -166,6 +171,12 @@ void SO3ControlNodelet::onInit(void)
   controller_.setGravity(g_);
 
   n.param("use_external_yaw", use_external_yaw_, true);
+
+  double ki_x, ki_y, ki_z;
+  n.param("gains/ki/x", ki_x, 0.0);
+  n.param("gains/ki/y", ki_y, 0.0);
+  n.param("gains/ki/z", ki_z, 0.0);
+  ki_[0] = ki_x, ki_[1] = ki_y, ki_[2] = ki_z;
 
   double kR[3], kOm[3];
   n.param("gains/rot/x", kR[0], 1.5);
