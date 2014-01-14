@@ -44,6 +44,7 @@ void VelocityTracker::Initialize(const ros::NodeHandle &nh)
   sub_vel_cmd_ = priv_nh.subscribe("vel_cmd", 10, &VelocityTracker::velocity_cmd_cb, this,
                                    ros::TransportHints().tcpNoDelay());
 
+  position_cmd_.kx[0] = 0, position_cmd_.kx[1] = 0, position_cmd_.kx[2] = 0;
   position_cmd_.kv[0] = kv_[0], position_cmd_.kv[1] = kv_[1], position_cmd_.kv[2] = kv_[2];
 }
 
