@@ -60,7 +60,7 @@ void SO3ControlNodelet::publishSO3Command(void)
   {
     ki = ki_;
   }
-  controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki_);
+  controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki);
 
   const Eigen::Vector3f &force = controller_.getComputedForce();
   const Eigen::Quaternionf &orientation = controller_.getComputedOrientation();
