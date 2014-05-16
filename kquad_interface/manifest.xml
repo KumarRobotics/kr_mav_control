@@ -1,0 +1,22 @@
+<package>
+  <description brief="kquad_interface">
+
+     kquad_interface
+
+  </description>
+  <author>Kartik Mohta</author>
+  <license>Proprietary</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/kquad_interface</url>
+  <depend package="roscpp"/>
+  <depend package="nodelet"/>
+  <depend package="quadrotor_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="geometry_msgs"/>
+
+  <export>
+    <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
+  </export>
+</package>
+
+

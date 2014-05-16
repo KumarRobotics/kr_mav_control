@@ -1,0 +1,7 @@
+<library path="lib/libkquad_interface_nodelet">
+  <class name="kquad_interface/kQuadInterfaceNodelet" type="kQuadInterfaceNodelet" base_class_type="nodelet::Nodelet">
+    <description>
+      kQuadInterfaceNodelet is a nodelet for sending messages to the KMel Robotics quadrotors
+    </description>
+  </class>
+</library>
