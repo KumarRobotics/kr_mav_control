@@ -1,0 +1,45 @@
+<package>
+  <name>quadrotor</name>
+  <version>1.0.0</version>
+  <description>A quadrotor control stack which uses odom input from an external source such
+    as Vicon and computes the controls for quadrotor. Also includes a basic
+    quadrotor dynamics simulator.</description>
+<maintainer email="kartikmohta@users.noreply.github.com">Kartik Mohta</maintainer>
+
+  <license>BSD</license>
+  <license>GPL</license>
+
+  <url type="website"></url>
+  <!-- <url type="bugtracker"></url> -->
+
+  <author>Kartik Mohta</author>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed to compile this package. -->
+
+
+  <!-- Dependencies needed after this package is compiled. -->
+  <run_depend>kquad_interface</run_depend>
+  <run_depend>quadrotor_simulator</run_depend>
+  <run_depend>mesh_visualization</run_depend>
+  <run_depend>pid_control</run_depend>
+  <run_depend>quadrotor_msgs</run_depend>
+  <run_depend>controllers_manager</run_depend>
+  <run_depend>line_tracker</run_depend>
+  <run_depend>velocity_tracker</run_depend>
+  <run_depend>quad_serial_comm</run_depend>
+  <run_depend>quad_encode_msg</run_depend>
+  <run_depend>quad_decode_msg</run_depend>
+  <run_depend>so3_control</run_depend>
+
+  <!-- Dependencies needed only for running tests. -->
+
+
+
+
+
+
+
+</package>
