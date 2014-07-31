@@ -3,7 +3,8 @@
   <version>1.0.0</version>
   <description>quad_serial_comm
      GPL license since asio-serial-device is under GPL and we link to it.</description>
-  <maintainer email="kartikmohta@users.noreply.github.com">Kartik Mohta</maintainer>
+  <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
+  <maintainer email="michael.f.watterson@gmail.com">Michael Watterson</maintainer>
 
   <license>GPL</license>
 
