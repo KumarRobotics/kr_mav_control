@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(pid_control)
 
 find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs quadrotor_msgs std_msgs nodelet tf cmake_modules)
-find_package(Eigen 3.0.0 REQUIRED)
+find_package(Eigen REQUIRED)
 
 include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 include_directories(${EIGEN_INCLUDE_DIR})

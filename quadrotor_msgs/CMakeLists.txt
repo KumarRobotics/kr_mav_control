@@ -3,7 +3,7 @@ project(quadrotor_msgs)
 
 find_package(catkin REQUIRED COMPONENTS geometry_msgs nav_msgs cmake_modules)
 find_package(Boost REQUIRED COMPONENTS thread)
-find_package(Eigen 3.0.0 REQUIRED)
+find_package(Eigen REQUIRED)
 
 include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
 
