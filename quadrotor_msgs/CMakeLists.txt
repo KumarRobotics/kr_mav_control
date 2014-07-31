@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(quadrotor_msgs)
 
-find_package(catkin REQUIRED COMPONENTS geometry_msgs nav_msgs)
+find_package(catkin REQUIRED COMPONENTS geometry_msgs nav_msgs cmake_modules)
 find_package(Boost REQUIRED COMPONENTS thread)
-find_package(Eigen REQUIRED)
+find_package(Eigen 3.0.0 REQUIRED)
 
 include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
 
@@ -23,8 +23,8 @@ generate_messages(
 )
 
 catkin_package(
-    DEPENDS geometry_msgs nav_msgs
-    CATKIN_DEPENDS # TODO
+    DEPENDS eigen3
+    CATKIN_DEPENDS geometry_msgs nav_msgs
     INCLUDE_DIRS include
     LIBRARIES # TODO
 )
