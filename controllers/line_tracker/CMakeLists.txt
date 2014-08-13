@@ -1,44 +1,30 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.8.3)
+project(line_tracker)
 
-# Set the build type.  Options are:
-#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-#  Debug          : w/ debug symbols, w/o optimization
-#  Release        : w/o debug symbols, w/ optimization
-#  RelWithDebInfo : w/ debug symbols, w/ optimization
-#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
+find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs geometry_msgs nav_msgs tf nodelet controllers_manager cmake_modules)
+find_package(Eigen REQUIRED)
 
-rosbuild_init()
+include_directories(include ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+add_service_files(DIRECTORY srv
+  FILES
+  DesVelAcc.srv)
+generate_messages()
 
-#uncomment if you have defined messages
-#rosbuild_genmsg()
-#uncomment if you have defined services
-rosbuild_gensrv()
+catkin_package(
+  INCLUDE_DIRS
+  LIBRARIES
+  CATKIN_DEPENDS roscpp quadrotor_msgs geometry_msgs nav_msgs tf nodelet controllers_manager
+  DEPENDS Eigen)
 
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-#rosbuild_add_executable(example examples/example.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+add_library(line_tracker_min_jerk src/line_tracker_min_jerk.cpp)
+add_dependencies(line_tracker_min_jerk ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(line_tracker_min_jerk ${catkin_LIBRARIES})
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+add_library(line_tracker_trapezoid src/line_tracker_trapezoid.cpp)
+add_dependencies(line_tracker_trapezoid ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(line_tracker_trapezoid ${catkin_LIBRARIES})
 
-find_package(Eigen3 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
-
-rosbuild_add_library(line_tracker_min_jerk src/line_tracker_min_jerk.cpp)
-rosbuild_add_link_flags(line_tracker_min_jerk -Wl,--as-needed)
-
-rosbuild_add_library(line_tracker_trapezoid src/line_tracker_trapezoid.cpp)
-rosbuild_add_link_flags(line_tracker_trapezoid -Wl,--as-needed)
-
-rosbuild_add_library(line_tracker_distance src/line_tracker_distance.cpp)
-rosbuild_add_link_flags(line_tracker_distance -Wl,--as-needed)
+add_library(line_tracker_distance src/line_tracker_distance.cpp)
+add_dependencies(line_tracker_distance ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(line_tracker_distance ${catkin_LIBRARIES})
