@@ -3,16 +3,14 @@ project(quad_serial_comm)
 
 find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs asio-serial-device nodelet)
 
-include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 catkin_package(
-    DEPENDS roscpp quadrotor_msgs asio-serial-device nodelet
-    CATKIN_DEPENDS # TODO
-    INCLUDE_DIRS # TODO include
-    LIBRARIES # TODO
-)
+  INCLUDE_DIRS
+  LIBRARIES
+  CATKIN_DEPENDS roscpp quadrotor_msgs asio-serial-device nodelet
+  DEPENDS)
 
 add_library(quad_serial_comm_nodelet src/quad_serial_comm_nodelet.cpp src/asctec_serial_interface.cpp)
-
-add_dependencies(quad_serial_comm_nodelet quadrotor_msgs_generate_messages_cpp)
-  
+add_dependencies(quad_serial_comm_nodelet ${catkin_EXPORTED_TARGETS})
+target_link_libraries(quad_serial_comm_nodelet ${catkin_LIBRARIES})

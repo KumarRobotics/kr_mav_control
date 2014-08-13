@@ -3,21 +3,20 @@ project(controllers_manager)
 
 find_package(catkin REQUIRED COMPONENTS roscpp nodelet pluginlib quadrotor_msgs nav_msgs)
 
-include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_service_files(
+add_service_files(DIRECTORY srv
   FILES
   Transition.srv
 )
-generate_messages(DEPENDENCIES geometry_msgs std_msgs)
+generate_messages()
 
 catkin_package(
-    DEPENDS roscpp nodelet pluginlib quadrotor_msgs nav_msgs
-    CATKIN_DEPENDS # TODO
-    INCLUDE_DIRS include
-    LIBRARIES # TODO
-)
+  INCLUDE_DIRS include
+  LIBRARIES
+  CATKIN_DEPENDS roscpp nodelet pluginlib quadrotor_msgs nav_msgs
+  DEPENDS)
 
 add_library(controllers_manager src/controllers_manager.cpp)
-
-add_dependencies(controllers_manager quadrotor_msgs_generate_messages_cpp)
+add_dependencies(controllers_manager ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(controllers_manager ${catkin_LIBRARIES})

@@ -3,4 +3,4 @@
 	url = git@github.com:headmyshoulder/odeint-v2.git
 [submodule "asio-serial-device"]
 	path = asio-serial-device
-	url = git@github.com:mwatterson/asio-serial-device.git
+	url = git@github.com:KumarRobotics/asio-serial-device.git
