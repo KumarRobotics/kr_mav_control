@@ -57,7 +57,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /nanoplus/mesh_visualization/robot
+      Marker Topic: /quadrotor/mesh_visualization/robot
       Name: Robot
       Namespaces:
         mesh_visualization: true
