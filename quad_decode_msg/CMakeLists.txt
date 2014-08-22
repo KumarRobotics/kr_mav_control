@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(quad_decode_msg)
 
+# set default build type
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+endif()
+
 find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs sensor_msgs nodelet)
 
 include_directories(include ${catkin_INCLUDE_DIRS})

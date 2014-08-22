@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(quadrotor_msgs)
 
+# set default build type
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+endif()
+
 find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs nav_msgs cmake_modules)
 find_package(Eigen REQUIRED)
 

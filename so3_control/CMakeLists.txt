@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(so3_control)
 
+# set default build type
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+endif()
+
 find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs quadrotor_msgs std_msgs tf nodelet cmake_modules)
 find_package(Eigen REQUIRED)
 

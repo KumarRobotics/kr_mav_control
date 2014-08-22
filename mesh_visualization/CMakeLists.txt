@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(mesh_visualization)
 
+# set default build type
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+endif()
+
 find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs visualization_msgs)
 
 catkin_package(

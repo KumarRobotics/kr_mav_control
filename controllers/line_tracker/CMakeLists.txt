@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(line_tracker)
 
-find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs geometry_msgs nav_msgs tf nodelet controllers_manager cmake_modules)
+# set default build type
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+endif()
+
+find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs geometry_msgs nav_msgs tf nodelet controllers_manager
+  cmake_modules)
 find_package(Eigen REQUIRED)
 
 include_directories(include ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})

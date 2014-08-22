@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(velocity_tracker)
 
+# set default build type
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+endif()
+
 find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs nav_msgs geometry_msgs controllers_manager tf)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
