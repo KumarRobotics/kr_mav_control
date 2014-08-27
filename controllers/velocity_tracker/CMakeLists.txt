@@ -17,7 +17,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #uncomment if you have defined messages
-#rosbuild_genmsg()
+rosbuild_genmsg()
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
@@ -31,3 +31,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_library(velocity_tracker_plugin src/velocity_tracker_plugin.cpp)
 rosbuild_add_link_flags(velocity_tracker_plugin -Wl,--as-needed)
+
+rosbuild_add_library(velocity_tracker_yaw_plugin src/velocity_tracker_yaw_plugin.cpp)
+rosbuild_add_link_flags(velocity_tracker_yaw_plugin -Wl,--as-needed)
