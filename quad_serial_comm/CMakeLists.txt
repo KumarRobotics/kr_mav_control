@@ -6,14 +6,14 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs asio-serial-device nodelet)
+find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs asio_serial_device nodelet)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS
   LIBRARIES
-  CATKIN_DEPENDS roscpp quadrotor_msgs asio-serial-device nodelet
+  CATKIN_DEPENDS roscpp quadrotor_msgs asio_serial_device nodelet
   DEPENDS)
 
 add_library(quad_serial_comm_nodelet src/quad_serial_comm_nodelet.cpp src/asctec_serial_interface.cpp)

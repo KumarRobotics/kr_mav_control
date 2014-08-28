@@ -2,7 +2,7 @@
   <name>quad_serial_comm</name>
   <version>1.0.0</version>
   <description>quad_serial_comm
-     GPL license since asio-serial-device is under GPL and we link to it.</description>
+     GPL license since asio_serial_device is under GPL and we link to it.</description>
   <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
   <maintainer email="michael.f.watterson@gmail.com">Michael Watterson</maintainer>
 
@@ -19,19 +19,19 @@
   <!-- Dependencies needed to compile this package. -->
   <build_depend>roscpp</build_depend>
   <build_depend>quadrotor_msgs</build_depend>
-  <build_depend>asio-serial-device</build_depend>
+  <build_depend>asio_serial_device</build_depend>
   <build_depend>nodelet</build_depend>
 
   <!-- Dependencies needed after this package is compiled. -->
   <run_depend>roscpp</run_depend>
   <run_depend>quadrotor_msgs</run_depend>
-  <run_depend>asio-serial-device</run_depend>
+  <run_depend>asio_serial_device</run_depend>
   <run_depend>nodelet</run_depend>
 
   <!-- Dependencies needed only for running tests. -->
   <!-- <test_depend>roscpp</test_depend> -->
   <!-- <test_depend>quadrotor_msgs</test_depend> -->
-  <!-- <test_depend>asio-serial-device</test_depend> -->
+  <!-- <test_depend>asio_serial_device</test_depend> -->
   <!-- <test_depend>nodelet</test_depend> -->
 
 <export>
