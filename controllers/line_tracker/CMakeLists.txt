@@ -42,3 +42,6 @@ rosbuild_add_link_flags(line_tracker_trapezoid -Wl,--as-needed)
 
 rosbuild_add_library(line_tracker_distance src/line_tracker_distance.cpp)
 rosbuild_add_link_flags(line_tracker_distance -Wl,--as-needed)
+
+rosbuild_add_library(line_tracker_yaw src/line_tracker_yaw.cpp)
+rosbuild_add_link_flags(line_tracker_yaw -Wl,--as-needed)
