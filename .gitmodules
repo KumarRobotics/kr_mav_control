@@ -1,6 +1,7 @@
 [submodule "quadrotor_simulator/include/odeint-v2"]
-	path = quadrotor_simulator/include/odeint-v2
-	url = git@github.com:headmyshoulder/odeint-v2.git
-[submodule "asio-serial-device"]
-	path = asio-serial-device
-	url = git@github.com:nmichael/asio-serial-device.git
+  path = quadrotor_simulator/include/odeint-v2
+  url = git@github.com:headmyshoulder/odeint-v2.git
+[submodule "asio_serial_device"]
+  path = asio_serial_device
+  url = git@github.com:KumarRobotics/asio_serial_device.git
+  branch = rosbuild
