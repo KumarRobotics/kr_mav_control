@@ -1,9 +1,9 @@
 #include <ros/ros.h>
 #include <controllers_manager/Controller.h>
 #include <nav_msgs/Odometry.h>
-#include <velocity_tracker/GoalCommandWithYaw.h>
 #include <geometry_msgs/Vector3.h>
 #include <quadrotor_msgs/PositionCommand.h>
+#include <quadrotor_msgs/FlatOutputs.h>
 #include <tf/transform_datatypes.h>
 
 class VelocityTrackerYaw : public controllers_manager::Controller
@@ -18,7 +18,7 @@ class VelocityTrackerYaw : public controllers_manager::Controller
   const quadrotor_msgs::PositionCommand::Ptr update(const nav_msgs::Odometry::ConstPtr &msg);
 
  private:
-  void velocity_cmd_cb(const velocity_tracker::GoalCommandWithYaw::ConstPtr &msg);
+  void velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPtr &msg);
   void velocity_odom_cb(const nav_msgs::Odometry::ConstPtr &msg);
 
   ros::Subscriber sub_vel_cmd_;
@@ -89,12 +89,12 @@ const quadrotor_msgs::PositionCommand::Ptr VelocityTrackerYaw::update(const nav_
   return quadrotor_msgs::PositionCommand::Ptr(new quadrotor_msgs::PositionCommand(position_cmd_));
 }
 
-void VelocityTrackerYaw::velocity_cmd_cb(const velocity_tracker::GoalCommandWithYaw::ConstPtr &msg)
+void VelocityTrackerYaw::velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPtr &msg)
 {
-  position_cmd_.velocity.x = msg->x;
-  position_cmd_.velocity.y = msg->y;
-  position_cmd_.velocity.z = msg->z;
-  position_cmd_.yaw_dot = msg->yaw_dot;
+  position_cmd_.velocity.x = msg->position.x;
+  position_cmd_.velocity.y = msg->position.y;
+  position_cmd_.velocity.z = msg->position.z;
+  position_cmd_.yaw_dot = msg->yaw;
 }
 
 #include <pluginlib/class_list_macros.h>
