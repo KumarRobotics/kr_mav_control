@@ -28,14 +28,15 @@ class LineTrackerYaw : public controllers_manager::Controller
   ros::Subscriber sub_goal_;
   ros::ServiceServer srv_param_;
   bool pos_set_, goal_set_, goal_reached_;
-  double default_v_des_, default_a_des_, epsilon_;
-  float v_des_, a_des_;
+  double default_v_des_, default_a_des_, 
+         default_yaw_v_des_, default_yaw_a_des_, epsilon_;
+  float v_des_, a_des_, yaw_v_des_, yaw_a_des_;
   bool active_;
+  ros::Time traj_start_;
 
   Eigen::Vector3f start_, goal_, pos_;
   double goal_yaw_;
   float yaw_, start_yaw_;
-  float t_accel_, t_constant_;
   double kx_[3], kv_[3];
 };
 
@@ -60,10 +61,14 @@ void LineTrackerYaw::Initialize(const ros::NodeHandle &nh)
 
   priv_nh.param("default_v_des", default_v_des_, 0.5);
   priv_nh.param("default_a_des", default_a_des_, 0.5);
+  priv_nh.param("default_yaw_v_des", default_yaw_v_des_, 0.8);
+  priv_nh.param("default_yaw_a_des", default_yaw_a_des_, 0.5);
   priv_nh.param("epsilon", epsilon_, 0.1);
 
   v_des_ = default_v_des_;
   a_des_ = default_a_des_;
+  yaw_v_des_ = default_yaw_v_des_;
+  yaw_a_des_ = default_yaw_a_des_;
 
   sub_goal_ = priv_nh.subscribe("goal", 10, &LineTrackerYaw::goal_callback, this,
                                 ros::TransportHints().tcpNoDelay());
@@ -75,9 +80,14 @@ bool LineTrackerYaw::Activate(void)
   // Only allow activation if a goal has been set
   if(goal_set_ && pos_set_)
   {
+    // Set start and start_yaw here so that even if the goal was sent at a
+    // different position, we still use the current position as start
     start_ = pos_;
     start_yaw_ = yaw_;
+    
     active_ = true;
+    
+    traj_start_ = ros::Time::now();
   }
   return active_;
 }
@@ -96,14 +106,13 @@ const quadrotor_msgs::PositionCommand::Ptr LineTrackerYaw::update(const nav_msgs
   yaw_ = tf::getYaw(msg->pose.pose.orientation);
   pos_set_ = true;
 
-  static bool goal_pos_reached(false), goal_yaw_reached(false);
+  bool goal_pos_reached(false), goal_yaw_reached(false);
   
   // Timing
-  static ros::Time t_prev;
-  const ros::Time t_now = msg->header.stamp;
-  static ros::Time traj_start_ = t_now;
-  const double dT = (t_now - t_prev).toSec();
-  t_prev = msg->header.stamp;
+  ros::Time t_now = ros::Time::now(); //msg->header.stamp;
+  static ros::Time t_prev = t_now;
+  double dT = (t_now - t_prev).toSec();
+  t_prev = t_now; // msg->header.stamp;
 
   if(!active_)
     return quadrotor_msgs::PositionCommand::Ptr();
@@ -153,42 +162,43 @@ const quadrotor_msgs::PositionCommand::Ptr LineTrackerYaw::update(const nav_msgs
   // cout << "yaw_dir :" << axis[2] << endl;
   const float yaw_dir = axis[2]; 
   const float yaw_total_dist = q3.getAngle();
-  
-  if(yaw_total_dist > v_des_*v_des_/a_des_)
+
+  static float t_accel, t_constant; 
+  if(yaw_total_dist > yaw_v_des_ * yaw_v_des_ / yaw_a_des_)
   {
-    t_accel_ = v_des_/a_des_;
-    t_constant_ = yaw_total_dist/v_des_ - v_des_/a_des_;
+    t_accel = yaw_v_des_ / yaw_a_des_;
+    t_constant = yaw_total_dist / yaw_v_des_ - yaw_v_des_ / yaw_a_des_;
   }
   else
   {
-    t_accel_ = std::sqrt(yaw_total_dist/a_des_);
-    t_constant_ = 0;
+    t_accel = std::sqrt(yaw_total_dist / yaw_a_des_);
+    t_constant = 0;
   }
 
   // Determine the yaw and yaw_dot
   double yaw, yaw_dot;
   const float traj_time = (t_now - traj_start_).toSec();
-  if(traj_time <= t_accel_)
+  if(traj_time <= t_accel)
   {
     // Accelerate
-    const float dT = traj_time;
-    yaw_dot = a_des_ * yaw_dir * dT;
-    yaw = start_yaw_ + 0.5 * a_des_ * yaw_dir * dT * dT; 
+    const float time = traj_time;
+    yaw_dot = yaw_a_des_ * yaw_dir * time;
+    yaw = start_yaw_ + 0.5 * yaw_a_des_ * yaw_dir * time * time; 
   }
-  else if(traj_time <= (t_accel_ + t_constant_))
+  else if(traj_time <= (t_accel + t_constant))
   {
     // Constant speed
-    const float dT = traj_time - t_accel_;
-    yaw_dot = a_des_ * yaw_dir * t_accel_;
-    yaw = start_yaw_ + (0.5 * a_des_ * yaw_dir * t_accel_ * t_accel_) + yaw_dot * dT; 
+    const float time = traj_time - t_accel;
+    yaw_dot = yaw_a_des_ * yaw_dir * t_accel;
+    yaw = start_yaw_ + (0.5 * yaw_a_des_ * yaw_dir * t_accel * t_accel) + yaw_dot * time; 
   }
-  else if(traj_time <= (t_accel_ + t_constant_ + t_accel_))
+  else if(traj_time <= (t_accel + t_constant + t_accel))
   {
     // Decelerate
-    const float dT = traj_time - (t_accel_ + t_constant_);
-    yaw_dot = a_des_ * yaw_dir * t_accel_ - a_des_ * yaw_dir * dT; 
-    yaw = start_yaw_ + ( 0.5 * a_des_ * yaw_dir * t_accel_ * t_accel_ ) + (a_des_ * yaw_dir * t_accel_ * t_constant_) +
-        (a_des_ * yaw_dir * t_accel_ * dT - 0.5 * a_des_ * yaw_dir * dT * dT);
+    const float time = traj_time - (t_accel + t_constant);
+    yaw_dot = yaw_a_des_ * yaw_dir * t_accel - yaw_a_des_ * yaw_dir * time; 
+    yaw = start_yaw_ + ( 0.5 * yaw_a_des_ * yaw_dir * t_accel * t_accel ) + (yaw_a_des_ * yaw_dir * t_accel * t_constant) +
+        (yaw_a_des_ * yaw_dir * t_accel * time - 0.5 * yaw_a_des_ * yaw_dir * time * time);
   }
   else
   {
@@ -270,6 +280,10 @@ void LineTrackerYaw::goal_callback(const quadrotor_msgs::FlatOutputs::ConstPtr &
   goal_(2) = msg->z;
   goal_yaw_ = msg->yaw;
 
+  start_ = pos_;
+  start_yaw_ = yaw_;
+  traj_start_ = ros::Time::now();
+  
   goal_set_ = true;
   goal_reached_ = false;
 }
