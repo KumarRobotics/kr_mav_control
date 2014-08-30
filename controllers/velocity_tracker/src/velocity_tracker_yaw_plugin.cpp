@@ -91,9 +91,9 @@ const quadrotor_msgs::PositionCommand::Ptr VelocityTrackerYaw::update(const nav_
 
 void VelocityTrackerYaw::velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPtr &msg)
 {
-  position_cmd_.velocity.x = msg->position.x;
-  position_cmd_.velocity.y = msg->position.y;
-  position_cmd_.velocity.z = msg->position.z;
+  position_cmd_.velocity.x = msg->x;
+  position_cmd_.velocity.y = msg->y;
+  position_cmd_.velocity.z = msg->z;
   position_cmd_.yaw_dot = msg->yaw;
 }
 
