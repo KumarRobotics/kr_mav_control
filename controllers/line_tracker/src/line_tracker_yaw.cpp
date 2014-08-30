@@ -265,10 +265,9 @@ const quadrotor_msgs::PositionCommand::Ptr LineTrackerYaw::update(const nav_msgs
 
 void LineTrackerYaw::goal_callback(const quadrotor_msgs::FlatOutputs::ConstPtr &msg)
 {
-  goal_(0) = msg->position.x;
-  goal_(1) = msg->position.y;
-  goal_(2) = msg->position.z;
-
+  goal_(0) = msg->x;
+  goal_(1) = msg->y;
+  goal_(2) = msg->z;
   goal_yaw_ = msg->yaw;
 
   goal_set_ = true;
