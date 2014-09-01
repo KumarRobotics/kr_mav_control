@@ -1,3 +1,7 @@
 controllers:
   - line_tracker/LineTracker
-#  - velocity_tracker/VelocityTracker
+  - line_tracker/LineTrackerDistance
+  - line_tracker/LineTrackerYaw
+  - velocity_tracker/VelocityTracker
+  - velocity_tracker/VelocityTrackerYaw
+  - trajectory_tracker/TrajectoryTracker

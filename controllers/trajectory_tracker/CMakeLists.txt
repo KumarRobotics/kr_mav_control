@@ -17,7 +17,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #uncomment if you have defined messages
-#rosbuild_genmsg()
+rosbuild_genmsg()
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
@@ -29,8 +29,10 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_library(velocity_tracker_plugin src/velocity_tracker_plugin.cpp)
-rosbuild_add_link_flags(velocity_tracker_plugin -Wl,--as-needed)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-rosbuild_add_library(velocity_tracker_yaw_plugin src/velocity_tracker_yaw_plugin.cpp)
-rosbuild_add_link_flags(velocity_tracker_yaw_plugin -Wl,--as-needed)
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+rosbuild_add_library(trajectory_tracker src/trajectory_tracker.cpp)
+rosbuild_add_link_flags(trajectory_tracker -Wl,--as-needed)

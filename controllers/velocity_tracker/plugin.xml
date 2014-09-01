@@ -5,3 +5,11 @@
     </description>
   </class>
 </library>
+
+<library path="lib/libvelocity_tracker_yaw_plugin">
+  <class name="velocity_tracker/VelocityTrackerYaw" type="VelocityTrackerYaw" base_class_type="controllers_manager::Controller">
+    <description>
+      This controller commands a desired velocity for the robot.
+    </description>
+  </class>
+</library>

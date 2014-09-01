@@ -1,0 +1,24 @@
+<package>
+  <description brief="trajectory_tracker">
+
+     trajectory_tracker
+
+  </description>
+  <author>Justin Thomas</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/trajectory_tracker</url>
+  <depend package="roscpp"/>
+  <depend package="quadrotor_msgs"/>
+  <depend package="geometry_msgs"/>
+  <depend package="nav_msgs"/>
+  <depend package="tf"/>
+  <depend package="nodelet"/>
+  <depend package="controllers_manager"/>
+
+  <export>
+    <controllers_manager plugin="${prefix}/plugin.xml"/>
+  </export>
+</package>
+
+
