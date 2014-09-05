@@ -218,4 +218,4 @@ bool LineTrackerTrapezoid::set_des_vel_acc(line_tracker::DesVelAcc::Request &req
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_DECLARE_CLASS(line_tracker, LineTrackerTrapezoid, LineTrackerTrapezoid, controllers_manager::Controller);
+PLUGINLIB_EXPORT_CLASS(LineTrackerTrapezoid, controllers_manager::Controller);

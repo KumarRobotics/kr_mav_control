@@ -61,4 +61,4 @@ void QuadEncodeMsg::onInit(void)
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_DECLARE_CLASS(quad_encode_msg, QuadEncodeMsg, QuadEncodeMsg, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(QuadEncodeMsg, nodelet::Nodelet);

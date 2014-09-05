@@ -87,4 +87,4 @@ void VelocityTracker::velocity_cmd_cb(const geometry_msgs::Vector3::ConstPtr &ms
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_DECLARE_CLASS(velocity_tracker, VelocityTracker, VelocityTracker, controllers_manager::Controller)
+PLUGINLIB_EXPORT_CLASS(VelocityTracker, controllers_manager::Controller)

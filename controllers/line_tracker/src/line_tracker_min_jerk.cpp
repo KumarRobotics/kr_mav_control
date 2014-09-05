@@ -228,4 +228,4 @@ void LineTracker::gen_trajectory(const Eigen::Vector3f &xi, const Eigen::Vector3
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_DECLARE_CLASS(line_tracker, LineTracker, LineTracker, controllers_manager::Controller);
+PLUGINLIB_EXPORT_CLASS(LineTracker, controllers_manager::Controller);
