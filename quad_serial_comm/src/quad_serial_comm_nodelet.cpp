@@ -69,4 +69,4 @@ QuadSerialComm::~QuadSerialComm()
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_DECLARE_CLASS(quad_serial_comm, QuadSerialComm, QuadSerialComm, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(QuadSerialComm, nodelet::Nodelet);

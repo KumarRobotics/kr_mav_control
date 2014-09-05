@@ -175,4 +175,4 @@ void PIDControlNodelet::onInit(void)
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_DECLARE_CLASS(pid_control, PIDControlNodelet, PIDControlNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(PIDControlNodelet, nodelet::Nodelet);

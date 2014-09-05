@@ -60,4 +60,4 @@ void QuadDecodeMsg::onInit(void)
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_DECLARE_CLASS(quad_decode_msg, QuadDecodeMsg, QuadDecodeMsg, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(QuadDecodeMsg, nodelet::Nodelet);

@@ -211,4 +211,4 @@ kQuadInterfaceNodelet::~kQuadInterfaceNodelet(void)
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_DECLARE_CLASS(kquad_interface, kQuadInterfaceNodelet, kQuadInterfaceNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(kQuadInterfaceNodelet, nodelet::Nodelet);
