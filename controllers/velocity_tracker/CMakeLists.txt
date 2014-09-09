@@ -19,3 +19,7 @@ catkin_package(
 add_library(velocity_tracker_plugin src/velocity_tracker_plugin.cpp)
 add_dependencies(velocity_tracker_plugin ${catkin_EXPORTED_TARGETS})
 target_link_libraries(velocity_tracker_plugin ${catkin_LIBRARIES})
+
+add_library(velocity_tracker_yaw_plugin src/velocity_tracker_yaw_plugin.cpp)
+add_dependencies(velocity_tracker_yaw_plugin ${catkin_EXPORTED_TARGETS})
+target_link_libraries(velocity_tracker_yaw_plugin ${catkin_LIBRARIES})
