@@ -31,3 +31,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_library(velocity_tracker_plugin src/velocity_tracker_plugin.cpp)
 rosbuild_add_link_flags(velocity_tracker_plugin -Wl,--as-needed)
+
+rosbuild_add_library(velocity_tracker_yaw_plugin src/velocity_tracker_yaw_plugin.cpp)
+rosbuild_add_link_flags(velocity_tracker_yaw_plugin -Wl,--as-needed)
