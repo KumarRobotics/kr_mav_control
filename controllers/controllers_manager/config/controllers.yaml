@@ -5,3 +5,4 @@ controllers:
 #  - line_tracker/LineTrackerYaw
 #  - velocity_tracker/VelocityTracker
 #  - velocity_tracker/VelocityTrackerYaw
+#  - trajectory_tracker/TrajectoryTracker
