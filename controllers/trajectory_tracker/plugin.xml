@@ -1,0 +1,8 @@
+<library path="lib/libtrajectory_tracker">
+  <class name="trajectory_tracker/TrajectoryTracker" type="TrajectoryTracker" base_class_type="controllers_manager::Controller">
+    <description>
+      This controller takes a trajectory msg and publishes it to the so3 controller.
+    </description>
+  </class>
+</library>
+
