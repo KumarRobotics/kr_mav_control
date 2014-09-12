@@ -7,10 +7,10 @@
 #include <tf/transform_datatypes.h>
 #include <line_tracker/DesVelAcc.h>
 
-class LineTracker : public controllers_manager::Controller
+class LineTrackerJerk : public controllers_manager::Controller
 {
  public:
-  LineTracker(void);
+  LineTrackerJerk(void);
 
   void Initialize(const ros::NodeHandle &nh);
   bool Activate(void);
@@ -43,7 +43,7 @@ class LineTracker : public controllers_manager::Controller
   double kx_[3], kv_[3];
 };
 
-LineTracker::LineTracker(void) :
+LineTrackerJerk::LineTrackerJerk(void) :
     pos_set_(false),
     goal_set_(false),
     goal_reached_(true),
@@ -51,7 +51,7 @@ LineTracker::LineTracker(void) :
 {
 }
 
-void LineTracker::Initialize(const ros::NodeHandle &nh)
+void LineTrackerJerk::Initialize(const ros::NodeHandle &nh)
 {
   nh.param("gains/pos/x", kx_[0], 2.5);
   nh.param("gains/pos/y", kx_[1], 2.5);
@@ -60,7 +60,7 @@ void LineTracker::Initialize(const ros::NodeHandle &nh)
   nh.param("gains/vel/y", kv_[1], 2.2);
   nh.param("gains/vel/z", kv_[2], 4.0);
 
-  ros::NodeHandle priv_nh(nh, "line_tracker");
+  ros::NodeHandle priv_nh(nh, "line_tracker_min_jerk");
 
   priv_nh.param("default_v_des", default_v_des_, 0.5);
   priv_nh.param("default_a_des", default_a_des_, 0.5);
@@ -69,12 +69,12 @@ void LineTracker::Initialize(const ros::NodeHandle &nh)
   v_des_ = default_v_des_;
   a_des_ = default_a_des_;
 
-  sub_goal_ = priv_nh.subscribe("goal", 10, &LineTracker::goal_callback, this,
+  sub_goal_ = priv_nh.subscribe("goal", 10, &LineTrackerJerk::goal_callback, this,
                                 ros::TransportHints().tcpNoDelay());
-  srv_param_ = priv_nh.advertiseService("set_des_vel_acc", &LineTracker::set_des_vel_acc, this);
+  srv_param_ = priv_nh.advertiseService("set_des_vel_acc", &LineTrackerJerk::set_des_vel_acc, this);
 }
 
-bool LineTracker::Activate(void)
+bool LineTrackerJerk::Activate(void)
 {
   // Only allow activation if a goal has been set
   if(goal_set_ && pos_set_)
@@ -84,13 +84,13 @@ bool LineTracker::Activate(void)
   return active_;
 }
 
-void LineTracker::Deactivate(void)
+void LineTrackerJerk::Deactivate(void)
 {
   goal_set_ = false;
   active_ = false;
 }
 
-const quadrotor_msgs::PositionCommand::Ptr LineTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
+const quadrotor_msgs::PositionCommand::Ptr LineTrackerJerk::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   pos_(0) = msg->pose.pose.position.x;
   pos_(1) = msg->pose.pose.position.y;
@@ -165,7 +165,7 @@ const quadrotor_msgs::PositionCommand::Ptr LineTracker::update(const nav_msgs::O
   return cmd;
 }
 
-void LineTracker::goal_callback(const geometry_msgs::Vector3::ConstPtr &msg)
+void LineTrackerJerk::goal_callback(const geometry_msgs::Vector3::ConstPtr &msg)
 {
   goal_(0) = msg->x;
   goal_(1) = msg->y;
@@ -175,7 +175,7 @@ void LineTracker::goal_callback(const geometry_msgs::Vector3::ConstPtr &msg)
   goal_reached_ = false;
 }
 
-bool LineTracker::set_des_vel_acc(line_tracker::DesVelAcc::Request &req,
+bool LineTrackerJerk::set_des_vel_acc(line_tracker::DesVelAcc::Request &req,
                                   line_tracker::DesVelAcc::Response &res)
 {
   // Don't allow changes while already following a line
@@ -199,7 +199,7 @@ bool LineTracker::set_des_vel_acc(line_tracker::DesVelAcc::Request &req,
   return true;
 }
 
-void LineTracker::gen_trajectory(const Eigen::Vector3f &xi, const Eigen::Vector3f &xf,
+void LineTrackerJerk::gen_trajectory(const Eigen::Vector3f &xi, const Eigen::Vector3f &xf,
                                  const Eigen::Vector3f &vi, const Eigen::Vector3f &vf,
                                  const Eigen::Vector3f &ai, const Eigen::Vector3f &af,
                                  float dt, Eigen::Vector3f coeffs[6])
@@ -228,4 +228,4 @@ void LineTracker::gen_trajectory(const Eigen::Vector3f &xi, const Eigen::Vector3
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(LineTracker, controllers_manager::Controller);
+PLUGINLIB_EXPORT_CLASS(LineTrackerJerk, controllers_manager::Controller);
