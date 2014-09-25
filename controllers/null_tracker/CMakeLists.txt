@@ -29,7 +29,5 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-
 rosbuild_add_library(null_tracker src/null_tracker.cpp)
 rosbuild_add_link_flags(null_tracker -Wl,--as-needed)
