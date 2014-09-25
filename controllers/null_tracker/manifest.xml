@@ -1,0 +1,21 @@
+<package>
+  <description brief="null_tracker">
+
+     null_tracker
+
+  </description>
+  <author>Justin Thomas</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/null_tracker</url>
+  <depend package="roscpp"/>
+  <depend package="quadrotor_msgs"/>
+  <depend package="nodelet"/>
+  <depend package="controllers_manager"/>
+
+  <export>
+    <controllers_manager plugin="${prefix}/plugin.xml"/>
+  </export>
+</package>
+
+
