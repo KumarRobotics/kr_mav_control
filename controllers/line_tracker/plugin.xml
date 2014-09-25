@@ -1,5 +1,5 @@
 <library path="lib/libline_tracker_min_jerk">
-  <class name="line_tracker/LineTracker" type="LineTracker" base_class_type="controllers_manager::Controller">
+  <class name="line_tracker/LineTrackerMinJerk" type="LineTrackerMinJerk" base_class_type="controllers_manager::Controller">
     <description>
       This is a controller which follows a line from the current position to a given goal position using min jerk trajectory.
     </description>
