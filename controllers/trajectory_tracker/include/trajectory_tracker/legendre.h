@@ -47,7 +47,7 @@ public:
 	LegendreBasis(uint n_p_,uint k_r_);
 	~LegendreBasis();
 	virtual void differentiate();
-	virtual decimal_t evaluate(decimal_t x, uint coeff);
+	virtual decimal_t evaluate(decimal_t x, uint coeff); // evalues basis polynomial coeff at value x in [0,1]
 	friend std::ostream& operator<<(std::ostream& os, const LegendreBasis& lb);
 private:
 	std::vector<LPoly> polys; // basis polynomials

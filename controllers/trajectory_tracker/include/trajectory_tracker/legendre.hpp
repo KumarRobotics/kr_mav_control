@@ -84,6 +84,8 @@ void LegendreBasis::differentiate() {
 }
 decimal_t LegendreBasis::evaluate(decimal_t x, uint coeff) {
 	assert(coeff < polys.size());
+	if(x > 1.0 || x < 0.0)
+		throw std::out_of_range("Tried to evaluate shifted legensdre basis out of normalized range [0,1]");
 	return polys[coeff].evaluate(x);
 }
 std::ostream& operator<<(std::ostream& os, const LegendreBasis& lb) {
