@@ -43,6 +43,12 @@ catkin_package(
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
+add_executable(trajectory_base src/trajectory_base.cpp)
+target_link_libraries(trajectory_base
+  ${catkin_LIBRARIES}
+  ${GUROBI_CXX_LIBRARY}
+  ${GUROBI_LIBRARY}
+)
 
 add_executable(trajectory_generator src/traj_gen.cpp)
 target_link_libraries(trajectory_generator
