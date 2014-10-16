@@ -10,14 +10,14 @@ enum{TRAJ_X = 0, TRAJ_Y = 1, TRAJ_Z = 2, TRAJ_PSI = 3};
 
 class TrajSection1D {
 public:
-	TrajSection1D(unit n_p_, uint k_r_, decimal_t dt_, std::shared_ptr<BasisBundle> basis);
+	TrajSection1D(uint n_p_, uint k_r_, decimal_t dt_, std::shared_ptr<BasisBundle> basis);
 	~TrajSection1D();
 
 	decimal_t evaluate(decimal_t t, uint derr);
 
 	// gurobi contr functions
 	GRBLinExpr getContr(decimal_t x, uint derr);
-	GRBLinExpr getCost();
+	GRBQuadExpr getCost();
 
 	// unpacks optimized coefficients
 	void recoverVars();
@@ -40,25 +40,25 @@ private:
 
 class TrajSection4D {
 public:
-	TrajSection4D(unit n_p_, uint k_r_, decimal_t dt_, std::shared_ptr<BasisBundle> basis_);
+	TrajSection4D(uint n_p_, uint k_r_, decimal_t dt_, std::shared_ptr<BasisBundle> basis_);
 	~TrajSection4D();
 
-	evaluate(decimal_t t, uint derr , Vec4 &out);
+	void evaluate(decimal_t t, uint derr , Vec4 &out);
 
 	GRBLinExpr getContr(decimal_t x, uint derr, uint dim); // dim 0,1,2,3 for x,y,z,psi
-	GRBLinExpr getCost(uint dim);
+	GRBQuadExpr getCost();
 
 	// unpacks optimized coefficients
 	void recoverVars();
 private:
-	std::vector<std::shared_ptr<TrajSection4D> > secs;
+	std::vector<std::shared_ptr<TrajSection1D> > secs;
 
 };
 
 
 class Trajectory {
 public:
-	Trajectory(GRBModel *model_, const std::vector<Mat4> &waypoints, const std::vector<decimal_t> dts); // way points and times each column represents a time derrivate: column 0 is position, column 1 is velocity, etc. 
+	Trajectory(GRBModel *model_, const Mat4Vec &waypoints, const std::vector<decimal_t> dts_); // way points and times each column represents a time derrivate: column 0 is position, column 1 is velocity, etc. 
 	Trajectory(const Trajectory& traj) = delete; // forbid copying because dependent on gurobi model pointer
 	~Trajectory();
 
@@ -66,10 +66,12 @@ public:
 	bool recoverVars();
 	bool evaluate(decimal_t t, uint derr, Vec4 &out); // returns false when out of time range, but returns enpoints
 private:
-	std::vector<shared_ptr<TrajSection4D> > individual_sections;
-	void linkSections(const std::vector<Mat4> &waypoints); // links endpoints of trajectories
+	std::vector<std::shared_ptr<TrajSection4D> > individual_sections;
+	void linkSections(const Mat4Vec &waypoints); // links endpoints of trajectories
 
 	GRBModel *model;
+
+	std::vector<decimal_t> dts;
 };
 
 #endif
