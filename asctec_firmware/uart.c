@@ -65,6 +65,7 @@ void uart1ISR(void) __irq
       break;
     case 2:
       // RX interrupt
+      t = U1RBR; // Dummy read
       //uBloxReceiveHandler(U1RBR);
       break;
     case 3:
