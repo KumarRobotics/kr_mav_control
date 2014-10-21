@@ -31,6 +31,10 @@ DAMAGE.
 
 #include <stdint.h>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 void SDK_mainloop(void);
 
 #define TYPE_SO3_CMD 's'
