@@ -39,6 +39,7 @@ struct SO3_CMD_INPUT
   // Scaling factors when decoding
   int16_t force[3]; // /500
   int8_t des_qx, des_qy, des_qz, des_qw; // /125
+  int16_t angvel_x, angvel_y, angvel_z; // /1000
   uint8_t kR[3]; // /50
   uint8_t kOm[3]; // /100
   int16_t cur_yaw; // /1e4

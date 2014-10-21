@@ -59,18 +59,22 @@ void SSP_data_distribution_HL(void)
 
 	if(LL_1khz_attitude_data.system_flags&SF_GPS_NEW) gpsDataOkTrigger=0;
 
+	// Set the Euler angles
 	IMU_CalcData.angle_nick=LL_1khz_attitude_data.angle_pitch*10;
 	IMU_CalcData.angle_roll=LL_1khz_attitude_data.angle_roll*10;
 	IMU_CalcData.angle_yaw=LL_1khz_attitude_data.angle_yaw*10;
 
+	// Set the angular rates
 	IMU_CalcData.angvel_nick=LL_1khz_attitude_data.angvel_pitch;
 	IMU_CalcData.angvel_roll=LL_1khz_attitude_data.angvel_roll;
 	IMU_CalcData.angvel_yaw=LL_1khz_attitude_data.angvel_yaw;
 
+	// Euler angles
 	RO_ALL_Data.angle_pitch=IMU_CalcData.angle_nick;
 	RO_ALL_Data.angle_roll=IMU_CalcData.angle_roll;
 	RO_ALL_Data.angle_yaw=IMU_CalcData.angle_yaw;
 
+	// Angular rates
 	RO_ALL_Data.angvel_pitch=LL_1khz_attitude_data.angvel_pitch;
 	RO_ALL_Data.angvel_roll=LL_1khz_attitude_data.angvel_roll;
 	RO_ALL_Data.angvel_yaw=LL_1khz_attitude_data.angvel_yaw;
@@ -140,7 +144,6 @@ void SSP_data_distribution_HL(void)
 		break;
 
 		}
-
 	}
 }
 
