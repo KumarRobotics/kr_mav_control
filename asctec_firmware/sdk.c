@@ -37,9 +37,14 @@ DAMAGE.
 
 #define HUMMINGBIRD
 //#define PELICAN
+#define GYRO_900_DEG 0
 
 static const float DEG2RADCONV = M_PI/180.0/1000;
+#if GYRO_900_DEG
+static const float DEGSEC2RADSECCONV = 0.0154*3.0*M_PI/180.0; // AscTec LL sends output/3 for high rate gyros
+#else
 static const float DEGSEC2RADSECCONV = 0.0154*M_PI/180.0;
+#endif
 
 #if defined(HUMMINGBIRD)
 static const float LENGTH = 0.171;
