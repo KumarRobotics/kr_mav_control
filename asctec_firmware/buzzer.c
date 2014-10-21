@@ -33,9 +33,6 @@
 void buzzer_handler(unsigned int vbat)	//needs to be triggered at 100 Hz
 {
 	unsigned int buz_active = 0;
-	static uint16_t error_cnt_mag_fs = 0;
-	static uint16_t error_cnt_mag_inc = 0;
-	static uint16_t error_cnt_compass = 0;
 
 	unsigned int buz_priority=0;
 	static uint16_t buz_cnt=0;
@@ -150,6 +147,11 @@ void buzzer_handler(unsigned int vbat)	//needs to be triggered at 100 Hz
 		buz_active &= ~BU_ERROR_ADC;
 	}
 
+#ifdef MAG_BEEP
+	static uint16_t error_cnt_mag_fs = 0;
+	static uint16_t error_cnt_mag_inc = 0;
+	static uint16_t error_cnt_compass = 0;
+
 	//compass failure: warn 3 seconds only
 	if((LL_1khz_attitude_data.flightMode & FM_COMPASS_FAILURE) && (SYSTEM_initialized) && (error_cnt_compass < 400))
 	{
@@ -212,7 +214,7 @@ void buzzer_handler(unsigned int vbat)	//needs to be triggered at 100 Hz
 		buz_priority &= ~BU_WARNING_MAG_INC;
 		buz_active &= ~BU_WARNING_MAG_INC;
 	}
-
+#endif
 
 #endif
 
