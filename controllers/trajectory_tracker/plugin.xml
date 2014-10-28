@@ -1,0 +1,7 @@
+<library path="lib/libtrajectory_tracker_plugin">
+  <class name="trajectory_tracker/TrajectoryTracker" type="TrajectoryTracker" base_class_type="controllers_manager::Controller">
+    <description>
+      This is a controller which generates a min snap trajectory based on waypoints and velocity/acceleration/jerk contraints and executes it.
+    </description>
+  </class>
+</library>

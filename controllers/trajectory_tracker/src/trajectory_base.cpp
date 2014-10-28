@@ -119,8 +119,7 @@ Trajectory::Trajectory(GRBModel *model_, const Mat4Vec &waypoints, const std::ve
 	for(uint i = 0; i < num_secs; i++) {
 		individual_sections.push_back(std::shared_ptr<TrajSection4D>(new TrajSection4D(n_p,k_r,dts[i],basis)));
 	}
-
-	
+	linkSections(waypoints);
 }
 void Trajectory::linkSections(const Mat4Vec &waypoints) {
 	GRBQuadExpr cost;
@@ -184,7 +183,7 @@ Trajectory::~Trajectory(){}
 TrajSection1D::~TrajSection1D(){}
 TrajSection4D::~TrajSection4D(){}
 
-int main() {
-	std::cout << "run" << std::endl;
-	return 0;
-};
+// int main() {
+// 	std::cout << "run" << std::endl;
+// 	return 0;
+// };
