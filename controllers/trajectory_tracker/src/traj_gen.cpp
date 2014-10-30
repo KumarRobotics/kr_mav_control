@@ -96,6 +96,7 @@ const quadrotor_msgs::PositionCommand::Ptr TrajectoryTracker::update(const nav_m
 		run_optim_ = true;
 		optimizationThread();
 		path_updated_ = false;
+		traj_running_ = false;
 	}
 	else if(optim_done_){
 		if(!traj_running_) {
@@ -108,7 +109,7 @@ const quadrotor_msgs::PositionCommand::Ptr TrajectoryTracker::update(const nav_m
 		trajectory_->evaluate(dt,1,vel);
 		trajectory_->evaluate(dt,2,acc);
 		trajectory_->evaluate(dt,3,jrk);
-		
+
 		cmd->position.x = pos(0); cmd->position.y = pos(1); cmd->position.z = pos(2);
 		cmd->velocity.x = vel(0); cmd->velocity.y = vel(1); cmd->velocity.z = vel(2);
 		cmd->acceleration.x = acc(0); cmd->acceleration.y = acc(1); cmd->acceleration.z = acc(2);
@@ -142,6 +143,7 @@ void TrajectoryTracker::pathCB(const nav_msgs::Path::ConstPtr &msg){
 
 		wayPoints_.push_back(curr);
 	}
+	wayPoints_.back().block<4,3>(0,1) = Eigen::Matrix<decimal_t,4,3>::Zero(); // set end to zero vel, accel, jrk
 	path_updated_ = true;
 }
 void TrajectoryTracker::optimizationThread() {
@@ -155,7 +157,7 @@ void TrajectoryTracker::optimizationThread() {
 			waypnts.push_back(curr_aug);
 			waypnts.insert(waypnts.end(),wayPoints_.begin(),wayPoints_.end());
 
-			std::vector<decimal_t> dts(waypnts.size()-1,5.0);
+			std::vector<decimal_t> dts(waypnts.size()-1,2.0);
 			try {
 				GRBModel model(*grb_env_);
 				trajectory_.reset(new Trajectory(&model,waypnts,dts));

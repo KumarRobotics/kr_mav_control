@@ -41,7 +41,7 @@ decimal_t TrajSection1D::evaluate(decimal_t t, uint derr) {
 
 	decimal_t rsn = 0;
 	for(int i = 0 ; i < n_p ; i ++) {
-		rsn += coeffs[i] * basis->getVal(t,dt,i,0);
+		rsn += coeffs[i] * basis->getVal(t,dt,i,derr);
 	}
 	return rsn;
 }
@@ -131,10 +131,14 @@ void Trajectory::linkSections(const Mat4Vec &waypoints) {
 			individual_sections.front()->getContr(0.0,j,i,start);		
 			GRBLinExpr goal;
 			individual_sections.back()->getContr(1.0,j,i,goal);
-			if(!isnan(constr_start))
+			if(!isnan(constr_start)){
 				model->addConstr(constr_start == start);
-			if(!isnan(constr_goal))
+				// std::cout << "start constr " << start << std::endl;
+			}
+			if(!isnan(constr_goal)){
 				model->addConstr(constr_goal == goal);
+				// std::cout << "goal constr " << goal << std::endl;
+			}
 			
 		}
 	}
