@@ -5,6 +5,7 @@
 #include <nav_msgs/Path.h>
 #include <tf/transform_datatypes.h>
 
+#include <exception>
 
 
 class TrajectoryTracker : public controllers_manager::Controller {
@@ -45,6 +46,9 @@ TrajectoryTracker::TrajectoryTracker(): is_active_(false), got_odom_(false), pat
 	// cout << "Error code = " << e.getErrorCode() << endl;
 	// cout << e.getMessage() << endl;
 	} 
+	catch(...) {
+		ROS_ERROR("Unkown error during contruction of trajectory tracker");
+	}
 }
 void TrajectoryTracker::Initialize(const ros::NodeHandle &nh) {
 	nh.param("gains/pos/x", kx_[0], 2.5);
@@ -57,7 +61,7 @@ void TrajectoryTracker::Initialize(const ros::NodeHandle &nh) {
 	nh_ = &nh;
 
 	ros::NodeHandle private_nh(nh,"trajectory_tracker");
-	path_sub_ = private_nh.subscribe("~path", 10, &TrajectoryTracker::pathCB, this, ros::TransportHints().tcpNoDelay());
+	path_sub_ = private_nh.subscribe("path", 10, &TrajectoryTracker::pathCB, this, ros::TransportHints().tcpNoDelay());
 
 }
 bool TrajectoryTracker::Activate(){
@@ -67,7 +71,6 @@ bool TrajectoryTracker::Activate(){
 	return is_active_;
 }
 const quadrotor_msgs::PositionCommand::Ptr TrajectoryTracker::update(const nav_msgs::Odometry::ConstPtr &msg) {
-	ROS_ERROR("calling back");
 	curr_pose_(0) = msg->pose.pose.position.x;
 	curr_pose_(1) = msg->pose.pose.position.y;
 	curr_pose_(2) = msg->pose.pose.position.z;
@@ -152,23 +155,29 @@ void TrajectoryTracker::optimizationThread() {
 			waypnts.push_back(curr_aug);
 			waypnts.insert(waypnts.end(),wayPoints_.begin(),wayPoints_.end());
 
-			std::vector<decimal_t> dts(waypnts.size(),0.5);
+			std::vector<decimal_t> dts(waypnts.size()-1,5.0);
 			try {
 				GRBModel model(*grb_env_);
 				trajectory_.reset(new Trajectory(&model,waypnts,dts));
-				trajectory_->addMaximumBound(1.0,1);
-				trajectory_->addMaximumBound(2.0,2);
-				trajectory_->addMaximumBound(3.0,3);
+				trajectory_->addMaximumBound(10.0,1);
+				trajectory_->addMaximumBound(20.0,2);
+				trajectory_->addMaximumBound(30.0,3);
 				
 				model.optimize();
 
-				trajectory_->recoverVars();
+				optim_done_ = trajectory_->recoverVars();
 
-				optim_done_ = true;
 			}
-			catch(...) {
-				ROS_ERROR("Exception during optimization");
+			catch(GRBException e) {
+				ROS_ERROR("%s",e.getMessage().c_str()); 
 			}
+			catch(std::exception& e) {
+				std::cout << e.what() << std::endl;
+
+			}
+			// catch(...) {
+			// 	ROS_ERROR("Exception during optimization");
+			// }
 
 			run_optim_ = false;
 		}

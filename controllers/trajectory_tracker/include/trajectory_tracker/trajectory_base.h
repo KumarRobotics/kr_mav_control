@@ -10,14 +10,14 @@ enum{TRAJ_X = 0, TRAJ_Y = 1, TRAJ_Z = 2, TRAJ_PSI = 3};
 
 class TrajSection1D {
 public:
-	TrajSection1D(uint n_p_, uint k_r_, decimal_t dt_, std::shared_ptr<BasisBundle> basis);
+	TrajSection1D(GRBModel *model_, uint n_p_, uint k_r_, decimal_t dt_, std::shared_ptr<BasisBundle> basis);
 	~TrajSection1D();
 
 	decimal_t evaluate(decimal_t t, uint derr);
 
 	// gurobi contr functions
-	GRBLinExpr getContr(decimal_t x, uint derr);
-	GRBQuadExpr getCost();
+	void getContr(decimal_t x, uint derr, GRBLinExpr &expr);
+	void getCost(GRBQuadExpr &cost);
 
 	// unpacks optimized coefficients
 	void recoverVars();
@@ -40,13 +40,13 @@ private:
 
 class TrajSection4D {
 public:
-	TrajSection4D(uint n_p_, uint k_r_, decimal_t dt_, std::shared_ptr<BasisBundle> basis_);
+	TrajSection4D(GRBModel *model, uint n_p_, uint k_r_, decimal_t dt_, std::shared_ptr<BasisBundle> basis_);
 	~TrajSection4D();
 
 	void evaluate(decimal_t t, uint derr , Vec4 &out);
 
-	GRBLinExpr getContr(decimal_t x, uint derr, uint dim); // dim 0,1,2,3 for x,y,z,psi
-	GRBQuadExpr getCost();
+	void getContr(decimal_t x, uint derr, uint dim, GRBLinExpr &expr); // dim 0,1,2,3 for x,y,z,psi
+	void getCost(GRBQuadExpr &cost);
 
 	// unpacks optimized coefficients
 	void recoverVars();

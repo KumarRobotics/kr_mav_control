@@ -61,3 +61,8 @@ target_link_libraries(trajectory_tracker_plugin
   trajectory_base
   ${catkin_LIBRARIES}
 )
+
+add_executable(sample_planner src/sample_planner_node.cpp)
+target_link_libraries(sample_planner
+  ${catkin_LIBRARIES}
+)

@@ -3,7 +3,7 @@
 
 #include <trajectory_tracker/trajectory_base.h>
 
-TrajSection1D::TrajSection1D(uint n_p_, uint k_r_, decimal_t dt_, std::shared_ptr<BasisBundle> basis_): n_p(n_p_), k_r(k_r_), dt(dt_), basis(basis_) {
+TrajSection1D::TrajSection1D(GRBModel *model_, uint n_p_, uint k_r_, decimal_t dt_, std::shared_ptr<BasisBundle> basis_): n_p(n_p_), k_r(k_r_), dt(dt_), basis(basis_), model(model_) {
 	generated = false;
 	for(uint i = 0 ; i < n_p ; i++) {
 		coeffs_var.push_back( model->addVar(-GRB_INFINITY,GRB_INFINITY,0.0,GRB_CONTINUOUS));
@@ -11,33 +11,27 @@ TrajSection1D::TrajSection1D(uint n_p_, uint k_r_, decimal_t dt_, std::shared_pt
 	// Integrate new variables
 	model->update();
 }
-GRBQuadExpr TrajSection1D::getCost() {
+void TrajSection1D::getCost(GRBQuadExpr &objective) {
 	// adds cost based on assumption of using a legendre basis
-	GRBQuadExpr objective;
 	for(uint i = 1 ; i <= n_p - k_r ; i++) {
 		int index = i + k_r;
 		double delta = dt/(1.0 + 2.0*(double)i);
 		objective += delta * coeffs_var[index-1] * coeffs_var[index-1];
 	}
-	return objective;
 }
-GRBQuadExpr TrajSection4D::getCost() {
-	GRBQuadExpr objective;
+void TrajSection4D::getCost(GRBQuadExpr &objective) {
 	// add cost from each dimension
-	for(auto &sec: secs) {
-		objective += sec->getCost();
-	}
-
+	for(auto &sec: secs)
+		sec->getCost(objective);
 }
 
-GRBLinExpr TrajSection1D::getContr(decimal_t x, uint derr) {
-	GRBLinExpr expr;
+void TrajSection1D::getContr(decimal_t x, uint derr, GRBLinExpr &expr) {
 	for(uint i = 0 ; i < n_p ; i++)
 		expr += basis->getVal(x,dt,i,derr)*coeffs_var[i];
 
 }
-GRBLinExpr TrajSection4D::getContr(decimal_t x, uint derr, uint dim) {
-	return secs[dim]->getContr(x,derr);
+void TrajSection4D::getContr(decimal_t x, uint derr, uint dim, GRBLinExpr &expr) {
+	secs[dim]->getContr(x,derr,expr);
 }
 
 
@@ -55,11 +49,11 @@ decimal_t TrajSection1D::evaluate(decimal_t t, uint derr) {
 void TrajSection4D::evaluate(decimal_t t, uint derr , Vec4 &out) {
 	out == Vec4::Zero();
 	for(uint i = 0 ; i < 4 ; i++)
-		out(i,1) = secs[i]->evaluate(t,derr);
+		out(i,0) = secs[i]->evaluate(t,derr);
 }
-TrajSection4D::TrajSection4D(uint n_p, uint k_r, decimal_t dt, std::shared_ptr<BasisBundle> basis){
+TrajSection4D::TrajSection4D(GRBModel *model, uint n_p, uint k_r, decimal_t dt, std::shared_ptr<BasisBundle> basis){
 	for(uint i = 0 ; i < 4 ; i++)
-		secs.push_back( std::shared_ptr<TrajSection1D>(new TrajSection1D(n_p,k_r,dt,basis)));
+		secs.push_back( std::shared_ptr<TrajSection1D>(new TrajSection1D(model, n_p,k_r,dt,basis)));
 }
 
 void TrajSection1D::recoverVars(){
@@ -117,14 +111,14 @@ Trajectory::Trajectory(GRBModel *model_, const Mat4Vec &waypoints, const std::ve
 
 	// create space for sections
 	for(uint i = 0; i < num_secs; i++) {
-		individual_sections.push_back(std::shared_ptr<TrajSection4D>(new TrajSection4D(n_p,k_r,dts[i],basis)));
+		individual_sections.push_back(std::shared_ptr<TrajSection4D>(new TrajSection4D(model,n_p,k_r,dts[i],basis)));
 	}
 	linkSections(waypoints);
 }
 void Trajectory::linkSections(const Mat4Vec &waypoints) {
 	GRBQuadExpr cost;
 	for(auto &sec: individual_sections)
-		cost += sec->getCost();
+		sec->getCost(cost);
 	model->setObjective(cost,GRB_MINIMIZE);
 
 	// set start and goal constr
@@ -133,8 +127,10 @@ void Trajectory::linkSections(const Mat4Vec &waypoints) {
 			decimal_t constr_start = waypoints.front()(i,j);
 			decimal_t constr_goal  = waypoints.back()(i,j);
 
-			GRBLinExpr start = individual_sections.front()->getContr(0.0,j,i);		
-			GRBLinExpr goal =  individual_sections.back()->getContr(1.0,j,i);
+			GRBLinExpr start;
+			individual_sections.front()->getContr(0.0,j,i,start);		
+			GRBLinExpr goal;
+			individual_sections.back()->getContr(1.0,j,i,goal);
 			if(!isnan(constr_start))
 				model->addConstr(constr_start == start);
 			if(!isnan(constr_goal))
@@ -149,8 +145,10 @@ void Trajectory::linkSections(const Mat4Vec &waypoints) {
 			// derrivatives
 			for(uint k= 0; k < 4; k++) {
 				decimal_t constr = waypoints[i+1](j,k);
-				GRBLinExpr left = individual_sections[i]->getContr(1.0,k,j);		
-				GRBLinExpr right = individual_sections[i+1]->getContr(0.0,k,j);
+				GRBLinExpr left;
+				individual_sections[i]->getContr(1.0,k,j,left);		
+				GRBLinExpr right;
+				individual_sections[i+1]->getContr(0.0,k,j,right);
 				model->addConstr(left == right);
 				// adds hard coded constraints only is they aren't nan
 				if(!isnan(constr))
@@ -168,7 +166,8 @@ void Trajectory::addMaximumBound(decimal_t bound, uint derr) {
 	for(auto &sec: individual_sections) {
 		for(uint dim = 0 ; dim < 4; dim ++) {
 			for(double t = 0.0 ; t < 1.0; t+=0.1) { // hard code inforcing contraints at 10 points along sections
-				GRBLinExpr expr = sec->getContr(t,derr,dim);
+				GRBLinExpr expr;
+				sec->getContr(t,derr,dim,expr);
 				model->addConstr(expr <=  side);
 				model->addConstr(expr >= -side);
 			}					
