@@ -1,0 +1,24 @@
+Controller with online trajectory generation capabilities:
+
+Gurobi Setup:
+This package requires the gurobi optimizer which is commercial, but free for academic use: www.gurobi.com
+Academic licenses are unlimited in number and can be requested at http://pages.gurobi.com/DownloadRegistration.html?/download/licenses/current
+
+1. Download the gurobi package
+2. Unzip into install dir (sudo tar -xvf ~/gurobi5.6.3_linux64.tar.gz /opt)
+3. Add the following lines to ~/.bashrc 
+	export GUROBI_HOME="/opt/gurobi563/linux64"
+	export PATH="${PATH}:${GUROBI_HOME}/bin"
+	export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${GUROBI_HOME}/lib"
+	export GRB_LICENSE_FILE="/opt/gurobi563/linux64/gurobi.lic"	
+4. Re source .bashrc (source ~/.bashrc)
+5. Run  grbgetkey with your key and set the license install location to /opt/gurobi563/linux64
+Note: you can choose a different location to keep the the license file (gurobi.lic), just set the variable "GRB_LICENSE_FILE" appropriately in .bashrc
+
+Sample code: 
+Look at src/sample_planner_node.cpp for an example of how to run a trajectory defined by sample waypoints.
+run it by:
+roslaunch trajectory_tracker sim.launch
+rosservice call /quadrotor/takeoff
+rosservice call /quadrotor/run_demo_waypoints
+
