@@ -15,6 +15,7 @@ add_message_files(DIRECTORY msg
   FILES
   AuxCommand.msg
   Corrections.msg
+  FlatOutputs.msg
   OutputData.msg
   PositionCommand.msg
   Serial.msg
