@@ -40,39 +40,10 @@ extern volatile uint8_t SYSTEM_initialized;
 #define BATTERY_MIN_VOLTAGE     (9000)  //9.0V
 #define BAT_DIV ((BATTERY_WARNING_VOLTAGE - BATTERY_MIN_VOLTAGE)/100)
 
-//#define GPS_BEEP	//warning if GPS has no lock
-#define ERROR_BEEP  //sensor calibration errors signaled by buzzer
-#define INIT_BEEP 	//double beep during system initialization
-
 #define ControllerCyclesPerSecond 	1000
 
 #define OFF 0
 #define ON  1
-
-#define NORMAL 0
-
-
-//packet descriptors
-#define PD_IMURAWDATA       0x01
-#define PD_LLSTATUS        	0x02
-#define PD_IMUCALCDATA      0x03
-#define PD_HLSTATUS        	0x04
-
-#define PD_CTRLOUT			0x11
-#define PD_FLIGHTPARAMS     0x12
-#define PD_CTRLCOMMANDS		0x13
-#define PD_CTRLINTERNAL		0x14
-#define PD_RCDATA       	0x15
-#define PD_CTRLSTATUS		0x16
-
-#define PD_WAYPOINT     	0x20
-#define PD_CURRENTWAY   	0x21
-#define PD_NMEADATA     	0x22
-#define PD_GPSDATA			0x23
-
-#define PD_CAMERACOMMANDS	0x30
-#define PD_RO_ALL_DATA		0x90
-
 
 //system status defines for buzzer handling
 #define FM_COMPASS_FAILURE			0x10

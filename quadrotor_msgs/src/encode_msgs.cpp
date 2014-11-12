@@ -18,6 +18,10 @@ void encodeSO3Command(const quadrotor_msgs::SO3Command &so3_command,
   so3_cmd_input.des_qz = so3_command.orientation.z*125;
   so3_cmd_input.des_qw = so3_command.orientation.w*125;
 
+  so3_cmd_input.angvel_x = so3_command.angular_velocity.x*1000;
+  so3_cmd_input.angvel_y = so3_command.angular_velocity.y*1000;
+  so3_cmd_input.angvel_z = so3_command.angular_velocity.z*1000;
+
   so3_cmd_input.kR[0] = so3_command.kR[0]*50;
   so3_cmd_input.kR[1] = so3_command.kR[1]*50;
   so3_cmd_input.kR[2] = so3_command.kR[2]*50;
