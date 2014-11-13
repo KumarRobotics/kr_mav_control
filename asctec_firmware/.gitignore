@@ -3,3 +3,5 @@
 *.map
 *.elf
 *.sym
+*.hex
+.dep
