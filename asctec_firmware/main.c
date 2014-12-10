@@ -45,6 +45,7 @@
 #include "LL_HL_comm.h"
 #include "sdk.h"
 #include "buzzer.h"
+#include "pelican_ptu.h"
 
 // Only one of these should be enabled (if both defined, IMU takes priority)
 #define OUTPUT_IMU
@@ -106,6 +107,7 @@ int	main (void) {
 
   init();
   buzzer(OFF);
+  PTU_init();
   LL_write_init();
   ADC0triggerSampling(1<<VOLTAGE_1); //activate ADC sampling
 

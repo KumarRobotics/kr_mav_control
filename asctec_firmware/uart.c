@@ -41,6 +41,7 @@ uint8_t trigger_transmission=0;
 static const uint8_t startstring[]={0x55,0x55};
 
 uint8_t Ctrl_Input_updated = 0;
+uint8_t PWM_Input_updated = 0;
 
 void uart1ISR(void) __irq
 {
@@ -147,6 +148,11 @@ void uart0ISR(void) __irq
             rx_ptr = (uint8_t*)&SO3_cmd_input_tmp;
             sync_state++;
           }
+          else if( (received_type == TYPE_PWM_CMD) && (received_length == sizeof(struct PWM_CMD_INPUT)) )
+          {
+            rx_ptr = (uint8_t*)&PWM_cmd_input_tmp;
+            sync_state++;
+          }
           else
             sync_state = 0;
           break;
@@ -167,7 +173,10 @@ void uart0ISR(void) __irq
           if(received_crc == expected_crc)
           {
             // Received full packet
-            Ctrl_Input_updated = 1;
+            if (received_type == TYPE_SO3_CMD)
+              Ctrl_Input_updated = 1;
+            else if (received_type == TYPE_PWM_CMD)
+              PWM_Input_updated = 1;
           }
           sync_state = 0;
           break;

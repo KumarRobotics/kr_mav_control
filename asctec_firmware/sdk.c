@@ -34,6 +34,7 @@ DAMAGE.
 #include "sdk.h"
 #include "uart.h"
 #include "LL_HL_comm.h"
+#include "pelican_ptu.h"
 
 #define HUMMINGBIRD
 //#define PELICAN
@@ -76,6 +77,7 @@ struct RO_ALL_DATA RO_ALL_Data;
 struct WO_DIRECT_MOTOR_CONTROL WO_Direct_Motor_Control;
 struct WO_DIRECT_INDIVIDUAL_MOTOR_CONTROL WO_Direct_Individual_Motor_Control;
 struct SO3_CMD_INPUT SO3_cmd_input_tmp;
+struct PWM_CMD_INPUT PWM_cmd_input_tmp;
 struct OUTPUT_DATA Output_Data;
 struct STATUS_DATA Status_Data;
 
@@ -102,6 +104,9 @@ void SDK_mainloop(void)
   static struct SO3_CMD_INPUT SO3_cmd_input;
   static uint8_t command_initialized = 0;
 
+  static struct PWM_CMD_INPUT PWM_cmd_input;
+  static uint8_t pwm_initialized = 0;
+
   if(Ctrl_Input_updated)
   {
     memcpy(&SO3_cmd_input, &SO3_cmd_input_tmp, sizeof(SO3_cmd_input));
@@ -112,6 +117,13 @@ void SDK_mainloop(void)
     if((sizeof(SO3_cmd_input)) < ringbuffer(RBFREE, 0, 0))
       UART_SendPacket(&SO3_cmd_input, sizeof(SO3_cmd_input), TYPE_SO3_CMD);
 #endif
+  }
+
+  if(PWM_Input_updated)
+  {
+    memcpy(&PWM_cmd_input, &PWM_cmd_input_tmp, sizeof(PWM_cmd_input));
+    PWM_Input_updated = 0;
+    pwm_initialized = 1;
   }
 
   uint8_t motors_des = 0;
@@ -327,6 +339,18 @@ void SDK_mainloop(void)
   WO_Direct_Individual_Motor_Control.motor[4] = 0;
   WO_Direct_Individual_Motor_Control.motor[5] = 0;
 #endif
+
+  if (pwm_initialized)
+  {
+    int servo_val = PWM_cmd_input.pwm[0] / 255.0 * 6000 + 6000;
+
+    if (servo_val < 6000)
+      servo_val = 6000;
+    else if (servo_val > 12000)
+      servo_val = 12000;
+
+    PTU_update(servo_val);
+  }
 }
 
 static float normalize(float angle)

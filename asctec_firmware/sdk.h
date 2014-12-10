@@ -55,6 +55,14 @@ struct SO3_CMD_INPUT
 };
 extern struct SO3_CMD_INPUT SO3_cmd_input_tmp;
 
+#define TYPE_PWM_CMD 'w'
+struct PWM_CMD_INPUT
+{
+  // Scaling factors when decoding
+  uint8_t pwm[2]; // pwm1,pwm2 *255
+};
+extern struct PWM_CMD_INPUT PWM_cmd_input_tmp;
+
 #define TYPE_STATUS_DATA 'c'
 struct STATUS_DATA
 {
