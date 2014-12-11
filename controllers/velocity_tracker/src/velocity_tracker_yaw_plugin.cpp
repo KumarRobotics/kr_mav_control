@@ -76,9 +76,9 @@ const quadrotor_msgs::PositionCommand::Ptr VelocityTrackerYaw::update(const nav_
 
   dt_ = ros::Time::now().toSec() - last_t_.toSec();
   last_t_ = ros::Time::now();
-  
+
   cmd_yaw_ = cur_yaw_ + dt_ * position_cmd_.yaw_dot;
-  
+
   if(!active_)
     return quadrotor_msgs::PositionCommand::Ptr();
 
