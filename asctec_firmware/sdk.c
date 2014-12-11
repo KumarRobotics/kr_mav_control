@@ -114,6 +114,9 @@ void SDK_mainloop(void)
 #endif
   }
 
+  uint8_t motors_des = 0;
+  int u[4] = {0, 0, 0, 0};
+
   if(command_initialized)
   {
     const float fx = 2e-3f*SO3_cmd_input.force[0];
@@ -160,7 +163,7 @@ void SDK_mainloop(void)
     const float r_correction = 4e-4f*SO3_cmd_input.angle_corrections[0];
     const float p_correction = 4e-4f*SO3_cmd_input.angle_corrections[1];
 
-    const uint8_t motors_des = SO3_cmd_input.enable_motors;
+    motors_des = SO3_cmd_input.enable_motors;
 
     // Switch from X front, Y right, Z down to X front, Y left, Z up
     const float rad_r = normalize(DEG2RADCONV*RO_ALL_Data.angle_roll + r_correction);
@@ -264,7 +267,6 @@ void SDK_mainloop(void)
         w[i] = sqrtf(w_sq[i]);
     }
 
-    int u[4];
     for(int i = 0; i < 4; i++)
     {
       u[i] = lrintf(RPMSCALE*(w[i] - MIN_RPM));
@@ -275,41 +277,41 @@ void SDK_mainloop(void)
       else if(u[i] > 200)
         u[i] = 200;
     }
+  }
 #if 1
-    //uint8_t motors_on = (LL_1khz_attitude_data.status2 & 0x01);
-    const uint8_t motors_on = (RO_ALL_Data.motor_rpm[0] > 0 ||
-        RO_ALL_Data.motor_rpm[1] > 0 ||
-        RO_ALL_Data.motor_rpm[2] > 0 ||
-        RO_ALL_Data.motor_rpm[3] > 0);
-    static unsigned int counter = 0;
-    if(motors_des != motors_on)
-    {
-      WO_SDK.ctrl_mode = 0x02; // 0x02: attitude and throttle control: commands
-      // are input for standard attitude controller
-      WO_SDK.ctrl_enabled = 1; // enable control by HL processor
-      WO_SDK.disable_motor_onoff_by_stick = 0; // allow RC control
-      WO_CTRL_Input.ctrl = 0x0C; // enable throttle control and yaw control
-      WO_CTRL_Input.thrust = 0;
-      WO_CTRL_Input.yaw = -2047;
-      counter = 0;
-    }
+  //uint8_t motors_on = (LL_1khz_attitude_data.status2 & 0x01);
+  const uint8_t motors_on = (RO_ALL_Data.motor_rpm[0] > 0 ||
+                             RO_ALL_Data.motor_rpm[1] > 0 ||
+                             RO_ALL_Data.motor_rpm[2] > 0 ||
+                             RO_ALL_Data.motor_rpm[3] > 0);
+  static unsigned int counter = 0;
+  if(motors_des != motors_on)
+  {
+    WO_SDK.ctrl_mode = 0x02; // 0x02: attitude and throttle control: commands
+    // are input for standard attitude controller
+    WO_SDK.ctrl_enabled = 1; // enable control by HL processor
+    WO_SDK.disable_motor_onoff_by_stick = 0; // allow RC control
+    WO_CTRL_Input.ctrl = 0x0C; // enable throttle control and yaw control
+    WO_CTRL_Input.thrust = 0;
+    WO_CTRL_Input.yaw = -2047;
+    counter = 0;
+  }
+  else
+  {
+    if(counter < 50) // Delay between turning motors on and sending command
+      counter++;
     else
     {
-      if(counter < 50) // Delay between turning motors on and sending command
-        counter++;
-      else
-      {
-        WO_SDK.ctrl_mode = 0x00; // direct individual motor control
-        WO_SDK.ctrl_enabled = 1; // enable control by HL processor
-        WO_SDK.disable_motor_onoff_by_stick = 0; // allow RC control
+      WO_SDK.ctrl_mode = 0x00; // direct individual motor control
+      WO_SDK.ctrl_enabled = 1; // enable control by HL processor
+      WO_SDK.disable_motor_onoff_by_stick = 0; // allow RC control
 
-        WO_Direct_Individual_Motor_Control.motor[0] = u[0];
-        WO_Direct_Individual_Motor_Control.motor[1] = u[1];
-        WO_Direct_Individual_Motor_Control.motor[2] = u[2];
-        WO_Direct_Individual_Motor_Control.motor[3] = u[3];
-        WO_Direct_Individual_Motor_Control.motor[4] = 0;
-        WO_Direct_Individual_Motor_Control.motor[5] = 0;
-      }
+      WO_Direct_Individual_Motor_Control.motor[0] = u[0];
+      WO_Direct_Individual_Motor_Control.motor[1] = u[1];
+      WO_Direct_Individual_Motor_Control.motor[2] = u[2];
+      WO_Direct_Individual_Motor_Control.motor[3] = u[3];
+      WO_Direct_Individual_Motor_Control.motor[4] = 0;
+      WO_Direct_Individual_Motor_Control.motor[5] = 0;
     }
   }
 #else
