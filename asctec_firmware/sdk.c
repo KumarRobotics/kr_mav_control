@@ -37,9 +37,14 @@ DAMAGE.
 
 #define HUMMINGBIRD
 //#define PELICAN
+#define GYRO_900_DEG 0
 
 static const float DEG2RADCONV = M_PI/180.0/1000;
+#if GYRO_900_DEG
+static const float DEGSEC2RADSECCONV = 0.0154*3.0*M_PI/180.0; // AscTec LL sends output/3 for high rate gyros
+#else
 static const float DEGSEC2RADSECCONV = 0.0154*M_PI/180.0;
+#endif
 
 #if defined(HUMMINGBIRD)
 static const float LENGTH = 0.171;
@@ -95,11 +100,13 @@ static float normalize(float angle);
 void SDK_mainloop(void)
 {
   static struct SO3_CMD_INPUT SO3_cmd_input;
+  static uint8_t command_initialized = 0;
 
   if(Ctrl_Input_updated)
   {
     memcpy(&SO3_cmd_input, &SO3_cmd_input_tmp, sizeof(SO3_cmd_input));
     Ctrl_Input_updated = 0;
+    command_initialized = 1;
 
 #if 0 // Loopback (for debugging)
     if((sizeof(SO3_cmd_input)) < ringbuffer(RBFREE, 0, 0))
@@ -107,194 +114,202 @@ void SDK_mainloop(void)
 #endif
   }
 
-  float fx = 2e-3f*SO3_cmd_input.force[0];
-  float fy = 2e-3f*SO3_cmd_input.force[1];
-  float fz = 2e-3f*SO3_cmd_input.force[2];
+  if(command_initialized)
+  {
+    const float fx = 2e-3f*SO3_cmd_input.force[0];
+    const float fy = 2e-3f*SO3_cmd_input.force[1];
+    const float fz = 2e-3f*SO3_cmd_input.force[2];
 
-  float qw = 8e-3f*SO3_cmd_input.des_qw;
-  float qx = 8e-3f*SO3_cmd_input.des_qx;
-  float qy = 8e-3f*SO3_cmd_input.des_qy;
-  float qz = 8e-3f*SO3_cmd_input.des_qz;
-  float q_norm = sqrtf(qw*qw+qx*qx+qy*qy+qz*qz);
-  qw = qw/q_norm;
-  qx = qx/q_norm;
-  qy = qy/q_norm;
-  qz = qz/q_norm;
+    float qw = 8e-3f*SO3_cmd_input.des_qw;
+    float qx = 8e-3f*SO3_cmd_input.des_qx;
+    float qy = 8e-3f*SO3_cmd_input.des_qy;
+    float qz = 8e-3f*SO3_cmd_input.des_qz;
+    float q_norm = sqrtf(qw*qw+qx*qx+qy*qy+qz*qz);
+    qw = qw/q_norm;
+    qx = qx/q_norm;
+    qy = qy/q_norm;
+    qz = qz/q_norm;
 
-  float Rd11 = qw*qw + qx*qx - qy*qy - qz*qz;
-  float Rd12 = 2.0f*(qx*qy - qw*qz);
-  float Rd13 = 2.0f*(qx*qz + qw*qy);
-  float Rd21 = 2.0f*(qx*qy + qw*qz);
-  float Rd22 = qw*qw - qx*qx + qy*qy - qz*qz;
-  float Rd23 = 2.0f*(qy*qz - qw*qx);
-  float Rd31 = 2.0f*(qx*qz - qw*qy);
-  float Rd32 = 2.0f*(qy*qz + qw*qx);
-  float Rd33 = qw*qw - qx*qx - qy*qy + qz*qz;
+    const float des_angvel_x = 1e-3f*SO3_cmd_input.angvel_x;
+    const float des_angvel_y = 1e-3f*SO3_cmd_input.angvel_y;
+    const float des_angvel_z = 1e-3f*SO3_cmd_input.angvel_z;
 
-  float kR1 = 2e-2f*SO3_cmd_input.kR[0];
-  float kR2 = 2e-2f*SO3_cmd_input.kR[1];
-  float kR3 = 2e-2f*SO3_cmd_input.kR[2];
+    const float Rd11 = qw*qw + qx*qx - qy*qy - qz*qz;
+    const float Rd12 = 2.0f*(qx*qy - qw*qz);
+    const float Rd13 = 2.0f*(qx*qz + qw*qy);
+    const float Rd21 = 2.0f*(qx*qy + qw*qz);
+    const float Rd22 = qw*qw - qx*qx + qy*qy - qz*qz;
+    const float Rd23 = 2.0f*(qy*qz - qw*qx);
+    const float Rd31 = 2.0f*(qx*qz - qw*qy);
+    const float Rd32 = 2.0f*(qy*qz + qw*qx);
+    const float Rd33 = qw*qw - qx*qx - qy*qy + qz*qz;
 
-  float kOm1 = 1e-2f*SO3_cmd_input.kOm[0];
-  float kOm2 = 1e-2f*SO3_cmd_input.kOm[1];
-  float kOm3 = 1e-2f*SO3_cmd_input.kOm[2];
+    const float kR1 = 2e-2f*SO3_cmd_input.kR[0];
+    const float kR2 = 2e-2f*SO3_cmd_input.kR[1];
+    const float kR3 = 2e-2f*SO3_cmd_input.kR[2];
 
-  float kf = (KTHRUST - 1e-11f*SO3_cmd_input.kf_correction);
-  // km = (Cq/Ct)*Dia*kf
-  // Cq/Ct for 8 inch props from UIUC prop db ~ 0.07
-  float km = 0.14f*PROP_RADIUS*kf;
+    const float kOm1 = 1e-2f*SO3_cmd_input.kOm[0];
+    const float kOm2 = 1e-2f*SO3_cmd_input.kOm[1];
+    const float kOm3 = 1e-2f*SO3_cmd_input.kOm[2];
 
-  float r_correction = 4e-4f*SO3_cmd_input.angle_corrections[0];
-  float p_correction = 4e-4f*SO3_cmd_input.angle_corrections[1];
+    const float kf = (KTHRUST - 1e-11f*SO3_cmd_input.kf_correction);
+    // km = (Cq/Ct)*Dia*kf
+    // Cq/Ct for 8 inch props from UIUC prop db ~ 0.07
+    const float km = 0.14f*PROP_RADIUS*kf;
 
-  uint8_t motors_des = SO3_cmd_input.enable_motors;
+    const float r_correction = 4e-4f*SO3_cmd_input.angle_corrections[0];
+    const float p_correction = 4e-4f*SO3_cmd_input.angle_corrections[1];
 
-  // Switch from X front, Y right, Z down to X front, Y left, Z up
-  float rad_r = normalize(DEG2RADCONV*RO_ALL_Data.angle_roll + r_correction);
-  float rad_p = normalize(-DEG2RADCONV*RO_ALL_Data.angle_pitch + p_correction);
+    const uint8_t motors_des = SO3_cmd_input.enable_motors;
 
-  float rad_y;
-  if(SO3_cmd_input.use_external_yaw)
-    rad_y = normalize(1e-4f*SO3_cmd_input.cur_yaw);
-  else
-    rad_y = normalize(-DEG2RADCONV*RO_ALL_Data.angle_yaw);
+    // Switch from X front, Y right, Z down to X front, Y left, Z up
+    const float rad_r = normalize(DEG2RADCONV*RO_ALL_Data.angle_roll + r_correction);
+    const float rad_p = normalize(-DEG2RADCONV*RO_ALL_Data.angle_pitch + p_correction);
 
-  float Om1 = DEGSEC2RADSECCONV*RO_ALL_Data.angvel_roll;
-  float Om2 = -DEGSEC2RADSECCONV*RO_ALL_Data.angvel_pitch;
-  float Om3 = -DEGSEC2RADSECCONV*RO_ALL_Data.angvel_yaw;
+    const float rad_y = SO3_cmd_input.use_external_yaw ? normalize(1e-4f*SO3_cmd_input.cur_yaw) :
+      normalize(-DEG2RADCONV*RO_ALL_Data.angle_yaw);
 
-  float cr = cosf(rad_r);
-  float sr = sinf(rad_r);
-  float cp = cosf(rad_p);
-  float sp = sinf(rad_p);
-  float cy = cosf(rad_y);
-  float sy = sinf(rad_y);
+    const float Om1 = DEGSEC2RADSECCONV*RO_ALL_Data.angvel_roll;
+    const float Om2 = -DEGSEC2RADSECCONV*RO_ALL_Data.angvel_pitch;
+    const float Om3 = -DEGSEC2RADSECCONV*RO_ALL_Data.angvel_yaw;
 
-  // LL sends euler angles in Z-Y-X convention
-  float R11 = cy*cp;
-  float R12 = cy*sp*sr - cr*sy;
-  float R13 = sy*sr + cy*cr*sp;
-  float R21 = cp*sy;
-  float R22 = cy*cr + sy*sp*sr;
-  float R23 = cr*sy*sp - cy*sr;
-  float R31 = -sp;
-  float R32 = cp*sr;
-  float R33 = cp*cr;
+    const float cr = cosf(rad_r);
+    const float sr = sinf(rad_r);
+    const float cp = cosf(rad_p);
+    const float sp = sinf(rad_p);
+    const float cy = cosf(rad_y);
+    const float sy = sinf(rad_y);
+
+    // LL sends euler angles in Z-Y-X convention
+    const float R11 = cy*cp;
+    const float R12 = cy*sp*sr - cr*sy;
+    const float R13 = sy*sr + cy*cr*sp;
+    const float R21 = cp*sy;
+    const float R22 = cy*cr + sy*sp*sr;
+    const float R23 = cr*sy*sp - cy*sr;
+    const float R31 = -sp;
+    const float R32 = cp*sr;
+    const float R33 = cp*cr;
 
 #if 0
-  float tr = sqrtf(1.0f +
-                   R11*Rd11 + R12*Rd12 + R13*Rd13 +
-                   R21*Rd21 + R22*Rd22 + R23*Rd23 +
-                   R31*Rd31 + R32*Rd32 + R33*Rd33);
-  float Psi = 2.0f - tr;
+    float tr = sqrtf(1.0f +
+        R11*Rd11 + R12*Rd12 + R13*Rd13 +
+        R21*Rd21 + R22*Rd22 + R23*Rd23 +
+        R31*Rd31 + R32*Rd32 + R33*Rd33);
+    float Psi = 2.0f - tr;
 
-  float force = 0.0;
-  if (Psi < 1) // Position control stability guaranteed only when Psi < 1
-    force = fx*R13 + fy*R23 + fz*R33;
+    float force = 0.0;
+    if (Psi < 1) // Position control stability guaranteed only when Psi < 1
+      force = fx*R13 + fy*R23 + fz*R33;
 
-  float tri = 1/tr;
-  float eR1 =
-    0.5f*tri*(-R13*Rd12 + R12*Rd13 - R23*Rd22 + R22*Rd23 - R33*Rd32 + R32*Rd33);
-  float eR2 =
-    0.5f*tri*(R13*Rd11 - R11*Rd13 + R23*Rd21 - R21*Rd23 + R33*Rd31 - R31*Rd33);
-  float eR3 =
-    0.5f*tri*(-R12*Rd11 + R11*Rd12 - R22*Rd21 + R21*Rd22 - R32*Rd31 + R31*Rd32);
+    float tri = 1/tr;
+    float eR1 =
+      0.5f*tri*(-R13*Rd12 + R12*Rd13 - R23*Rd22 + R22*Rd23 - R33*Rd32 + R32*Rd33);
+    float eR2 =
+      0.5f*tri*(R13*Rd11 - R11*Rd13 + R23*Rd21 - R21*Rd23 + R33*Rd31 - R31*Rd33);
+    float eR3 =
+      0.5f*tri*(-R12*Rd11 + R11*Rd12 - R22*Rd21 + R21*Rd22 - R32*Rd31 + R31*Rd32);
 #else
-  float Psi = 0.5f*(3.0f - (Rd11*R11 + Rd21*R21 + Rd31*R31 +
-        Rd12*R12 + Rd22*R22 + Rd32*R32 + Rd13*R13 + Rd23*R23 + Rd33*R33));
+    const float Psi = 0.5f*(3.0f - (Rd11*R11 + Rd21*R21 + Rd31*R31 +
+          Rd12*R12 + Rd22*R22 + Rd32*R32 + Rd13*R13 + Rd23*R23 + Rd33*R33));
 
-  float force = 0.0f;
-  if(Psi < 1.0f) // Position control stability guaranteed only when Psi < 1
-    force = fx*R13 + fy*R23 + fz*R33;
+    float force = 0.0f;
+    if(Psi < 1.0f) // Position control stability guaranteed only when Psi < 1
+      force = fx*R13 + fy*R23 + fz*R33;
 
-  float eR1 = 0.5f*(R12*Rd13 - R13*Rd12 + R22*Rd23 - R23*Rd22 + R32*Rd33 - R33*Rd32);
-  float eR2 = 0.5f*(R13*Rd11 - R11*Rd13 - R21*Rd23 + R23*Rd21 - R31*Rd33 + R33*Rd31);
-  float eR3 = 0.5f*(R11*Rd12 - R12*Rd11 + R21*Rd22 - R22*Rd21 + R31*Rd32 - R32*Rd31);
+    const float eR1 = 0.5f*(R12*Rd13 - R13*Rd12 + R22*Rd23 - R23*Rd22 + R32*Rd33 - R33*Rd32);
+    const float eR2 = 0.5f*(R13*Rd11 - R11*Rd13 - R21*Rd23 + R23*Rd21 - R31*Rd33 + R33*Rd31);
+    const float eR3 = 0.5f*(R11*Rd12 - R12*Rd11 + R21*Rd22 - R22*Rd21 + R31*Rd32 - R32*Rd31);
 #endif
 
-  float eOm1 = Om1;
-  float eOm2 = Om2;
-  float eOm3 = Om3;
+    // Omd = R.transpose()*Rd*des_ang_vel;
+    const float Omd1 = des_angvel_x*(R11*Rd11 + R21*Rd21 + R31*Rd31) + des_angvel_y*(R11*Rd12 + R21*Rd22 + R31*Rd32) +
+      des_angvel_z*(R11*Rd13 + R21*Rd23 + R31*Rd33);
+    const float Omd2 = des_angvel_x*(R12*Rd11 + R22*Rd21 + R32*Rd31) + des_angvel_y*(R12*Rd12 + R22*Rd22 + R32*Rd32) +
+      des_angvel_z*(R12*Rd13 + R22*Rd23 + R32*Rd33);
+    const float Omd3 = des_angvel_x*(R13*Rd11 + R23*Rd21 + R33*Rd31) + des_angvel_y*(R13*Rd12 + R23*Rd22 + R33*Rd32) +
+      des_angvel_z*(R13*Rd13 + R23*Rd23 + R33*Rd33);
 
-  float in1 = I[2][0]*Om1*Om2 + I[2][1]*Om2*Om2 - I[1][0]*Om1*Om3 - I[1][1]*Om2*Om3 +
-    I[2][2]*Om2*Om3 - I[1][2]*Om3*Om3;
-  float in2 = -I[2][0]*Om1*Om1 - I[2][1]*Om1*Om2 + I[0][0]*Om1*Om3 - I[2][2]*Om1*Om3 +
-    I[0][1]*Om2*Om3 + I[0][2]*Om3*Om3;
-  float in3 = I[1][0]*Om1*Om1 - I[0][0]*Om1*Om2 + I[1][1]*Om1*Om2 - I[0][1]*Om2*Om2 +
-    I[1][2]*Om1*Om3 - I[0][2]*Om2*Om3;
+    const float eOm1 = Om1 - Omd1;
+    const float eOm2 = Om2 - Omd2;
+    const float eOm3 = Om3 - Omd3;
 
-  float uF = force;
-  float uM1 = -kR1*eR1 - kOm1*eOm1 + in1;
-  float uM2 = -kR2*eR2 - kOm2*eOm2 + in2;
-  float uM3 = -kR3*eR3 - kOm3*eOm3 + in3;
+    const float in1 = Om2*(I[2][0]*Om1 + I[2][1]*Om2 + I[2][2]*Om3) - Om3*(I[1][0]*Om1 + I[1][1]*Om2 + I[1][2]*Om3);
+    const float in2 = Om3*(I[0][0]*Om1 + I[0][1]*Om2 + I[0][2]*Om3) - Om1*(I[2][0]*Om1 + I[2][1]*Om2 + I[2][2]*Om3);
+    const float in3 = Om1*(I[1][0]*Om1 + I[1][1]*Om2 + I[1][2]*Om3) - Om2*(I[0][0]*Om1 + I[0][1]*Om2 + I[0][2]*Om3);
 
-  float kf_inv = 1/kf;
-  float kfl_inv = kf_inv*(1/LENGTH);
-  float km_inv = 1/km;
+    const float uF = force;
+    const float uM1 = -kR1*eR1 - kOm1*eOm1 + in1;
+    const float uM2 = -kR2*eR2 - kOm2*eOm2 + in2;
+    const float uM3 = -kR3*eR3 - kOm3*eOm3 + in3;
 
-  // Rotor numbering is:
-  //   *1*    Front
-  // 3     4
-  //    2
-  float w_sq[4];
-  w_sq[0] = (uF*kf_inv - 2*uM2*kfl_inv + uM3*km_inv)/4;
-  w_sq[1] = (uF*kf_inv + 2*uM2*kfl_inv + uM3*km_inv)/4;
-  w_sq[2] = (uF*kf_inv + 2*uM1*kfl_inv - uM3*km_inv)/4;
-  w_sq[3] = (uF*kf_inv - 2*uM1*kfl_inv - uM3*km_inv)/4;
+    const float kf_inv = 1/kf;
+    const float kfl_inv = kf_inv*(1/LENGTH);
+    const float km_inv = 1/km;
 
-  float w[4] = {0,0,0,0};
-  for(int i = 0; i < 4; i++)
-  {
-    if(w_sq[i] > 0)
-      w[i] = sqrtf(w_sq[i]);
-  }
+    // Rotor numbering is:
+    //   *1*    Front
+    // 3     4
+    //    2
+    float w_sq[4];
+    w_sq[0] = (uF*kf_inv - 2*uM2*kfl_inv + uM3*km_inv)/4;
+    w_sq[1] = (uF*kf_inv + 2*uM2*kfl_inv + uM3*km_inv)/4;
+    w_sq[2] = (uF*kf_inv + 2*uM1*kfl_inv - uM3*km_inv)/4;
+    w_sq[3] = (uF*kf_inv - 2*uM1*kfl_inv - uM3*km_inv)/4;
 
-  int u[4];
-  for(int i = 0; i < 4; i++)
-  {
-    u[i] = lrintf(RPMSCALE*(w[i] - MIN_RPM));
-
-    // Input range is 1-200, 0 turns off motor
-    if(u[i] < 1)
-      u[i] = 1;
-    else if(u[i] > 200)
-      u[i] = 200;
-  }
-
-#if 1
-  //uint8_t motors_on = (LL_1khz_attitude_data.status2 & 0x01);
-  uint8_t motors_on = (RO_ALL_Data.motor_rpm[0] > 0 ||
-                       RO_ALL_Data.motor_rpm[1] > 0 ||
-                       RO_ALL_Data.motor_rpm[2] > 0 ||
-                       RO_ALL_Data.motor_rpm[3] > 0);
-  static unsigned int counter = 0;
-  if(motors_des != motors_on)
-  {
-    WO_SDK.ctrl_mode = 0x02; // 0x02: attitude and throttle control: commands
-                             // are input for standard attitude controller
-    WO_SDK.ctrl_enabled = 1; // enable control by HL processor
-    WO_SDK.disable_motor_onoff_by_stick = 0; // allow RC control
-    WO_CTRL_Input.ctrl = 0x0C; // enable throttle control and yaw control
-    WO_CTRL_Input.thrust = 0;
-    WO_CTRL_Input.yaw = -2047;
-    counter = 0;
-  }
-  else
-  {
-    if(counter < 50) // Delay between turning motors on and sending command
-      counter++;
-    else
+    float w[4] = {0,0,0,0};
+    for(int i = 0; i < 4; i++)
     {
-      WO_SDK.ctrl_mode = 0x00; // direct individual motor control
+      if(w_sq[i] > 0)
+        w[i] = sqrtf(w_sq[i]);
+    }
+
+    int u[4];
+    for(int i = 0; i < 4; i++)
+    {
+      u[i] = lrintf(RPMSCALE*(w[i] - MIN_RPM));
+
+      // Input range is 1-200, 0 turns off motor
+      if(u[i] < 1)
+        u[i] = 1;
+      else if(u[i] > 200)
+        u[i] = 200;
+    }
+#if 1
+    //uint8_t motors_on = (LL_1khz_attitude_data.status2 & 0x01);
+    const uint8_t motors_on = (RO_ALL_Data.motor_rpm[0] > 0 ||
+        RO_ALL_Data.motor_rpm[1] > 0 ||
+        RO_ALL_Data.motor_rpm[2] > 0 ||
+        RO_ALL_Data.motor_rpm[3] > 0);
+    static unsigned int counter = 0;
+    if(motors_des != motors_on)
+    {
+      WO_SDK.ctrl_mode = 0x02; // 0x02: attitude and throttle control: commands
+      // are input for standard attitude controller
       WO_SDK.ctrl_enabled = 1; // enable control by HL processor
       WO_SDK.disable_motor_onoff_by_stick = 0; // allow RC control
+      WO_CTRL_Input.ctrl = 0x0C; // enable throttle control and yaw control
+      WO_CTRL_Input.thrust = 0;
+      WO_CTRL_Input.yaw = -2047;
+      counter = 0;
+    }
+    else
+    {
+      if(counter < 50) // Delay between turning motors on and sending command
+        counter++;
+      else
+      {
+        WO_SDK.ctrl_mode = 0x00; // direct individual motor control
+        WO_SDK.ctrl_enabled = 1; // enable control by HL processor
+        WO_SDK.disable_motor_onoff_by_stick = 0; // allow RC control
 
-      WO_Direct_Individual_Motor_Control.motor[0] = u[0];
-      WO_Direct_Individual_Motor_Control.motor[1] = u[1];
-      WO_Direct_Individual_Motor_Control.motor[2] = u[2];
-      WO_Direct_Individual_Motor_Control.motor[3] = u[3];
-      WO_Direct_Individual_Motor_Control.motor[4] = 0;
-      WO_Direct_Individual_Motor_Control.motor[5] = 0;
+        WO_Direct_Individual_Motor_Control.motor[0] = u[0];
+        WO_Direct_Individual_Motor_Control.motor[1] = u[1];
+        WO_Direct_Individual_Motor_Control.motor[2] = u[2];
+        WO_Direct_Individual_Motor_Control.motor[3] = u[3];
+        WO_Direct_Individual_Motor_Control.motor[4] = 0;
+        WO_Direct_Individual_Motor_Control.motor[5] = 0;
+      }
     }
   }
 #else
