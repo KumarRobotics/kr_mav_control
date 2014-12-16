@@ -4,6 +4,8 @@
 #include <sensor_msgs/Imu.h>
 #include <quadrotor_msgs/SO3Command.h>
 #include <quadrotor_simulator/Quadrotor.h>
+#include <tf/transform_datatypes.h>
+#include <tf/transform_broadcaster.h>
 
 typedef struct _ControlInput
 {
@@ -26,6 +28,7 @@ static Command command;
 
 void stateToOdomMsg(const QuadrotorSimulator::Quadrotor::State &state, nav_msgs::Odometry &odom);
 void quadToImuMsg(const QuadrotorSimulator::Quadrotor &quad, sensor_msgs::Imu &imu);
+void tf_broadcast(const nav_msgs::Odometry &odom_msg);
 
 
 static ControlInput getControl(const QuadrotorSimulator::Quadrotor &quad, const Command &cmd)
@@ -219,6 +222,7 @@ int main(int argc, char **argv)
       imu_msg.header.stamp = tnow;
       odom_pub.publish(odom_msg);
       imu_pub.publish(imu_msg);
+      tf_broadcast(odom_msg);
     }
 
     r.sleep();
@@ -279,4 +283,22 @@ void quadToImuMsg(const QuadrotorSimulator::Quadrotor &quad, sensor_msgs::Imu &i
   imu.linear_acceleration.x = acc(0);
   imu.linear_acceleration.y = acc(1);
   imu.linear_acceleration.z = acc(2);
+}
+
+void tf_broadcast(const nav_msgs::Odometry &odom_msg)
+{
+  static tf::TransformBroadcaster br;
+  static geometry_msgs::TransformStamped ts;
+
+  ts.header.stamp = odom_msg.header.stamp;
+  ts.header.frame_id = odom_msg.header.frame_id;
+  ts.child_frame_id = odom_msg.child_frame_id;
+
+  ts.transform.translation.x = odom_msg.pose.pose.position.x;
+  ts.transform.translation.y = odom_msg.pose.pose.position.y;
+  ts.transform.translation.z = odom_msg.pose.pose.position.z;
+
+  ts.transform.rotation = odom_msg.pose.pose.orientation;
+
+  br.sendTransform(ts);
 }
