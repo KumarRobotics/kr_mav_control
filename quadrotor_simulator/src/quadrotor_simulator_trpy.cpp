@@ -4,7 +4,6 @@
 #include <sensor_msgs/Imu.h>
 #include <quadrotor_msgs/TRPYCommand.h>
 #include <quadrotor_simulator/Quadrotor.h>
-#include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
 
 typedef struct _ControlInput

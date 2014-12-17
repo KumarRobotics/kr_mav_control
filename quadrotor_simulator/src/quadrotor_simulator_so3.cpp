@@ -4,7 +4,6 @@
 #include <sensor_msgs/Imu.h>
 #include <quadrotor_msgs/SO3Command.h>
 #include <quadrotor_simulator/Quadrotor.h>
-#include <tf/transform_datatypes.h>
 #include <tf/transform_broadcaster.h>
 
 typedef struct _ControlInput
@@ -95,15 +94,9 @@ static ControlInput getControl(const QuadrotorSimulator::Quadrotor &quad, const 
   float eOm2 = Om2 - Omd2;
   float eOm3 = Om3 - Omd3;
 
-#if 0
   float in1 = Om2*(I[2][0]*Om1 + I[2][1]*Om2 + I[2][2]*Om3) - Om3*(I[1][0]*Om1 + I[1][1]*Om2 + I[1][2]*Om3);
   float in2 = Om3*(I[0][0]*Om1 + I[0][1]*Om2 + I[0][2]*Om3) - Om1*(I[2][0]*Om1 + I[2][1]*Om2 + I[2][2]*Om3);
   float in3 = Om1*(I[1][0]*Om1 + I[1][1]*Om2 + I[1][2]*Om3) - Om2*(I[0][0]*Om1 + I[0][1]*Om2 + I[0][2]*Om3);
-#else
-  float in1 = Omd2*(I[2][0]*Omd1 + I[2][1]*Omd2 + I[2][2]*Omd3) - Omd3*(I[1][0]*Omd1 + I[1][1]*Omd2 + I[1][2]*Omd3);
-  float in2 = Omd3*(I[0][0]*Omd1 + I[0][1]*Omd2 + I[0][2]*Omd3) - Omd1*(I[2][0]*Omd1 + I[2][1]*Omd2 + I[2][2]*Omd3);
-  float in3 = Omd1*(I[1][0]*Omd1 + I[1][1]*Omd2 + I[1][2]*Omd3) - Omd2*(I[0][0]*Omd1 + I[0][1]*Omd2 + I[0][2]*Omd3);
-#endif
 
   float M1 = -cmd.kR[0]*eR1 - cmd.kOm[0]*eOm1 + in1;
   float M2 = -cmd.kR[1]*eR2 - cmd.kOm[1]*eOm2 + in2;
