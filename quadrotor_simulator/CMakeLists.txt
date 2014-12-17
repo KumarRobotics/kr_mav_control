@@ -6,7 +6,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs nav_msgs sensor_msgs cmake_modules)
+find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs nav_msgs sensor_msgs tf cmake_modules)
 find_package(Eigen REQUIRED)
 
 include_directories(include include/odeint-v2/include ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
@@ -14,7 +14,7 @@ include_directories(include include/odeint-v2/include ${EIGEN_INCLUDE_DIR} ${cat
 catkin_package(
   INCLUDE_DIRS
   LIBRARIES
-  CATKIN_DEPENDS roscpp quadrotor_msgs nav_msgs sensor_msgs
+  CATKIN_DEPENDS roscpp quadrotor_msgs nav_msgs sensor_msgs tf
   DEPENDS Eigen)
 
 add_library(quadrotor_dynamics src/dynamics/Quadrotor.cpp)
