@@ -20,7 +20,7 @@
   <build_depend>quadrotor_msgs</build_depend>
   <build_depend>nav_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
-  <build_depend>tf</build_depend>
+  <build_depend>tf2_ros</build_depend>
   <build_depend>cmake_modules</build_depend>
 
   <!-- Dependencies needed after this package is compiled. -->
@@ -28,7 +28,7 @@
   <run_depend>quadrotor_msgs</run_depend>
   <run_depend>nav_msgs</run_depend>
   <run_depend>sensor_msgs</run_depend>
-  <run_depend>tf</run_depend>
+  <run_depend>tf2_ros</run_depend>
 
   <!-- Dependencies needed only for running tests. -->
   <!-- <test_depend>roscpp</test_depend> -->

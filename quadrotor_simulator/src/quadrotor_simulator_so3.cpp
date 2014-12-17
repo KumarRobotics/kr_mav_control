@@ -4,7 +4,7 @@
 #include <sensor_msgs/Imu.h>
 #include <quadrotor_msgs/SO3Command.h>
 #include <quadrotor_simulator/Quadrotor.h>
-#include <tf/transform_broadcaster.h>
+#include <tf2_ros/transform_broadcaster.h>
 
 typedef struct _ControlInput
 {
@@ -280,7 +280,7 @@ void quadToImuMsg(const QuadrotorSimulator::Quadrotor &quad, sensor_msgs::Imu &i
 
 void tfBroadcast(const nav_msgs::Odometry &odom_msg)
 {
-  static tf::TransformBroadcaster br;
+  static tf2_ros::TransformBroadcaster br;
   geometry_msgs::TransformStamped ts;
 
   ts.header.stamp = odom_msg.header.stamp;
