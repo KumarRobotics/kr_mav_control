@@ -287,7 +287,7 @@ void quadToImuMsg(const QuadrotorSimulator::Quadrotor &quad, sensor_msgs::Imu &i
 
 void tfBroadcast(const nav_msgs::Odometry &odom_msg)
 {
-  tf::TransformBroadcaster br;
+  static tf::TransformBroadcaster br;
   geometry_msgs::TransformStamped ts;
 
   ts.header.stamp = odom_msg.header.stamp;
