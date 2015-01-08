@@ -12,6 +12,10 @@
 *
 */
 
+/*
+* Modified by Justin Thomas to use the PWM signals directly for our own servos
+*/
+
 #include "main.h"
 #include "system.h"
 #include "pelican_ptu.h"
@@ -34,7 +38,7 @@ void PTU_init(void)
 #endif
 
 #ifdef PELICAN_PTU
-    CAMERA_ptu.servo_pitch_offset=60500;
+  CAMERA_ptu.servo_pitch_offset=60500;
 	CAMERA_ptu.servo_pitch_scale=54853;
 	CAMERA_ptu.servo_pitch_min=44000;
 	CAMERA_ptu.servo_pitch_max=128000;
@@ -46,7 +50,6 @@ void PTU_init(void)
 #endif
 }
 
-
 void PTU_update(int servo_pos)
 {
 	static int ptu_cnt=0;
@@ -55,87 +58,14 @@ void PTU_update(int servo_pos)
 		ptu_cnt=0;
 		SERVO_roll_move(servo_pos);
 	}
-    	//int angle_pitch, angle_roll;
-
-#if 0
-
-#ifdef CAMMOUNT_XCONFIG	//rotate pitch/roll tiltcompensation for 45°
-#ifndef CAM_FACING_FRONT_RIGHT
-    angle_pitch=IMU_CalcData.angle_nick*707/1000+IMU_CalcData.angle_roll*707/1000;
-    angle_roll=IMU_CalcData.angle_roll*707/1000-IMU_CalcData.angle_nick*707/1000;
-#else
-    angle_roll=IMU_CalcData.angle_nick*707/1000+IMU_CalcData.angle_roll*707/1000;
-    angle_pitch=-IMU_CalcData.angle_roll*707/1000+IMU_CalcData.angle_nick*707/1000;
-#endif
-#else
-    angle_pitch=IMU_CalcData.angle_nick;
-    angle_roll=IMU_CalcData.angle_roll;
-#endif
-#ifndef	HUMMINGBIRD_ROLL_SERVO
-		if(CAMERA_Commands.status&0x02)	//no tilt compensation
-		{
-			SERVO_move_analog((CAMERA_OFFSET_HUMMINGBIRD+CAMERA_Commands.desired_angle_pitch)*HUMMINGBIRD_SERVO_DIRECTION_PITCH);
-		}
-		else
-		{
-			int t=0;	//to overcome compiler optimization problem
-			SERVO_move_analog(t+(CAMERA_OFFSET_HUMMINGBIRD+CAMERA_Commands.desired_angle_pitch+IMU_CalcData.angle_nick)*HUMMINGBIRD_SERVO_DIRECTION_PITCH);
-		}
-#else
-		static int cam_angle_pitch=0;
-#ifdef SET_CAMERA_ANGLE_INCREMENTAL
-		if(LL_1khz_attitude_data.RC_data[4]>192) cam_angle_pitch+=200;
-		else if(LL_1khz_attitude_data.RC_data[4]<64) cam_angle_pitch-=200;
-		if(cam_angle_pitch>55000) cam_angle_pitch=55000;
-		if(cam_angle_pitch<-55000) cam_angle_pitch=-55000;
-#else
-		cam_angle_pitch=CAMERA_Commands.desired_angle_pitch;
-#ifdef APTINA
-		if(cam_angle_pitch<-90000) cam_angle_pitch=-90000;
-		else if(cam_angle_pitch>0) cam_angle_pitch=0;
-#endif
-#endif
-
-		if(CAMERA_Commands.status&0x02)	//no tilt compensation
-		{
-			SERVO_pitch_move((CAMERA_OFFSET_HUMMINGBIRD_PITCH+cam_angle_pitch)*HUMMINGBIRD_SERVO_DIRECTION_PITCH);
-			SERVO_roll_move((CAMERA_OFFSET_HUMMINGBIRD_ROLL+CAMERA_Commands.desired_angle_roll)*HUMMINGBIRD_SERVO_DIRECTION_ROLL);
-		}
-		else
-		{
-			SERVO_pitch_move((CAMERA_OFFSET_HUMMINGBIRD_PITCH+cam_angle_pitch+angle_pitch)*HUMMINGBIRD_SERVO_DIRECTION_PITCH);
-			SERVO_roll_move((CAMERA_OFFSET_HUMMINGBIRD_ROLL+CAMERA_Commands.desired_angle_roll+angle_roll)*HUMMINGBIRD_SERVO_DIRECTION_ROLL);
-		}
-#endif
-#ifndef IO1AND2ONCHANNEL5AND7
-		if(CAMERA_Commands.status&CAM_TRIGGERED)  IOCLR1 = (1<<16);	//turn camera on
-		else IOSET1 = (1<<16);	//turn camera off
-#endif
-#endif
-}
-
-
-void SERVO_pitch_move (int angle)
-{
-    unsigned int value;
-    value=CAMERA_ptu.servo_pitch_offset+(angle/10)*CAMERA_ptu.servo_pitch_scale/9000;	//9000
-
-    if(value>CAMERA_ptu.servo_pitch_max) value=CAMERA_ptu.servo_pitch_max;
-    else if(value<CAMERA_ptu.servo_pitch_min) value=CAMERA_ptu.servo_pitch_min;
-
-    PWMMR5 = value;
-    PWMLER = LER5_EN|LER1_EN|LER2_EN;
 }
 
 void SERVO_roll_move (int angle)
 {
-    int value;
-    //value=CAMERA_ptu.servo_roll_offset+(angle/10)*CAMERA_ptu.servo_roll_scale/9000;	//9000
+  unsigned long value = 10 * angle; 
 
-    value = 10*angle;
-
-    //if(value>CAMERA_ptu.servo_roll_max) value=CAMERA_ptu.servo_roll_max;
-    //else if(value<CAMERA_ptu.servo_roll_min) value=CAMERA_ptu.servo_roll_min;
+  if (value < 60000) value = 60000;
+  if (value > 120000) value = 120000;
 
 #ifdef HUMMINGBIRD_ROLL_SERVO_ON_SSEL0
     PWMMR2 = value;
@@ -145,4 +75,10 @@ void SERVO_roll_move (int angle)
     PWMLER = LER5_EN|LER1_EN|LER2_EN;
 }
 
+void SERVO_pitch_move (int angle)
+{
+    unsigned int value = 10*angle;
 
+    PWMMR5 = value;
+    PWMLER = LER5_EN|LER1_EN|LER2_EN;
+}

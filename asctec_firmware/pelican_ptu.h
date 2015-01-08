@@ -18,7 +18,6 @@ void PTU_update(int);
 void SERVO_pitch_move(int);
 void SERVO_roll_move(int);
 
-
 struct CAMERA_PTU {	//Pan Tilt Unit Data
 
 	int servo_roll_offset;
@@ -38,8 +37,8 @@ extern struct CAMERA_PTU CAMERA_ptu;
 
 struct CAMERA_COMMANDS {
 
-    unsigned short status;     //0x01 => camera power on; 0x00 => camera power off
-    short chksum;  //status + desired_angle_pitch + desired_angle_roll;
+  unsigned short status;     //0x01 => camera power on; 0x00 => camera power off
+  short chksum;  //status + desired_angle_pitch + desired_angle_roll;
 	int desired_angle_pitch;	//desired angles in 1/1000th degree
 	int desired_angle_roll;
 };
@@ -47,4 +46,3 @@ struct CAMERA_COMMANDS {
 extern struct CAMERA_COMMANDS CAMERA_Commands;
 
 #endif /*PELICAN_PTU_H_*/
-
