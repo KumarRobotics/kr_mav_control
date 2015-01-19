@@ -26,3 +26,10 @@
     </description>
   </class>
 </library>
+<library path="lib/libline_tracker_waypoints">
+  <class name="line_tracker/LineTrackerWaypoints" type="LineTrackerWaypoints" base_class_type="controllers_manager::Controller">
+    <description>
+      This is a controller which follows waypoints trajectory with desired yaw.
+    </description>
+  </class>
+</library>
