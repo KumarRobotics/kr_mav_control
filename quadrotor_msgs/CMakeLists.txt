@@ -18,6 +18,7 @@ add_message_files(DIRECTORY msg
   FlatOutputs.msg
   OutputData.msg
   PositionCommand.msg
+  PWMCommand.msg
   Serial.msg
   SO3Command.msg
   StatusData.msg

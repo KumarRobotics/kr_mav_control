@@ -54,4 +54,11 @@ struct TRPY_CMD
   uint8_t use_external_yaw:1;
 };
 
+#define TYPE_PWM_CMD 'w'
+struct PWM_CMD_INPUT
+{
+  // Scaling factors when decoding
+  uint8_t pwm[2]; // /255
+};
+
 #endif

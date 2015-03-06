@@ -71,6 +71,7 @@ SRCARM = LL_HL_comm.c
 SRCARM += gpsmath.c
 SRCARM += buzzer.c
 SRCARM += sdk.c
+SRCARM += pelican_ptu.c
 
 #Sources with interrupt routines in them
 SRCARMINT = $(TARGET).c

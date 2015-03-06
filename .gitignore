@@ -4,6 +4,7 @@ _*.py
 *.o
 *.so
 *.swp
+*.DS_Store
 ROS_NOBUILD
 
 build

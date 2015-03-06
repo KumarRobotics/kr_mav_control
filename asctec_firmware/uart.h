@@ -55,6 +55,7 @@ extern uint8_t trigger_transmission;
 extern uint8_t transmission_running;
 
 extern uint8_t Ctrl_Input_updated;
+extern uint8_t PWM_Input_updated;
 
 #define RBREAD 0
 #define RBWRITE 1

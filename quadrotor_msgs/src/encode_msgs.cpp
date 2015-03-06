@@ -61,4 +61,16 @@ void encodeTRPYCommand(const quadrotor_msgs::TRPYCommand &trpy_command,
   memcpy(&output[0], &trpy_cmd_input, sizeof(trpy_cmd_input));
 }
 
+void encodePWMCommand(const quadrotor_msgs::PWMCommand &pwm_command,
+                      std::vector<uint8_t> &output)
+{
+  struct PWM_CMD_INPUT pwm_cmd_input;
+
+  pwm_cmd_input.pwm[0] = pwm_command.pwm[0]*255;
+  pwm_cmd_input.pwm[1] = pwm_command.pwm[1]*255;
+
+  output.resize(sizeof(pwm_cmd_input));
+  memcpy(&output[0], &pwm_cmd_input, sizeof(pwm_cmd_input));
+}
+
 }
