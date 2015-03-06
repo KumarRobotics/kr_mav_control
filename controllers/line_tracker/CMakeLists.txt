@@ -38,7 +38,3 @@ target_link_libraries(line_tracker_distance ${catkin_LIBRARIES})
 add_library(line_tracker_yaw src/line_tracker_yaw.cpp)
 add_dependencies(line_tracker_yaw ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(line_tracker_yaw ${catkin_LIBRARIES})
-
-add_library(line_tracker_waypoints src/line_tracker_waypoints.cpp)
-add_dependencies(line_tracker_waypoints ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(line_tracker_waypoints ${catkin_LIBRARIES})
