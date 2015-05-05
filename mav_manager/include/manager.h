@@ -47,18 +47,11 @@ static const std::string null_tracker_str("null_tracker/NullTracker");
 enum enum_controllers
 {
   INIT,
-  TAKEOFF,
-  HOVER,
-  HOME,
   LINE_TRACKER_MIN_JERK,
   LINE_TRACKER_DISTANCE,
-  // LINE_TRACKER_YAW,
   VELOCITY_TRACKER,
   NULL_TRACKER,
-  // VISION_CONTROL,
   LAND,
-  // PREP_TRAJ,
-  // TRAJ,
   NONE,
 };
 
@@ -71,10 +64,11 @@ class MAVManager {
 
     vec3 pos_;
     vec4 offsets_;
+    quat odom_q_;
+    double yaw_;
 
     // geometry_msgs::Point pos_;
     geometry_msgs::Vector3 vel_;
-    geometry_msgs::Quaternion odom_q_;
     geometry_msgs::Quaternion imu_q_;
     
     // Odometry stuff
@@ -104,7 +98,7 @@ class MAVManager {
     ros::Publisher pub_estop_;
     ros::Publisher pub_goal_yaw_;
     // ros::Publisher pub_info_bool_;
-    // ros::Publisher so3_command_pub_;
+    ros::Publisher so3_command_pub_;
     // ros::Publisher pub_position_cmd_;
     ros::Publisher pub_pwm_command_;
 
@@ -129,14 +123,17 @@ class MAVManager {
     void goTo(double, double, double);                // (x, y, z)
     void goTo(double, double, double, double);        // (x, y, z, yaw)
 
-    void setVelocity(vec4);                           // (xyz(yaw))
-    void setVelocity(vec3);                           // (xyz)
-    void setVelocity(vec3, double);                   // (xyz, yaw)
-    void setVelocity(double, double, double);         // (x, y, z)
-    void setVelocity(double, double, double, double); // (x, y, z, yaw)
+    void worldVelocity(vec4);                           // (xyz(yaw))
+    void worldVelocity(vec3);                           // (xyz)
+    void worldVelocity(vec3, double);                   // (xyz, yaw)
+    void worldVelocity(double, double, double);         // (x, y, z)
+    void worldVelocity(double, double, double, double); // (x, y, z, yaw)
 
-    // The following might be a tempting option, but should only be published from a controller
-    // void positionCommand(quadrotor_msgs::PositionCommand);
+    void bodyVelocity(vec4);                           // (xyz(yaw))
+    void bodyVelocity(vec3);                           // (xyz)
+    void bodyVelocity(vec3, double);                   // (xyz, yaw)
+    void bodyVelocity(double, double, double);         // (x, y, z)
+    void bodyVelocity(double, double, double, double); // (x, y, z, yaw)
 
     // Yaw control
     void setYaw(double), setYawVelocity(double);
@@ -167,13 +164,26 @@ MAVManager::MAVManager(): nh_("~"), have_odom_(false), active_controller_(INIT),
 
   // Publishers
   pub_goal_min_jerk_ = nh_.advertise<geometry_msgs::Vector3>("controllers_manager/line_tracker_min_jerk/goal", 1);
-   
   pub_goal_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("controllers_manager/velocity_tracker/vel_cmd_with_yaw", 1);
-  // pub_position_cmd_ = nh_.advertise<quadrotor_msgs::PositionCommand>("position_cmd", 1);
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 1);
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 1);
-  // so3_command_pub_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 1);
-  // pub_pwm_command_ = nh_.advertise<quadrotor_msgs::PWMCommand>("pwm_cmd", 1);
+  so3_command_pub_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 1);
+  
+  // Disable motors
+  std_msgs::Bool motors_cmd;
+  motors_cmd.data = false;
+  pub_motors_.publish(motors_cmd);
+  
+  ROS_DEBUG("Starting NullTracker");
+  controllers_manager::Transition transition_cmd;
+  transition_cmd.request.controller = null_tracker_str;
+  srv_transition_.call(transition_cmd);
+  active_controller_ = NULL_TRACKER;
+
+  // Publish so3_command to stop motors
+  quadrotor_msgs::SO3Command so3_cmd;
+  so3_cmd.aux.enable_motors = false;
+  so3_command_pub_.publish(so3_cmd);
 }
 
 
@@ -183,10 +193,14 @@ void MAVManager::updateOdom(const nav_msgs::Odometry::ConstPtr &msg)
   pos_(1) = msg->pose.pose.position.y;
   pos_(2) = msg->pose.pose.position.z;
 
-  odom_q_ = msg->pose.pose.orientation;
+  odom_q_ = quat(
+      msg->pose.pose.orientation.w,
+      msg->pose.pose.orientation.x,
+      msg->pose.pose.orientation.y,
+      msg->pose.pose.orientation.z);
+
+  yaw_ = tf::getYaw(msg->pose.pose.orientation);
 }
-// Get position gains using try/catch
-// -> Throw excpetion if not set
 
 void MAVManager::takeoff()
 {
@@ -201,8 +215,9 @@ void MAVManager::takeoff()
       goal.y = pos_(1);
       goal.z = pos_(2) + 0.2;
       pub_goal_distance_.publish(goal);
-      
-      if (active_controller_ == INIT)
+     
+      // Only takeoff if currently under NULL_TRACKER
+      if (active_controller_ == NULL_TRACKER)
       {
         usleep(100000);
         controllers_manager::Transition transition_cmd;
@@ -225,7 +240,7 @@ bool MAVManager::setHome()
     home_ = pos_;
     home_set_ = true;
 
-    home_yaw_ = 0; // #### Should get this from the odom quaternion
+    home_yaw_ = yaw_;
     home_yaw_set_ = true;
   }
   else
@@ -259,45 +274,36 @@ void MAVManager::goTo(vec4 target) // (xyz(psi))
   // Only 
   if (active_controller_ != LINE_TRACKER_MIN_JERK)
   {
-    usleep(100000); // #### Try to come up with a better way
+    usleep(100000);
     controllers_manager::Transition transition_cmd;
     transition_cmd.request.controller = line_tracker_min_jerk;
     srv_transition_.call(transition_cmd);
     active_controller_ = LINE_TRACKER_MIN_JERK;
   }
 }
-
 void MAVManager::goTo(vec3 xyz)
 {
-  // #### This can be computed more efficiently
-  tf::Quaternion q;
-  tf::quaternionMsgToTF(odom_q_, q);
-  double roll, pitch, yaw;
-  tf::Matrix3x3(q).getEulerYPR(yaw, pitch, roll);
-
-  vec4 goal(xyz(0), xyz(1), xyz(2), yaw);
+  vec4 goal(xyz(0), xyz(1), xyz(2), yaw_);
   this->goTo(goal);
 }
-
 void MAVManager::goTo(vec3 xyz, double yaw)
 {
   vec4 goal(xyz(0), xyz(1), xyz(2), yaw);
   this->goTo(goal);
 }
-
 void MAVManager::goTo(double x, double y, double z)
 {
   vec3 goal(x,y,z);
   this->goTo(goal);
 }
-
 void MAVManager::goTo(double x, double y, double z, double yaw)
 {
   vec4 goal(x,y,z,yaw);
   this->goTo(goal);
 }
 
-void MAVManager::setVelocity(vec4 vel)
+// World Velocity commands
+void MAVManager::worldVelocity(vec4 vel)
 {
   quadrotor_msgs::FlatOutputs goal;
   goal.x = vel(0);
@@ -317,30 +323,53 @@ void MAVManager::setVelocity(vec4 vel)
     active_controller_ = VELOCITY_TRACKER;
   }
 }
-
-void MAVManager::setVelocity(vec3 xyz)
+void MAVManager::worldVelocity(vec3 xyz)
 {
   vec4 goal(xyz(0), xyz(1), xyz(2), 0);
-  this->setVelocity(goal);
+  this->worldVelocity(goal);
 }
-
-void MAVManager::setVelocity(vec3 xyz, double yaw)
+void MAVManager::worldVelocity(vec3 xyz, double yaw)
 {
   vec4 goal(xyz(0), xyz(1), xyz(2), yaw);
-  this->setVelocity(goal);
+  this->worldVelocity(goal);
 }
-
-void MAVManager::setVelocity(double x, double y, double z)
+void MAVManager::worldVelocity(double x, double y, double z)
 {
   vec4 goal(x,y,z,0);
-  this->setVelocity(goal);
+  this->worldVelocity(goal);
 }
-
-void MAVManager::setVelocity(double x, double y, double z, double yaw)
+void MAVManager::worldVelocity(double x, double y, double z, double yaw)
 {
   vec4 goal(x,y,z,yaw);
-  this->setVelocity(goal);
+  this->worldVelocity(goal);
 }
+
+// Body Velocity commands
+void MAVManager::bodyVelocity(vec3 xyz, double yaw)
+{
+  vec3 vel(odom_q_ * xyz);
+  this->worldVelocity(vel, yaw);
+}
+void MAVManager::bodyVelocity(vec4 vel)
+{
+  vec3 v(vel(0), vel(1), vel(2));
+  this->bodyVelocity(v, vel(3));
+}
+void MAVManager::bodyVelocity(vec3 xyz)
+{
+  this->bodyVelocity(xyz, 0);
+}
+void MAVManager::bodyVelocity(double x, double y, double z)
+{
+  vec3 vel(x,y,z);
+  this->bodyVelocity(vel, 0);
+}
+void MAVManager::bodyVelocity(double x, double y, double z, double yaw)
+{
+  vec3 vel(x,y,z);
+  this->bodyVelocity(vel, yaw);
+}
+
 
 void MAVManager::motors(bool flag)
 {
@@ -388,7 +417,7 @@ void MAVManager::useRadioForVelocity()
 
   vel(3) = -((double)radio_channel_[3] - scale) / scale * rc_max_w;
 
-  this->setVelocity(vel);
+  this->worldVelocity(vel);
 }
 
 void MAVManager::estop()
