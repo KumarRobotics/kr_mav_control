@@ -1,10 +1,6 @@
 #include <ros/ros.h>
 #include <controllers_manager/Controller.h>
-#include <nav_msgs/Odometry.h>
-#include <std_msgs/Float64.h>
-#include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/FlatOutputs.h>
-#include <geometry_msgs/Vector3.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
 #include <line_tracker/DesVelAcc.h>

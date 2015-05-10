@@ -1,8 +1,6 @@
 #include <ros/ros.h>
 #include <controllers_manager/Controller.h>
-#include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Vector3.h>
-#include <quadrotor_msgs/PositionCommand.h>
 #include <tf/transform_datatypes.h>
 
 class VelocityTracker : public controllers_manager::Controller

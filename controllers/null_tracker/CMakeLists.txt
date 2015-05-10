@@ -6,18 +6,15 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs nodelet controllers_manager
-  cmake_modules)
-find_package(Eigen REQUIRED)
+find_package(catkin REQUIRED COMPONENTS controllers_manager)
 
-include_directories(include ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS
-  LIBRARIES
-  CATKIN_DEPENDS roscpp quadrotor_msgs nodelet controllers_manager
-  DEPENDS Eigen)
+  LIBRARIES null_tracker
+  CATKIN_DEPENDS controllers_manager)
 
 add_library(null_tracker src/null_tracker.cpp)
-add_dependencies(null_tracker ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(null_tracker ${catkin_EXPORTED_TARGETS})
 target_link_libraries(null_tracker ${catkin_LIBRARIES})

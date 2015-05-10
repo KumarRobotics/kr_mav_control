@@ -1,7 +1,5 @@
 #include <ros/ros.h>
 #include <controllers_manager/Controller.h>
-#include <nav_msgs/Odometry.h>
-#include <quadrotor_msgs/PositionCommand.h>
 #include <geometry_msgs/Vector3.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
