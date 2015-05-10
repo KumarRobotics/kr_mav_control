@@ -12,10 +12,12 @@
   <author>Kartik Mohta</author>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>message_generation</build_depend>
   <depend>controllers_manager</depend>
   <depend>geometry_msgs</depend>
   <depend>tf</depend>
   <depend>cmake_modules</depend>
+  <exec_depend>message_runtime</exec_depend>
 
   <export>
     <controllers_manager plugin="${prefix}/plugin.xml"/>
