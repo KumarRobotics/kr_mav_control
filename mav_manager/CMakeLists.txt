@@ -26,8 +26,9 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
 add_service_files(
   DIRECTORY srv
   FILES 
-    Vec4.srv
+    Bool.srv
     Empty.srv
+    Vec4.srv
 )
 generate_messages()
 

@@ -33,6 +33,7 @@ MAVManager::MAVManager():
   offsets_(0,0,0,0) // TODO: The offsets need to be implemented throughout
 {
   // Publishers
+  pub_goal_line_tracker_distance_ = nh_.advertise<geometry_msgs::Vector3>("controllers_manager/line_tracker_distance/goal", 10);
   pub_goal_min_jerk_ = nh_.advertise<geometry_msgs::Vector3>("controllers_manager/line_tracker_min_jerk/goal", 10);
   pub_goal_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("controllers_manager/velocity_tracker/vel_cmd_with_yaw", 10);
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
@@ -67,6 +68,8 @@ MAVManager::MAVManager():
   so3_cmd.orientation.w = 1;
   so3_cmd.aux.enable_motors = false;
   so3_command_pub_.publish(so3_cmd);
+
+  motors_ = false;
 }
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg)
@@ -95,39 +98,45 @@ void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg)
 
 bool MAVManager::takeoff()
 {
-  bool success(false);
-  if (have_odom_)
+  if (!have_odom_)
   {
-    if (this->setHome())
-    {
-      ROS_INFO("Initiating launch sequence...");
+    ROS_WARN("Cannot takeoff without odometry.");
+    return false;
+  }
 
-      geometry_msgs::Point goal;
-      goal.x = pos_(0);
-      goal.y = pos_(1);
-      goal.z = pos_(2) + 0.2;
-      pub_goal_distance_.publish(goal);
+  if (!this->setHome())
+    return false;
 
-      // Only takeoff if currently under NULL_TRACKER
-      if (active_controller_ == NULL_TRACKER)
-      {
-        usleep(100000);
-        controllers_manager::Transition transition_cmd;
-        transition_cmd.request.controller = line_tracker_distance;
-        if (srv_transition_.call(transition_cmd))
-        {
-          active_controller_ = LINE_TRACKER_DISTANCE;
-          success = true;
-        }
-      }
-      else
-        ROS_WARN("active_controller_ must be NULL_TRACKER before taking off");
-    }
+  if (!motors_)
+  {
+    ROS_WARN("Cannot takeoff until motors are enabled.");
+    return false;
+  }
+
+  // Only takeoff if currently under NULL_TRACKER
+  if (active_controller_ != NULL_TRACKER)
+  {
+    ROS_WARN("active_controller_ must be NULL_TRACKER before taking off");
+    return false;
+  }
+ 
+  ROS_INFO("Initiating launch sequence...");
+  geometry_msgs::Point goal;
+  goal.x = pos_(0);
+  goal.y = pos_(1);
+  goal.z = pos_(2) + 0.2;
+  pub_goal_line_tracker_distance_.publish(goal);
+   
+  usleep(100000);
+  controllers_manager::Transition transition_cmd;
+  transition_cmd.request.controller = line_tracker_distance;
+  if (srv_transition_.call(transition_cmd))
+  {
+    active_controller_ = LINE_TRACKER_DISTANCE;
+    return true;
   }
   else
-    ROS_WARN("Cannot takeoff without odometry.");
-
-  return success;
+    return false;
 }
 
 bool MAVManager::setHome()
@@ -161,8 +170,7 @@ bool MAVManager::goHome()
 
   if (home_set_ || home_yaw_set_)
   {
-    this->goTo(goal);
-    return true;
+    return this->goTo(goal);
   }
   else
   { 
@@ -171,7 +179,7 @@ bool MAVManager::goHome()
   }
 }
 
-void MAVManager::goTo(vec4 target) // (xyz(psi))
+bool MAVManager::goTo(vec4 target) // (xyz(psi))
 {
   quadrotor_msgs::FlatOutputs goal;
   goal.x   = target(0) + offsets_(0);
@@ -187,36 +195,38 @@ void MAVManager::goTo(vec4 target) // (xyz(psi))
     usleep(100000);
     controllers_manager::Transition transition_cmd;
     transition_cmd.request.controller = line_tracker_min_jerk;
+    
     if (srv_transition_.call(transition_cmd))
-    {
       active_controller_ = LINE_TRACKER_MIN_JERK;
-    }
+    else
+      return false;
   }
+  return true;
 }
-void MAVManager::goTo(vec3 xyz)
+bool MAVManager::goTo(vec3 xyz)
 {
   vec4 goal(xyz(0), xyz(1), xyz(2), yaw_);
-  this->goTo(goal);
+  return this->goTo(goal);
 }
-void MAVManager::goTo(vec3 xyz, double yaw)
+bool MAVManager::goTo(vec3 xyz, double yaw)
 {
   vec4 goal(xyz(0), xyz(1), xyz(2), yaw);
-  this->goTo(goal);
+  return this->goTo(goal);
 }
-void MAVManager::goTo(double x, double y, double z)
+bool MAVManager::goTo(double x, double y, double z)
 {
   vec3 goal(x,y,z);
-  this->goTo(goal);
+  return this->goTo(goal);
 }
-void MAVManager::goTo(double x, double y, double z, double yaw)
+bool MAVManager::goTo(double x, double y, double z, double yaw)
 {
   vec4 goal(x,y,z,yaw);
-  this->goTo(goal);
+  return this->goTo(goal);
 }
-void MAVManager::goToYaw(double yaw)
+bool MAVManager::goToYaw(double yaw)
 {
   vec4 goal(pos_(0), pos_(1), pos_(2), yaw);
-  this->goTo(goal);
+  return this->goTo(goal);
 }
 
 // World Velocity commands
@@ -350,9 +360,18 @@ void MAVManager::estop()
 
   // Disarm motors
   this->motors(false);
+
+  // Publish so3_command to ensure motors are stopped
+  quadrotor_msgs::SO3Command so3_cmd;
+  so3_cmd.orientation.x = 0;
+  so3_cmd.orientation.y = 0;
+  so3_cmd.orientation.z = 0;
+  so3_cmd.orientation.w = 1;
+  so3_cmd.aux.enable_motors = false;
+  so3_command_pub_.publish(so3_cmd);
 }
 
-void MAVManager::hover()
+bool MAVManager::hover()
 {
   // Assuming constant-deceleration (same as defaults in min_jerk)
   // TODO: Maybe set these as params
@@ -379,25 +398,25 @@ void MAVManager::hover()
       yaw_    + 1/2 * acc(3) * t_yaw * t_yaw);
 
   ROS_DEBUG("Transitioning smoothly to hover.");
-  this->goTo(goal);
+  return this->goTo(goal);
 }
 
-void MAVManager::ehover()
+bool MAVManager::ehover()
 {
   geometry_msgs::Point goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
   goal.z = pos_(2);
-  pub_goal_distance_.publish(goal);
+  pub_goal_line_tracker_distance_.publish(goal);
 
   usleep(100000);
   controllers_manager::Transition transition_cmd;
   transition_cmd.request.controller = line_tracker_distance;
+  
   if (srv_transition_.call(transition_cmd))
-  {
     active_controller_ = LINE_TRACKER_DISTANCE;
-  }
-  // This should keep trying until the transition is successful
+  else 
+    return false;
+
+  return true;
 }
-
-

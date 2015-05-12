@@ -17,8 +17,9 @@
 #include <quadrotor_msgs/OutputData.h>
 
 // Service includes
-#include <mav_manager/Vec4.h>
+#include <mav_manager/Bool.h>
 #include <mav_manager/Empty.h>
+#include <mav_manager/Vec4.h>
 
 class MAVManager 
 {
@@ -59,11 +60,11 @@ class MAVManager
     // Movement
     bool takeoff();
 
-    void goTo(vec4 xyz_yaw);
-    void goTo(vec3 xyz);                                 // Uses current yaw
-    void goTo(vec3 xyz, double yaw);
-    void goTo(double x, double y, double z);             // Uses current yaw
-    void goTo(double x, double y, double z, double yaw);
+    bool goTo(vec4 xyz_yaw);
+    bool goTo(vec3 xyz);                                 // Uses current yaw
+    bool goTo(vec3 xyz, double yaw);
+    bool goTo(double x, double y, double z);             // Uses current yaw
+    bool goTo(double x, double y, double z, double yaw);
 
     void setDesVelWorld(vec4);                           // (xyz(yaw))
     void setDesVelWorld(vec3);                           // (xyz)
@@ -78,7 +79,7 @@ class MAVManager
     void setDesVelBody(double, double, double, double); // (x, y, z, yaw)
 
     // Yaw control
-    void goToYaw(double);
+    bool goToYaw(double);
 
     // Waypoints
     void clearWaypoints();
@@ -89,8 +90,8 @@ class MAVManager
     void useRadioForVelocity();
 
     // Safety
-    void hover();
-    void ehover();
+    bool hover();
+    bool ehover();
     void motors(bool);
     void estop();
 
@@ -119,7 +120,7 @@ class MAVManager
 
     // Publishers
     ros::Publisher pub_goal_min_jerk_;
-    ros::Publisher pub_goal_distance_;
+    ros::Publisher pub_goal_line_tracker_distance_;
     ros::Publisher pub_goal_velocity_;
     ros::Publisher pub_motors_;
     ros::Publisher pub_estop_;
