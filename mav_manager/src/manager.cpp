@@ -53,11 +53,19 @@ MAVManager::MAVManager():
   this->motors(false);
 
   ROS_INFO("Starting NullTracker");
+
+  // Sleep to ensure service server initialized
+  ros::Duration(0.25).sleep();
+
   controllers_manager::Transition transition_cmd;
   transition_cmd.request.controller = null_tracker_str;
   if (srv_transition_.call(transition_cmd))
   {
     active_controller_ = NULL_TRACKER;
+  }
+  else
+  {
+    ROS_ERROR("Initial transition to NullTracker failed");
   }
 
   // Publish so3_command to ensure motors are stopped
@@ -119,14 +127,14 @@ bool MAVManager::takeoff()
     ROS_WARN("active_controller_ must be NULL_TRACKER before taking off");
     return false;
   }
- 
+
   ROS_INFO("Initiating launch sequence...");
   geometry_msgs::Point goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
   goal.z = pos_(2) + 0.2;
   pub_goal_line_tracker_distance_.publish(goal);
-   
+
   usleep(100000);
   controllers_manager::Transition transition_cmd;
   transition_cmd.request.controller = line_tracker_distance;
@@ -164,7 +172,7 @@ bool MAVManager::goHome()
     goal(1) = home_(1);
     goal(2) = home_(2);
   }
- 
+
   if (home_yaw_set_)
     goal(3) = home_yaw_;
 
@@ -173,7 +181,7 @@ bool MAVManager::goHome()
     return this->goTo(goal);
   }
   else
-  { 
+  {
     ROS_WARN("Home not set. Cannot go home.");
     return false;
   }
@@ -195,7 +203,7 @@ bool MAVManager::goTo(vec4 target) // (xyz(psi))
     usleep(100000);
     controllers_manager::Transition transition_cmd;
     transition_cmd.request.controller = line_tracker_min_jerk;
-    
+
     if (srv_transition_.call(transition_cmd))
       active_controller_ = LINE_TRACKER_MIN_JERK;
     else
@@ -412,10 +420,10 @@ bool MAVManager::ehover()
   usleep(100000);
   controllers_manager::Transition transition_cmd;
   transition_cmd.request.controller = line_tracker_distance;
-  
+
   if (srv_transition_.call(transition_cmd))
     active_controller_ = LINE_TRACKER_DISTANCE;
-  else 
+  else
     return false;
 
   return true;
