@@ -6,9 +6,10 @@
   </description>
   <maintainer email="jut@seas.upenn.edu">Justin Thomas</maintainer>
   <license>BSD</license>
-  
-  <buildtool_depend>catkin</buildtool_depend>
 
+  <!-- TODO: Remove unnecessary dependencies -->
+
+  <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>nav_msgs</build_depend>
@@ -17,8 +18,10 @@
   <build_depend>quadrotor_msgs</build_depend>
   <build_depend>controllers_manager</build_depend>
   <build_depend>velocity_tracker</build_depend>
-  <build_depend>line_tracker</build_depend>
+  <!-- <build_depend>line_tracker</build_depend> -->
   <build_depend>null_tracker</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>service_generation</build_depend>
 
   <!-- Dependencies needed after this package is compiled. -->
   <run_depend>roscpp</run_depend>
@@ -29,7 +32,9 @@
   <run_depend>quadrotor_msgs</run_depend>
   <run_depend>controllers_manager</run_depend>
   <run_depend>velocity_tracker</run_depend>
-  <run_depend>line_tracker</run_depend>
+  <!-- <run_depend>line_tracker</run_depend> -->
   <run_depend>null_tracker</run_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>service_runtime</run_depend>
 
 </package>
