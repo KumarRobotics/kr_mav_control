@@ -1,8 +1,8 @@
 controllers:
-  - line_tracker/LineTrackerMinJerk
   - line_tracker/LineTrackerDistance
+  - line_tracker/LineTrackerMinJerk
+  - velocity_tracker/VelocityTrackerYaw
+  - null_tracker/NullTracker
 #  - line_tracker/LineTrackerTrapezoid
 #  - line_tracker/LineTrackerYaw
 #  - velocity_tracker/VelocityTracker
-#  - velocity_tracker/VelocityTrackerYaw
-#  - null_tracker/NullTracker
