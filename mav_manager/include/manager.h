@@ -101,6 +101,7 @@ class MAVManager
 
     void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
     void output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg);
+    void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
 
     enum_controllers active_controller_;
     vec3 pos_, vel_;

@@ -45,7 +45,8 @@ MAVManager::MAVManager():
   // Subscribers
   odom_sub_ = nh_.subscribe("odom", 10, &MAVManager::odometry_cb, this);
   output_data_sub_ = nh_.subscribe("output_data", 10, &MAVManager::output_data_cb, this);
-
+  imu_sub_ = nh_.subscribe("imu", 10, &MAVManager::imu_cb, this); 
+        
   // Services
   srv_transition_ = nh_.serviceClient<controllers_manager::Transition>("controllers_manager/transition");
 
@@ -333,6 +334,11 @@ void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg)
 
 // TODO: Put safety monitoring in here
 
+
+}
+
+void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
+{
 
 }
 

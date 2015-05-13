@@ -9,7 +9,8 @@ ros::ServiceServer
   srv_setDesVelWorld_,
   srv_setDesVelBody_,
   srv_hover_,
-  srv_ehover_;
+  srv_ehover_,
+  srv_estop_;
 
 // Typedefs
 typedef Eigen::Vector3d    vec3;
@@ -89,6 +90,7 @@ int main(int argc, char **argv)
   srv_setDesVelBody_ = nh.advertiseService("setDesVelBody", &MAV_Services::setDesVelBody_cb, &mav_srvs);
   srv_hover_ = nh.advertiseService("hover", &MAV_Services::hover_cb, &mav_srvs);
   srv_ehover_ = nh.advertiseService("ehover", &MAV_Services::ehover_cb, &mav_srvs);
+  srv_estop_ = nh.advertiseService("estop", &MAV_Services::estop_cb, &mav_srvs);
 
   // Let's spin some rotors
   ros::spin();
