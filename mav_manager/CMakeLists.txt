@@ -25,7 +25,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
 
 add_service_files(
   DIRECTORY srv
-  FILES 
+  FILES
     Bool.srv
     Empty.srv
     Vec4.srv
@@ -44,9 +44,13 @@ catkin_package(
     controllers_manager
     velocity_tracker
     null_tracker
-    std_msgs 
+    std_msgs
   DEPENDS Eigen)
 
 add_executable(mav_manager src/manager.cpp src/sample.cpp)
 add_dependencies(mav_manager ${catkin_EXPORTED_TARGETS})
 target_link_libraries(mav_manager ${catkin_LIBRARIES})
+
+add_executable(mav_manager_sub src/manager.cpp src/sample_sub.cpp)
+add_dependencies(mav_manager_sub ${catkin_EXPORTED_TARGETS})
+target_link_libraries(mav_manager_sub ${catkin_LIBRARIES})

@@ -55,7 +55,7 @@
     </node>
 
     <node pkg="mav_manager"
-      type="mav_manager"
+      type="mav_manager_sub"
       name="mav_manager"
       output="screen">
     </node>
