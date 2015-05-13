@@ -21,7 +21,7 @@
 #include <mav_manager/Empty.h>
 #include <mav_manager/Vec4.h>
 
-class MAVManager 
+class MAVManager
 {
   public:
 
@@ -86,7 +86,7 @@ class MAVManager
     void addWaypoint();
 
     // Use radio as velocity controller
-    // TODO: This will need to be monitored in the output_data callback if toggled 
+    // TODO: This will need to be monitored in the output_data callback if toggled
     void useRadioForVelocity();
 
     // Safety
@@ -96,7 +96,7 @@ class MAVManager
     void estop();
 
   private:
-    
+
     ros::NodeHandle nh_;
 
     void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
@@ -132,6 +132,7 @@ class MAVManager
     // Subscribers
     ros::Subscriber odom_sub_;
     ros::Subscriber output_data_sub_;
+    ros::Subscriber imu_sub_;
 
     // Services
     ros::ServiceClient srv_transition_;
