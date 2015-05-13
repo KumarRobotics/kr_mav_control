@@ -1,7 +1,0 @@
-<launch>
-   <node pkg="mav_manager"
-      type="mav_manager"
-      name="mav_manager"
-      output="screen">
-    </node>
-</launch>
