@@ -1,8 +1,0 @@
-<library path="lib/libnull_tracker">
-  <class name="null_tracker/NullTracker" type="NullTracker" base_class_type="controllers_manager::Controller">
-    <description>
-      This controller literally does nothing.
-    </description>
-  </class>
-</library>
-
