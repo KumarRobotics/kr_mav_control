@@ -13,7 +13,8 @@ ros::Subscriber
   sub_setDesVelWorld_,
   sub_setDesVelBody_,
   sub_hover_,
-  sub_ehover_;
+  sub_ehover_,
+  sub_estop_;
 
 // Typedefs
 typedef Eigen::Vector3d    vec3;
