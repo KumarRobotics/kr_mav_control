@@ -16,10 +16,11 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>quadrotor_msgs</build_depend>
-  <build_depend>controllers_manager</build_depend>
-  <build_depend>velocity_tracker</build_depend>
-  <!-- <build_depend>line_tracker</build_depend> -->
-  <build_depend>null_tracker</build_depend>
+  <build_depend>trackers_manager</build_depend>
+  <build_depend>std_trackers</build_depend>
+  <!-- build_depend>velocity_tracker</build_depend -->
+  <!-- build_depend>line_tracker</build_depend> -->
+  <!-- build_depend>null_tracker</build_depend -->
   <build_depend>message_generation</build_depend>
   <build_depend>service_generation</build_depend>
 
@@ -30,10 +31,11 @@
   <run_depend>std_msgs</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>quadrotor_msgs</run_depend>
-  <run_depend>controllers_manager</run_depend>
-  <run_depend>velocity_tracker</run_depend>
+  <run_depend>trackers_manager</run_depend>
+  <run_depend>std_trackers</run_depend>
+  <!-- run_depend>velocity_tracker</run_depend -->
   <!-- <run_depend>line_tracker</run_depend> -->
-  <run_depend>null_tracker</run_depend>
+  <!-- run_depend>null_tracker</run_depend -->
   <run_depend>message_runtime</run_depend>
   <run_depend>service_runtime</run_depend>
 

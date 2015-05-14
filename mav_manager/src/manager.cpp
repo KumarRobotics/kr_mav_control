@@ -11,7 +11,7 @@
 #include <tf/transform_datatypes.h>
 
 // quadrotor_control
-#include <controllers_manager/Transition.h>
+#include <trackers_manager/Transition.h>
 #include <quadrotor_msgs/FlatOutputs.h>
 #include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/SO3Command.h>
@@ -30,13 +30,13 @@ MAVManager::MAVManager():
   nh_(""),
   priv_nh_("~"),
   have_odom_(false),
-  active_controller_(INIT),
+  active_tracker_(INIT),
   offsets_(0,0,0,0) // TODO: The offsets need to be implemented throughout
 {
   // Publishers
-  pub_goal_line_tracker_distance_ = nh_.advertise<geometry_msgs::Vector3>("controllers_manager/line_tracker_distance/goal", 10);
-  pub_goal_min_jerk_ = nh_.advertise<geometry_msgs::Vector3>("controllers_manager/line_tracker_min_jerk/goal", 10);
-  pub_goal_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("controllers_manager/velocity_tracker/vel_cmd_with_yaw", 10);
+  pub_goal_line_tracker_distance_ = nh_.advertise<geometry_msgs::Vector3>("trackers_manager/line_tracker_distance/goal", 10);
+  pub_goal_min_jerk_ = nh_.advertise<geometry_msgs::Vector3>("trackers_manager/line_tracker_min_jerk/goal", 10);
+  pub_goal_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/velocity_tracker/vel_cmd_with_yaw", 10);
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
   so3_command_pub_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
@@ -49,7 +49,7 @@ MAVManager::MAVManager():
   imu_sub_ = nh_.subscribe("imu", 10, &MAVManager::imu_cb, this);
 
   // Services
-  srv_transition_ = nh_.serviceClient<controllers_manager::Transition>("controllers_manager/transition");
+  srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
 
   // Disable motors
   this->motors(false);
@@ -61,11 +61,11 @@ MAVManager::MAVManager():
   priv_nh_.param("startup_sleep_duration", duration, 0.25);
   ros::Duration(duration).sleep();
 
-  controllers_manager::Transition transition_cmd;
-  transition_cmd.request.controller = null_tracker_str;
+  trackers_manager::Transition transition_cmd;
+  transition_cmd.request.tracker = null_tracker_str;
   if (srv_transition_.call(transition_cmd))
   {
-    active_controller_ = NULL_TRACKER;
+    active_tracker_ = NULL_TRACKER;
   }
   else
   {
@@ -86,7 +86,7 @@ MAVManager::MAVManager():
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  ROS_INFO_THROTTLE(1, "active_controller_ = %u", active_controller_);
+  ROS_INFO_THROTTLE(1, "active_tracker_ = %u", active_tracker_);
 
   pos_(0) = msg->pose.pose.position.x;
   pos_(1) = msg->pose.pose.position.y;
@@ -126,9 +126,9 @@ bool MAVManager::takeoff()
   }
 
   // Only takeoff if currently under NULL_TRACKER
-  if (active_controller_ != NULL_TRACKER)
+  if (active_tracker_ != NULL_TRACKER)
   {
-    ROS_WARN("active_controller_ must be NULL_TRACKER before taking off");
+    ROS_WARN("active_tracker_ must be NULL_TRACKER before taking off");
     return false;
   }
 
@@ -140,11 +140,11 @@ bool MAVManager::takeoff()
   pub_goal_line_tracker_distance_.publish(goal);
 
   usleep(100000);
-  controllers_manager::Transition transition_cmd;
-  transition_cmd.request.controller = line_tracker_distance;
+  trackers_manager::Transition transition_cmd;
+  transition_cmd.request.tracker = line_tracker_distance;
   if (srv_transition_.call(transition_cmd))
   {
-    active_controller_ = LINE_TRACKER_DISTANCE;
+    active_tracker_ = LINE_TRACKER_DISTANCE;
     return true;
   }
   else
@@ -202,14 +202,14 @@ bool MAVManager::goTo(vec4 target) // (xyz(psi))
   ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}", goal.x, goal.y, goal.z, goal.yaw);
 
   // Only
-  if (active_controller_ != LINE_TRACKER_MIN_JERK)
+  if (active_tracker_ != LINE_TRACKER_MIN_JERK)
   {
     usleep(100000);
-    controllers_manager::Transition transition_cmd;
-    transition_cmd.request.controller = line_tracker_min_jerk;
+    trackers_manager::Transition transition_cmd;
+    transition_cmd.request.tracker = line_tracker_min_jerk;
 
     if (srv_transition_.call(transition_cmd))
-      active_controller_ = LINE_TRACKER_MIN_JERK;
+      active_tracker_ = LINE_TRACKER_MIN_JERK;
     else
       return false;
   }
@@ -252,14 +252,14 @@ void MAVManager::setDesVelWorld(vec4 vel)
   pub_goal_velocity_.publish(goal);
   ROS_INFO("Desired World velocity: (%1.4f, %1.4f, %1.4f, %1.4f)", goal.x, goal.y, goal.z, goal.yaw);
 
-  if (active_controller_ != VELOCITY_TRACKER)
+  if (active_tracker_ != VELOCITY_TRACKER)
   {
     usleep(100000);
-    controllers_manager::Transition transition_cmd;
-    transition_cmd.request.controller = velocity_tracker_str;
+    trackers_manager::Transition transition_cmd;
+    transition_cmd.request.tracker = velocity_tracker_str;
     if (srv_transition_.call(transition_cmd))
     {
-      active_controller_ = VELOCITY_TRACKER;
+      active_tracker_ = VELOCITY_TRACKER;
     }
   }
 }
@@ -427,11 +427,11 @@ bool MAVManager::ehover()
   pub_goal_line_tracker_distance_.publish(goal);
 
   usleep(100000);
-  controllers_manager::Transition transition_cmd;
-  transition_cmd.request.controller = line_tracker_distance;
+  trackers_manager::Transition transition_cmd;
+  transition_cmd.request.tracker = line_tracker_distance;
 
   if (srv_transition_.call(transition_cmd))
-    active_controller_ = LINE_TRACKER_DISTANCE;
+    active_tracker_ = LINE_TRACKER_DISTANCE;
   else
     return false;
 

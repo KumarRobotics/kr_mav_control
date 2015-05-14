@@ -25,7 +25,7 @@ class MAVManager
 {
   public:
 
-    enum enum_controllers
+    enum enum_trackers
     {
       INIT,
       LINE_TRACKER_DISTANCE,
@@ -85,7 +85,7 @@ class MAVManager
     void clearWaypoints();
     void addWaypoint();
 
-    // Use radio as velocity controller
+    // Use radio as velocity tracker
     // TODO: This will need to be monitored in the output_data callback if toggled
     void useRadioForVelocity();
 
@@ -104,7 +104,7 @@ class MAVManager
     void output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
 
-    enum_controllers active_controller_;
+    enum_trackers active_tracker_;
     vec3 pos_, vel_;
     vec4 offsets_;
     quat odom_q_;
