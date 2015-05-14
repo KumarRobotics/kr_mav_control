@@ -34,9 +34,9 @@ catkin_package(
   DEPENDS eigen)
 
 add_library(encode_msgs src/encode_msgs.cpp)
-add_dependencies(encode_msgs ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(encode_msgs ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(encode_msgs ${catkin_LIBRARIES})
 
 add_library(decode_msgs src/decode_msgs.cpp)
-add_dependencies(decode_msgs ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(decode_msgs ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(decode_msgs ${catkin_LIBRARIES})

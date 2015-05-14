@@ -46,9 +46,9 @@ catkin_package(
   DEPENDS Eigen)
 
 add_executable(mav_manager src/manager.cpp src/sample.cpp)
-add_dependencies(mav_manager ${catkin_EXPORTED_TARGETS})
+add_dependencies(mav_manager ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(mav_manager ${catkin_LIBRARIES})
 
 add_executable(mav_manager_sub src/manager.cpp src/sample_sub.cpp)
-add_dependencies(mav_manager_sub ${catkin_EXPORTED_TARGETS})
+add_dependencies(mav_manager_sub ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(mav_manager_sub ${catkin_LIBRARIES})
