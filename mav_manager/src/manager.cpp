@@ -21,10 +21,10 @@
 #include <manager.h>
 
 // Strings
-static const std::string line_tracker_distance("line_tracker/LineTrackerDistance");
-static const std::string line_tracker_min_jerk("line_tracker/LineTrackerMinJerk");
-static const std::string velocity_tracker_str("velocity_tracker/VelocityTrackerYaw");
-static const std::string null_tracker_str("null_tracker/NullTracker");
+static const std::string line_tracker_distance("std_trackers/LineTrackerDistance");
+static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerk");
+static const std::string velocity_tracker_str("std_trackers/VelocityTracker");
+static const std::string null_tracker_str("std_trackers/NullTracker");
 
 MAVManager::MAVManager():
   nh_(""),
