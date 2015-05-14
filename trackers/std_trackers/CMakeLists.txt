@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(common_trackers)
+project(std_trackers)
 
 # set default build type
 if(NOT CMAKE_BUILD_TYPE)

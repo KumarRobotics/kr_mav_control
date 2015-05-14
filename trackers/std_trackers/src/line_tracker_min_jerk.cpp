@@ -3,7 +3,7 @@
 #include <geometry_msgs/Vector3.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
-#include <common_trackers/DesVelAcc.h>
+#include <std_trackers/DesVelAcc.h>
 
 class LineTrackerMinJerk : public trackers_manager::Tracker
 {
@@ -18,8 +18,8 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
 
  private:
   void goal_callback(const geometry_msgs::Vector3::ConstPtr &msg);
-  bool set_des_vel_acc(common_trackers::DesVelAcc::Request &req,
-                       common_trackers::DesVelAcc::Response &res);
+  bool set_des_vel_acc(std_trackers::DesVelAcc::Request &req,
+                       std_trackers::DesVelAcc::Response &res);
 
   void gen_trajectory(const Eigen::Vector3f &xi, const Eigen::Vector3f &xf,
                       const Eigen::Vector3f &vi, const Eigen::Vector3f &vf,
@@ -173,8 +173,8 @@ void LineTrackerMinJerk::goal_callback(const geometry_msgs::Vector3::ConstPtr &m
   goal_reached_ = false;
 }
 
-bool LineTrackerMinJerk::set_des_vel_acc(common_trackers::DesVelAcc::Request &req,
-                                         common_trackers::DesVelAcc::Response &res)
+bool LineTrackerMinJerk::set_des_vel_acc(std_trackers::DesVelAcc::Request &req,
+                                         std_trackers::DesVelAcc::Response &res)
 {
   // Don't allow changes while already following a line
   if(!goal_reached_)

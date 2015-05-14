@@ -3,7 +3,7 @@
 #include <quadrotor_msgs/FlatOutputs.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
-#include <common_trackers/DesVelAcc.h>
+#include <std_trackers/DesVelAcc.h>
 
 class LineTrackerYaw : public trackers_manager::Tracker
 {
@@ -18,8 +18,8 @@ class LineTrackerYaw : public trackers_manager::Tracker
 
  private:
   void goal_callback(const quadrotor_msgs::FlatOutputs::ConstPtr &msg);
-  bool set_des_vel_acc(common_trackers::DesVelAcc::Request &req,
-                       common_trackers::DesVelAcc::Response &res);
+  bool set_des_vel_acc(std_trackers::DesVelAcc::Request &req,
+                       std_trackers::DesVelAcc::Response &res);
 
   ros::Subscriber sub_goal_;
   ros::ServiceServer srv_param_;
@@ -271,8 +271,8 @@ void LineTrackerYaw::goal_callback(const quadrotor_msgs::FlatOutputs::ConstPtr &
   goal_reached_ = false;
 }
 
-bool LineTrackerYaw::set_des_vel_acc(common_trackers::DesVelAcc::Request &req,
-                                     common_trackers::DesVelAcc::Response &res)
+bool LineTrackerYaw::set_des_vel_acc(std_trackers::DesVelAcc::Request &req,
+                                     std_trackers::DesVelAcc::Response &res)
 {
   // Don't allow changes while already following a line
   if(!goal_reached_)
