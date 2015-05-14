@@ -28,6 +28,7 @@ static const std::string null_tracker_str("null_tracker/NullTracker");
 
 MAVManager::MAVManager():
   nh_(""),
+  priv_nh_("~"),
   have_odom_(false),
   active_controller_(INIT),
   offsets_(0,0,0,0) // TODO: The offsets need to be implemented throughout
@@ -45,8 +46,8 @@ MAVManager::MAVManager():
   // Subscribers
   odom_sub_ = nh_.subscribe("odom", 10, &MAVManager::odometry_cb, this);
   output_data_sub_ = nh_.subscribe("output_data", 10, &MAVManager::output_data_cb, this);
-  imu_sub_ = nh_.subscribe("imu", 10, &MAVManager::imu_cb, this); 
-        
+  imu_sub_ = nh_.subscribe("imu", 10, &MAVManager::imu_cb, this);
+
   // Services
   srv_transition_ = nh_.serviceClient<controllers_manager::Transition>("controllers_manager/transition");
 
@@ -56,7 +57,9 @@ MAVManager::MAVManager():
   ROS_INFO("Starting NullTracker");
 
   // Sleep to ensure service server initialized
-  ros::Duration(0.25).sleep();
+  double duration;
+  priv_nh_.param("startup_sleep_duration", duration, 0.25);
+  ros::Duration(duration).sleep();
 
   controllers_manager::Transition transition_cmd;
   transition_cmd.request.controller = null_tracker_str;

@@ -58,6 +58,7 @@
       type="mav_manager_sub"
       name="mav_manager"
       output="screen">
+      <param name="startup_sleep_duration" value="0.25"/>
     </node>
 
   </group>

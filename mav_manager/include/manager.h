@@ -98,6 +98,7 @@ class MAVManager
   private:
 
     ros::NodeHandle nh_;
+    ros::NodeHandle priv_nh_;
 
     void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
     void output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg);
