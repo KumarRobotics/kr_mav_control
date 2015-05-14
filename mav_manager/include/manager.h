@@ -66,17 +66,17 @@ class MAVManager
     bool goTo(double x, double y, double z);             // Uses current yaw
     bool goTo(double x, double y, double z, double yaw);
 
-    void setDesVelWorld(vec4);                           // (xyz(yaw))
-    void setDesVelWorld(vec3);                           // (xyz)
-    void setDesVelWorld(vec3, double);                   // (xyz, yaw)
-    void setDesVelWorld(double, double, double);         // (x, y, z)
-    void setDesVelWorld(double, double, double, double); // (x, y, z, yaw)
+    bool setDesVelWorld(vec4);                           // (xyz(yaw))
+    bool setDesVelWorld(vec3);                           // (xyz)
+    bool setDesVelWorld(vec3, double);                   // (xyz, yaw)
+    bool setDesVelWorld(double, double, double);         // (x, y, z)
+    bool setDesVelWorld(double, double, double, double); // (x, y, z, yaw)
 
-    void setDesVelBody(vec4);                           // (xyz(yaw))
-    void setDesVelBody(vec3);                           // (xyz)
-    void setDesVelBody(vec3, double);                   // (xyz, yaw)
-    void setDesVelBody(double, double, double);         // (x, y, z)
-    void setDesVelBody(double, double, double, double); // (x, y, z, yaw)
+    bool setDesVelBody(vec4);                           // (xyz(yaw))
+    bool setDesVelBody(vec3);                           // (xyz)
+    bool setDesVelBody(vec3, double);                   // (xyz, yaw)
+    bool setDesVelBody(double, double, double);         // (x, y, z)
+    bool setDesVelBody(double, double, double, double); // (x, y, z, yaw)
 
     // Yaw control
     bool goToYaw(double);
@@ -87,7 +87,7 @@ class MAVManager
 
     // Use radio as velocity tracker
     // TODO: This will need to be monitored in the output_data callback if toggled
-    void useRadioForVelocity();
+    bool useRadioForVelocity();
 
     // Safety
     bool hover();

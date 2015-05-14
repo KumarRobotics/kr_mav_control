@@ -47,14 +47,16 @@ class MAV_Services
   bool setDesVelWorld_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
   {
     vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-    mav_.setDesVelWorld(goal);
-    return true;
+    bool flag = mav_.setDesVelWorld(goal);
+    res.success = flag;
+    return flag;
   }
   bool setDesVelBody_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
   {
     vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-    mav_.setDesVelBody(goal);
-    return true;
+    bool flag = mav_.setDesVelBody(goal);
+    res.success = flag;
+    return flag;
   }
   bool hover_cb(mav_manager::Empty::Request &req, mav_manager::Empty::Response &res)
   {
@@ -71,6 +73,7 @@ class MAV_Services
   bool estop_cb(mav_manager::Empty::Request &req, mav_manager::Empty::Response &res)
   {
     mav_.estop();
+    res.success = true;
     return true;
   }
 };

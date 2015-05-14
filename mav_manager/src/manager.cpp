@@ -242,7 +242,7 @@ bool MAVManager::goToYaw(double yaw)
 }
 
 // World Velocity commands
-void MAVManager::setDesVelWorld(vec4 vel)
+bool MAVManager::setDesVelWorld(vec4 vel)
 {
   quadrotor_msgs::FlatOutputs goal;
   goal.x = vel(0);
@@ -258,56 +258,57 @@ void MAVManager::setDesVelWorld(vec4 vel)
     trackers_manager::Transition transition_cmd;
     transition_cmd.request.tracker = velocity_tracker_str;
     if (srv_transition_.call(transition_cmd))
-    {
       active_tracker_ = VELOCITY_TRACKER;
-    }
+    else
+      return false;
   }
+  return true;
 }
-void MAVManager::setDesVelWorld(vec3 xyz)
+bool MAVManager::setDesVelWorld(vec3 xyz)
 {
   vec4 goal(xyz(0), xyz(1), xyz(2), 0);
-  this->setDesVelWorld(goal);
+  return this->setDesVelWorld(goal);
 }
-void MAVManager::setDesVelWorld(vec3 xyz, double yaw)
+bool MAVManager::setDesVelWorld(vec3 xyz, double yaw)
 {
   vec4 goal(xyz(0), xyz(1), xyz(2), yaw);
-  this->setDesVelWorld(goal);
+  return this->setDesVelWorld(goal);
 }
-void MAVManager::setDesVelWorld(double x, double y, double z)
+bool MAVManager::setDesVelWorld(double x, double y, double z)
 {
   vec4 goal(x,y,z,0);
-  this->setDesVelWorld(goal);
+  return this->setDesVelWorld(goal);
 }
-void MAVManager::setDesVelWorld(double x, double y, double z, double yaw)
+bool MAVManager::setDesVelWorld(double x, double y, double z, double yaw)
 {
   vec4 goal(x,y,z,yaw);
-  this->setDesVelWorld(goal);
+  return this->setDesVelWorld(goal);
 }
 
 // Body Velocity commands
-void MAVManager::setDesVelBody(vec3 xyz, double yaw)
+bool MAVManager::setDesVelBody(vec3 xyz, double yaw)
 {
   vec3 vel(odom_q_ * xyz);
-  this->setDesVelWorld(vel, yaw);
+  return this->setDesVelWorld(vel, yaw);
 }
-void MAVManager::setDesVelBody(vec4 vel)
+bool MAVManager::setDesVelBody(vec4 vel)
 {
   vec3 v(vel(0), vel(1), vel(2));
-  this->setDesVelBody(v, vel(3));
+  return this->setDesVelBody(v, vel(3));
 }
-void MAVManager::setDesVelBody(vec3 xyz)
+bool MAVManager::setDesVelBody(vec3 xyz)
 {
-  this->setDesVelBody(xyz, 0);
+  return this->setDesVelBody(xyz, 0);
 }
-void MAVManager::setDesVelBody(double x, double y, double z)
-{
-  vec3 vel(x,y,z);
-  this->setDesVelBody(vel, 0);
-}
-void MAVManager::setDesVelBody(double x, double y, double z, double yaw)
+bool MAVManager::setDesVelBody(double x, double y, double z)
 {
   vec3 vel(x,y,z);
-  this->setDesVelBody(vel, yaw);
+  return this->setDesVelBody(vel, 0);
+}
+bool MAVManager::setDesVelBody(double x, double y, double z, double yaw)
+{
+  vec3 vel(x,y,z);
+  return this->setDesVelBody(vel, yaw);
 }
 
 void MAVManager::motors(bool flag)
@@ -345,7 +346,7 @@ void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
 
 }
 
-void MAVManager::useRadioForVelocity()
+bool MAVManager::useRadioForVelocity()
 {
   // constants
   double scale    = 255.0 / 2.0;
@@ -365,7 +366,7 @@ void MAVManager::useRadioForVelocity()
 
   vel(3) = -((double)radio_channel_[3] - scale) / scale * rc_max_w;
 
-  this->setDesVelWorld(vel);
+  return this->setDesVelWorld(vel);
 }
 
 void MAVManager::estop()
