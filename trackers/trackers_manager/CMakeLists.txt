@@ -24,5 +24,5 @@ catkin_package(
 )
 
 add_library(trackers_manager src/trackers_manager.cpp)
-add_dependencies(trackers_manager ${catkin_EXPORTED_TARGETS})
+add_dependencies(trackers_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(trackers_manager ${catkin_LIBRARIES})
