@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>trackers_manager</name>
+  <version>1.0.0</version>
+  <description>trackers_manager</description>
+  <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
+  <maintainer email="michael.f.watterson@gmail.com">Michael Watterson</maintainer>
+  <maintainer email="justinthomas@jtwebs.net">Justin Thomas</maintainer>
+
+  <license>BSD</license>
+
+  <author>Kartik Mohta</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>message_generation</build_depend>
+  <depend>roscpp</depend>
+  <depend>nodelet</depend>
+  <depend>pluginlib</depend>
+  <depend>quadrotor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <exec_depend>message_runtime</exec_depend>
+
+  <export>
+    <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
+  </export>
+</package>

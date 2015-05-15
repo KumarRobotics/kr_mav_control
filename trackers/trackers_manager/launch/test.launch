@@ -1,0 +1,17 @@
+<launch>
+  <node pkg="nodelet"
+    type="nodelet"
+    name="standalone_nodelet"
+    args="manager"
+    output="screen"/>
+
+  <node pkg="nodelet"
+    type="nodelet"
+    name="trackers_manager"
+    args="load trackers_manager/TrackersManager standalone_nodelet"
+    output="screen">
+    <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
+    <rosparam file="$(find so3_control)/config/gains.yaml"/>
+    <remap from="~odom" to="odom"/>
+  </node>
+</launch>
