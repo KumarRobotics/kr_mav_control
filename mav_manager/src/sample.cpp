@@ -26,54 +26,54 @@ class MAV_Services
 
   bool motors_cb(mav_manager::Bool::Request &req, mav_manager::Bool::Response &res)
   {
-    mav_.motors(req.flag);
-    res.success = true;
+    mav_.motors(req.data);
+    res.data = true;
     return true;
   }
   bool takeoff_cb(mav_manager::Empty::Request &req, mav_manager::Empty::Response &res)
   {
     ROS_INFO("Trying to takeoff");
-    bool flag = mav_.takeoff();
-    res.success = flag;
-    return flag;
+    bool data = mav_.takeoff();
+    res.data = data;
+    return data;
   }
   bool goTo_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
   {
     vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-    bool flag = mav_.goTo(goal);
-    res.success = flag;
-    return flag;
+    bool data = mav_.goTo(goal);
+    res.data = data;
+    return data;
   }
   bool setDesVelWorld_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
   {
     vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-    bool flag = mav_.setDesVelWorld(goal);
-    res.success = flag;
-    return flag;
+    bool data = mav_.setDesVelWorld(goal);
+    res.data = data;
+    return data;
   }
   bool setDesVelBody_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
   {
     vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-    bool flag = mav_.setDesVelBody(goal);
-    res.success = flag;
-    return flag;
+    bool data = mav_.setDesVelBody(goal);
+    res.data = data;
+    return data;
   }
   bool hover_cb(mav_manager::Empty::Request &req, mav_manager::Empty::Response &res)
   {
-    bool flag = mav_.hover();
-    res.success = flag;
-    return flag;
+    bool data = mav_.hover();
+    res.data = data;
+    return data;
   }
   bool ehover_cb(mav_manager::Empty::Request &req, mav_manager::Empty::Response &res)
   {
-    bool flag = mav_.ehover();
-    res.success = flag;
-    return flag;
+    bool data = mav_.ehover();
+    res.data = data;
+    return data;
   }
   bool estop_cb(mav_manager::Empty::Request &req, mav_manager::Empty::Response &res)
   {
     mav_.estop();
-    res.success = true;
+    res.data = true;
     return true;
   }
 };
