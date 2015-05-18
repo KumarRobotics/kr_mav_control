@@ -1,3 +1,4 @@
-bool data
+bool b
 ---
-bool data
+bool success
+string message

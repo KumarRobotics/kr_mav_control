@@ -1,3 +1,4 @@
 float64[4] goal
 ---
-bool data
+bool success
+string message

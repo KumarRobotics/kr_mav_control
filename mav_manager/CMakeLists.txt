@@ -26,7 +26,7 @@ add_service_files(
   DIRECTORY srv
   FILES
     Bool.srv
-    Empty.srv
+    Trigger.srv
     Vec4.srv
 )
 generate_messages()

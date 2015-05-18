@@ -18,7 +18,7 @@
 
 // Service includes
 #include <mav_manager/Bool.h>
-#include <mav_manager/Empty.h>
+#include <mav_manager/Trigger.h>
 #include <mav_manager/Vec4.h>
 
 class MAVManager

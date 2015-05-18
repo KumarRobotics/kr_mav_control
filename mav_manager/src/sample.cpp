@@ -26,54 +26,55 @@ class MAV_Services
 
   bool motors_cb(mav_manager::Bool::Request &req, mav_manager::Bool::Response &res)
   {
-    mav_.motors(req.data);
-    res.data = true;
+    mav_.motors(req.b);
+    res.success = true;
+    res.message = "Motors activated";
     return true;
   }
-  bool takeoff_cb(mav_manager::Empty::Request &req, mav_manager::Empty::Response &res)
+  bool takeoff_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
   {
-    ROS_INFO("Trying to takeoff");
-    bool data = mav_.takeoff();
-    res.data = data;
-    return data;
+    res.success = mav_.takeoff();
+    res.message = "Takeoff";
+    return res.success;
   }
   bool goTo_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
   {
     vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-    bool data = mav_.goTo(goal);
-    res.data = data;
-    return data;
+    res.success = mav_.goTo(goal);
+    res.message = "Go To";
+    return res.success;
   }
   bool setDesVelWorld_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
   {
     vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-    bool data = mav_.setDesVelWorld(goal);
-    res.data = data;
-    return data;
+    res.success = mav_.setDesVelWorld(goal);
+    res.message = "World Velocity";
+    return res.success;
   }
   bool setDesVelBody_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
   {
     vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-    bool data = mav_.setDesVelBody(goal);
-    res.data = data;
-    return data;
+    res.success = mav_.setDesVelBody(goal);
+    res.message = "Body Velocity";
+    return res.success;
   }
-  bool hover_cb(mav_manager::Empty::Request &req, mav_manager::Empty::Response &res)
+  bool hover_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
   {
-    bool data = mav_.hover();
-    res.data = data;
-    return data;
+    res.success = mav_.hover();
+    res.message = "Hover";
+    return res.success;
   }
-  bool ehover_cb(mav_manager::Empty::Request &req, mav_manager::Empty::Response &res)
+  bool ehover_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
   {
-    bool data = mav_.ehover();
-    res.data = data;
-    return data;
+    res.success = mav_.ehover();
+    res.message = "Emergency Hover";
+    return res.success;
   }
-  bool estop_cb(mav_manager::Empty::Request &req, mav_manager::Empty::Response &res)
+  bool estop_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
   {
     mav_.estop();
-    res.data = true;
+    res.success = true;
+    res.message = "Emergency Stop";
     return true;
   }
 };
