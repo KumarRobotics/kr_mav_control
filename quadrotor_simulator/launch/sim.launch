@@ -17,10 +17,10 @@
 
     <node pkg="nodelet"
       type="nodelet"
-      name="controllers_manager"
-      args="load controllers_manager/ControllersManager standalone_nodelet"
+      name="trackers_manager"
+      args="load trackers_manager/TrackersManager standalone_nodelet"
       output="screen">
-      <rosparam file="$(find controllers_manager)/config/controllers.yaml"/>
+      <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
       <rosparam file="$(find so3_control)/config/gains.yaml"/>
       <param name="line_tracker/default_v_des" value="2.0"/>
       <param name="line_tracker/default_a_des" value="1.0"/>
@@ -54,9 +54,5 @@
       <remap from="~odom" to="odom"/>
     </node>
 
-    <node pkg="rviz"
-      type="rviz"
-      name="rviz"
-      args="-d $(find quadrotor_simulator)/launch/rviz_config.rviz"/>
   </group>
 </launch>
