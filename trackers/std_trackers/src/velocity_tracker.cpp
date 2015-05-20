@@ -54,7 +54,6 @@ bool VelocityTracker::Activate(void)
     cmd_yaw_ = cur_yaw_;
     active_ = true;
 
-    ROS_INFO("Activated Velocity Tracker");
     last_t_ = ros::Time::now();
   }
 

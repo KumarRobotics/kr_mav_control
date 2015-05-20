@@ -30,7 +30,7 @@ MAVManager::MAVManager():
   nh_(""),
   priv_nh_("~"),
   have_odom_(false),
-  active_tracker_(INIT),
+  active_tracker_(""),
   offsets_(0,0,0,0) // TODO: The offsets need to be implemented throughout
 {
   // Publishers
@@ -61,16 +61,8 @@ MAVManager::MAVManager():
   priv_nh_.param("startup_sleep_duration", duration, 0.25);
   ros::Duration(duration).sleep();
 
-  trackers_manager::Transition transition_cmd;
-  transition_cmd.request.tracker = null_tracker_str;
-  if (srv_transition_.call(transition_cmd))
-  {
-    active_tracker_ = NULL_TRACKER;
-  }
-  else
-  {
+  if (!(this->transition(null_tracker_str)))
     ROS_ERROR("Initial transition to NullTracker failed");
-  }
 
   // Publish so3_command to ensure motors are stopped
   quadrotor_msgs::SO3Command so3_cmd;
@@ -86,8 +78,6 @@ MAVManager::MAVManager():
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  ROS_INFO_THROTTLE(1, "active_tracker_ = %u", active_tracker_);
-
   pos_(0) = msg->pose.pose.position.x;
   pos_(1) = msg->pose.pose.position.y;
   pos_(2) = msg->pose.pose.position.z;
@@ -126,9 +116,9 @@ bool MAVManager::takeoff()
   }
 
   // Only takeoff if currently under NULL_TRACKER
-  if (active_tracker_ != NULL_TRACKER)
+  if (active_tracker_.compare(null_tracker_str) != 0)
   {
-    ROS_WARN("active_tracker_ must be NULL_TRACKER before taking off");
+    ROS_WARN("The Null Tracker must be active before taking off");
     return false;
   }
 
@@ -139,16 +129,7 @@ bool MAVManager::takeoff()
   goal.z = pos_(2) + 0.2;
   pub_goal_line_tracker_distance_.publish(goal);
 
-  usleep(100000);
-  trackers_manager::Transition transition_cmd;
-  transition_cmd.request.tracker = line_tracker_distance;
-  if (srv_transition_.call(transition_cmd))
-  {
-    active_tracker_ = LINE_TRACKER_DISTANCE;
-    return true;
-  }
-  else
-    return false;
+  return this->transition(line_tracker_distance);
 }
 
 bool MAVManager::setHome()
@@ -201,19 +182,7 @@ bool MAVManager::goTo(vec4 target) // (xyz(psi))
   pub_goal_min_jerk_.publish(goal);
   ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}", goal.x, goal.y, goal.z, goal.yaw);
 
-  // Only
-  if (active_tracker_ != LINE_TRACKER_MIN_JERK)
-  {
-    usleep(100000);
-    trackers_manager::Transition transition_cmd;
-    transition_cmd.request.tracker = line_tracker_min_jerk;
-
-    if (srv_transition_.call(transition_cmd))
-      active_tracker_ = LINE_TRACKER_MIN_JERK;
-    else
-      return false;
-  }
-  return true;
+  return this->transition(line_tracker_min_jerk);
 }
 bool MAVManager::goTo(vec3 xyz)
 {
@@ -252,16 +221,10 @@ bool MAVManager::setDesVelWorld(vec4 vel)
   pub_goal_velocity_.publish(goal);
   ROS_INFO("Desired World velocity: (%1.4f, %1.4f, %1.4f, %1.4f)", goal.x, goal.y, goal.z, goal.yaw);
 
-  if (active_tracker_ != VELOCITY_TRACKER)
-  {
-    usleep(100000);
-    trackers_manager::Transition transition_cmd;
-    transition_cmd.request.tracker = velocity_tracker_str;
-    if (srv_transition_.call(transition_cmd))
-      active_tracker_ = VELOCITY_TRACKER;
-    else
-      return false;
-  }
+  // Only try to transition if it is not the active tracker
+  if (active_tracker_.compare(velocity_tracker_str) != 0)
+    return this->transition(velocity_tracker_str);
+  
   return true;
 }
 bool MAVManager::setDesVelWorld(vec3 xyz)
@@ -348,6 +311,8 @@ void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
 
 bool MAVManager::useRadioForVelocity()
 {
+  // TODO: This should toggle a flag that switches to a desired world velocity and should be updated in the output_data callback
+  
   // constants
   double scale    = 255.0 / 2.0;
   double rc_max_v = 1.0;
@@ -415,7 +380,7 @@ bool MAVManager::hover()
       pos_(2) + 1/2 * acc(2) * tz * tz,
       yaw_    + 1/2 * acc(3) * t_yaw * t_yaw);
 
-  ROS_DEBUG("Transitioning smoothly to hover.");
+  ROS_DEBUG("Coasting to hover...");
   return this->goTo(goal);
 }
 
@@ -427,14 +392,21 @@ bool MAVManager::ehover()
   goal.z = pos_(2);
   pub_goal_line_tracker_distance_.publish(goal);
 
-  usleep(100000);
+  return this->transition(line_tracker_distance);
+}
+
+bool MAVManager::transition(const std::string &tracker_str)
+{
+  // usleep(100000);
   trackers_manager::Transition transition_cmd;
-  transition_cmd.request.tracker = line_tracker_distance;
+  transition_cmd.request.tracker = tracker_str;
 
   if (srv_transition_.call(transition_cmd))
-    active_tracker_ = LINE_TRACKER_DISTANCE;
-  else
-    return false;
-
-  return true;
+  {
+    active_tracker_ = tracker_str;
+    ROS_INFO("Current tracker: %s", tracker_str.c_str());
+    return true;
+  }
+  
+  return false;
 }

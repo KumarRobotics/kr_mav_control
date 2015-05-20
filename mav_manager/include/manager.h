@@ -2,7 +2,6 @@
 #define MANAGER_H
 
 // Standard C++
-// #include <iostream>
 #include <string>
 #include <Eigen/Geometry>
 
@@ -24,21 +23,6 @@
 class MAVManager
 {
   public:
-
-    enum enum_trackers
-    {
-      INIT,
-      LINE_TRACKER_DISTANCE,
-      LINE_TRACKER_MIN_JERK,
-      VELOCITY_TRACKER,
-      NULL_TRACKER
-    };
-
-    // enum states
-    // {
-    //   MISC,
-    //   RADIO_VELOCITY_CONTROL
-    // };
 
     // Typedefs
     typedef Eigen::Vector3d    vec3;
@@ -104,7 +88,9 @@ class MAVManager
     void output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
 
-    enum_trackers active_tracker_;
+    std::string active_tracker_;
+    bool transition(const std::string &tracker_str);
+
     vec3 pos_, vel_;
     vec4 offsets_;
     quat odom_q_;
