@@ -29,9 +29,9 @@ static const std::string null_tracker_str("std_trackers/NullTracker");
 MAVManager::MAVManager():
   nh_(""),
   priv_nh_("~"),
-  have_odom_(false),
   active_tracker_(""),
-  offsets_(0,0,0,0) // TODO: The offsets need to be implemented throughout
+  offsets_(0,0,0,0), // TODO: The offsets need to be implemented throughout
+  have_odom_(false)
 {
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<geometry_msgs::Vector3>("trackers_manager/line_tracker_distance/goal", 10);
@@ -86,7 +86,7 @@ void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg)
   vel_(1) = msg->twist.twist.linear.y;
   vel_(2) = msg->twist.twist.linear.z;
 
-  odom_q_ = quat(
+  odom_q_ = Quat(
       msg->pose.pose.orientation.w,
       msg->pose.pose.orientation.x,
       msg->pose.pose.orientation.y,
@@ -150,7 +150,7 @@ bool MAVManager::setHome()
 
 bool MAVManager::goHome()
 {
-  vec4 goal(pos_(0), pos_(1), pos_(2), yaw_);
+  Vec4 goal(pos_(0), pos_(1), pos_(2), yaw_);
   if (home_set_)
   {
     goal(0) = home_(0);
@@ -172,7 +172,7 @@ bool MAVManager::goHome()
   }
 }
 
-bool MAVManager::goTo(vec4 target) // (xyz(psi))
+bool MAVManager::goTo(Vec4 target) // (xyz(psi))
 {
   quadrotor_msgs::FlatOutputs goal;
   goal.x   = target(0) + offsets_(0);
@@ -184,34 +184,34 @@ bool MAVManager::goTo(vec4 target) // (xyz(psi))
 
   return this->transition(line_tracker_min_jerk);
 }
-bool MAVManager::goTo(vec3 xyz)
+bool MAVManager::goTo(Vec3 xyz)
 {
-  vec4 goal(xyz(0), xyz(1), xyz(2), yaw_);
+  Vec4 goal(xyz(0), xyz(1), xyz(2), yaw_);
   return this->goTo(goal);
 }
-bool MAVManager::goTo(vec3 xyz, double yaw)
+bool MAVManager::goTo(Vec3 xyz, double yaw)
 {
-  vec4 goal(xyz(0), xyz(1), xyz(2), yaw);
+  Vec4 goal(xyz(0), xyz(1), xyz(2), yaw);
   return this->goTo(goal);
 }
 bool MAVManager::goTo(double x, double y, double z)
 {
-  vec3 goal(x,y,z);
+  Vec3 goal(x,y,z);
   return this->goTo(goal);
 }
 bool MAVManager::goTo(double x, double y, double z, double yaw)
 {
-  vec4 goal(x,y,z,yaw);
+  Vec4 goal(x,y,z,yaw);
   return this->goTo(goal);
 }
 bool MAVManager::goToYaw(double yaw)
 {
-  vec4 goal(pos_(0), pos_(1), pos_(2), yaw);
+  Vec4 goal(pos_(0), pos_(1), pos_(2), yaw);
   return this->goTo(goal);
 }
 
 // World Velocity commands
-bool MAVManager::setDesVelWorld(vec4 vel)
+bool MAVManager::setDesVelWorld(Vec4 vel)
 {
   quadrotor_msgs::FlatOutputs goal;
   goal.x = vel(0);
@@ -224,53 +224,53 @@ bool MAVManager::setDesVelWorld(vec4 vel)
   // Only try to transition if it is not the active tracker
   if (active_tracker_.compare(velocity_tracker_str) != 0)
     return this->transition(velocity_tracker_str);
-  
+
   return true;
 }
-bool MAVManager::setDesVelWorld(vec3 xyz)
+bool MAVManager::setDesVelWorld(Vec3 xyz)
 {
-  vec4 goal(xyz(0), xyz(1), xyz(2), 0);
+  Vec4 goal(xyz(0), xyz(1), xyz(2), 0);
   return this->setDesVelWorld(goal);
 }
-bool MAVManager::setDesVelWorld(vec3 xyz, double yaw)
+bool MAVManager::setDesVelWorld(Vec3 xyz, double yaw)
 {
-  vec4 goal(xyz(0), xyz(1), xyz(2), yaw);
+  Vec4 goal(xyz(0), xyz(1), xyz(2), yaw);
   return this->setDesVelWorld(goal);
 }
 bool MAVManager::setDesVelWorld(double x, double y, double z)
 {
-  vec4 goal(x,y,z,0);
+  Vec4 goal(x,y,z,0);
   return this->setDesVelWorld(goal);
 }
 bool MAVManager::setDesVelWorld(double x, double y, double z, double yaw)
 {
-  vec4 goal(x,y,z,yaw);
+  Vec4 goal(x,y,z,yaw);
   return this->setDesVelWorld(goal);
 }
 
 // Body Velocity commands
-bool MAVManager::setDesVelBody(vec3 xyz, double yaw)
+bool MAVManager::setDesVelBody(Vec3 xyz, double yaw)
 {
-  vec3 vel(odom_q_ * xyz);
+  Vec3 vel(odom_q_ * xyz);
   return this->setDesVelWorld(vel, yaw);
 }
-bool MAVManager::setDesVelBody(vec4 vel)
+bool MAVManager::setDesVelBody(Vec4 vel)
 {
-  vec3 v(vel(0), vel(1), vel(2));
+  Vec3 v(vel(0), vel(1), vel(2));
   return this->setDesVelBody(v, vel(3));
 }
-bool MAVManager::setDesVelBody(vec3 xyz)
+bool MAVManager::setDesVelBody(Vec3 xyz)
 {
   return this->setDesVelBody(xyz, 0);
 }
 bool MAVManager::setDesVelBody(double x, double y, double z)
 {
-  vec3 vel(x,y,z);
+  Vec3 vel(x,y,z);
   return this->setDesVelBody(vel, 0);
 }
 bool MAVManager::setDesVelBody(double x, double y, double z, double yaw)
 {
-  vec3 vel(x,y,z);
+  Vec3 vel(x,y,z);
   return this->setDesVelBody(vel, yaw);
 }
 
@@ -312,14 +312,14 @@ void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
 bool MAVManager::useRadioForVelocity()
 {
   // TODO: This should toggle a flag that switches to a desired world velocity and should be updated in the output_data callback
-  
+
   // constants
   double scale    = 255.0 / 2.0;
   double rc_max_v = 1.0;
   double rc_max_w = 15.0*M_PI/180.0;
 
   // scale radio
-  vec4 vel;
+  Vec4 vel;
   vel(0) = -((double)radio_channel_[0] - scale) / scale * rc_max_v;
   vel(1) = -((double)radio_channel_[1] - scale) / scale * rc_max_v;
 
@@ -361,7 +361,7 @@ bool MAVManager::hover()
   double xy_acc(0.5), z_acc(0.5), yaw_acc(0.1);
 
   // Acceleration should be opposite the velocity component
-  vec4 acc;
+  Vec4 acc;
   acc(0) = - copysign(xy_acc,  vel_(0));
   acc(1) = - copysign(xy_acc,  vel_(1));
   acc(2) = - copysign(z_acc,   vel_(2));
@@ -374,7 +374,7 @@ bool MAVManager::hover()
   tz = - vel_(2) / acc(2);
   t_yaw = - yaw_dot_ / acc(3);
 
-  vec4 goal(
+  Vec4 goal(
       pos_(0) + 1/2 * acc(0) * tx * tx,
       pos_(1) + 1/2 * acc(1) * ty * ty,
       pos_(2) + 1/2 * acc(2) * tz * tz,
@@ -407,6 +407,6 @@ bool MAVManager::transition(const std::string &tracker_str)
     ROS_INFO("Current tracker: %s", tracker_str.c_str());
     return true;
   }
-  
+
   return false;
 }

@@ -17,9 +17,9 @@ ros::Subscriber
   sub_estop_;
 
 // Typedefs
-typedef Eigen::Vector3d    vec3;
-typedef Eigen::Vector4d    vec4;
-typedef Eigen::Quaterniond quat;
+//typedef Eigen::Vector3d    Vec3;
+typedef Eigen::Vector4d    Vec4;
+//typedef Eigen::Quaterniond Quat;
 
 class MAV_Subscribers
 {
@@ -42,7 +42,7 @@ class MAV_Subscribers
   }
   void goTo_cb(const geometry_msgs::Pose &msg)
   {
-    vec4 goal(msg.position.x, msg.position.y, msg.position.z, tf::getYaw(msg.orientation));
+    Vec4 goal(msg.position.x, msg.position.y, msg.position.z, tf::getYaw(msg.orientation));
     if (!mav_.goTo(goal))
     {
       ROS_ERROR("GoTo failed");
@@ -50,12 +50,12 @@ class MAV_Subscribers
   }
   void setDesVelWorld_cb(const geometry_msgs::Twist &msg)
   {
-    vec4 goal(msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.z);
+    Vec4 goal(msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.z);
     mav_.setDesVelWorld(goal);
   }
   void setDesVelBody_cb(const geometry_msgs::Twist &msg)
   {
-    vec4 goal(msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.z);
+    Vec4 goal(msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.z);
     mav_.setDesVelBody(goal);
   }
   void hover_cb(const std_msgs::Empty &msg)

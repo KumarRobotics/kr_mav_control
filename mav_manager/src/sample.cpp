@@ -13,9 +13,9 @@ ros::ServiceServer
   srv_estop_;
 
 // Typedefs
-typedef Eigen::Vector3d    vec3;
-typedef Eigen::Vector4d    vec4;
-typedef Eigen::Quaterniond quat;
+//typedef Eigen::Vector3d    Vec3;
+typedef Eigen::Vector4d    Vec4;
+//typedef Eigen::Quaterniond Quat;
 
 class MAV_Services
 {
@@ -39,21 +39,21 @@ class MAV_Services
   }
   bool goTo_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
   {
-    vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
+    Vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
     res.success = mav_.goTo(goal);
     res.message = "Go To";
     return res.success;
   }
   bool setDesVelWorld_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
   {
-    vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
+    Vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
     res.success = mav_.setDesVelWorld(goal);
     res.message = "World Velocity";
     return res.success;
   }
   bool setDesVelBody_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
   {
-    vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
+    Vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
     res.success = mav_.setDesVelBody(goal);
     res.message = "Body Velocity";
     return res.success;
