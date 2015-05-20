@@ -1,0 +1,8 @@
+<library path="lib/libcircle_tracker">
+  <class name="circle_tracker/CircleTracker" type="CircleTracker" base_class_type="controllers_manager::Controller">
+    <description>
+      This tracker follows a circle around the origin
+    </description>
+  </class>
+</library>
+
