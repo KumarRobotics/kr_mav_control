@@ -75,8 +75,8 @@ class MAVManager
     void addWaypoint();
 
     // Use radio as velocity tracker
-    // TODO: This will need to be monitored in the output_data callback if toggled
-    bool useRadioForVelocity();
+    bool useRadioForVelocity(bool b);
+
     // Monitoring
     bool have_odom();
     bool have_imu();
@@ -114,6 +114,7 @@ class MAVManager
 
     geometry_msgs::Quaternion imu_q_;
 
+    bool useRadioForVelocity_;
     uint8_t radio_channel_[8];
 
     Vec3 home_;

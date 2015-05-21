@@ -26,6 +26,9 @@ static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerk"
 static const std::string velocity_tracker_str("std_trackers/VelocityTracker");
 static const std::string null_tracker_str("std_trackers/NullTracker");
 
+// Helper functions
+double deadband(double val, double deadband);
+
 MAVManager::MAVManager():
   nh_(""),
   priv_nh_("~"),
@@ -34,7 +37,8 @@ MAVManager::MAVManager():
   last_odom_t_(0),
   last_imu_t_(0),
   last_output_data_t_(0),
-  kGravity_(9.81)
+  kGravity_(9.81),
+  useRadioForVelocity_(false)
 {
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<geometry_msgs::Vector3>("trackers_manager/line_tracker_distance/goal", 10);
@@ -307,13 +311,33 @@ void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg)
   for (unsigned int i = 0; i < 8; i++)
     radio_channel_[i] = msg->radio_channel[i];
 
-	ROS_DEBUG("First 4 radio channels: {%u, %u, %u, %u}",
-	    radio_channel_[0], radio_channel_[1], radio_channel_[2], radio_channel_[3]);
-
   serial_ = radio_channel_[4] > 0;
 
-// TODO: Put safety monitoring in here
+  if (useRadioForVelocity_)
+  {
+    // constants
+    double scale    = 255.0 / 2.0;
+    double rc_max_v = 1.0;
+    double rc_max_w = 15.0*M_PI/180.0;
 
+    // scale radio
+    Vec4 vel(0,0,0,0);
+    vel(0) = -((double)radio_channel_[0] - scale) / scale * rc_max_v;
+    vel(1) = -((double)radio_channel_[1] - scale) / scale * rc_max_v;
+
+    // Only consider z velocity if the FLT Mode switch is toggled
+    if(radio_channel_[5] > 0)
+      vel(2) = ((double)radio_channel_[2] - scale) / scale * rc_max_v;
+
+    vel(3) = -((double)radio_channel_[3] - scale) / scale * rc_max_w;
+
+    // Deadbands on velocity
+    Vec4 db(0.1, 0.1, 0.15, 0.03);
+    for (unsigned int i = 0; i < 4; i++)
+      vel(i) = deadband(vel(i), db(i));
+
+    this->setDesVelWorld(vel);
+  }
 
   this->heartbeat();
 }
@@ -349,12 +373,27 @@ void MAVManager::heartbeat()
   // TODO: Put safety monitoring in here
 }
 
+bool MAVManager::useRadioForVelocity(bool b)
+{
+  useRadioForVelocity_ = b;
+
+  if (b && !this->have_output_data())
+  {
+    ROS_WARN("useRadioForVelocity: Not a recent enough output_data update");
+    useRadioForVelocity_ = false;
+    return false;
+  }
+
+  if (!b)
+    return this->hover();
+}
+
 bool MAVManager::eland()
 {
   ROS_WARN("Emergency Land");
   bool flag = this->transition(null_tracker_str);
 
-  // Publish so3_command to ensure motors are stopped
+  // Publish so3_command
   quadrotor_msgs::SO3Command so3_cmd;
   so3_cmd.force.z = 0.9 * mass_ * kGravity_;
   so3_cmd.orientation.x = 0;
@@ -462,3 +501,18 @@ bool MAVManager::have_output_data()
   return (ros::Time::now() - last_output_data_t_).toSec() < 0.1;
 }
 
+double deadband(double val, double deadband)
+{
+  if (val > deadband)
+    return val - deadband;
+  else if (val < -deadband)
+    return val + deadband;
+  else
+    return 0.0;
+
+  // // Could also do it this way
+  // double v = val;
+  // v = std::min(v,  deadband);
+  // v = std::max(v, -deadband);
+  // return = val - v;
+}

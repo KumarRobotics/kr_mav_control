@@ -8,6 +8,7 @@ ros::ServiceServer
   srv_goTo_,
   srv_setDesVelWorld_,
   srv_setDesVelBody_,
+  srv_useRadioForVelocity_,
   srv_hover_,
   srv_ehover_,
   srv_eland_,
@@ -57,6 +58,19 @@ class MAV_Services
     res.message = "Body Velocity";
     return res.success;
   }
+  bool useRadioForVelocity_cb(mav_manager::Bool::Request &req, mav_manager::Bool::Response &res)
+  {
+    res.success = mav_.useRadioForVelocity(req.b);
+    if (res.success)
+    {
+      if (req.b)
+        res.message = "Using radio for velocity";
+      else
+        res.message = "No longer using radio for velocity";
+    }
+    else
+      res.message = "Failed to transition";
+  }
   bool hover_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
   {
     res.success = mav_.hover();
@@ -97,6 +111,7 @@ int main(int argc, char **argv)
   srv_goTo_ = nh.advertiseService("goTo", &MAV_Services::goTo_cb, &mav_srvs);
   srv_setDesVelWorld_ = nh.advertiseService("setDesVelWorld", &MAV_Services::setDesVelWorld_cb, &mav_srvs);
   srv_setDesVelBody_ = nh.advertiseService("setDesVelBody", &MAV_Services::setDesVelBody_cb, &mav_srvs);
+  srv_useRadioForVelocity_ = nh.advertiseService("useRadioForVelocity", &MAV_Services::useRadioForVelocity_cb, &mav_srvs);
   srv_hover_ = nh.advertiseService("hover", &MAV_Services::hover_cb, &mav_srvs);
   srv_ehover_ = nh.advertiseService("ehover", &MAV_Services::ehover_cb, &mav_srvs);
   srv_eland_ = nh.advertiseService("eland", &MAV_Services::eland_cb, &mav_srvs);
