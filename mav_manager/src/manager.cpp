@@ -33,7 +33,8 @@ MAVManager::MAVManager():
   offsets_(0,0,0,0), // TODO: The offsets need to be implemented throughout
   last_odom_t_(0),
   last_imu_t_(0),
-  last_output_data_t_(0)
+  last_output_data_t_(0),
+  kGravity_(9.81)
 {
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<geometry_msgs::Vector3>("trackers_manager/line_tracker_distance/goal", 10);
@@ -57,6 +58,10 @@ MAVManager::MAVManager():
   // Disable motors
   this->motors(false);
 
+  if (!nh_.getParam("mass", mass_))
+    ROS_ERROR("Mass must be set");
+  else
+    ROS_INFO("Using mass = %2.2f", mass_);
 
   // Sleep to ensure service server initialized
   double duration;
@@ -104,7 +109,7 @@ void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg)
 
 bool MAVManager::takeoff()
 {
-  if (this->have_odom())
+  if (!this->have_odom())
   {
     ROS_WARN("Cannot takeoff without odometry.");
     return false;
@@ -282,17 +287,17 @@ bool MAVManager::setDesVelBody(double x, double y, double z, double yaw)
 
 void MAVManager::motors(bool flag)
 {
-  // Enable/Disable motors
-  if (flag)
-    ROS_WARN("Arming Motors...");
-  else
-    ROS_WARN("Disarming Motors...");
-
   std_msgs::Bool motors_cmd;
   motors_cmd.data = flag;
   pub_motors_.publish(motors_cmd);
 
   motors_ = flag;
+
+  // Enable/Disable motors
+  if (flag)
+    ROS_WARN("Motors Armed...");
+  else
+    ROS_WARN("Motors Disarmed...");
 }
 
 void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg)
@@ -335,14 +340,33 @@ void MAVManager::heartbeat()
     last_heartbeat_t_ = t;
 
   // Checking the last odom and imu/output_data messages
-  if (this->have_odom())
+  if (motors_ && !this->have_odom())
     this->eland();
 
-  if (this->have_imu() && this->have_output_data())
+  if (motors_ && !this->have_imu() && !this->have_output_data())
     this->eland();
 
   // TODO: Put safety monitoring in here
+}
 
+bool MAVManager::eland()
+{
+  ROS_WARN("Emergency Land");
+  bool flag = this->transition(null_tracker_str);
+
+  // Publish so3_command to ensure motors are stopped
+  quadrotor_msgs::SO3Command so3_cmd;
+  so3_cmd.force.z = 0.9 * mass_ * kGravity_;
+  so3_cmd.orientation.x = 0;
+  so3_cmd.orientation.y = 0;
+  so3_cmd.orientation.z = 0;
+  so3_cmd.orientation.w = 1;
+  so3_cmd.aux.use_external_yaw = true;
+  so3_cmd.aux.current_yaw = 0;
+  so3_cmd.aux.enable_motors = motors_;
+  so3_command_pub_.publish(so3_cmd);
+
+  return flag;
 }
 
 void MAVManager::estop()
@@ -425,16 +449,16 @@ bool MAVManager::transition(const std::string &tracker_str)
 
 bool MAVManager::have_odom()
 {
-  return (ros::Time::now() - last_odom_t_).toSec() > 0.1;
+  return (ros::Time::now() - last_odom_t_).toSec() < 0.1;
 }
 
 bool MAVManager::have_imu()
 {
-  return (ros::Time::now() - last_imu_t_).toSec() > 0.1;
+  return (ros::Time::now() - last_imu_t_).toSec() < 0.1;
 }
 
 bool MAVManager::have_output_data()
 {
-  return (ros::Time::now() - last_output_data_t_).toSec() > 0.1;
+  return (ros::Time::now() - last_output_data_t_).toSec() < 0.1;
 }
 

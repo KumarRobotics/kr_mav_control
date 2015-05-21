@@ -10,12 +10,11 @@ ros::ServiceServer
   srv_setDesVelBody_,
   srv_hover_,
   srv_ehover_,
+  srv_eland_,
   srv_estop_;
 
 // Typedefs
-//typedef Eigen::Vector3d    Vec3;
 typedef Eigen::Vector4d    Vec4;
-//typedef Eigen::Quaterniond Quat;
 
 class MAV_Services
 {
@@ -70,6 +69,12 @@ class MAV_Services
     res.message = "Emergency Hover";
     return res.success;
   }
+  bool eland_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
+  {
+    res.success = mav_.eland();
+    res.message = "Emergency Landing";
+    return res.success;
+  }
   bool estop_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
   {
     mav_.estop();
@@ -94,6 +99,7 @@ int main(int argc, char **argv)
   srv_setDesVelBody_ = nh.advertiseService("setDesVelBody", &MAV_Services::setDesVelBody_cb, &mav_srvs);
   srv_hover_ = nh.advertiseService("hover", &MAV_Services::hover_cb, &mav_srvs);
   srv_ehover_ = nh.advertiseService("ehover", &MAV_Services::ehover_cb, &mav_srvs);
+  srv_eland_ = nh.advertiseService("eland", &MAV_Services::eland_cb, &mav_srvs);
   srv_estop_ = nh.advertiseService("estop", &MAV_Services::estop_cb, &mav_srvs);
 
   // Let's spin some rotors

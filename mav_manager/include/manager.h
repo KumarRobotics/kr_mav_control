@@ -37,6 +37,10 @@ class MAVManager
     Vec3 home() { return home_; }
     double yaw() { return yaw_; }
     double home_yaw() { return home_yaw_; }
+    double mass() { return mass_; }
+   
+    // Mutators
+    void set_mass(double m)   {mass_ = m;}
 
     // Home Methods
     bool setHome();                 // Uses the current position and yaw
@@ -82,6 +86,7 @@ class MAVManager
     bool hover();
     bool ehover();
     void motors(bool);
+    bool eland();
     void estop();
 
   private:
@@ -102,6 +107,8 @@ class MAVManager
 
     Vec3 pos_, vel_;
     Vec4 offsets_;
+    double mass_;
+    const double kGravity_;
     Quat odom_q_;
     double yaw_, yaw_dot_;
 
