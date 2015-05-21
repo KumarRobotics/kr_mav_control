@@ -31,7 +31,9 @@ MAVManager::MAVManager():
   priv_nh_("~"),
   active_tracker_(""),
   offsets_(0,0,0,0), // TODO: The offsets need to be implemented throughout
-  have_odom_(false)
+  last_odom_t_(0),
+  last_imu_t_(0),
+  last_output_data_t_(0)
 {
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<geometry_msgs::Vector3>("trackers_manager/line_tracker_distance/goal", 10);
@@ -47,6 +49,7 @@ MAVManager::MAVManager():
   odom_sub_ = nh_.subscribe("odom", 10, &MAVManager::odometry_cb, this);
   output_data_sub_ = nh_.subscribe("output_data", 10, &MAVManager::output_data_cb, this);
   imu_sub_ = nh_.subscribe("imu", 10, &MAVManager::imu_cb, this);
+  heartbeat_sub_ = nh_.subscribe("/heartbeat", 10, &MAVManager::heartbeat_cb, this);
 
   // Services
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
@@ -54,7 +57,6 @@ MAVManager::MAVManager():
   // Disable motors
   this->motors(false);
 
-  ROS_INFO("Starting NullTracker");
 
   // Sleep to ensure service server initialized
   double duration;
@@ -95,12 +97,14 @@ void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg)
   yaw_ = tf::getYaw(msg->pose.pose.orientation);
   yaw_dot_ = msg->twist.twist.angular.z;
 
-  have_odom_ = true;
+  last_odom_t_ = msg->header.stamp;
+
+  this->heartbeat();
 }
 
 bool MAVManager::takeoff()
 {
-  if (!have_odom_)
+  if (this->have_odom())
   {
     ROS_WARN("Cannot takeoff without odometry.");
     return false;
@@ -134,7 +138,9 @@ bool MAVManager::takeoff()
 
 bool MAVManager::setHome()
 {
-  if (have_odom_)
+  bool flag = this->have_odom();
+
+  if (flag)
   {
     home_ = pos_;
     home_set_ = true;
@@ -145,7 +151,7 @@ bool MAVManager::setHome()
   else
     ROS_WARN("Cannot set home unless current pose is set or an argument is provided.");
 
-  return have_odom_;
+  return flag;
 }
 
 bool MAVManager::goHome()
@@ -291,6 +297,8 @@ void MAVManager::motors(bool flag)
 
 void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg)
 {
+  last_output_data_t_ = msg->header.stamp;
+
   for (unsigned int i = 0; i < 8; i++)
     radio_channel_[i] = msg->radio_channel[i];
 
@@ -302,36 +310,39 @@ void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg)
 // TODO: Put safety monitoring in here
 
 
+  this->heartbeat();
 }
 
 void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
 {
-
+  last_imu_t_ = msg->header.stamp;
+  this->heartbeat();
 }
 
-bool MAVManager::useRadioForVelocity()
+void MAVManager::heartbeat_cb(const std_msgs::Empty::ConstPtr &msg)
 {
-  // TODO: This should toggle a flag that switches to a desired world velocity and should be updated in the output_data callback
+  this->heartbeat();
+}
 
-  // constants
-  double scale    = 255.0 / 2.0;
-  double rc_max_v = 1.0;
-  double rc_max_w = 15.0*M_PI/180.0;
+void MAVManager::heartbeat()
+{
+  ros::Time t = ros::Time::now();
 
-  // scale radio
-  Vec4 vel;
-  vel(0) = -((double)radio_channel_[0] - scale) / scale * rc_max_v;
-  vel(1) = -((double)radio_channel_[1] - scale) / scale * rc_max_v;
-
-  // Only consider z velocity if a switch is toggled
-  if(radio_channel_[5] > scale)
-    vel(2) = ((double)radio_channel_[2] - scale) / scale * rc_max_v;
+  // Only need to do monitoring at 10 Hz
+  if ((t - last_heartbeat_t_).toSec() < 0.1)
+    return;
   else
-    vel(2) = 0;
+    last_heartbeat_t_ = t;
 
-  vel(3) = -((double)radio_channel_[3] - scale) / scale * rc_max_w;
+  // Checking the last odom and imu/output_data messages
+  if (this->have_odom())
+    this->eland();
 
-  return this->setDesVelWorld(vel);
+  if (this->have_imu() && this->have_output_data())
+    this->eland();
+
+  // TODO: Put safety monitoring in here
+
 }
 
 void MAVManager::estop()
@@ -343,6 +354,7 @@ void MAVManager::estop()
 
   // Disarm motors
   this->motors(false);
+  this->transition(null_tracker_str);
 
   // Publish so3_command to ensure motors are stopped
   quadrotor_msgs::SO3Command so3_cmd;
@@ -410,3 +422,19 @@ bool MAVManager::transition(const std::string &tracker_str)
 
   return false;
 }
+
+bool MAVManager::have_odom()
+{
+  return (ros::Time::now() - last_odom_t_).toSec() > 0.1;
+}
+
+bool MAVManager::have_imu()
+{
+  return (ros::Time::now() - last_imu_t_).toSec() > 0.1;
+}
+
+bool MAVManager::have_output_data()
+{
+  return (ros::Time::now() - last_output_data_t_).toSec() > 0.1;
+}
+

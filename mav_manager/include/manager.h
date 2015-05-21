@@ -11,6 +11,7 @@
 #include <geometry_msgs/Quaternion.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
+#include <std_msgs/Empty.h>
 
 // quadrotor_control
 #include <quadrotor_msgs/OutputData.h>
@@ -31,11 +32,11 @@ class MAVManager
 
     MAVManager();
 
-    Vec3 getPosition() {return pos_;}
-    Vec3 getHome()     {return home_;}
-
-    double getYaw()      {return yaw_;}
-    double getHomeYaw()  {return home_yaw_;}
+    // Accessors
+    Vec3 pos() { return pos_; }
+    Vec3 home() { return home_; }
+    double yaw() { return yaw_; }
+    double home_yaw() { return home_yaw_; }
 
     // Home Methods
     bool setHome();                 // Uses the current position and yaw
@@ -72,6 +73,10 @@ class MAVManager
     // Use radio as velocity tracker
     // TODO: This will need to be monitored in the output_data callback if toggled
     bool useRadioForVelocity();
+    // Monitoring
+    bool have_odom();
+    bool have_imu();
+    bool have_output_data();
 
     // Safety
     bool hover();
@@ -87,6 +92,10 @@ class MAVManager
     void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
     void output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
+    void heartbeat_cb(const std_msgs::Empty::ConstPtr &msg);
+    void heartbeat();
+
+    ros::Time last_odom_t_, last_output_data_t_, last_imu_t_, last_heartbeat_t_;
 
     std::string active_tracker_;
     bool transition(const std::string &tracker_str);
@@ -104,7 +113,7 @@ class MAVManager
     Vec3 goal_;
     double goal_yaw_, home_yaw_;
 
-    bool have_odom_, home_set_, home_yaw_set_, serial_, motors_;
+    bool home_set_, home_yaw_set_, serial_, motors_;
 
     // Publishers
     ros::Publisher pub_goal_min_jerk_;
@@ -120,6 +129,7 @@ class MAVManager
     ros::Subscriber odom_sub_;
     ros::Subscriber output_data_sub_;
     ros::Subscriber imu_sub_;
+    ros::Subscriber heartbeat_sub_;
 
     // Services
     ros::ServiceClient srv_transition_;
