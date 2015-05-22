@@ -1,10 +1,12 @@
+// mav_manager
+#include <manager.h>
+
 // Standard C++
 #include <math.h>
 #include <string>
 
 // ROS Related
 #include <ros/ros.h>
-#include <ros/console.h>
 #include <geometry_msgs/Vector3.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Empty.h>
@@ -13,12 +15,8 @@
 // quadrotor_control
 #include <trackers_manager/Transition.h>
 #include <quadrotor_msgs/FlatOutputs.h>
-#include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/SO3Command.h>
-#include <quadrotor_msgs/PWMCommand.h>
 
-// mav_manager
-#include <manager.h>
 
 // Strings
 static const std::string line_tracker_distance("std_trackers/LineTrackerDistance");

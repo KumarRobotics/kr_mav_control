@@ -17,9 +17,7 @@ ros::Subscriber
   sub_estop_;
 
 // Typedefs
-//typedef Eigen::Vector3d    Vec3;
-typedef Eigen::Vector4d    Vec4;
-//typedef Eigen::Quaterniond Quat;
+typedef Eigen::Vector4d Vec4;
 
 class MAV_Subscribers
 {

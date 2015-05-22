@@ -43,6 +43,7 @@ catkin_package(
     trackers_manager
     std_trackers
     std_msgs
+    message_runtime
   DEPENDS Eigen)
 
 add_executable(mav_manager src/manager.cpp src/sample.cpp)

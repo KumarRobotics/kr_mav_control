@@ -1,5 +1,7 @@
-#include <ros/ros.h>
 #include <manager.h>
+#include <mav_manager/Bool.h>
+#include <mav_manager/Trigger.h>
+#include <mav_manager/Vec4.h>
 
 // Services
 ros::ServiceServer
@@ -15,7 +17,7 @@ ros::ServiceServer
   srv_estop_;
 
 // Typedefs
-typedef Eigen::Vector4d    Vec4;
+typedef Eigen::Vector4d Vec4;
 
 class MAV_Services
 {

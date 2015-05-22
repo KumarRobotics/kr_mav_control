@@ -7,19 +7,12 @@
 
 // ROS related
 #include <ros/ros.h>
-#include <ros/console.h>
-#include <geometry_msgs/Quaternion.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Empty.h>
 
 // quadrotor_control
 #include <quadrotor_msgs/OutputData.h>
-
-// Service includes
-#include <mav_manager/Bool.h>
-#include <mav_manager/Trigger.h>
-#include <mav_manager/Vec4.h>
 
 class MAVManager
 {
@@ -38,7 +31,7 @@ class MAVManager
     double yaw() { return yaw_; }
     double home_yaw() { return home_yaw_; }
     double mass() { return mass_; }
-   
+
     // Mutators
     void set_mass(double m)   {mass_ = m;}
 
@@ -111,8 +104,6 @@ class MAVManager
     const double kGravity_;
     Quat odom_q_;
     double yaw_, yaw_dot_;
-
-    geometry_msgs::Quaternion imu_q_;
 
     bool useRadioForVelocity_;
     uint8_t radio_channel_[8];
