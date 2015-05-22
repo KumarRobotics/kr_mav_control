@@ -111,7 +111,7 @@ void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg)
 
 bool MAVManager::takeoff()
 {
-  if (!this->have_odom())
+  if (!this->have_recent_odom())
   {
     ROS_WARN("Cannot takeoff without odometry.");
     return false;
@@ -145,7 +145,7 @@ bool MAVManager::takeoff()
 
 bool MAVManager::setHome()
 {
-  bool flag = this->have_odom();
+  bool flag = this->have_recent_odom();
 
   if (flag)
   {
@@ -297,9 +297,9 @@ void MAVManager::motors(bool flag)
 
   // Enable/Disable motors
   if (flag)
-    ROS_WARN("Motors Armed...");
+    ROS_INFO("Motors Armed...");
   else
-    ROS_WARN("Motors Disarmed...");
+    ROS_INFO("Motors Disarmed...");
 }
 
 void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg)
@@ -351,6 +351,7 @@ void MAVManager::heartbeat_cb(const std_msgs::Empty::ConstPtr &msg)
   this->heartbeat();
 }
 
+// TODO: This should be done in a separate thread
 void MAVManager::heartbeat()
 {
   ros::Time t = ros::Time::now();
@@ -362,10 +363,10 @@ void MAVManager::heartbeat()
     last_heartbeat_t_ = t;
 
   // Checking the last odom and imu/output_data messages
-  if (motors_ && !this->have_odom())
+  if (motors_ && !this->have_recent_odom())
     this->eland();
 
-  if (motors_ && !this->have_imu() && !this->have_output_data())
+  if (motors_ && !this->have_recent_imu() && !this->have_recent_output_data())
     this->eland();
 
   // TODO: Put safety monitoring in here
@@ -375,7 +376,7 @@ bool MAVManager::useRadioForVelocity(bool b)
 {
   useRadioForVelocity_ = b;
 
-  if (b && !this->have_output_data())
+  if (b && !this->have_recent_output_data())
   {
     ROS_WARN("useRadioForVelocity: Not a recent enough output_data update");
     useRadioForVelocity_ = false;
@@ -484,17 +485,17 @@ bool MAVManager::transition(const std::string &tracker_str)
   return false;
 }
 
-bool MAVManager::have_odom()
+bool MAVManager::have_recent_odom()
 {
   return (ros::Time::now() - last_odom_t_).toSec() < 0.1;
 }
 
-bool MAVManager::have_imu()
+bool MAVManager::have_recent_imu()
 {
   return (ros::Time::now() - last_imu_t_).toSec() < 0.1;
 }
 
-bool MAVManager::have_output_data()
+bool MAVManager::have_recent_output_data()
 {
   return (ros::Time::now() - last_output_data_t_).toSec() < 0.1;
 }

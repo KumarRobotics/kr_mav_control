@@ -1,11 +1,16 @@
 <launch>
   <group ns="quadrotor">
+
+    <arg name="mass" value="0.5"/>
+    <param name="mass" value="$(arg mass)"/> 
+
     <node pkg="quadrotor_simulator"
       type="quadrotor_simulator_so3"
       name="quadrotor_simulator_so3"
       output="screen">
       <param name="rate/odom" value="100.0"/>
       <remap from="~odom" to="odom"/>
+      <remap from="~imu" to="imu"/>
       <remap from="~cmd" to="so3_cmd"/>
     </node>
 
@@ -35,7 +40,7 @@
       required="true"
       output="screen">
       <rosparam file="$(find so3_control)/config/gains.yaml"/>
-      <param name="mass" value="0.5"/>
+      <param name="mass" value="$(arg mass)"/>
       <remap from="~odom" to="odom"/>
       <remap from="~position_cmd" to="position_cmd"/>
       <remap from="~so3_cmd" to="so3_cmd"/>
@@ -59,6 +64,7 @@
       name="mav_manager"
       output="screen">
       <param name="startup_sleep_duration" value="0.25"/>
+      <remap from="output_data" to="quad_decode_msg/output_data"/>
     </node>
 
   </group>

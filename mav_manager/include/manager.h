@@ -71,9 +71,9 @@ class MAVManager
     bool useRadioForVelocity(bool b);
 
     // Monitoring
-    bool have_odom();
-    bool have_imu();
-    bool have_output_data();
+    bool have_recent_odom();
+    bool have_recent_imu();
+    bool have_recent_output_data();
 
     // Safety
     bool hover();
