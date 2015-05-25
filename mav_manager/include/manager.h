@@ -104,6 +104,7 @@ class MAVManager
     const double kGravity_;
     Quat odom_q_;
     double yaw_, yaw_dot_;
+    double takeoff_height_;
 
     bool useRadioForVelocity_;
     uint8_t radio_channel_[8];

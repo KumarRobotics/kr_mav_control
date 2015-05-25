@@ -32,7 +32,7 @@ add_service_files(
 generate_messages()
 
 catkin_package(
-  INCLUDE_DIRS
+  INCLUDE_DIRS include
   LIBRARIES
   CATKIN_DEPENDS
     roscpp
