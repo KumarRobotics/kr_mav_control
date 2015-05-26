@@ -32,8 +32,8 @@ MAVManager::MAVManager()
     : nh_(""),
       priv_nh_("~"),
       active_tracker_(""),
-      offsets_(0, 0, 0,
-               0),  // TODO: The offsets need to be implemented throughout
+      offsets_(0, 0, 0, 0),
+      // TODO: The offsets need to be implemented throughout
       last_odom_t_(0),
       last_imu_t_(0),
       last_output_data_t_(0),
@@ -159,9 +159,7 @@ bool MAVManager::setHome() {
     home_yaw_ = yaw_;
     home_yaw_set_ = true;
   } else
-    ROS_WARN(
-        "Cannot set home unless current pose is set or an argument is "
-        "provided.");
+    ROS_WARN("Cannot set home unless current pose is set or an argument is provided.");
 
   return flag;
 }
@@ -192,8 +190,8 @@ bool MAVManager::goTo(Vec4 target)  // (xyz(psi))
   goal.z = target(2) + offsets_(2);
   goal.yaw = target(3) + offsets_(3);
   pub_goal_min_jerk_.publish(goal);
-  ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}", goal.x, goal.y,
-           goal.z, goal.yaw);
+  ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}",
+           goal.x, goal.y, goal.z, goal.yaw);
 
   return this->transition(line_tracker_min_jerk);
 }
@@ -226,8 +224,8 @@ bool MAVManager::setDesVelWorld(Vec4 vel) {
   goal.z = vel(2);
   goal.yaw = vel(3);
   pub_goal_velocity_.publish(goal);
-  ROS_INFO("Desired World velocity: (%1.4f, %1.4f, %1.4f, %1.4f)", goal.x,
-           goal.y, goal.z, goal.yaw);
+  ROS_INFO("Desired World velocity: (%1.4f, %1.4f, %1.4f, %1.4f)",
+           goal.x, goal.y, goal.z, goal.yaw);
 
   // Only try to transition if it is not the active tracker
   if (active_tracker_.compare(velocity_tracker_str) != 0)
@@ -287,6 +285,7 @@ void MAVManager::motors(bool flag) {
 
 void MAVManager::output_data_cb(
     const quadrotor_msgs::OutputData::ConstPtr &msg) {
+
   last_output_data_t_ = msg->header.stamp;
 
   for (unsigned int i = 0; i < 8; i++)
@@ -332,6 +331,7 @@ void MAVManager::heartbeat_cb(const std_msgs::Empty::ConstPtr &msg) {
 
 // TODO: This should be done in a separate thread
 void MAVManager::heartbeat() {
+
   ros::Time t = ros::Time::now();
 
   // Only need to do monitoring at 10 Hz
@@ -429,6 +429,7 @@ bool MAVManager::hover() {
 }
 
 bool MAVManager::ehover() {
+
   geometry_msgs::Point goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
