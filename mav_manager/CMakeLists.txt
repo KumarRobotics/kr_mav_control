@@ -6,6 +6,8 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
+add_definitions("-std=c++0x")
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   nav_msgs
@@ -15,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   trackers_manager
   std_trackers
   std_msgs
+  std_srvs
   cmake_modules
   message_generation)
 
@@ -56,3 +59,6 @@ target_link_libraries(mav_manager_node mav_manager ${catkin_LIBRARIES})
 
 add_executable(mav_manager_sub src/sample_sub.cpp)
 target_link_libraries(mav_manager_sub mav_manager ${catkin_LIBRARIES})
+
+add_executable(mav_manager_services src/sample_service_server.cpp)
+target_link_libraries(mav_manager_services mav_manager ${catkin_LIBRARIES})
