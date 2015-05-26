@@ -33,7 +33,7 @@ generate_messages()
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES
+  LIBRARIES mav_manager
   CATKIN_DEPENDS
     roscpp
     nav_msgs
@@ -46,10 +46,13 @@ catkin_package(
     message_runtime
   DEPENDS Eigen)
 
-add_executable(mav_manager src/manager.cpp src/sample.cpp)
+add_library(mav_manager src/manager.cpp)
 add_dependencies(mav_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(mav_manager ${catkin_LIBRARIES})
 
-add_executable(mav_manager_sub src/manager.cpp src/sample_sub.cpp)
-add_dependencies(mav_manager_sub ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(mav_manager_sub ${catkin_LIBRARIES})
+
+add_executable(mav_manager_node src/sample.cpp)
+target_link_libraries(mav_manager_node mav_manager ${catkin_LIBRARIES})
+
+add_executable(mav_manager_sub src/sample_sub.cpp)
+target_link_libraries(mav_manager_sub mav_manager ${catkin_LIBRARIES})
