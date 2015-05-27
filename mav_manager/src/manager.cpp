@@ -15,6 +15,7 @@
 // quadrotor_control
 #include <trackers_manager/Transition.h>
 #include <quadrotor_msgs/FlatOutputs.h>
+#include <quadrotor_msgs/LineTrackerGoal.h>
 #include <quadrotor_msgs/SO3Command.h>
 
 // Strings
@@ -33,16 +34,17 @@ MAVManager::MAVManager()
       priv_nh_("~"),
       active_tracker_(""),
       offsets_(0, 0, 0, 0),
-      // TODO: The offsets need to be implemented throughout
+      // TODO: The offsets need to be implemented throughout. Or, maybe not used.
       last_odom_t_(0),
       last_imu_t_(0),
       last_output_data_t_(0),
       kGravity_(9.81),
       useRadioForVelocity_(false) {
+
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<geometry_msgs::Vector3>(
       "trackers_manager/line_tracker_distance/goal", 10);
-  pub_goal_min_jerk_ = nh_.advertise<quadrotor_msgs::FlatOutputs>(
+  pub_goal_min_jerk_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>(
       "trackers_manager/line_tracker_min_jerk/goal", 10);
   pub_goal_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>(
       "trackers_manager/velocity_tracker/vel_cmd_with_yaw", 10);
@@ -184,38 +186,36 @@ bool MAVManager::goHome() {
   }
 }
 
-bool MAVManager::goTo(Vec4 target)  // (xyz(psi))
-{
-  quadrotor_msgs::FlatOutputs goal;
-  goal.x = target(0) + offsets_(0);
-  goal.y = target(1) + offsets_(1);
-  goal.z = target(2) + offsets_(2);
-  goal.yaw = target(3) + offsets_(3);
+bool MAVManager::goTo(double x, double y, double z, double yaw, double v_des, double a_des) {
+
+  quadrotor_msgs::LineTrackerGoal goal;
+  goal.x   = x   + offsets_(0);
+  goal.y   = y   + offsets_(1);
+  goal.z   = z   + offsets_(2);
+  goal.yaw = yaw + offsets_(3);
+  goal.v_des = v_des;
+  goal.a_des = a_des;
+
   pub_goal_min_jerk_.publish(goal);
   ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}", goal.x, goal.y,
            goal.z, goal.yaw);
 
   return this->transition(line_tracker_min_jerk);
 }
-bool MAVManager::goTo(Vec3 xyz) {
-  Vec4 goal(xyz(0), xyz(1), xyz(2), yaw_);
-  return this->goTo(goal);
+bool MAVManager::goTo(Vec4 xyz_yaw, Vec2 v_and_a_des) {
+  return this->goTo(xyz_yaw(0), xyz_yaw(1), xyz_yaw(2), xyz_yaw(3),
+                    v_and_a_des(0), v_and_a_des(1));
 }
-bool MAVManager::goTo(Vec3 xyz, double yaw) {
-  Vec4 goal(xyz(0), xyz(1), xyz(2), yaw);
-  return this->goTo(goal);
+bool MAVManager::goTo(Vec3 xyz, double yaw, Vec2 v_and_a_des) {
+  return this->goTo(xyz(0), xyz(1), xyz(2), yaw,
+                    v_and_a_des(0), v_and_a_des(1));
 }
-bool MAVManager::goTo(double x, double y, double z) {
-  Vec3 goal(x, y, z);
-  return this->goTo(goal);
-}
-bool MAVManager::goTo(double x, double y, double z, double yaw) {
-  Vec4 goal(x, y, z, yaw);
-  return this->goTo(goal);
+bool MAVManager::goTo(Vec3 xyz, Vec2 v_and_a_des) {
+  return this->goTo(xyz(0), xyz(1), xyz(2), yaw_,
+                    v_and_a_des(0), v_and_a_des(1));
 }
 bool MAVManager::goToYaw(double yaw) {
-  Vec4 goal(pos_(0), pos_(1), pos_(2), yaw);
-  return this->goTo(goal);
+  return this->goTo(pos_(0), pos_(1), pos_(2), yaw);
 }
 
 // World Velocity commands
@@ -406,31 +406,32 @@ void MAVManager::estop() {
 }
 
 bool MAVManager::hover() {
-  // Assuming constant-deceleration (same as defaults in min_jerk)
-  // TODO: Maybe set these as params
-  double xy_acc(0.5), z_acc(0.5), yaw_acc(0.1);
+
+  double a_des(0.8); //, yaw_a_des(0.1);
+
+  double v_norm = vel_.norm();
+  Vec3 dir = vel_ / v_norm;
 
   // Acceleration should be opposite the velocity component
-  Vec4 acc;
-  acc(0) = -copysign(xy_acc, vel_(0));
-  acc(1) = -copysign(xy_acc, vel_(1));
-  acc(2) = -copysign(z_acc, vel_(2));
-  acc(3) = -copysign(yaw_acc, yaw_dot_);
+  Vec3 acc = -dir * a_des;
+
+  // acc(3) = - copysign(yaw_a_des, yaw_dot_);
 
   // vf = vo + a t   ->    t = (vf - vo) / a
-  double tx, ty, tz, t_yaw;
-  tx = -vel_(0) / acc(0);
-  ty = -vel_(1) / acc(1);
-  tz = -vel_(2) / acc(2);
-  t_yaw = -yaw_dot_ / acc(3);
+  double t = v_norm / a_des;
+  // double t_yaw = - yaw_dot_ / yaw_a_des;
 
-  Vec4 goal(pos_(0) + 1 / 2 * acc(0) * tx * tx,
-            pos_(1) + 1 / 2 * acc(1) * ty * ty,
-            pos_(2) + 1 / 2 * acc(2) * tz * tz,
-            yaw_ + 1 / 2 * acc(3) * t_yaw * t_yaw);
+  // xf = xo + vo * t + 1/2 * a * t^2
+  Vec4 goal(
+      pos_(0) + vel_(0)  * t     + 0.5 * acc(0)    * t     * t,
+      pos_(1) + vel_(1)  * t     + 0.5 * acc(1)    * t     * t,
+      pos_(2) + vel_(2)  * t     + 0.5 * acc(2)    * t     * t,
+      yaw_);//    + yaw_dot_ * t_yaw + 0.5 * yaw_a_des * t_yaw * t_yaw);
+
+  Vec2 v_and_a_des(std::sqrt(vel_.dot(vel_)), a_des);
 
   ROS_DEBUG("Coasting to hover...");
-  return this->goTo(goal);
+  return this->goTo(goal, v_and_a_des);
 }
 
 bool MAVManager::ehover() {

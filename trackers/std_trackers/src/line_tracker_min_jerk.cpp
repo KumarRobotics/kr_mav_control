@@ -1,7 +1,7 @@
 #include <iostream>
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
-#include <quadrotor_msgs/FlatOutputs.h>
+#include <quadrotor_msgs/LineTrackerGoal.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
 #include <std_trackers/DesVelAcc.h>
@@ -18,7 +18,7 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
   const quadrotor_msgs::PositionCommand::Ptr update(const nav_msgs::Odometry::ConstPtr &msg);
 
  private:
-  void goal_callback(const quadrotor_msgs::FlatOutputs::ConstPtr &msg);
+  void goal_callback(const quadrotor_msgs::LineTrackerGoal::ConstPtr &msg);
   bool set_des_vel_acc(std_trackers::DesVelAcc::Request &req,
                        std_trackers::DesVelAcc::Response &res);
 
@@ -30,7 +30,6 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
                       float dt, Eigen::Vector3f coeffs[6], float yaw_coeffs[4]);
 
   ros::Subscriber sub_goal_;
-  ros::ServiceServer srv_param_;
   bool pos_set_, goal_set_, goal_reached_;
   double default_v_des_, default_a_des_, default_yaw_v_des_, default_yaw_a_des_;
   float v_des_, a_des_, yaw_v_des_, yaw_a_des_;
@@ -40,7 +39,7 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
   ros::Time traj_start_;
   float traj_duration_;
   Eigen::Vector3f coeffs_[6];
-  float yaw_, goal_yaw_, yaw_coeffs_[4]; 
+  float yaw_, goal_yaw_, yaw_coeffs_[4];
 
   double kx_[3], kv_[3];
 };
@@ -76,7 +75,6 @@ void LineTrackerMinJerk::Initialize(const ros::NodeHandle &nh)
 
   sub_goal_ = priv_nh.subscribe("goal", 10, &LineTrackerMinJerk::goal_callback, this,
                                 ros::TransportHints().tcpNoDelay());
-  srv_param_ = priv_nh.advertiseService("set_des_vel_acc", &LineTrackerMinJerk::set_des_vel_acc, this);
 }
 
 bool LineTrackerMinJerk::Activate(void)
@@ -120,12 +118,59 @@ const quadrotor_msgs::PositionCommand::Ptr LineTrackerMinJerk::update(const nav_
   if(goal_set_)
   {
     traj_start_ = t_now;
+    traj_duration_ = (float) 0.5;
+
     // Min-Jerk trajectory
     const float total_dist = (goal_-pos_).norm();
-    if(total_dist > v_des_*v_des_/a_des_)
-      traj_duration_ = total_dist/v_des_ + v_des_/a_des_;
-    else
-      traj_duration_ = 2*std::sqrt(total_dist/a_des_);
+    const Eigen::Vector3f dir = (goal_ - pos_) / total_dist;
+    const float vel_proj = vel_.dot(dir);
+    
+    const float t_ramp = (v_des_ - vel_proj) / a_des_;
+   
+    const float distance_to_v_des = vel_proj * t_ramp + 0.5 * a_des_ * t_ramp * t_ramp;
+    const float distance_v_des_to_stop = 0.5 * v_des_ * v_des_ / a_des_;
+
+    const float ramping_distance = distance_to_v_des + distance_v_des_to_stop;
+
+    if(total_dist > ramping_distance) {
+
+      float t =
+        (v_des_ - vel_proj) / a_des_                // Ramp up
+        + (total_dist - ramping_distance) / v_des_  // Constant velocity
+        + v_des_ / a_des_;                          // Ramp down
+     
+      traj_duration_ = std::max(traj_duration_, t);
+    
+    } else {
+      // In this case, v_des_ is not reached. Assume bang bang acceleration.
+
+      float vo = vel_proj;
+      float distance_to_stop = 0.5 * vo * vo / a_des_;
+
+      float t_dir; // The time required for the component along dir
+      if (vo > 0.0 && total_dist < distance_to_stop) {
+          // Currently traveling towards the goal and need to overshoot
+
+          t_dir = vo / a_des_
+            + std::sqrt(2.0)
+            * std::sqrt(vo * vo - 2.0 * a_des_ * total_dist) / a_des_;
+   
+      } else {
+          // Ramp up to a velocity towards the goal before ramping down
+
+          t_dir = - vo / a_des_
+            + std::sqrt(2.0)
+            * std::sqrt(vo * vo + 2.0 * a_des_ * total_dist) / a_des_;
+      }
+      traj_duration_ = std::max(traj_duration_, t_dir);
+
+      // The velocity component orthogonal to dir 
+      float v_ortho = (vel_ - dir * vo).norm();
+      float t_non_dir = v_ortho / a_des_      // Ramp to zero velocity
+        + std::sqrt(2.0) * v_ortho / a_des_;  // Get back to the dir line
+
+      traj_duration_ = std::max(traj_duration_, t_non_dir);
+    }
 
     // Find shortest angle and direction to go from yaw_ to goal_yaw_
     float yaw_dist, yaw_dir;
@@ -145,13 +190,13 @@ const quadrotor_msgs::PositionCommand::Ptr LineTrackerMinJerk::update(const nav_
       traj_duration_ = std::max(traj_duration_, yaw_dist/yaw_v_des_ + yaw_v_des_/yaw_a_des_);
     else
       traj_duration_ = std::max(traj_duration_, 2*std::sqrt(yaw_dist/yaw_a_des_));
-    
-    traj_duration_ = std::max(float(0.5), traj_duration_);
+
+    // TODO: Should consider yaw_dot_. See hover() in MAVManager
 
     gen_trajectory(pos_, goal_, vel_, Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(),
                    yaw_, goal_yaw_, 0, 0,
                    traj_duration_, coeffs_, yaw_coeffs_);
-    
+
     goal_set_ = false;
   }
   else if(goal_reached_)
@@ -168,7 +213,7 @@ const quadrotor_msgs::PositionCommand::Ptr LineTrackerMinJerk::update(const nav_
   double yaw_des, yaw_dot_des;
 
   const float traj_time = (t_now - traj_start_).toSec();
-  if((traj_time >= traj_duration_) || (traj_duration_ < 0.3)) // Reached goal
+  if (traj_time >= traj_duration_) // Reached goal
   {
     ROS_DEBUG_THROTTLE(1, "Reached goal");
     j = Eigen::Vector3f::Zero();
@@ -200,40 +245,25 @@ const quadrotor_msgs::PositionCommand::Ptr LineTrackerMinJerk::update(const nav_
   return cmd;
 }
 
-void LineTrackerMinJerk::goal_callback(const quadrotor_msgs::FlatOutputs::ConstPtr &msg)
+void LineTrackerMinJerk::goal_callback(const quadrotor_msgs::LineTrackerGoal::ConstPtr &msg)
 {
   goal_(0) = msg->x;
   goal_(1) = msg->y;
   goal_(2) = msg->z;
   goal_yaw_ = msg->yaw;
 
-  goal_set_ = true;
-  goal_reached_ = false;
-}
-
-// TODO: allow for yaw velocity and yaw acceleration to be set
-bool LineTrackerMinJerk::set_des_vel_acc(std_trackers::DesVelAcc::Request &req,
-                                         std_trackers::DesVelAcc::Response &res)
-{
-  // Don't allow changes while already following a line
-  if(!goal_reached_)
-    return false;
-
-  // Only non-negative v_des and a_des allowed
-  if(req.v_des < 0 || req.a_des < 0)
-    return false;
-
-  if(req.v_des > 0)
-    v_des_ = req.v_des;
+  if (msg->v_des > 0)
+    v_des_ = msg->v_des;
   else
     v_des_ = default_v_des_;
 
-  if(req.a_des > 0)
-    a_des_ = req.a_des;
+  if (msg->a_des > 0)
+    a_des_ = msg->a_des;
   else
     a_des_ = default_a_des_;
 
-  return true;
+  goal_set_ = true;
+  goal_reached_ = false;
 }
 
 void LineTrackerMinJerk::gen_trajectory(const Eigen::Vector3f &xi, const Eigen::Vector3f &xf,

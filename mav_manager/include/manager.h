@@ -19,6 +19,7 @@ class MAVManager
   public:
 
     // Typedefs
+    typedef Eigen::Vector2d    Vec2;
     typedef Eigen::Vector3d    Vec3;
     typedef Eigen::Vector4d    Vec4;
     typedef Eigen::Quaterniond Quat;
@@ -42,23 +43,23 @@ class MAVManager
     // Movement
     bool takeoff();
 
-    bool goTo(Vec4 xyz_yaw);
-    bool goTo(Vec3 xyz);                                 // Uses current yaw
-    bool goTo(Vec3 xyz, double yaw);
-    bool goTo(double x, double y, double z);             // Uses current yaw
-    bool goTo(double x, double y, double z, double yaw);
+    bool goTo(double x, double y, double z, double yaw,
+              double v_des = 0, double a_des = 0);
+    bool goTo(Vec4 xyz_yaw, Vec2 v_and_a_des = Vec2::Zero());
+    bool goTo(Vec3 xyz, double yaw, Vec2 v_and_a_des = Vec2::Zero());
+    bool goTo(Vec3 xyz, Vec2 v_and_a_des = Vec2::Zero());  // Uses Current yaw
 
-    bool setDesVelWorld(Vec4);                           // (xyz(yaw))
-    bool setDesVelWorld(Vec3);                           // (xyz)
-    bool setDesVelWorld(Vec3, double);                   // (xyz, yaw)
-    bool setDesVelWorld(double, double, double);         // (x, y, z)
-    bool setDesVelWorld(double, double, double, double); // (x, y, z, yaw)
+    bool setDesVelWorld(Vec4 xyz_yaw);
+    bool setDesVelWorld(Vec3 xyz);
+    bool setDesVelWorld(Vec3 xyz, double yaw);
+    bool setDesVelWorld(double x, double y, double z);
+    bool setDesVelWorld(double x, double y, double z, double yaw);
 
-    bool setDesVelBody(Vec4);                           // (xyz(yaw))
-    bool setDesVelBody(Vec3);                           // (xyz)
-    bool setDesVelBody(Vec3, double);                   // (xyz, yaw)
-    bool setDesVelBody(double, double, double);         // (x, y, z)
-    bool setDesVelBody(double, double, double, double); // (x, y, z, yaw)
+    bool setDesVelBody(Vec4 xyz_yaw);
+    bool setDesVelBody(Vec3 xyz);
+    bool setDesVelBody(Vec3 xyz, double yaw);
+    bool setDesVelBody(double x, double y, double z);
+    bool setDesVelBody(double x, double y, double z, double yaw);
 
     // Yaw control
     bool goToYaw(double);

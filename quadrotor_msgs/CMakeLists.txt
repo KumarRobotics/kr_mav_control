@@ -16,6 +16,7 @@ add_message_files(DIRECTORY msg
   AuxCommand.msg
   Corrections.msg
   FlatOutputs.msg
+  LineTrackerGoal.msg
   OutputData.msg
   PositionCommand.msg
   PWMCommand.msg
