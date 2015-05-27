@@ -219,56 +219,54 @@ bool MAVManager::goToYaw(double yaw) {
 }
 
 // World Velocity commands
-bool MAVManager::setDesVelWorld(Vec4 vel) {
-  quadrotor_msgs::FlatOutputs goal;
-  goal.x = vel(0);
-  goal.y = vel(1);
-  goal.z = vel(2);
-  goal.yaw = vel(3);
-  pub_goal_velocity_.publish(goal);
-  ROS_INFO("Desired World velocity: (%1.4f, %1.4f, %1.4f, %1.4f)", goal.x,
-           goal.y, goal.z, goal.yaw);
+bool MAVManager::setDesVelWorld(double x, double y, double z, double yaw) {
 
-  // Only try to transition if it is not the active tracker
+  quadrotor_msgs::FlatOutputs goal;
+  goal.x = x;
+  goal.y = y;
+  goal.z = z;
+  goal.yaw = yaw;
+  pub_goal_velocity_.publish(goal);
+  ROS_INFO("Desired World velocity: (%1.4f, %1.4f, %1.4f, %1.4f)",
+      goal.x, goal.y, goal.z, goal.yaw);
+
+  // Since this could be called quite often by output_data_cb,
+  // only try to transition if it is not the active tracker.
   if (active_tracker_.compare(velocity_tracker_str) != 0)
     return this->transition(velocity_tracker_str);
 
   return true;
 }
+bool MAVManager::setDesVelWorld(Vec4 vel) {
+  return this->setDesVelWorld(vel(0), vel(1), vel(2), vel(3));
+}
 bool MAVManager::setDesVelWorld(Vec3 xyz) {
-  Vec4 goal(xyz(0), xyz(1), xyz(2), 0);
-  return this->setDesVelWorld(goal);
+  return this->setDesVelWorld(xyz(0), xyz(1), xyz(2), 0);
 }
 bool MAVManager::setDesVelWorld(Vec3 xyz, double yaw) {
-  Vec4 goal(xyz(0), xyz(1), xyz(2), yaw);
-  return this->setDesVelWorld(goal);
+  return this->setDesVelWorld(xyz(0), xyz(1), xyz(2), yaw);
 }
 bool MAVManager::setDesVelWorld(double x, double y, double z) {
-  Vec4 goal(x, y, z, 0);
-  return this->setDesVelWorld(goal);
-}
-bool MAVManager::setDesVelWorld(double x, double y, double z, double yaw) {
-  Vec4 goal(x, y, z, yaw);
-  return this->setDesVelWorld(goal);
+  return this->setDesVelWorld(x, y, z, 0);
 }
 
 // Body Velocity commands
 bool MAVManager::setDesVelBody(Vec3 xyz, double yaw) {
   Vec3 vel(odom_q_ * xyz);
-  return this->setDesVelWorld(vel, yaw);
+  return this->setDesVelWorld(vel(0), vel(1), vel(2), yaw);
 }
-bool MAVManager::setDesVelBody(Vec4 vel) {
-  Vec3 v(vel(0), vel(1), vel(2));
-  return this->setDesVelBody(v, vel(3));
+bool MAVManager::setDesVelBody(Vec4 xyz_yaw) {
+  return this->setDesVelBody(
+      Vec3(xyz_yaw(0), xyz_yaw(1), xyz_yaw(2)), xyz_yaw(3));
 }
-bool MAVManager::setDesVelBody(Vec3 xyz) { return this->setDesVelBody(xyz, 0); }
+bool MAVManager::setDesVelBody(Vec3 xyz) {
+  return this->setDesVelBody(xyz, 0);
+}
 bool MAVManager::setDesVelBody(double x, double y, double z) {
-  Vec3 vel(x, y, z);
-  return this->setDesVelBody(vel, 0);
+  return this->setDesVelBody(Vec3(x, y, z), 0);
 }
 bool MAVManager::setDesVelBody(double x, double y, double z, double yaw) {
-  Vec3 vel(x, y, z);
-  return this->setDesVelBody(vel, yaw);
+  return this->setDesVelBody(Vec3(x, y, z), yaw);
 }
 
 void MAVManager::motors(bool flag) {
@@ -287,6 +285,7 @@ void MAVManager::motors(bool flag) {
 
 void MAVManager::output_data_cb(
     const quadrotor_msgs::OutputData::ConstPtr &msg) {
+
   last_output_data_t_ = msg->header.stamp;
 
   for (unsigned int i = 0; i < 8; i++)
@@ -315,7 +314,7 @@ void MAVManager::output_data_cb(
     Vec4 db(0.1, 0.1, 0.15, 0.03);
     for (unsigned int i = 0; i < 4; i++) vel(i) = deadband(vel(i), db(i));
 
-    this->setDesVelWorld(vel);
+    this->setDesVelWorld(vel(0), vel(1), vel(2), vel(3));
   }
 
   this->heartbeat();
