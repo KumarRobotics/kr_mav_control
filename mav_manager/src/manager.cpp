@@ -7,7 +7,6 @@
 
 // ROS Related
 #include <ros/ros.h>
-#include <geometry_msgs/Vector3.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Empty.h>
 #include <tf/transform_datatypes.h>
@@ -19,10 +18,8 @@
 #include <quadrotor_msgs/SO3Command.h>
 
 // Strings
-static const std::string line_tracker_distance(
-    "std_trackers/LineTrackerDistance");
-static const std::string line_tracker_min_jerk(
-    "std_trackers/LineTrackerMinJerk");
+static const std::string line_tracker_distance("std_trackers/LineTrackerDistance");
+static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerk");
 static const std::string velocity_tracker_str("std_trackers/VelocityTracker");
 static const std::string null_tracker_str("std_trackers/NullTracker");
 
@@ -42,12 +39,12 @@ MAVManager::MAVManager()
       useRadioForVelocity_(false) {
 
   // Publishers
-  pub_goal_line_tracker_distance_ = nh_.advertise<geometry_msgs::Vector3>(
+  pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>(
       "trackers_manager/line_tracker_distance/goal", 10);
   pub_goal_min_jerk_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>(
       "trackers_manager/line_tracker_min_jerk/goal", 10);
   pub_goal_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>(
-      "trackers_manager/velocity_tracker/vel_cmd_with_yaw", 10);
+      "trackers_manager/velocity_tracker/goal", 10);
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
   so3_command_pub_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
@@ -142,7 +139,7 @@ bool MAVManager::takeoff() {
   }
 
   ROS_INFO("Initiating launch sequence...");
-  geometry_msgs::Point goal;
+  quadrotor_msgs::LineTrackerGoal goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
   goal.z = pos_(2) + takeoff_height_;
@@ -434,7 +431,7 @@ bool MAVManager::hover() {
 }
 
 bool MAVManager::ehover() {
-  geometry_msgs::Point goal;
+  quadrotor_msgs::LineTrackerGoal goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
   goal.z = pos_(2);

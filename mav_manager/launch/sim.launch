@@ -60,8 +60,8 @@
     </node>
 
     <node pkg="mav_manager"
-      type="mav_manager"
-      name="mav_manager"
+      type="mav_manager_node"
+      name="mav_manager_node"
       output="screen">
       <param name="startup_sleep_duration" value="0.25"/>
       <remap from="output_data" to="quad_decode_msg/output_data"/>

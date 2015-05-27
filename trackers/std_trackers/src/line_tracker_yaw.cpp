@@ -1,9 +1,8 @@
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
-#include <quadrotor_msgs/FlatOutputs.h>
+#include <quadrotor_msgs/LineTrackerGoal.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
-#include <std_trackers/DesVelAcc.h>
 
 class LineTrackerYaw : public trackers_manager::Tracker
 {
@@ -17,12 +16,9 @@ class LineTrackerYaw : public trackers_manager::Tracker
   const quadrotor_msgs::PositionCommand::Ptr update(const nav_msgs::Odometry::ConstPtr &msg);
 
  private:
-  void goal_callback(const quadrotor_msgs::FlatOutputs::ConstPtr &msg);
-  bool set_des_vel_acc(std_trackers::DesVelAcc::Request &req,
-                       std_trackers::DesVelAcc::Response &res);
+  void goal_callback(const quadrotor_msgs::LineTrackerGoal::ConstPtr &msg);
 
   ros::Subscriber sub_goal_;
-  ros::ServiceServer srv_param_;
   bool pos_set_, goal_set_, goal_reached_;
   double default_v_des_, default_a_des_,
          default_yaw_v_des_, default_yaw_a_des_, epsilon_;
@@ -72,7 +68,6 @@ void LineTrackerYaw::Initialize(const ros::NodeHandle &nh)
 
   sub_goal_ = priv_nh.subscribe("goal", 10, &LineTrackerYaw::goal_callback, this,
                                 ros::TransportHints().tcpNoDelay());
-  srv_param_ = priv_nh.advertiseService("set_des_vel_acc", &LineTrackerYaw::set_des_vel_acc, this);
 }
 
 bool LineTrackerYaw::Activate(void)
@@ -229,12 +224,22 @@ const quadrotor_msgs::PositionCommand::Ptr LineTrackerYaw::update(const nav_msgs
   return cmd;
 }
 
-void LineTrackerYaw::goal_callback(const quadrotor_msgs::FlatOutputs::ConstPtr &msg)
+void LineTrackerYaw::goal_callback(const quadrotor_msgs::LineTrackerGoal::ConstPtr &msg)
 {
   goal_pos_(0) = msg->x;
   goal_pos_(1) = msg->y;
   goal_pos_(2) = msg->z;
   goal_yaw_ = msg->yaw;
+
+  if(msg->v_des > 0)
+    v_des_ = msg->v_des;
+  else
+    v_des_ = default_v_des_;
+
+  if(msg->a_des > 0)
+    a_des_ = msg->a_des;
+  else
+    a_des_ = default_a_des_;
 
   // Initial values
   start_pos_ = pos_;
@@ -269,30 +274,6 @@ void LineTrackerYaw::goal_callback(const quadrotor_msgs::FlatOutputs::ConstPtr &
 
   goal_set_ = true;
   goal_reached_ = false;
-}
-
-bool LineTrackerYaw::set_des_vel_acc(std_trackers::DesVelAcc::Request &req,
-                                     std_trackers::DesVelAcc::Response &res)
-{
-  // Don't allow changes while already following a line
-  if(!goal_reached_)
-    return false;
-
-  // Only non-negative v_des and a_des allowed
-  if(req.v_des < 0 || req.a_des < 0)
-    return false;
-
-  if(req.v_des > 0)
-    v_des_ = req.v_des;
-  else
-    v_des_ = default_v_des_;
-
-  if(req.a_des > 0)
-    a_des_ = req.a_des;
-  else
-    a_des_ = default_a_des_;
-
-  return true;
 }
 
 #include <pluginlib/class_list_macros.h>

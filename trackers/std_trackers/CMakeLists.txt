@@ -11,11 +11,6 @@ find_package(Eigen REQUIRED)
 
 include_directories(include ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
-add_service_files(DIRECTORY srv
-  FILES
-  DesVelAcc.srv)
-generate_messages()
-
 catkin_package(
   INCLUDE_DIRS
   LIBRARIES

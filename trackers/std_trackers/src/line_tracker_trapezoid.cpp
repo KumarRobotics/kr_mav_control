@@ -1,9 +1,8 @@
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
-#include <geometry_msgs/Vector3.h>
+#include <quadrotor_msgs/LineTrackerGoal.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
-#include <std_trackers/DesVelAcc.h>
 
 class LineTrackerTrapezoid : public trackers_manager::Tracker
 {
@@ -19,12 +18,9 @@ class LineTrackerTrapezoid : public trackers_manager::Tracker
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
  private:
-  void goal_callback(const geometry_msgs::Vector3::ConstPtr &msg);
-  bool set_des_vel_acc(std_trackers::DesVelAcc::Request &req,
-                       std_trackers::DesVelAcc::Response &res);
+  void goal_callback(const quadrotor_msgs::LineTrackerGoal::ConstPtr &msg);
 
   ros::Subscriber sub_goal_;
-  ros::ServiceServer srv_param_;
   bool pos_set_, goal_set_, goal_reached_;
   double default_v_des_, default_a_des_, epsilon_;
   float v_des_, a_des_;
@@ -65,7 +61,6 @@ void LineTrackerTrapezoid::Initialize(const ros::NodeHandle &nh)
 
   sub_goal_ = priv_nh.subscribe("goal", 10, &LineTrackerTrapezoid::goal_callback, this,
                                 ros::TransportHints().tcpNoDelay());
-  srv_param_ = priv_nh.advertiseService("set_des_vel_acc", &LineTrackerTrapezoid::set_des_vel_acc, this);
 }
 
 bool LineTrackerTrapezoid::Activate(void)
@@ -181,38 +176,24 @@ const quadrotor_msgs::PositionCommand::Ptr LineTrackerTrapezoid::update(const na
   return cmd;
 }
 
-void LineTrackerTrapezoid::goal_callback(const geometry_msgs::Vector3::ConstPtr &msg)
+void LineTrackerTrapezoid::goal_callback(const quadrotor_msgs::LineTrackerGoal::ConstPtr &msg)
 {
   goal_(0) = msg->x;
   goal_(1) = msg->y;
   goal_(2) = msg->z;
 
-  goal_set_ = true;
-  goal_reached_ = false;
-}
-
-bool LineTrackerTrapezoid::set_des_vel_acc(std_trackers::DesVelAcc::Request &req,
-                                           std_trackers::DesVelAcc::Response &res)
-{
-  // Don't allow changes while already following a line
-  if(!goal_reached_)
-    return false;
-
-  // Only non-negative v_des and a_des allowed
-  if(req.v_des < 0 || req.a_des < 0)
-    return false;
-
-  if(req.v_des > 0)
-    v_des_ = req.v_des;
+  if (msg->v_des > 0)
+    v_des_ = msg->v_des;
   else
     v_des_ = default_v_des_;
 
-  if(req.a_des > 0)
-    a_des_ = req.a_des;
+  if (msg->a_des > 0)
+    a_des_ = msg->a_des;
   else
     a_des_ = default_a_des_;
 
-  return true;
+  goal_set_ = true;
+  goal_reached_ = false;
 }
 
 #include <pluginlib/class_list_macros.h>
