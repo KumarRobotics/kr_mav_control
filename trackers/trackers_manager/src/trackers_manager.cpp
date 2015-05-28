@@ -21,6 +21,7 @@ class TrackersManager : public nodelet::Nodelet
 
   ros::Subscriber sub_odom_;
   ros::Publisher pub_cmd_;
+  ros::Publisher pub_status_;
   ros::ServiceServer srv_tracker_;
   pluginlib::ClassLoader<trackers_manager::Tracker> *tracker_loader_;
   trackers_manager::Tracker *active_tracker_;
@@ -82,6 +83,7 @@ void TrackersManager::onInit(void)
                                 ros::TransportHints().tcpNoDelay());
 
   pub_cmd_ = priv_nh.advertise<quadrotor_msgs::PositionCommand>("cmd", 10);
+  pub_status_ = priv_nh.advertise<quadrotor_msgs::TrackerStatus>("status", 10);
 
   srv_tracker_ = priv_nh.advertiseService("transition", &TrackersManager::transition_callback, this);
 }
@@ -96,6 +98,14 @@ void TrackersManager::odom_callback(const nav_msgs::Odometry::ConstPtr &msg)
       const quadrotor_msgs::PositionCommand::ConstPtr cmd = it->second->update(msg);
       if(cmd != NULL)
         pub_cmd_.publish(cmd);
+
+      const quadrotor_msgs::TrackerStatus::Ptr status = it->second->status();
+      if(status != NULL)
+      {
+        status->stamp = ros::Time::now();
+        status->tracker = it->first;
+        pub_status_.publish(status);
+      }
     }
     else
     {

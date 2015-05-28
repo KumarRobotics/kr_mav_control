@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
 #include <quadrotor_msgs/FlatOutputs.h>
+#include <quadrotor_msgs/TrackerStatus.h>
 #include <tf/transform_datatypes.h>
 
 class VelocityTracker : public trackers_manager::Tracker
@@ -13,10 +14,10 @@ class VelocityTracker : public trackers_manager::Tracker
   void Deactivate(void);
 
   const quadrotor_msgs::PositionCommand::Ptr update(const nav_msgs::Odometry::ConstPtr &msg);
+  const quadrotor_msgs::TrackerStatus::Ptr status();
 
  private:
   void velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPtr &msg);
-  void velocity_odom_cb(const nav_msgs::Odometry::ConstPtr &msg);
 
   ros::Subscriber sub_vel_cmd_;
   quadrotor_msgs::PositionCommand position_cmd_;
@@ -91,6 +92,16 @@ void VelocityTracker::velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPt
   position_cmd_.velocity.y = msg->y;
   position_cmd_.velocity.z = msg->z;
   position_cmd_.yaw_dot = msg->yaw;
+}
+
+const quadrotor_msgs::TrackerStatus::Ptr VelocityTracker::status()
+{
+  if(!active_)
+    return quadrotor_msgs::TrackerStatus::Ptr();
+
+  quadrotor_msgs::TrackerStatus::Ptr msg(new quadrotor_msgs::TrackerStatus);
+  msg->status = quadrotor_msgs::TrackerStatus::SUCCEEDED;
+  return msg;
 }
 
 #include <pluginlib/class_list_macros.h>

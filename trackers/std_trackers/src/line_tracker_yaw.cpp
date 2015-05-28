@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
 #include <quadrotor_msgs/LineTrackerGoal.h>
+#include <quadrotor_msgs/TrackerStatus.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
 
@@ -14,6 +15,7 @@ class LineTrackerYaw : public trackers_manager::Tracker
   void Deactivate(void);
 
   const quadrotor_msgs::PositionCommand::Ptr update(const nav_msgs::Odometry::ConstPtr &msg);
+  const quadrotor_msgs::TrackerStatus::Ptr status();
 
  private:
   void goal_callback(const quadrotor_msgs::LineTrackerGoal::ConstPtr &msg);
@@ -274,6 +276,19 @@ void LineTrackerYaw::goal_callback(const quadrotor_msgs::LineTrackerGoal::ConstP
 
   goal_set_ = true;
   goal_reached_ = false;
+}
+
+const quadrotor_msgs::TrackerStatus::Ptr LineTrackerYaw::status()
+{
+  if(!active_)
+    return quadrotor_msgs::TrackerStatus::Ptr();
+
+  quadrotor_msgs::TrackerStatus::Ptr msg(new quadrotor_msgs::TrackerStatus);
+
+  msg->status = goal_reached_ ? (uint8_t)
+    quadrotor_msgs::TrackerStatus::SUCCEEDED : quadrotor_msgs::TrackerStatus::ACTIVE;
+
+  return msg;
 }
 
 #include <pluginlib/class_list_macros.h>
