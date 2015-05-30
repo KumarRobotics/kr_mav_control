@@ -1,5 +1,5 @@
-#ifndef __QUADROTOR_MSGS_QUADROTOR_MSGS_H__
-#define __QUADROTOR_MSGS_QUADROTOR_MSGS_H__
+#ifndef QUADROTOR_MSGS_ENCODE_MSGS_H
+#define QUADROTOR_MSGS_ENCODE_MSGS_H
 
 #include <stdint.h>
 #include <vector>

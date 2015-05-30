@@ -1,5 +1,5 @@
-#ifndef CONTROLLERS_MANAGER_CONTROLLER_H_
-#define CONTROLLERS_MANAGER_CONTROLLER_H_
+#ifndef CONTROLLERS_MANAGER_CONTROLLER_H
+#define CONTROLLERS_MANAGER_CONTROLLER_H
 
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>

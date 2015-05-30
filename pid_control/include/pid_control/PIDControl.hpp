@@ -1,5 +1,5 @@
-#ifndef __SO3_CONTROL_H__
-#define __SO3_CONTROL_H__
+#ifndef PID_CONTROL_H
+#define PID_CONTROL_H
 
 #include <Eigen/Geometry>
 
