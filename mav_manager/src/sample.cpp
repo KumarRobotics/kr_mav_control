@@ -72,6 +72,8 @@ class MAV_Services
     }
     else
       res.message = "Failed to transition";
+
+    return res.success;
   }
   bool hover_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
   {

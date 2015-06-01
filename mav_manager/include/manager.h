@@ -13,6 +13,7 @@
 
 // quadrotor_control
 #include <quadrotor_msgs/OutputData.h>
+#include <quadrotor_msgs/PositionCommand.h>
 
 class MAVManager
 {
@@ -71,6 +72,8 @@ class MAVManager
     // Use radio as velocity tracker
     bool useRadioForVelocity(bool b);
 
+    bool setPositionCommand(const quadrotor_msgs::PositionCommand cmd);
+
     // Monitoring
     bool have_recent_odom();
     bool have_recent_imu();
@@ -94,10 +97,10 @@ class MAVManager
     void heartbeat_cb(const std_msgs::Empty::ConstPtr &msg);
     void heartbeat();
 
-    ros::Time last_odom_t_, last_output_data_t_, last_imu_t_, last_heartbeat_t_;
-
     std::string active_tracker_;
     bool transition(const std::string &tracker_str);
+
+    ros::Time last_odom_t_, last_output_data_t_, last_imu_t_, last_heartbeat_t_;
 
     Vec3 pos_, vel_;
     Vec4 offsets_;
@@ -123,7 +126,8 @@ class MAVManager
     ros::Publisher pub_motors_;
     ros::Publisher pub_estop_;
     ros::Publisher pub_goal_yaw_;
-    ros::Publisher so3_command_pub_;
+    ros::Publisher pub_so3_command_;
+    ros::Publisher pub_position_command_;
     ros::Publisher pub_pwm_command_;
 
     // Subscribers

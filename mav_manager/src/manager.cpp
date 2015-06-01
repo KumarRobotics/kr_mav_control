@@ -15,6 +15,7 @@
 #include <trackers_manager/Transition.h>
 #include <quadrotor_msgs/FlatOutputs.h>
 #include <quadrotor_msgs/LineTrackerGoal.h>
+// #include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/SO3Command.h>
 
 // Strings
@@ -22,6 +23,7 @@ static const std::string line_tracker_distance("std_trackers/LineTrackerDistance
 static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerk");
 static const std::string velocity_tracker_str("std_trackers/VelocityTracker");
 static const std::string null_tracker_str("std_trackers/NullTracker");
+static const std::string pos_cmd_tracker_str("trajectory_trackers/PositionCommandTracker");
 
 // Helper functions
 double deadband(double val, double deadband);
@@ -30,11 +32,11 @@ MAVManager::MAVManager()
     : nh_(""),
       priv_nh_("~"),
       active_tracker_(""),
-      offsets_(0, 0, 0, 0),
-      // TODO: The offsets need to be implemented throughout. Or, maybe not used.
       last_odom_t_(0),
-      last_imu_t_(0),
       last_output_data_t_(0),
+      last_imu_t_(0),
+      last_heartbeat_t_(0),
+      offsets_(0, 0, 0, 0), // TODO: The offsets need to be implemented throughout. Or, maybe not used.
       kGravity_(9.81),
       useRadioForVelocity_(false) {
 
@@ -47,8 +49,9 @@ MAVManager::MAVManager()
       "trackers_manager/velocity_tracker/goal", 10);
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
-  so3_command_pub_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
-  // position_command_pub_ = nh_ ...
+  pub_so3_command_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
+  pub_position_command_ = nh_.advertise<quadrotor_msgs::PositionCommand>(
+      "trackers_manager/position_command_tracker/goal", 10);
   // pwm_command_pub_ = nh_ ...
 
   // Subscribers
@@ -86,7 +89,7 @@ MAVManager::MAVManager()
   so3_cmd.orientation.z = 0;
   so3_cmd.orientation.w = 1;
   so3_cmd.aux.enable_motors = false;
-  so3_command_pub_.publish(so3_cmd);
+  pub_so3_command_.publish(so3_cmd);
 
   motors_ = false;
 }
@@ -266,6 +269,19 @@ bool MAVManager::setDesVelBody(double x, double y, double z, double yaw) {
   return this->setDesVelBody(Vec3(x, y, z), yaw);
 }
 
+bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand msg) {
+
+  // quadrotor_msgs::PositionCommand goal;
+  pub_position_command_.publish(msg);
+
+  // Since this could be called quite often,
+  // only try to transition if it is not the active tracker.
+  if (active_tracker_.compare(pos_cmd_tracker_str) != 0)
+    return this->transition(pos_cmd_tracker_str);
+
+  return true;
+}
+
 void MAVManager::motors(bool flag) {
   std_msgs::Bool motors_cmd;
   motors_cmd.data = flag;
@@ -351,6 +367,7 @@ void MAVManager::heartbeat() {
 }
 
 bool MAVManager::useRadioForVelocity(bool b) {
+
   useRadioForVelocity_ = b;
 
   if (b && !this->have_recent_output_data()) {
@@ -359,7 +376,10 @@ bool MAVManager::useRadioForVelocity(bool b) {
     return false;
   }
 
-  if (!b) return this->hover();
+  if (!b)
+    return this->hover();
+
+  return true;
 }
 
 bool MAVManager::eland() {
@@ -376,7 +396,7 @@ bool MAVManager::eland() {
   so3_cmd.aux.use_external_yaw = true;
   so3_cmd.aux.current_yaw = 0;
   so3_cmd.aux.enable_motors = motors_;
-  so3_command_pub_.publish(so3_cmd);
+  pub_so3_command_.publish(so3_cmd);
 
   return flag;
 }
@@ -398,7 +418,7 @@ void MAVManager::estop() {
   so3_cmd.orientation.z = 0;
   so3_cmd.orientation.w = 1;
   so3_cmd.aux.enable_motors = false;
-  so3_command_pub_.publish(so3_cmd);
+  pub_so3_command_.publish(so3_cmd);
 }
 
 bool MAVManager::hover() {

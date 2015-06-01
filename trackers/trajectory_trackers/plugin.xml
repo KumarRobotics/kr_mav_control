@@ -1,0 +1,7 @@
+<library path="lib/libposition_command_tracker">
+  <class name="trajectory_trackers/PositionCommandTracker" type="PositionCommandTracker" base_class_type="trackers_manager::Tracker">
+    <description>
+      This is a tracker to follow a pre-evaluated trajectory.
+    </description>
+  </class>
+</library>
