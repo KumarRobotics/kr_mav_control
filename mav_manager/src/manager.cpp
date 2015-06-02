@@ -15,7 +15,6 @@
 #include <trackers_manager/Transition.h>
 #include <quadrotor_msgs/FlatOutputs.h>
 #include <quadrotor_msgs/LineTrackerGoal.h>
-// #include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/SO3Command.h>
 
 // Strings

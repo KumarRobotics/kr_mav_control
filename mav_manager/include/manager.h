@@ -29,10 +29,12 @@ class MAVManager
 
     // Accessors
     Vec3 pos() { return pos_; }
+    Vec3 vel() { return vel_; }
     Vec3 home() { return home_; }
     double yaw() { return yaw_; }
     double home_yaw() { return home_yaw_; }
     double mass() { return mass_; }
+    std::string active_tracker() { return active_tracker_; }
 
     // Mutators
     void set_mass(double m)   {mass_ = m;}

@@ -9,7 +9,7 @@ class NullTracker : public trackers_manager::Tracker
   bool Activate(void);
   void Deactivate(void);
 
-  const quadrotor_msgs::PositionCommand::Ptr update(const nav_msgs::Odometry::ConstPtr &msg);
+  const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
   const quadrotor_msgs::TrackerStatus::Ptr status();
 };
 
@@ -26,7 +26,7 @@ void NullTracker::Deactivate(void)
 {
 }
 
-const quadrotor_msgs::PositionCommand::Ptr NullTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
+const quadrotor_msgs::PositionCommand::ConstPtr NullTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   // Return a null message (will not publish the position command)
   return quadrotor_msgs::PositionCommand::Ptr();

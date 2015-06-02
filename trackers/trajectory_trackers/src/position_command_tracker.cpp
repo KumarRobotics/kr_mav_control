@@ -11,17 +11,17 @@ class PositionCommandTracker : public trackers_manager::Tracker
   bool Activate(void);
   void Deactivate(void);
 
-  const quadrotor_msgs::PositionCommand::Ptr update(const nav_msgs::Odometry::ConstPtr &msg);
+  const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
   const quadrotor_msgs::TrackerStatus::Ptr status();
 
  private:
-  void goal_callback(const quadrotor_msgs::PositionCommand &msg);
+  void goal_callback(const quadrotor_msgs::PositionCommand::ConstPtr msg);
 
   ros::Subscriber sub_goal_;
   bool pos_set_, goal_set_;
   bool active_;
 
-  quadrotor_msgs::PositionCommand cmd_;
+  quadrotor_msgs::PositionCommand::ConstPtr cmd_;
 };
 
 PositionCommandTracker::PositionCommandTracker(void) :
@@ -55,19 +55,17 @@ void PositionCommandTracker::Deactivate(void)
   active_ = false;
 }
 
-const quadrotor_msgs::PositionCommand::Ptr PositionCommandTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
+const quadrotor_msgs::PositionCommand::ConstPtr PositionCommandTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
+  pos_set_ = true;
+
   if(!active_ || !goal_set_)
     return quadrotor_msgs::PositionCommand::Ptr();
   else
-  {
-    quadrotor_msgs::PositionCommand::Ptr cmd(new quadrotor_msgs::PositionCommand);
-    *cmd = cmd_;
-    return cmd;
-  }
+    return cmd_;
 }
 
-void PositionCommandTracker::goal_callback(const quadrotor_msgs::PositionCommand &msg)
+void PositionCommandTracker::goal_callback(const quadrotor_msgs::PositionCommand::ConstPtr msg)
 {
   cmd_ = msg;
   goal_set_ = true;

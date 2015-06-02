@@ -14,7 +14,7 @@ class LineTrackerTrapezoid : public trackers_manager::Tracker
   bool Activate(void);
   void Deactivate(void);
 
-  const quadrotor_msgs::PositionCommand::Ptr update(const nav_msgs::Odometry::ConstPtr &msg);
+  const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
   const quadrotor_msgs::TrackerStatus::Ptr status();
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -83,7 +83,7 @@ void LineTrackerTrapezoid::Deactivate(void)
   active_ = false;
 }
 
-const quadrotor_msgs::PositionCommand::Ptr LineTrackerTrapezoid::update(const nav_msgs::Odometry::ConstPtr &msg)
+const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerTrapezoid::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   pos_(0) = msg->pose.pose.position.x;
   pos_(1) = msg->pose.pose.position.y;

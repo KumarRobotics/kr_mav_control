@@ -13,7 +13,7 @@ class VelocityTracker : public trackers_manager::Tracker
   bool Activate(void);
   void Deactivate(void);
 
-  const quadrotor_msgs::PositionCommand::Ptr update(const nav_msgs::Odometry::ConstPtr &msg);
+  const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
   const quadrotor_msgs::TrackerStatus::Ptr status();
 
  private:
@@ -66,7 +66,7 @@ void VelocityTracker::Deactivate(void)
   active_ = false;
 }
 
-const quadrotor_msgs::PositionCommand::Ptr VelocityTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
+const quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   cur_yaw_ = tf::getYaw(msg->pose.pose.orientation);
   odom_set_ = true;

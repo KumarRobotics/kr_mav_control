@@ -14,7 +14,7 @@ class LineTrackerDistance : public trackers_manager::Tracker
   bool Activate(void);
   void Deactivate(void);
 
-  const quadrotor_msgs::PositionCommand::Ptr update(const nav_msgs::Odometry::ConstPtr &msg);
+  const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
   const quadrotor_msgs::TrackerStatus::Ptr status();
 
  private:
@@ -81,7 +81,7 @@ void LineTrackerDistance::Deactivate(void)
   active_ = false;
 }
 
-const quadrotor_msgs::PositionCommand::Ptr LineTrackerDistance::update(const nav_msgs::Odometry::ConstPtr &msg)
+const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerDistance::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   pos_(0) = msg->pose.pose.position.x;
   pos_(1) = msg->pose.pose.position.y;
