@@ -357,10 +357,11 @@ void MAVManager::heartbeat() {
     this->eland();
   }
 
-  if (motors_ && !this->have_recent_imu() && !this->have_recent_output_data()) {
-    ROS_WARN("No recent imu or output_data");
-    this->eland();
-  }
+  // TODO: This isn't necessary if we are flying in a MoCap. Should we even monitor?
+  // if (motors_ && !this->have_recent_imu() && !this->have_recent_output_data()) {
+  //   ROS_WARN("No recent imu or output_data");
+  //   this->eland();
+  // }
 
   // TODO: Put safety monitoring in here
 }
