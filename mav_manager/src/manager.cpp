@@ -90,7 +90,6 @@ MAVManager::MAVManager()
   so3_cmd.aux.enable_motors = false;
   pub_so3_command_.publish(so3_cmd);
 
-  motors_ = false;
 }
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg) {
@@ -151,35 +150,25 @@ bool MAVManager::takeoff() {
 }
 
 bool MAVManager::setHome() {
-  bool flag = this->have_recent_odom();
 
-  if (flag) {
+  if (this->have_recent_odom()) {
     home_ = pos_;
+    home_yaw_ = yaw_;
     home_set_ = true;
 
-    home_yaw_ = yaw_;
-    home_yaw_set_ = true;
-  } else
-    ROS_WARN(
-        "Cannot set home unless current pose is set or an argument is "
-        "provided.");
+    return true;
 
-  return flag;
+  } else
+    ROS_WARN("Cannot set home unless current pose is known.");
+
+  return false;
 }
 
 bool MAVManager::goHome() {
-  Vec4 goal(pos_(0), pos_(1), pos_(2), yaw_);
-  if (home_set_) {
-    goal(0) = home_(0);
-    goal(1) = home_(1);
-    goal(2) = home_(2);
-  }
 
-  if (home_yaw_set_) goal(3) = home_yaw_;
-
-  if (home_set_ || home_yaw_set_) {
-    return this->goTo(goal);
-  } else {
+  if (home_set_)
+    return this->goTo(home_ + Vec3(0,0,0.15), home_yaw_);
+  else {
     ROS_WARN("Home not set. Cannot go home.");
     return false;
   }

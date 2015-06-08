@@ -7,6 +7,7 @@
 ros::ServiceServer
   srv_motors_,
   srv_takeoff_,
+  srv_goHome_,
   srv_goTo_,
   srv_setDesVelWorld_,
   srv_setDesVelBody_,
@@ -37,6 +38,12 @@ class MAV_Services
   {
     res.success = mav_.takeoff();
     res.message = "Takeoff";
+    return res.success;
+  }
+  bool goHome_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
+  {
+    res.success = mav_.goHome();
+    res.message = "Going home";
     return res.success;
   }
   bool goTo_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
@@ -112,6 +119,7 @@ int main(int argc, char **argv)
   // Services
   srv_motors_ = nh.advertiseService("motors", &MAV_Services::motors_cb, &mav_srvs);
   srv_takeoff_ = nh.advertiseService("takeoff", &MAV_Services::takeoff_cb, &mav_srvs);
+  srv_goHome_ = nh.advertiseService("goHome", &MAV_Services::goHome_cb, &mav_srvs);
   srv_goTo_ = nh.advertiseService("goTo", &MAV_Services::goTo_cb, &mav_srvs);
   srv_setDesVelWorld_ = nh.advertiseService("setDesVelWorld", &MAV_Services::setDesVelWorld_cb, &mav_srvs);
   srv_setDesVelBody_ = nh.advertiseService("setDesVelBody", &MAV_Services::setDesVelBody_cb, &mav_srvs);

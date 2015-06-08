@@ -119,7 +119,7 @@ class MAVManager
     Vec3 goal_;
     double goal_yaw_, home_yaw_;
 
-    bool home_set_, home_yaw_set_, serial_, motors_;
+    bool home_set_, serial_, motors_;
 
     // Publishers
     ros::Publisher pub_goal_min_jerk_;
