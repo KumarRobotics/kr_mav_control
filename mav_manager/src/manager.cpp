@@ -281,18 +281,43 @@ bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand msg) {
   return true;
 }
 
-void MAVManager::motors(bool flag) {
-  std_msgs::Bool motors_cmd;
-  motors_cmd.data = flag;
-  pub_motors_.publish(motors_cmd);
 
-  motors_ = flag;
+bool MAVManager::motors(bool motors) {
+
+  // Do nothing if we ask for motors to be turned on when they already are on
+  if (motors && motors_ == true)
+    return true;
+
+  bool null_tkr = this->transition(null_tracker_str);
+
+  // Make sure null_tracker is active before starting rotors. If turning motors
+  // off, continue anyway.
+  if (motors && !null_tkr) {
+    ROS_WARN("Could not transition to null_tracker before starting rotors");
+    return false;
+  }
 
   // Enable/Disable motors
-  if (flag)
-    ROS_INFO("Motors Armed...");
+  if (motors)
+    ROS_INFO("Motors starting...");
   else
-    ROS_INFO("Motors Disarmed...");
+    ROS_INFO("Motors stopping...");
+
+  std_msgs::Bool motors_cmd;
+  motors_cmd.data = motors;
+  pub_motors_.publish(motors_cmd);
+
+  // Publish so3_command ensure motors are or are not spinning
+  quadrotor_msgs::SO3Command so3_cmd;
+  so3_cmd.force.z = 0.01 * mass_ * kGravity_;
+  so3_cmd.orientation.w = 1;
+  so3_cmd.aux.use_external_yaw = true;
+  so3_cmd.aux.current_yaw = 0;
+  so3_cmd.aux.enable_motors = motors;
+  pub_so3_command_.publish(so3_cmd);
+
+  motors_ = motors;
+  return true;
 }
 
 void MAVManager::output_data_cb(
