@@ -75,6 +75,7 @@ class MAVManager
     bool useRadioForVelocity(bool b);
 
     bool setPositionCommand(const quadrotor_msgs::PositionCommand cmd);
+    bool useNullTracker();
 
     // Monitoring
     bool have_recent_odom();

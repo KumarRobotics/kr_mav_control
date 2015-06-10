@@ -261,6 +261,13 @@ bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand msg) {
   return true;
 }
 
+bool MAVManager::useNullTracker() {
+
+  if (active_tracker_.compare(null_tracker_str) != 0)
+    return this->transition(null_tracker_str);
+
+  return true;
+}
 
 bool MAVManager::motors(bool motors) {
 
