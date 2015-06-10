@@ -65,31 +65,22 @@ MAVManager::MAVManager()
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>(
       "trackers_manager/transition");
 
+  // Sleep to ensure service server initialized
+  double duration;
+  priv_nh_.param("startup_sleep_duration", duration, 0.25);
+  ros::Duration(duration).sleep();
+ 
   // Disable motors
-  this->motors(false);
-
+  if (!(this->motors(false)))
+    ROS_ERROR("Could not disable motors");
+ 
   if (!nh_.getParam("mass", mass_))
     ROS_ERROR("Mass must be set");
   else
     ROS_INFO("Using mass = %2.2f", mass_);
 
-  // Sleep to ensure service server initialized
-  double duration;
-  priv_nh_.param("startup_sleep_duration", duration, 0.25);
-  ros::Duration(duration).sleep();
-
   if (!(this->transition(null_tracker_str)))
     ROS_ERROR("Initial transition to NullTracker failed");
-
-  // Publish so3_command to ensure motors are stopped
-  quadrotor_msgs::SO3Command so3_cmd;
-  so3_cmd.orientation.x = 0;
-  so3_cmd.orientation.y = 0;
-  so3_cmd.orientation.z = 0;
-  so3_cmd.orientation.w = 1;
-  so3_cmd.aux.enable_motors = false;
-  pub_so3_command_.publish(so3_cmd);
-
 }
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg) {
@@ -279,10 +270,10 @@ bool MAVManager::motors(bool motors) {
 
   bool null_tkr = this->transition(null_tracker_str);
 
-  // Make sure null_tracker is active before starting rotors. If turning motors
+  // Make sure null_tracker is active before starting motors. If turning motors
   // off, continue anyway.
   if (motors && !null_tkr) {
-    ROS_WARN("Could not transition to null_tracker before starting rotors");
+    ROS_WARN("Could not transition to null_tracker before starting motors");
     return false;
   }
 
@@ -298,7 +289,7 @@ bool MAVManager::motors(bool motors) {
 
   // Publish so3_command ensure motors are or are not spinning
   quadrotor_msgs::SO3Command so3_cmd;
-  so3_cmd.force.z = 0.01 * mass_ * kGravity_;
+  so3_cmd.force.z = FLT_MIN;
   so3_cmd.orientation.w = 1;
   so3_cmd.aux.use_external_yaw = true;
   so3_cmd.aux.current_yaw = 0;
@@ -397,22 +388,14 @@ bool MAVManager::useRadioForVelocity(bool b) {
 }
 
 bool MAVManager::eland() {
+
   ROS_WARN("Emergency Land");
-  bool flag = this->transition(null_tracker_str);
-
-  // Publish so3_command
-  quadrotor_msgs::SO3Command so3_cmd;
-  so3_cmd.force.z = 0.9 * mass_ * kGravity_;
-  so3_cmd.orientation.x = 0;
-  so3_cmd.orientation.y = 0;
-  so3_cmd.orientation.z = 0;
-  so3_cmd.orientation.w = 1;
-  so3_cmd.aux.use_external_yaw = true;
-  so3_cmd.aux.current_yaw = 0;
-  so3_cmd.aux.enable_motors = motors_;
-  pub_so3_command_.publish(so3_cmd);
-
-  return flag;
+ 
+  quadrotor_msgs::PositionCommand goal;
+  goal.acceleration.z = - 0.45;
+  goal.yaw = yaw_;
+  
+  return this->setPositionCommand(goal);
 }
 
 void MAVManager::estop() {
