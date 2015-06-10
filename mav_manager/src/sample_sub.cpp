@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <tf/transform_datatypes.h>
-#include <manager.h>
+#include <mav_manager/manager.h>
 
 #include <std_msgs/Empty.h>
 #include <std_msgs/Bool.h>

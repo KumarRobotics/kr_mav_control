@@ -1,4 +1,4 @@
-#include <manager.h>
+#include <mav_manager/manager.h>
 #include <mav_manager/Bool.h>
 #include <mav_manager/Trigger.h>
 #include <mav_manager/Vec4.h>

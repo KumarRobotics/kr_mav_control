@@ -1,4 +1,4 @@
-#include <manager.h>
+#include <mav_manager/manager.h>
 #include <std_srvs/Empty.h>
 #include <mav_manager/Vec4.h>
 

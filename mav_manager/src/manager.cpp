@@ -1,5 +1,5 @@
 // mav_manager
-#include <manager.h>
+#include <mav_manager/manager.h>
 
 // Standard C++
 #include <math.h>
