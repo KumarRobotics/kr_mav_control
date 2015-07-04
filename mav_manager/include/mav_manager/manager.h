@@ -106,7 +106,6 @@ class MAVManager
     ros::Time last_odom_t_, last_output_data_t_, last_imu_t_, last_heartbeat_t_;
 
     Vec3 pos_, vel_;
-    Vec4 offsets_;
     double mass_;
     const double kGravity_;
     Quat odom_q_;

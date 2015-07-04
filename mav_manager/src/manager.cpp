@@ -35,7 +35,6 @@ MAVManager::MAVManager()
       last_output_data_t_(0),
       last_imu_t_(0),
       last_heartbeat_t_(0),
-      offsets_(0, 0, 0, 0), // TODO: The offsets need to be implemented throughout. Or, maybe not used.
       kGravity_(9.81),
       useRadioForVelocity_(false) {
 
@@ -69,11 +68,11 @@ MAVManager::MAVManager()
   double duration;
   priv_nh_.param("startup_sleep_duration", duration, 0.25);
   ros::Duration(duration).sleep();
- 
+
   // Disable motors
   if (!(this->motors(false)))
     ROS_ERROR("Could not disable motors");
- 
+
   if (!nh_.getParam("mass", mass_))
     ROS_ERROR("Mass must be set");
   else
@@ -168,10 +167,10 @@ bool MAVManager::goHome() {
 bool MAVManager::goTo(double x, double y, double z, double yaw, double v_des, double a_des) {
 
   quadrotor_msgs::LineTrackerGoal goal;
-  goal.x   = x   + offsets_(0);
-  goal.y   = y   + offsets_(1);
-  goal.z   = z   + offsets_(2);
-  goal.yaw = yaw + offsets_(3);
+  goal.x   = x;
+  goal.y   = y;
+  goal.z   = z;
+  goal.yaw = yaw;
   goal.v_des = v_des;
   goal.a_des = a_des;
 
@@ -397,11 +396,11 @@ bool MAVManager::useRadioForVelocity(bool b) {
 bool MAVManager::eland() {
 
   ROS_WARN("Emergency Land");
- 
+
   quadrotor_msgs::PositionCommand goal;
   goal.acceleration.z = - 0.45;
   goal.yaw = yaw_;
-  
+
   return this->setPositionCommand(goal);
 }
 
