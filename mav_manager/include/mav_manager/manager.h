@@ -12,7 +12,6 @@
 #include <std_msgs/Empty.h>
 
 // quadrotor_control
-#include <quadrotor_msgs/OutputData.h>
 #include <quadrotor_msgs/PositionCommand.h>
 
 class MAVManager
@@ -71,16 +70,12 @@ class MAVManager
     void clearWaypoints();
     void addWaypoint();
 
-    // Use radio as velocity tracker
-    bool useRadioForVelocity(bool b);
-
     bool setPositionCommand(const quadrotor_msgs::PositionCommand cmd);
     bool useNullTracker();
 
     // Monitoring
     bool have_recent_odom();
     bool have_recent_imu();
-    bool have_recent_output_data();
 
     // Safety
     bool hover();
@@ -95,7 +90,6 @@ class MAVManager
     ros::NodeHandle priv_nh_;
 
     void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
-    void output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
     void heartbeat_cb(const std_msgs::Empty::ConstPtr &msg);
     void heartbeat();
@@ -103,7 +97,7 @@ class MAVManager
     std::string active_tracker_;
     bool transition(const std::string &tracker_str);
 
-    ros::Time last_odom_t_, last_output_data_t_, last_imu_t_, last_heartbeat_t_;
+    ros::Time last_odom_t_, last_imu_t_, last_heartbeat_t_;
 
     Vec3 pos_, vel_;
     double mass_;
@@ -112,8 +106,6 @@ class MAVManager
     double yaw_, yaw_dot_;
     double takeoff_height_;
 
-    bool useRadioForVelocity_;
-    uint8_t radio_channel_[8];
 
     Vec3 home_;
     Vec3 goal_;
@@ -134,7 +126,6 @@ class MAVManager
 
     // Subscribers
     ros::Subscriber odom_sub_;
-    ros::Subscriber output_data_sub_;
     ros::Subscriber imu_sub_;
     ros::Subscriber heartbeat_sub_;
 

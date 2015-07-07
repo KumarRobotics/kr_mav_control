@@ -24,19 +24,14 @@ static const std::string velocity_tracker_str("std_trackers/VelocityTracker");
 static const std::string null_tracker_str("std_trackers/NullTracker");
 static const std::string pos_cmd_tracker_str("trajectory_trackers/PositionCommandTracker");
 
-// Helper functions
-double deadband(double val, double deadband);
-
 MAVManager::MAVManager()
     : nh_(""),
       priv_nh_("~"),
       active_tracker_(""),
       last_odom_t_(0),
-      last_output_data_t_(0),
       last_imu_t_(0),
       last_heartbeat_t_(0),
-      kGravity_(9.81),
-      useRadioForVelocity_(false) {
+      kGravity_(9.81) {
 
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>(
@@ -54,8 +49,6 @@ MAVManager::MAVManager()
 
   // Subscribers
   odom_sub_ = nh_.subscribe("odom", 10, &MAVManager::odometry_cb, this);
-  output_data_sub_ =
-      nh_.subscribe("output_data", 10, &MAVManager::output_data_cb, this);
   imu_sub_ = nh_.subscribe("imu", 10, &MAVManager::imu_cb, this);
   heartbeat_sub_ =
       nh_.subscribe("/heartbeat", 10, &MAVManager::heartbeat_cb, this);
@@ -208,7 +201,7 @@ bool MAVManager::setDesVelWorld(double x, double y, double z, double yaw) {
   ROS_INFO("Desired World velocity: (%1.4f, %1.4f, %1.4f, %1.4f)",
       goal.x, goal.y, goal.z, goal.yaw);
 
-  // Since this could be called quite often by output_data_cb,
+  // Since this could be called quite often,
   // only try to transition if it is not the active tracker.
   if (active_tracker_.compare(velocity_tracker_str) != 0)
     return this->transition(velocity_tracker_str);
@@ -306,43 +299,6 @@ bool MAVManager::motors(bool motors) {
   return true;
 }
 
-void MAVManager::output_data_cb(
-    const quadrotor_msgs::OutputData::ConstPtr &msg) {
-
-  last_output_data_t_ = msg->header.stamp;
-
-  for (unsigned int i = 0; i < 8; i++)
-    radio_channel_[i] = msg->radio_channel[i];
-
-  serial_ = radio_channel_[4] > 0;
-
-  if (useRadioForVelocity_) {
-    // constants
-    double scale = 255.0 / 2.0;
-    double rc_max_v = 1.0;
-    double rc_max_w = 15.0 * M_PI / 180.0;
-
-    // scale radio
-    Vec4 vel(0, 0, 0, 0);
-    vel(0) = -((double)radio_channel_[0] - scale) / scale * rc_max_v;
-    vel(1) = -((double)radio_channel_[1] - scale) / scale * rc_max_v;
-
-    // Only consider z velocity if the FLT Mode switch is toggled
-    if (radio_channel_[5] > 0)
-      vel(2) = ((double)radio_channel_[2] - scale) / scale * rc_max_v;
-
-    vel(3) = -((double)radio_channel_[3] - scale) / scale * rc_max_w;
-
-    // Deadbands on velocity
-    Vec4 db(0.1, 0.1, 0.15, 0.03);
-    for (unsigned int i = 0; i < 4; i++) vel(i) = deadband(vel(i), db(i));
-
-    this->setDesVelWorld(vel(0), vel(1), vel(2), vel(3));
-  }
-
-  this->heartbeat();
-}
-
 void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr &msg) {
   last_imu_t_ = msg->header.stamp;
   this->heartbeat();
@@ -362,35 +318,19 @@ void MAVManager::heartbeat() {
   else
     last_heartbeat_t_ = t;
 
-  // Checking the last odom and imu/output_data messages
+  // Checking the last odom
   if (motors_ && !this->have_recent_odom()) {
     ROS_WARN("No recent odometry!");
     this->eland();
   }
 
   // TODO: This isn't necessary if we are flying in a MoCap. Should we even monitor?
-  // if (motors_ && !this->have_recent_imu() && !this->have_recent_output_data()) {
-  //   ROS_WARN("No recent imu or output_data");
+  // if (motors_ && !this->have_recent_imu()) {
+  //   ROS_WARN("No recent imu");
   //   this->eland();
   // }
 
   // TODO: Put safety monitoring in here
-}
-
-bool MAVManager::useRadioForVelocity(bool b) {
-
-  useRadioForVelocity_ = b;
-
-  if (b && !this->have_recent_output_data()) {
-    ROS_WARN("useRadioForVelocity: Not a recent enough output_data update");
-    useRadioForVelocity_ = false;
-    return false;
-  }
-
-  if (!b)
-    return this->hover();
-
-  return true;
 }
 
 bool MAVManager::eland() {
@@ -483,23 +423,4 @@ bool MAVManager::have_recent_odom() {
 
 bool MAVManager::have_recent_imu() {
   return (ros::Time::now() - last_imu_t_).toSec() < 0.1;
-}
-
-bool MAVManager::have_recent_output_data() {
-  return (ros::Time::now() - last_output_data_t_).toSec() < 0.1;
-}
-
-double deadband(double val, double deadband) {
-  if (val > deadband)
-    return val - deadband;
-  else if (val < -deadband)
-    return val + deadband;
-  else
-    return 0.0;
-
-  // // Could also do it this way
-  // double v = val;
-  // v = std::min(v,  deadband);
-  // v = std::max(v, -deadband);
-  // return = val - v;
 }
