@@ -70,7 +70,9 @@ class MAV_Services
     }
     bool useRadioForVelocity_cb(mav_manager::Bool::Request &req, mav_manager::Bool::Response &res)
     {
-      res.success = mav_.useRadioForVelocity(req.b);
+      // TODO: Make this callback trigger a flag and sets the velocity using mav_.setDesVelBody
+      // res.success = mav_.useRadioForVelocity(req.b);
+      res.success = false;
       if (res.success)
       {
         if (req.b)

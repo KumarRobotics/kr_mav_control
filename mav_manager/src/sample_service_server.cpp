@@ -57,11 +57,13 @@ class MAV_Services {
   }
   bool useRadioForVelocity_cb(std_srvs::Empty::Request &req,
                               std_srvs::Empty::Response &res) {
-    static bool use_radio_ = true;
-    if (mav_.useRadioForVelocity(use_radio_)) {
-      use_radio_ = !use_radio_;
-      return true;
-    } else
+    // TODO: use mav_.setDesVelBody instead
+    
+    // static bool use_radio_ = true;
+    // if (mav_.useRadioForVelocity(use_radio_)) {
+    //  use_radio_ = !use_radio_;
+    //   return true;
+    // } else
       return false;
   }
   bool hover_cb(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
