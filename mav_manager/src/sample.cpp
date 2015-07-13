@@ -30,10 +30,10 @@ class MAV_Services
 
     bool motors_cb(mav_manager::Bool::Request &req, mav_manager::Bool::Response &res)
     {
-      mav_.motors(req.b);
-      res.success = true;
-      res.message = "Motors activated";
-      return true;
+      res.success = mav_.motors(req.b);
+      res.message = "Motors ";
+      res.message += req.b ? "on" : "off";
+      return res.success;
     }
     bool takeoff_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
@@ -105,10 +105,9 @@ class MAV_Services
     }
     bool estop_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
-      mav_.estop();
-      res.success = true;
+      res.success = mav_.estop();
       res.message = "Emergency Stop";
-      return true;
+      return res.success;
     }
 
     // Constructor

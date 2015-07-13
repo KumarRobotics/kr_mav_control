@@ -102,10 +102,10 @@ class MAVManager
     Vec3 pos_, vel_;
     double mass_;
     const double kGravity_;
-    Quat odom_q_;
+    Quat odom_q_, imu_q_;
     double yaw_, yaw_dot_;
     double takeoff_height_;
-
+    double max_attitude_angle_;
 
     Vec3 home_;
     Vec3 goal_;

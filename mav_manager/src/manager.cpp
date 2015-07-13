@@ -31,7 +31,9 @@ MAVManager::MAVManager()
       last_odom_t_(0),
       last_imu_t_(0),
       last_heartbeat_t_(0),
-      kGravity_(9.81) {
+      kGravity_(9.81),
+      imu_q_(1,0,0,0),
+      max_attitude_angle_(0.3) {
 
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>(
@@ -307,6 +309,10 @@ bool MAVManager::motors(bool motors) {
 
 void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr &msg) {
   last_imu_t_ = msg->header.stamp;
+
+  imu_q_ = Quat(msg->orientation.w, msg->orientation.x,
+      msg->orientation.y, msg->orientation.z);
+
   this->heartbeat();
 }
 
@@ -316,10 +322,13 @@ void MAVManager::heartbeat_cb(const std_msgs::Empty::ConstPtr &msg) {
 
 // TODO: This should be done in a separate thread
 void MAVManager::heartbeat() {
-  ros::Time t = ros::Time::now();
 
-  // Only need to do monitoring at 10 Hz
-  if ((t - last_heartbeat_t_).toSec() < 0.1)
+  const float freq = 10; // Hz
+
+  // Only need to do monitoring at the specified frequency
+  ros::Time t = ros::Time::now();
+  float dt = (t - last_heartbeat_t_).toSec();
+  if (dt < 1/freq)
     return;
   else
     last_heartbeat_t_ = t;
@@ -330,13 +339,38 @@ void MAVManager::heartbeat() {
     this->eland();
   }
 
-  // TODO: This isn't necessary if we are flying in a MoCap. Should we even monitor?
-  // if (motors_ && !this->have_recent_imu()) {
-  //   ROS_WARN("No recent imu");
-  //   this->eland();
-  // }
+  // Convert quaterions to tf so we can compute Euler angles, etc.
+  tf::Quaternion imu_q(imu_q_.x(), imu_q_.y(), imu_q_.z(), imu_q_.w());
+  tf::Quaternion odom_q(odom_q_.x(), odom_q_.y(), odom_q_.z(), odom_q_.w());
 
-  // TODO: Put safety monitoring in here
+  // Determine a geodesic angle from hover at the same yaw
+  double yaw, pitch, roll;
+  tf::Matrix3x3 R;
+
+  // If we don't have IMU feedback, imu_q_ will be the identity rotation
+  tf::Matrix3x3(imu_q).getEulerYPR(yaw, pitch, roll);
+  R.setEulerYPR(0, pitch, roll);
+  float imu_geodesic = std::fabs( std::acos(0.5 * (R[0][0] + R[1][1] + R[2][2] - 1)));
+
+  tf::Matrix3x3(odom_q).getEulerYPR(yaw, pitch, roll);
+  R.setEulerYPR(0, pitch, roll);
+  float odom_geodesic = std::fabs( std::acos(0.5 * (R[0][0] + R[1][1] + R[2][2] - 1)));
+
+  float geodesic = std::max(imu_geodesic, odom_geodesic);
+
+  static float attitude_limit_timer = 0;
+  if (geodesic > max_attitude_angle_)
+    attitude_limit_timer += dt;
+  else
+    attitude_limit_timer = 0;
+
+  if (attitude_limit_timer > 0.5)
+  {
+    // Reset the timer so we don't keep calling ehover
+    attitude_limit_timer = 0;
+    ROS_WARN("Attitude threshold exceeded! Entering emergency hover.");
+    this->ehover();
+  }
 }
 
 bool MAVManager::eland() {
