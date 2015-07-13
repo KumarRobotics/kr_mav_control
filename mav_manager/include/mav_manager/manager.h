@@ -82,7 +82,7 @@ class MAVManager
     bool ehover();
     bool motors(bool);
     bool eland();
-    void estop();
+    bool estop();
 
   private:
 

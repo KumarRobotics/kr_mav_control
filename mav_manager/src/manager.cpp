@@ -72,7 +72,7 @@ MAVManager::MAVManager()
     ROS_INFO("Using mass = %2.2f", mass_);
 
   if (!(this->transition(null_tracker_str)))
-    ROS_ERROR("Initial transition to NullTracker failed");
+    ROS_ERROR("Initial transition to NullTracker failed. Try increasing the startup_sleep_duration.");
 }
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg) {
@@ -286,14 +286,20 @@ bool MAVManager::motors(bool motors) {
   motors_cmd.data = motors;
   pub_motors_.publish(motors_cmd);
 
-  // Publish so3_command ensure motors are or are not spinning
+  // Publish a couple so3_commands to ensure motors are or are not spinning
   quadrotor_msgs::SO3Command so3_cmd;
   so3_cmd.force.z = FLT_MIN;
   so3_cmd.orientation.w = 1;
   so3_cmd.aux.use_external_yaw = true;
   so3_cmd.aux.current_yaw = 0;
   so3_cmd.aux.enable_motors = motors;
-  pub_so3_command_.publish(so3_cmd);
+
+  // Publish a few to make sure the signal gets through
+  for (short i=0; i<10; i++)
+  {
+    pub_so3_command_.publish(so3_cmd);
+    sleep(0.01);
+  }
 
   motors_ = motors;
   return true;
@@ -344,24 +350,14 @@ bool MAVManager::eland() {
   return this->setPositionCommand(goal);
 }
 
-void MAVManager::estop() {
-  // Publish the E-Stop command
+bool MAVManager::estop() {
+
   ROS_WARN("E-STOP");
   std_msgs::Empty estop_cmd;
   pub_estop_.publish(estop_cmd);
 
   // Disarm motors
-  this->motors(false);
-  this->transition(null_tracker_str);
-
-  // Publish so3_command to ensure motors are stopped
-  quadrotor_msgs::SO3Command so3_cmd;
-  so3_cmd.orientation.x = 0;
-  so3_cmd.orientation.y = 0;
-  so3_cmd.orientation.z = 0;
-  so3_cmd.orientation.w = 1;
-  so3_cmd.aux.enable_motors = false;
-  pub_so3_command_.publish(so3_cmd);
+  return this->motors(false);
 }
 
 bool MAVManager::hover() {
