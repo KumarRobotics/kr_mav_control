@@ -59,22 +59,20 @@ MAVManager::MAVManager()
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>(
       "trackers_manager/transition");
 
-  // Sleep to ensure service server initialized
-  double duration;
-  priv_nh_.param("startup_sleep_duration", duration, 0.25);
-  ros::Duration(duration).sleep();
-
-  // Disable motors
-  if (!(this->motors(false)))
-    ROS_ERROR("Could not disable motors");
-
   if (!nh_.getParam("mass", mass_))
     ROS_ERROR("Mass must be set");
   else
     ROS_INFO("Using mass = %2.2f", mass_);
 
-  if (!(this->transition(null_tracker_str)))
-    ROS_ERROR("Initial transition to NullTracker failed. Try increasing the startup_sleep_duration.");
+  // Wait until the service server is started
+  while (!this->transition(null_tracker_str)) {
+    ROS_WARN("Activation of NullTracker failed. Trying again shortly...");
+    ros::Duration(0.25).sleep();
+  }
+
+  // Disable motors
+  if (!this->motors(false))
+    ROS_ERROR("Could not disable motors");
 }
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg) {
