@@ -34,9 +34,14 @@ class MAVManager
     double home_yaw() { return home_yaw_; }
     double mass() { return mass_; }
     std::string active_tracker() { return active_tracker_; }
+    bool need_imu() { return need_imu_; }
+    bool need_odom() { return need_odom_; }
 
     // Mutators
-    void set_mass(double m)   {mass_ = m;}
+    void set_mass(double m)   {mass_ = m;} // TODO: This should fail if the mass is not positive
+    void set_need_imu(bool flag)  {need_imu_ = flag;} // TODO: Consider not allowing this to be toggled after takeoff
+    void set_need_odom(bool flag) {need_odom_ = flag;} // TODO: Consider not allowing this to be toggled after takeoff
+    void set_use_attitude_safety_catch(bool flag) {use_attitude_safety_catch_ = flag;}
 
     // Home Methods
     bool setHome();                 // Uses the current position and yaw
@@ -111,6 +116,7 @@ class MAVManager
     Vec3 goal_;
     double goal_yaw_, home_yaw_;
 
+    bool need_imu_, need_odom_, use_attitude_safety_catch_;
     bool home_set_, serial_, motors_;
 
     // Publishers
