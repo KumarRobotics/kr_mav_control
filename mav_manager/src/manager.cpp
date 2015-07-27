@@ -309,12 +309,9 @@ bool MAVManager::motors(bool motors) {
   so3_cmd.aux.current_yaw = 0;
   so3_cmd.aux.enable_motors = motors;
 
-  // Publish a few to make sure the signal gets through
+  // Queue a few to make sure the signal gets through
   for (short i=0; i<10; i++)
-  {
     pub_so3_command_.publish(so3_cmd);
-    sleep(0.01);
-  }
 
   motors_ = motors;
   return true;
@@ -401,13 +398,18 @@ void MAVManager::heartbeat() {
 
 bool MAVManager::eland() {
 
-  ROS_WARN("Emergency Land");
+  if (motors_)
+  {
+    ROS_WARN("Emergency Land");
 
-  quadrotor_msgs::PositionCommand goal;
-  goal.acceleration.z = - 0.45;
-  goal.yaw = yaw_;
+    quadrotor_msgs::PositionCommand goal;
+    goal.acceleration.z = - 0.45;
+    goal.yaw = yaw_;
 
-  return this->setPositionCommand(goal);
+    return this->setPositionCommand(goal);
+  }
+  else
+    return this->motors(false);
 }
 
 bool MAVManager::estop() {
