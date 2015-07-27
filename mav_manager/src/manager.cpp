@@ -22,7 +22,6 @@ static const std::string line_tracker_distance("std_trackers/LineTrackerDistance
 static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerk");
 static const std::string velocity_tracker_str("std_trackers/VelocityTracker");
 static const std::string null_tracker_str("std_trackers/NullTracker");
-static const std::string pos_cmd_tracker_str("trajectory_trackers/PositionCommandTracker");
 
 MAVManager::MAVManager()
     : nh_(""),
@@ -45,8 +44,8 @@ MAVManager::MAVManager()
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
   pub_so3_command_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
-  pub_position_command_ = nh_.advertise<quadrotor_msgs::PositionCommand>(
-      "trackers_manager/position_command_tracker/goal", 10);
+  pub_position_command_ =
+    nh_.advertise<quadrotor_msgs::PositionCommand>("position_cmd", 10);
   // pwm_command_pub_ = nh_ ...
 
   // Subscribers
@@ -242,15 +241,28 @@ bool MAVManager::setDesVelBody(double x, double y, double z, double yaw) {
 
 bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand msg) {
 
-  // quadrotor_msgs::PositionCommand goal;
-  pub_position_command_.publish(msg);
+  // TODO: Need to keep publishing a position command if there is no update.
+  // Otherwise, no so3_command will be published.
 
-  // Since this could be called quite often,
-  // only try to transition if it is not the active tracker.
-  if (active_tracker_.compare(pos_cmd_tracker_str) != 0)
-    return this->transition(pos_cmd_tracker_str);
+  if (motors_)
+  {
+    bool flag(true);
 
-  return true;
+    // Since this could be called quite often,
+    // only try to transition if it is not the active tracker.
+    if (active_tracker_.compare(null_tracker_str) != 0)
+      flag = this->transition(null_tracker_str);
+
+    if (flag)
+      pub_position_command_.publish(msg);
+
+    return flag;
+  }
+  else
+  {
+    ROS_WARN("You are trying to set a position command, but the motors have not been enabled yet");
+    return false;
+  }
 }
 
 bool MAVManager::useNullTracker() {

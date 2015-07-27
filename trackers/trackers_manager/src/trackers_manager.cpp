@@ -1,7 +1,6 @@
 #include <ros/ros.h>
 #include <nodelet/nodelet.h>
 #include <nav_msgs/Odometry.h>
-#include <quadrotor_msgs/PositionCommand.h>
 #include <pluginlib/class_loader.h>
 #include <trackers_manager/Tracker.h>
 #include <trackers_manager/Transition.h>
