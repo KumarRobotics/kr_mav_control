@@ -16,7 +16,6 @@ find_package(catkin REQUIRED COMPONENTS
   quadrotor_msgs
   trackers_manager
   std_trackers
-  trajectory_trackers
   std_msgs
   std_srvs
   cmake_modules
@@ -46,7 +45,6 @@ catkin_package(
     quadrotor_msgs
     trackers_manager
     std_trackers
-    trajectory_trackers
     std_msgs
     message_runtime
   DEPENDS Eigen)

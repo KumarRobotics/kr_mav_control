@@ -19,7 +19,6 @@
   <build_depend>quadrotor_msgs</build_depend>
   <build_depend>trackers_manager</build_depend>
   <build_depend>std_trackers</build_depend>
-  <build_depend>trajectory_trackers</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>std_srvs</build_depend>
 
@@ -32,7 +31,6 @@
   <run_depend>quadrotor_msgs</run_depend>
   <run_depend>trackers_manager</run_depend>
   <run_depend>std_trackers</run_depend>
-  <run_depend>trajectory_trackers</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>std_srvs</run_depend>
 </package>
