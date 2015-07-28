@@ -92,7 +92,7 @@ void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg) {
   yaw_ = tf::getYaw(msg->pose.pose.orientation);
   yaw_dot_ = msg->twist.twist.angular.z;
 
-  last_odom_t_ = msg->header.stamp;
+  last_odom_t_ = ros::Time::now();
 
   this->heartbeat();
 }
@@ -318,7 +318,7 @@ bool MAVManager::motors(bool motors) {
 }
 
 void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr &msg) {
-  last_imu_t_ = msg->header.stamp;
+  last_imu_t_ = ros::Time::now();
 
   imu_q_ = Quat(msg->orientation.w, msg->orientation.x,
       msg->orientation.y, msg->orientation.z);
