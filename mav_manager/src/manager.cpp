@@ -30,6 +30,7 @@ MAVManager::MAVManager()
       last_odom_t_(0.0),
       last_imu_t_(0.0),
       last_heartbeat_t_(0.0),
+      mass_(-1.0),
       kGravity_(9.81),
       imu_q_(1.0, 0.0 ,0.0 ,0.0),
       max_attitude_angle_(45.0 / 180.0 * M_PI),
@@ -61,7 +62,7 @@ MAVManager::MAVManager()
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>(
       "trackers_manager/transition");
 
-  if (!nh_.getParam("mass", mass_))
+  if (mass_ <= 0.0)
     ROS_ERROR("Mass must be set");
   else
     ROS_INFO("Using mass = %2.2f", mass_);
