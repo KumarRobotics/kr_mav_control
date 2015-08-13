@@ -1,8 +1,8 @@
+#include <memory>
 #include <mav_manager/manager.h>
 #include <mav_manager/Bool.h>
 #include <mav_manager/Trigger.h>
 #include <mav_manager/Vec4.h>
-
 
 // Typedefs
 typedef Eigen::Vector4d Vec4;
@@ -25,53 +25,50 @@ class MAV_Services
       srv_eland_,
       srv_estop_;
 
-    // Let's make an MAV
-    MAVManager mav_;
-
     bool motors_cb(mav_manager::Bool::Request &req, mav_manager::Bool::Response &res)
     {
-      res.success = mav_.motors(req.b);
+      res.success = mav->motors(req.b);
       res.message = "Motors ";
       res.message += req.b ? "on" : "off";
       return res.success;
     }
     bool takeoff_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
-      res.success = mav_.takeoff();
+      res.success = mav->takeoff();
       res.message = "Takeoff";
       return res.success;
     }
     bool goHome_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
-      res.success = mav_.goHome();
+      res.success = mav->goHome();
       res.message = "Going home";
       return res.success;
     }
     bool goTo_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
       Vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-      res.success = mav_.goTo(goal);
-      res.message = "Go To";
+      res.success = mav->goTo(goal);
+      res.message = "Going To...";
       return res.success;
     }
     bool setDesVelWorld_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
       Vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-      res.success = mav_.setDesVelWorld(goal);
+      res.success = mav->setDesVelWorld(goal);
       res.message = "World Velocity";
       return res.success;
     }
     bool setDesVelBody_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
       Vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-      res.success = mav_.setDesVelBody(goal);
+      res.success = mav->setDesVelBody(goal);
       res.message = "Body Velocity";
       return res.success;
     }
     bool useRadioForVelocity_cb(mav_manager::Bool::Request &req, mav_manager::Bool::Response &res)
     {
-      // TODO: Make this callback trigger a flag and sets the velocity using mav_.setDesVelBody
-      // res.success = mav_.useRadioForVelocity(req.b);
+      // TODO: Make this callback trigger a flag and sets the velocity using mav->setDesVelBody
+      // res.success = mav->useRadioForVelocity(req.b);
       res.success = false;
       if (res.success)
       {
@@ -87,31 +84,33 @@ class MAV_Services
     }
     bool hover_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
-      res.success = mav_.hover();
+      res.success = mav->hover();
       res.message = "Hover";
       return res.success;
     }
     bool ehover_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
-      res.success = mav_.ehover();
+      res.success = mav->ehover();
       res.message = "Emergency Hover";
       return res.success;
     }
     bool eland_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
-      res.success = mav_.eland();
+      res.success = mav->eland();
       res.message = "Emergency Landing";
       return res.success;
     }
     bool estop_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
-      res.success = mav_.estop();
+      res.success = mav->estop();
       res.message = "Emergency Stop";
       return res.success;
     }
 
     // Constructor
-    MAV_Services() : nh_(""), nh_priv_("~") {
+    MAV_Services(std::shared_ptr<MAVManager> m) : nh_(""), nh_priv_("~"), mav(m) {
+
+      mav->init();
 
       // Services
       srv_motors_ = nh_.advertiseService("motors", &MAV_Services::motors_cb, this);
@@ -130,16 +129,24 @@ class MAV_Services
   private:
     ros::NodeHandle nh_;
     ros::NodeHandle nh_priv_;
+
+    // Let's make an MAV pointer
+    std::shared_ptr<MAVManager> mav;
 };
 
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "manager");
-  ros::NodeHandle nh("");
+  ros::NodeHandle nh;
 
-  MAV_Services mav_srvs;
+  double mass(-1);
+  nh.getParam("mass", mass);
 
-  // Let's spin some rotors
+  std::shared_ptr<MAVManager> mav = std::make_shared<MAVManager>();
+  mav->set_mass(mass);
+
+  MAV_Services mav_srvs(mav);
+
   ros::spin();
 
   return 0;

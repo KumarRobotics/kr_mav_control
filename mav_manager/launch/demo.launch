@@ -1,7 +1,22 @@
 <launch>
-  <group ns="quadrotor">
+  
+  <arg name="model" default="quadrotor"/>
+  <arg name="sim" value="1"/>
+  <arg name="vicon" default="1"/>
 
-    <arg name="mass" value="0.5"/>
+  <!-- Launch vicon odometry node -->
+  <group ns="" unless="$(arg vicon)">
+    <arg name="vicon_fps" value="100"/>
+    <include file="$(find vicon)/launch/vicon.launch" unless="$(arg sim)"/>
+    <include file="$(find vicon_odom)/launch/ViconOdom.launch" unless="$(arg sim)">
+      <arg name="model" value="$(arg model)" />
+      <arg name="vicon_fps" value="$(arg vicon_fps)"/>
+    </include>
+  </group>
+
+  <group ns="$(arg model)">
+
+    <arg name="mass" default="0.5"/>
     <param name="mass" value="$(arg mass)"/> 
 
     <rosparam file="$(find mav_manager)/config/params.yaml"/>
@@ -9,13 +24,14 @@
     <node pkg="quadrotor_simulator"
       type="quadrotor_simulator_so3"
       name="quadrotor_simulator_so3"
-      output="screen">
+      output="screen"
+      if="$(arg sim)">
       <param name="rate/odom" value="100.0"/>
       <remap from="~odom" to="odom"/>
       <remap from="~imu" to="imu"/>
       <remap from="~cmd" to="so3_cmd"/>
     </node>
-
+    
     <node pkg="nodelet"
       type="nodelet"
       name="standalone_nodelet"
@@ -50,7 +66,8 @@
     <node pkg="mesh_visualization"
       type="mesh_visualization"
       name="mesh_visualization"
-      output="screen">
+      output="screen"
+      if="$(arg sim)">
       <param name="mesh_resource" value="package://mesh_visualization/mesh/hummingbird.mesh"/>
       <param name="color/r" value="0.0"/>
       <param name="color/g" value="0.0"/>
@@ -59,12 +76,39 @@
       <remap from="~odom" to="odom"/>
     </node>
 
-    <node pkg="mav_manager"
-      type="mav_manager_node"
-      name="mav_manager_node"
-      output="screen">
-      <remap from="output_data" to="quad_decode_msg/output_data"/>
+    <!-- For serial communication -->
+    <node pkg="nodelet"
+      type="nodelet"
+      name="quad_serial_comm"
+      args="load quad_serial_comm/QuadSerialComm standalone_nodelet"
+      output="screen"
+      unless="$(arg sim)">
+      <param name="device" value="/dev/ttyUSB0"/>
+      <param name="baud_rate" value="230400"/>
+      <remap from="~to_robot" to="to_robot"/>
+      <remap from="~from_robot" to="from_robot"/>
     </node>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="quad_encode_msg"
+      args="load quad_encode_msg/QuadEncodeMsg standalone_nodelet"
+      output="screen"
+      unless="$(arg sim)">
+      <remap from="~so3_cmd" to="so3_cmd"/>
+      <remap from="~serial_msg" to="to_robot"/>
+    </node>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="quad_decode_msg"
+      args="load quad_decode_msg/QuadDecodeMsg standalone_nodelet"
+      output="screen"
+      unless="$(arg sim)">
+      <remap from="~serial" to="from_robot"/>
+    </node>
+    
+    <include file="$(find mav_manager)/launch/manager.launch"/>
 
   </group>
 </launch>
