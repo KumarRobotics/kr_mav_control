@@ -36,7 +36,9 @@ MAVManager::MAVManager()
       max_attitude_angle_(45.0 / 180.0 * M_PI),
       need_imu_(true),
       need_odom_(true),
-      use_attitude_safety_catch_(true) {
+      use_attitude_safety_catch_(true) {}
+
+void MAVManager::init() { 
 
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>(

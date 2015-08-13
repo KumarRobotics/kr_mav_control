@@ -25,6 +25,7 @@ class MAVManager
     typedef Eigen::Quaterniond Quat;
 
     MAVManager();
+    void init();
 
     // Accessors
     Vec3 pos() { return pos_; }
