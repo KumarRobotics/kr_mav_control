@@ -62,10 +62,13 @@ MAVManager::MAVManager()
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>(
       "trackers_manager/transition");
 
-  if (mass_ <= 0.0)
-    ROS_ERROR("Mass must be set");
+  double m;
+  if (!nh_.getParam("mass", m))
+    ROS_ERROR("Mass must be set as param.");
+  else if (this->set_mass(m))
+    ROS_INFO("MAVManager using mass = %2.2f.", mass_);
   else
-    ROS_INFO("Using mass = %2.2f", mass_);
+    ROS_ERROR("Mass failed to set. Perhaps mass <= 0?");
 
   // Wait until the service server is started
   while (!this->transition(null_tracker_str)) {
@@ -133,6 +136,19 @@ bool MAVManager::takeoff() {
   pub_goal_line_tracker_distance_.publish(goal);
 
   return this->transition(line_tracker_distance);
+}
+
+bool MAVManager::set_mass(double m) {
+  if (m>0)
+  {
+    mass_ = m;
+    return true;
+  }
+  else
+  {
+    ROS_ERROR("Mass must be > 0");
+    return false;
+  } 
 }
 
 bool MAVManager::setHome() {

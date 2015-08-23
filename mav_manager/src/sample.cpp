@@ -137,14 +137,10 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "manager");
   ros::NodeHandle nh;
 
-  double mass(-1);
-  nh.getParam("mass", mass);
-
   std::shared_ptr<MAVManager> mav = std::make_shared<MAVManager>();
-  mav->set_mass(mass);
 
   MAV_Services mav_srvs(mav);
-
+  
   ros::spin();
 
   return 0;
