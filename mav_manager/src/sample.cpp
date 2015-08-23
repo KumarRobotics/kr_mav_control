@@ -110,8 +110,6 @@ class MAV_Services
     // Constructor
     MAV_Services(std::shared_ptr<MAVManager> m) : nh_(""), nh_priv_("~"), mav(m) {
 
-      mav->init();
-
       // Services
       srv_motors_ = nh_.advertiseService("motors", &MAV_Services::motors_cb, this);
       srv_takeoff_ = nh_.advertiseService("takeoff", &MAV_Services::takeoff_cb, this);
