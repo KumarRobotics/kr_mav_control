@@ -13,6 +13,7 @@
 
 // quadrotor_control
 #include <quadrotor_msgs/PositionCommand.h>
+#include <quadrotor_msgs/TrackerStatus.h>
 
 class MAVManager
 {
@@ -36,9 +37,10 @@ class MAVManager
     std::string active_tracker() { return active_tracker_; }
     bool need_imu() { return need_imu_; }
     bool need_odom() { return need_odom_; }
+    short tracker_status() { return tracker_status_; }
 
     // Mutators
-    void set_mass(double m)   {mass_ = m;} // TODO: This should fail if the mass is not positive
+    bool set_mass(double m);
     void set_need_imu(bool flag)  {need_imu_ = flag;} // TODO: Consider not allowing this to be toggled after takeoff
     void set_need_odom(bool flag) {need_odom_ = flag;} // TODO: Consider not allowing this to be toggled after takeoff
     void set_use_attitude_safety_catch(bool flag) {use_attitude_safety_catch_ = flag;}
@@ -97,9 +99,11 @@ class MAVManager
     void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
     void heartbeat_cb(const std_msgs::Empty::ConstPtr &msg);
+    void tracker_status_cb(const quadrotor_msgs::TrackerStatus::ConstPtr &msg);
     void heartbeat();
 
     std::string active_tracker_;
+    short tracker_status_;
     bool transition(const std::string &tracker_str);
 
     ros::Time last_odom_t_, last_imu_t_, last_heartbeat_t_;
@@ -134,6 +138,7 @@ class MAVManager
     ros::Subscriber odom_sub_;
     ros::Subscriber imu_sub_;
     ros::Subscriber heartbeat_sub_;
+    ros::Subscriber tracker_status_sub_;
 
     // Services
     ros::ServiceClient srv_transition_;

@@ -57,6 +57,8 @@ MAVManager::MAVManager()
   imu_sub_ = nh_.subscribe("imu", 10, &MAVManager::imu_cb, this);
   heartbeat_sub_ =
       nh_.subscribe("/heartbeat", 10, &MAVManager::heartbeat_cb, this);
+  tracker_status_sub_ =
+      nh_.subscribe("tracker_status", 10, &MAVManager::tracker_status_cb, this);
 
   // Services
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>(
@@ -343,6 +345,11 @@ void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr &msg) {
   this->heartbeat();
 }
 
+void MAVManager::tracker_status_cb(const quadrotor_msgs::TrackerStatus::ConstPtr &msg) {
+  active_tracker_ = msg->tracker.c_str();
+  tracker_status_ = msg->status;
+}
+
 void MAVManager::heartbeat_cb(const std_msgs::Empty::ConstPtr &msg) {
   this->heartbeat();
 }
@@ -485,6 +492,7 @@ bool MAVManager::transition(const std::string &tracker_str) {
 
   if (srv_transition_.call(transition_cmd)) {
     active_tracker_ = tracker_str;
+    tracker_status_ = quadrotor_msgs::TrackerStatus::ACTIVE;
     ROS_INFO("Current tracker: %s", tracker_str.c_str());
     return true;
   }
