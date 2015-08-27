@@ -323,9 +323,7 @@ bool MAVManager::motors(bool motors) {
   // Publish a couple so3_commands to ensure motors are or are not spinning
   quadrotor_msgs::SO3Command so3_cmd;
   so3_cmd.force.z = FLT_MIN;
-  so3_cmd.orientation.w = 1;
-  so3_cmd.aux.use_external_yaw = true;
-  so3_cmd.aux.current_yaw = 0;
+  so3_cmd.orientation.w = 1.0;
   so3_cmd.aux.enable_motors = motors;
 
   // Queue a few to make sure the signal gets through
