@@ -23,17 +23,17 @@ catkin_package(
   DEPENDS Eigen)
 
 add_library(line_tracker_min_jerk src/line_tracker_min_jerk.cpp)
-add_dependencies(line_tracker_min_jerk ${catkin_EXPORTED_TARGETS})
+add_dependencies(line_tracker_min_jerk ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(line_tracker_min_jerk ${catkin_LIBRARIES})
 
 add_library(line_tracker_trapezoid src/line_tracker_trapezoid.cpp)
-add_dependencies(line_tracker_trapezoid ${catkin_EXPORTED_TARGETS})
+add_dependencies(line_tracker_trapezoid ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(line_tracker_trapezoid ${catkin_LIBRARIES})
 
 add_library(line_tracker_distance src/line_tracker_distance.cpp)
-add_dependencies(line_tracker_distance ${catkin_EXPORTED_TARGETS})
+add_dependencies(line_tracker_distance ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(line_tracker_distance ${catkin_LIBRARIES})
 
 add_library(line_tracker_yaw src/line_tracker_yaw.cpp)
-add_dependencies(line_tracker_yaw ${catkin_EXPORTED_TARGETS})
+add_dependencies(line_tracker_yaw ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(line_tracker_yaw ${catkin_LIBRARIES})

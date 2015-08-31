@@ -29,7 +29,7 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS} ${Eigen_INCLUDE_DIRS})
 
 add_library(circle_tracker src/circle_tracker.cpp)
-add_dependencies(circle_tracker ${catkin_EXPORTED_TARGETS})
+add_dependencies(circle_tracker ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(circle_tracker ${catkin_LIBRARIES})
 
 install(TARGETS circle_tracker

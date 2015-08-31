@@ -24,5 +24,5 @@ catkin_package(
 )
 
 add_library(controllers_manager src/controllers_manager.cpp)
-add_dependencies(controllers_manager ${catkin_EXPORTED_TARGETS})
+add_dependencies(controllers_manager ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(controllers_manager ${catkin_LIBRARIES})
