@@ -2,13 +2,15 @@
   
   <arg name="model" default="quadrotor"/>
   <arg name="sim" value="1"/>
-  <arg name="vicon" default="1"/>
+  <arg name="vicon" value="1"/>
+  <arg name="vicon_fps" value="100"/>
+  <arg name="slow_baud_rate" value="true"/>
+  <arg name="mass" default="0.5"/>
 
   <!-- Launch vicon odometry node -->
-  <group ns="" unless="$(arg vicon)">
-    <arg name="vicon_fps" value="100"/>
+  <group if="$(arg vicon)">
     <include file="$(find vicon)/launch/vicon.launch" unless="$(arg sim)"/>
-    <include file="$(find vicon_odom)/launch/ViconOdom.launch" unless="$(arg sim)">
+    <include file="$(find vicon_odom)/launch/vicon_odom.launch" unless="$(arg sim)">
       <arg name="model" value="$(arg model)" />
       <arg name="vicon_fps" value="$(arg vicon_fps)"/>
     </include>
@@ -16,7 +18,6 @@
 
   <group ns="$(arg model)">
 
-    <arg name="mass" default="0.5"/>
     <param name="mass" value="$(arg mass)"/> 
 
     <rosparam file="$(find mav_manager)/config/params.yaml"/>
@@ -45,6 +46,7 @@
       output="screen">
       <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
       <rosparam file="$(find so3_control)/config/gains.yaml"/>
+      <rosparam file="$(find mav_manager)/config/hummingbird_gains.yaml"/>
       <remap from="~odom" to="odom"/>
       <remap from="~cmd" to="position_cmd"/>
     </node>
@@ -84,7 +86,8 @@
       output="screen"
       unless="$(arg sim)">
       <param name="device" value="/dev/ttyUSB0"/>
-      <param name="baud_rate" value="230400"/>
+      <param name="baud_rate" value="57600" if="$(arg slow_baud_rate)"/>
+      <param name="baud_rate" value="230400" unless="$(arg slow_baud_rate)"/>
       <remap from="~to_robot" to="to_robot"/>
       <remap from="~from_robot" to="from_robot"/>
     </node>
