@@ -13,6 +13,7 @@
 
 // quadrotor_control
 #include <quadrotor_msgs/PositionCommand.h>
+#include <quadrotor_msgs/SO3Command.h>
 #include <quadrotor_msgs/TrackerStatus.h>
 
 class MAVManager
@@ -77,7 +78,8 @@ class MAVManager
     void clearWaypoints();
     void addWaypoint();
 
-    bool setPositionCommand(const quadrotor_msgs::PositionCommand cmd);
+    bool setPositionCommand(const quadrotor_msgs::PositionCommand &cmd);
+    bool setSO3Command(const quadrotor_msgs::SO3Command &cmd);
     bool useNullTracker();
 
     // Monitoring

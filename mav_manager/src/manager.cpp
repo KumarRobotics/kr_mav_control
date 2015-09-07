@@ -15,7 +15,6 @@
 #include <trackers_manager/Transition.h>
 #include <quadrotor_msgs/FlatOutputs.h>
 #include <quadrotor_msgs/LineTrackerGoal.h>
-#include <quadrotor_msgs/SO3Command.h>
 
 // Strings
 static const std::string line_tracker_distance("std_trackers/LineTrackerDistance");
@@ -150,7 +149,7 @@ bool MAVManager::set_mass(double m) {
   {
     ROS_ERROR("Mass must be > 0");
     return false;
-  } 
+  }
 }
 
 bool MAVManager::setHome() {
@@ -261,7 +260,7 @@ bool MAVManager::setDesVelBody(double x, double y, double z, double yaw) {
   return this->setDesVelBody(Vec3(x, y, z), yaw);
 }
 
-bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand msg) {
+bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand &msg) {
 
   // TODO: Need to keep publishing a position command if there is no update.
   // Otherwise, no so3_command will be published.
@@ -285,6 +284,27 @@ bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand msg) {
     ROS_WARN("You are trying to set a position command, but the motors have not been enabled yet");
     return false;
   }
+}
+
+bool MAVManager::setSO3Command(const quadrotor_msgs::SO3Command &msg) {
+
+  // Note: To enable motors, the motors method must be used
+  if (!motors_)
+  {
+    ROS_WARN("Cannot publish an SO3Command until motors have been enabled using the motors method");
+    return false;
+  }
+
+  // Since this could be called quite often,
+  // only try to transition if it is not the active tracker.
+  bool flag(true);
+  if (active_tracker_.compare(null_tracker_str) != 0)
+    flag = this->transition(null_tracker_str);
+
+  if (flag)
+    pub_so3_command_.publish(msg);
+
+  return flag;
 }
 
 bool MAVManager::useNullTracker() {
