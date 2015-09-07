@@ -436,10 +436,34 @@ void MAVManager::heartbeat() {
       this->ehover();
     }
   }
+
+  // TODO: Incorporate bounding box constraints. Something along the lines of the following.
+  // We may want to use a timer in case the boundary is crossed slowly.
+  //
+  //
+  // bool flag = in_bounding_box(this->pos());
+  // static bool lastflag = flag;
+  // if (!flag && flag != lastflag)
+  // {
+  //   this->ehover();
+  // }
+  // lastflag = flag;
+
+  // TODO: Also something along the following
+  // // TF broadcaster to broadcast the quadrotor frame
+  // static tf::TransformBroadcaster br;
+  // tf::Transform transform;
+  // transform.setOrigin( tf::Vector3(pos_.x, pos_.y, pos_.z) );
+  // transform.setRotation(q);
+  // br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/simulator", "/quadrotor"));
+
 }
 
 bool MAVManager::eland() {
 
+  // TODO: This should also check a height threshold or something along those
+  // lines. For example, if the rotors are idle and the robot hasn't even
+  // left the ground, we don't want them to spin up faster.
   if (motors_)
   {
     ROS_WARN("Emergency Land");
