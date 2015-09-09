@@ -41,26 +41,19 @@ MAVManager::MAVManager()
       use_attitude_safety_catch_(true) {
 
   // Publishers
-  pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>(
-      "trackers_manager/line_tracker_distance/goal", 10);
-  pub_goal_min_jerk_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>(
-      "trackers_manager/line_tracker_min_jerk/goal", 10);
-  pub_goal_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>(
-      "trackers_manager/velocity_tracker/goal", 10);
+  pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_distance/goal", 10);
+  pub_goal_min_jerk_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_min_jerk/goal", 10);
+  pub_goal_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/velocity_tracker/goal", 10);
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
   pub_so3_command_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
-  pub_position_command_ =
-    nh_.advertise<quadrotor_msgs::PositionCommand>("position_cmd", 10);
+  pub_position_command_ = nh_.advertise<quadrotor_msgs::PositionCommand>("position_cmd", 10);
   // pwm_command_pub_ = nh_ ...
 
   // Subscribers
   odom_sub_ = nh_.subscribe("odom", 10, &MAVManager::odometry_cb, this);
-  imu_sub_ = nh_.subscribe("imu", 10, &MAVManager::imu_cb, this);
-  heartbeat_sub_ =
-      nh_.subscribe("/heartbeat", 10, &MAVManager::heartbeat_cb, this);
-  tracker_status_sub_ =
-      nh_.subscribe("tracker_status", 10, &MAVManager::tracker_status_cb, this);
+  heartbeat_sub_ = nh_.subscribe("/heartbeat", 10, &MAVManager::heartbeat_cb, this);
+  tracker_status_sub_ = nh_.subscribe("trackers_manager/status", 10, &MAVManager::tracker_status_cb, this);
 
   // Conditional subscribers
   if (need_output_data_)
@@ -70,8 +63,7 @@ MAVManager::MAVManager()
     imu_sub_ = nh_.subscribe("quad_decode_msg/imu", 10, &MAVManager::imu_cb, this);
 
   // Services
-  srv_transition_ = nh_.serviceClient<trackers_manager::Transition>(
-      "trackers_manager/transition");
+  srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
 
   double m;
   if (!nh_.getParam("mass", m))
@@ -198,8 +190,7 @@ bool MAVManager::goTo(double x, double y, double z, double yaw, double v_des, do
   goal.a_des = a_des;
 
   pub_goal_min_jerk_.publish(goal);
-  ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}", goal.x, goal.y,
-           goal.z, goal.yaw);
+  ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}", x, y, z, yaw);
 
   return this->transition(line_tracker_min_jerk);
 }
@@ -461,7 +452,8 @@ void MAVManager::heartbeat() {
     {
       // Reset the timer so we don't keep calling ehover
       attitude_limit_timer = 0;
-      ROS_WARN("Attitude threshold exceeded! Entering emergency hover.");
+      ROS_WARN("Attitude exceeded threshold of %2.2f deg! Geodesic = %2.2f deg. Entering emergency hover.",
+          max_attitude_angle_ * 180.0 / M_PI, geodesic * 180.0 / M_PI);
       this->ehover();
     }
   }
