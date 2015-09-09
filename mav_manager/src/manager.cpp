@@ -40,6 +40,16 @@ MAVManager::MAVManager()
       need_odom_(true),
       use_attitude_safety_catch_(true) {
 
+  // Load Params
+  if (!priv_nh_.getParam("need_imu", need_imu_))
+    ROS_WARN("Couldn't find need_imu param");
+
+  if (!priv_nh_.getParam("need_output_data", need_output_data_))
+    ROS_WARN("Couldn't find need_output_data param");
+
+  if (!priv_nh_.getParam("use_attitude_safety_catch", use_attitude_safety_catch_))
+    ROS_WARN("Couldn't find use_attitude_safety_catch param");
+
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_distance/goal", 10);
   pub_goal_min_jerk_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_min_jerk/goal", 10);
@@ -124,7 +134,7 @@ bool MAVManager::takeoff() {
   }
 
   // Read takeoff height
-  ros::param::param<double>("takeoff_height", takeoff_height_, 0.2);
+  ros::param::param<double>("takeoff_height", takeoff_height_, 0.1);
 
   if (takeoff_height_ > 3.0) {
     ROS_ERROR("Takeoff Height is Dangerously High");
