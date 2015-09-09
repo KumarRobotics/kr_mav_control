@@ -18,7 +18,7 @@ class MAV_Services {
   bool motors_cb(std_srvs::Empty::Request &req,
                  std_srvs::Empty::Response &res) {
     static bool motor_toggle_ = true;
-    mav_.motors(motor_toggle_);
+    mav_.set_motors(motor_toggle_);
     motor_toggle_ = !motor_toggle_;
     return true;
   }

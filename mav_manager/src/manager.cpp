@@ -90,7 +90,7 @@ MAVManager::MAVManager()
   }
 
   // Disable motors
-  if (!this->motors(false))
+  if (!this->set_motors(false))
     ROS_ERROR("Could not disable motors");
 }
 
@@ -122,7 +122,7 @@ bool MAVManager::takeoff() {
 
   if (!this->setHome()) return false;
 
-  if (!motors_) {
+  if (!this->motors()) {
     ROS_WARN("Cannot takeoff until motors are enabled.");
     return false;
   }
@@ -276,7 +276,7 @@ bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand &msg) 
   // TODO: Need to keep publishing a position command if there is no update.
   // Otherwise, no so3_command will be published.
 
-  if (motors_)
+  if (this->motors())
   {
     bool flag(true);
 
@@ -300,7 +300,7 @@ bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand &msg) 
 bool MAVManager::setSO3Command(const quadrotor_msgs::SO3Command &msg) {
 
   // Note: To enable motors, the motors method must be used
-  if (!motors_)
+  if (!this->motors())
   {
     ROS_WARN("Cannot publish an SO3Command until motors have been enabled using the motors method");
     return false;
@@ -326,10 +326,10 @@ bool MAVManager::useNullTracker() {
   return true;
 }
 
-bool MAVManager::motors(bool motors) {
+bool MAVManager::set_motors(bool motors) {
 
   // Do nothing if we ask for motors to be turned on when they already are on
-  if (motors && motors_ == true)
+  if (motors && this->motors())
     return true;
 
   bool null_tkr = this->transition(null_tracker_str);
@@ -416,13 +416,13 @@ void MAVManager::heartbeat() {
     last_heartbeat_t_ = t;
 
   // Checking for odom
-  if (motors_ && need_odom_ && !this->have_recent_odom()) {
+  if (this->motors() && need_odom_ && !this->have_recent_odom()) {
     ROS_WARN("No recent odometry!");
     this->eland();
   }
 
   // Checking for imu
-  if (motors_ && need_imu_ && !this->have_recent_imu()) {
+  if (this->motors() && need_imu_ && !this->have_recent_imu()) {
     ROS_WARN("No recent imu!");
     this->eland();
   }
@@ -501,7 +501,7 @@ bool MAVManager::eland() {
   // TODO: This should also check a height threshold or something along those
   // lines. For example, if the rotors are idle and the robot hasn't even
   // left the ground, we don't want them to spin up faster.
-  if (motors_)
+  if (this->motors())
   {
     ROS_WARN("Emergency Land");
 
@@ -512,7 +512,7 @@ bool MAVManager::eland() {
     return this->setPositionCommand(goal);
   }
   else
-    return this->motors(false);
+    return this->set_motors(false);
 }
 
 bool MAVManager::estop() {
@@ -522,7 +522,7 @@ bool MAVManager::estop() {
   pub_estop_.publish(estop_cmd);
 
   // Disarm motors
-  return this->motors(false);
+  return this->set_motors(false);
 }
 
 bool MAVManager::hover() {

@@ -28,7 +28,7 @@ class MAV_Subscribers
 
   void motors_cb(const std_msgs::Bool &msg)
   {
-    mav_.motors(msg.data);
+    mav_.set_motors(msg.data);
   }
   void takeoff_cb(const std_msgs::Empty &msg)
   {

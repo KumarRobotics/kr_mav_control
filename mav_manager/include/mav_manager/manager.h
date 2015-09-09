@@ -94,7 +94,7 @@ class MAVManager
     // Safety
     bool hover();
     bool ehover();
-    bool motors(bool);
+    bool set_motors(bool);
     bool motors() {return motors_;}
     bool eland();
     bool estop();
