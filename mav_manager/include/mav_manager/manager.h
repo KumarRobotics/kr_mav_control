@@ -15,6 +15,7 @@
 #include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/SO3Command.h>
 #include <quadrotor_msgs/TrackerStatus.h>
+#include <quadrotor_msgs/OutputData.h>
 
 class MAVManager
 {
@@ -83,8 +84,12 @@ class MAVManager
     bool useNullTracker();
 
     // Monitoring
-    bool have_recent_odom();
-    bool have_recent_imu();
+    bool have_recent_odom(), have_recent_imu(), have_recent_output_data();
+    float voltage() {return voltage_;}
+    float pressure_height() {return pressure_height_;}
+    float pressure_dheight() {return pressure_dheight_;}
+    float* magnetic_field() {return magnetic_field_;}
+    unsigned char* radio() {return radio_;}
 
     // Safety
     bool hover();
@@ -100,6 +105,7 @@ class MAVManager
 
     void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
+    void output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg);
     void heartbeat_cb(const std_msgs::Empty::ConstPtr &msg);
     void tracker_status_cb(const quadrotor_msgs::TrackerStatus::ConstPtr &msg);
     void heartbeat();
@@ -108,7 +114,7 @@ class MAVManager
     short tracker_status_;
     bool transition(const std::string &tracker_str);
 
-    ros::Time last_odom_t_, last_imu_t_, last_heartbeat_t_;
+    ros::Time last_odom_t_, last_imu_t_, last_output_data_t_, last_heartbeat_t_;
 
     Vec3 pos_, vel_;
     double mass_;
@@ -122,8 +128,10 @@ class MAVManager
     Vec3 goal_;
     double goal_yaw_, home_yaw_;
 
-    bool need_imu_, need_odom_, use_attitude_safety_catch_;
+    bool need_imu_, need_output_data_, need_odom_, use_attitude_safety_catch_;
     bool home_set_, serial_, motors_;
+    float voltage_, pressure_height_, pressure_dheight_, magnetic_field_[3];
+    unsigned char radio_[8];
 
     // Publishers
     ros::Publisher pub_goal_min_jerk_;
@@ -139,6 +147,7 @@ class MAVManager
     // Subscribers
     ros::Subscriber odom_sub_;
     ros::Subscriber imu_sub_;
+    ros::Subscriber output_data_sub_;
     ros::Subscriber heartbeat_sub_;
     ros::Subscriber tracker_status_sub_;
 

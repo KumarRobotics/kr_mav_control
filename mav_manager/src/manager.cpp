@@ -28,12 +28,14 @@ MAVManager::MAVManager()
       active_tracker_(""),
       last_odom_t_(0.0),
       last_imu_t_(0.0),
+      last_output_data_t_(0.0),
       last_heartbeat_t_(0.0),
       mass_(-1.0),
       kGravity_(9.81),
       imu_q_(1.0, 0.0 ,0.0 ,0.0),
       max_attitude_angle_(45.0 / 180.0 * M_PI),
-      need_imu_(true),
+      need_imu_(false),
+      need_output_data_(true),
       need_odom_(true),
       use_attitude_safety_catch_(true) {
 
@@ -58,6 +60,13 @@ MAVManager::MAVManager()
       nh_.subscribe("/heartbeat", 10, &MAVManager::heartbeat_cb, this);
   tracker_status_sub_ =
       nh_.subscribe("tracker_status", 10, &MAVManager::tracker_status_cb, this);
+
+  // Conditional subscribers
+  if (need_output_data_)
+    output_data_sub_ = nh_.subscribe("quad_decode_msg/output_data", 10, &MAVManager::output_data_cb, this);
+
+  if (need_imu_)
+    imu_sub_ = nh_.subscribe("quad_decode_msg/imu", 10, &MAVManager::imu_cb, this);
 
   // Services
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>(
@@ -363,6 +372,25 @@ void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr &msg) {
   this->heartbeat();
 }
 
+void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg) {
+  last_output_data_t_ = ros::Time::now();
+  last_imu_t_ = ros::Time::now();
+
+  imu_q_ = Quat(msg->orientation.w, msg->orientation.x,
+      msg->orientation.y, msg->orientation.z);
+
+  voltage_ = msg->voltage;
+  pressure_dheight_ = msg->pressure_dheight;
+  pressure_height_ = msg->pressure_height;
+  magnetic_field_[0] = msg->magnetic_field.x;
+  magnetic_field_[1] = msg->magnetic_field.y;
+  magnetic_field_[2] = msg->magnetic_field.z;
+  for (unsigned char i=0; i<8; i++)
+    radio_[i] = msg->radio_channel[i];
+
+  this->heartbeat();
+}
+
 void MAVManager::tracker_status_cb(const quadrotor_msgs::TrackerStatus::ConstPtr &msg) {
   active_tracker_ = msg->tracker.c_str();
   tracker_status_ = msg->status;
@@ -435,6 +463,12 @@ void MAVManager::heartbeat() {
       ROS_WARN("Attitude threshold exceeded! Entering emergency hover.");
       this->ehover();
     }
+  }
+
+  if (this->have_recent_output_data())
+  {
+    if (voltage_ < 10.0) // Note: Asctec firmware uses 9V
+      ROS_WARN_THROTTLE(10, "Battery voltage = %2.2f V", voltage_);
   }
 
   // TODO: Incorporate bounding box constraints. Something along the lines of the following.
@@ -548,4 +582,8 @@ bool MAVManager::have_recent_odom() {
 
 bool MAVManager::have_recent_imu() {
   return (ros::Time::now() - last_imu_t_).toSec() < 0.1;
+}
+
+bool MAVManager::have_recent_output_data() {
+  return (ros::Time::now() - last_output_data_t_).toSec() < 0.1;
 }
