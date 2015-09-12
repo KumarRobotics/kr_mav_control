@@ -189,6 +189,18 @@ bool MAVManager::goHome() {
   }
 }
 
+bool MAVManager::land() {
+
+  ROS_INFO("Initiating landing sequence...");
+  quadrotor_msgs::LineTrackerGoal goal;
+  goal.x = pos_(0);
+  goal.y = pos_(1);
+  goal.z = home_(2) - 0.1;
+  pub_goal_line_tracker_distance_.publish(goal);
+
+  return this->transition(line_tracker_distance);
+}
+
 bool MAVManager::goTo(double x, double y, double z, double yaw, double v_des, double a_des) {
 
   quadrotor_msgs::LineTrackerGoal goal;

@@ -50,6 +50,7 @@ class MAVManager
     // Home Methods
     bool setHome();                 // Uses the current position and yaw
     bool goHome();
+    bool land();
 
     // Movement
     bool takeoff();
