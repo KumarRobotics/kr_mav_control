@@ -3,5 +3,6 @@
     type="mav_manager_node"
     name="mav_manager_node"
     output="screen">
+    <rosparam file="$(find mav_manager)/config/mav_manager_params.yaml" />
   </node>
 </launch>
