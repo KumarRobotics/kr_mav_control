@@ -22,6 +22,7 @@ class MAV_Services
       srv_useRadioForVelocity_,
       srv_hover_,
       srv_ehover_,
+      srv_land_,
       srv_eland_,
       srv_estop_;
 
@@ -94,6 +95,12 @@ class MAV_Services
       res.message = "Emergency Hover";
       return res.success;
     }
+    bool land_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
+    {
+      res.success = mav->land();
+      res.message = "Landing";
+      return res.success;
+    }
     bool eland_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
       res.success = mav->eland();
@@ -120,6 +127,7 @@ class MAV_Services
       srv_useRadioForVelocity_ = nh_.advertiseService("useRadioForVelocity", &MAV_Services::useRadioForVelocity_cb, this);
       srv_hover_ = nh_.advertiseService("hover", &MAV_Services::hover_cb, this);
       srv_ehover_ = nh_.advertiseService("ehover", &MAV_Services::ehover_cb, this);
+      srv_land_ = nh_.advertiseService("land", &MAV_Services::land_cb, this);
       srv_eland_ = nh_.advertiseService("eland", &MAV_Services::eland_cb, this);
       srv_estop_ = nh_.advertiseService("estop", &MAV_Services::estop_cb, this);
     }
