@@ -176,12 +176,29 @@ int main(int argc, char **argv)
   n.param("initial_position/y", initial_pos_y, 0.0);
   n.param("initial_position/z", initial_pos_z, 0.0);
 
+  double initial_quaternion_w, initial_quaternion_x,
+         initial_quaternion_y, initial_quaternion_z;
+  n.param("initial_quaternion/w", initial_quaternion_w, 1.0);
+  n.param("initial_quaternion/x", initial_quaternion_x, 0.0);
+  n.param("initial_quaternion/y", initial_quaternion_y, 0.0);
+  n.param("initial_quaternion/z", initial_quaternion_z, 0.0);
+  Eigen::Quaterniond initial_q(
+      initial_quaternion_w,
+      initial_quaternion_x,
+      initial_quaternion_y,
+      initial_quaternion_z);
+
+  double mass;
+  n.param("mass", mass, 0.5);
+
   QuadrotorSimulator::Quadrotor quad;
   QuadrotorSimulator::Quadrotor::State state = quad.getState();
   state.x(0) = initial_pos_x;
   state.x(1) = initial_pos_y;
   state.x(2) = initial_pos_z;
+  state.R = initial_q.matrix();
   quad.setState(state);
+  quad.setMass(mass);
 
   ros::Rate r(simulation_rate);
   const double simulation_dt = 1/simulation_rate;
