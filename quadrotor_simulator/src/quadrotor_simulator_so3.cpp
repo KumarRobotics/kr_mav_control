@@ -176,17 +176,17 @@ int main(int argc, char **argv)
   n.param("initial_position/y", initial_pos_y, 0.0);
   n.param("initial_position/z", initial_pos_z, 0.0);
 
-  double initial_quaternion_w, initial_quaternion_x,
-         initial_quaternion_y, initial_quaternion_z;
-  n.param("initial_quaternion/w", initial_quaternion_w, 1.0);
-  n.param("initial_quaternion/x", initial_quaternion_x, 0.0);
-  n.param("initial_quaternion/y", initial_quaternion_y, 0.0);
-  n.param("initial_quaternion/z", initial_quaternion_z, 0.0);
+  double initial_orientation_w, initial_orientation_x,
+         initial_orientation_y, initial_orientation_z;
+  n.param("initial_orientation/w", initial_orientation_w, 1.0);
+  n.param("initial_orientation/x", initial_orientation_x, 0.0);
+  n.param("initial_orientation/y", initial_orientation_y, 0.0);
+  n.param("initial_orientation/z", initial_orientation_z, 0.0);
   Eigen::Quaterniond initial_q(
-      initial_quaternion_w,
-      initial_quaternion_x,
-      initial_quaternion_y,
-      initial_quaternion_z);
+      initial_orientation_w,
+      initial_orientation_x,
+      initial_orientation_y,
+      initial_orientation_z);
 
   double mass;
   n.param("mass", mass, 0.5);
