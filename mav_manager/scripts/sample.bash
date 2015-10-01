@@ -19,6 +19,14 @@ read -p "Press [Enter] to hover"
 rosservice call /$ROBOT/hover
 sleep 1
 
+read -p "Press [Enter] to ascend at 0.5 m/s"
+rosservice call /$ROBOT/setDesVelWorld "goal: [0.0, 0.0, 0.5, 0.0]"
+sleep 1
+
+read -p "Press [Enter] to hover"
+rosservice call /$ROBOT/hover
+sleep 1
+
 read -p "Press [Enter] to go home"
 rosservice call /$ROBOT/goHome
 sleep 1
