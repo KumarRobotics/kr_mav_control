@@ -50,6 +50,9 @@ MAVManager::MAVManager()
   if (!priv_nh_.getParam("use_attitude_safety_catch", use_attitude_safety_catch_))
     ROS_WARN("Couldn't find use_attitude_safety_catch param");
 
+  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle_))
+    ROS_WARN("Couldn't find max_attitude_angle param");
+
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_distance/goal", 10);
   pub_goal_min_jerk_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_min_jerk/goal", 10);
