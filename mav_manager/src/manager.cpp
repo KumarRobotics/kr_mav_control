@@ -137,7 +137,7 @@ bool MAVManager::takeoff() {
   }
 
   // Read takeoff height
-  ros::param::param<double>("takeoff_height", takeoff_height_, 0.1);
+  priv_nh_.param("takeoff_height", takeoff_height_, 0.1);
 
   if (takeoff_height_ > 3.0) {
     ROS_ERROR("Takeoff Height is Dangerously High");
