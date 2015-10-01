@@ -23,5 +23,9 @@ read -p "Press [Enter] to go home"
 rosservice call /$ROBOT/goHome
 sleep 1
 
+read -p "Press [Enter] to land"
+rosservice call /$ROBOT/land
+sleep 1
+
 read -p "Press [Enter] to estop"
 rosservice call /$ROBOT/estop
