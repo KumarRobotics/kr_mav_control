@@ -34,11 +34,11 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
   float v_des_, a_des_, yaw_v_des_, yaw_a_des_;
   bool active_;
 
-  Eigen::Vector3f goal_, pos_, vel_;
+  Eigen::Vector3f goal_, last_cmd_pos_, pos_, vel_;
   ros::Time traj_start_;
   float traj_duration_;
   Eigen::Vector3f coeffs_[6];
-  float yaw_, goal_yaw_, yaw_coeffs_[4];
+  float yaw_, goal_yaw_, last_cmd_yaw_, yaw_coeffs_[4];
 
   double kx_[3], kv_[3];
 };
@@ -120,8 +120,17 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const
     traj_duration_ = (float) 0.5;
 
     // Min-Jerk trajectory
-    const float total_dist = (goal_-pos_).norm();
-    const Eigen::Vector3f dir = (goal_ - pos_) / total_dist;
+    Eigen::Vector3f start = pos_;
+    if ((last_cmd_pos_ - pos_).norm() < 0.15)
+    {
+      start = last_cmd_pos_;
+      ROS_INFO("Line tracker min jerk using last commanded position as start location");
+    }
+    else
+      ROS_INFO("Line tracker min jerk using pos_ as start location");
+
+    const float total_dist = (goal_ - start).norm();
+    const Eigen::Vector3f dir = (goal_ - start) / total_dist;
     const float vel_proj = vel_.dot(dir);
     
     const float t_ramp = (v_des_ - vel_proj) / a_des_;
@@ -172,8 +181,17 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const
     }
 
     // Find shortest angle and direction to go from yaw_ to goal_yaw_
+    float yaw_start = yaw_;
+    if (std::abs(last_cmd_yaw_ - yaw_) < 8.0 / 180.0 * M_PI) // TODO: Do this more intelligent
+    {
+      yaw_start = last_cmd_yaw_;
+      ROS_INFO("Line tracker min jerk using the last commanded yaw as yaw_start");
+    }
+    else
+      ROS_INFO("Line tracker min jerk using yaw_ as yaw_start");
+    
     float yaw_dist, yaw_dir;
-    yaw_dist = goal_yaw_ - yaw_;
+    yaw_dist = goal_yaw_ - yaw_start;
     const float pi(M_PI); // Defined so as to force float type
     yaw_dist = std::fmod(yaw_dist, 2*pi);
     if(yaw_dist > pi)
@@ -182,7 +200,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const
       yaw_dist += 2*pi;
     yaw_dir = (yaw_dist >= 0) ? 1 : -1;
     yaw_dist = std::abs(yaw_dist);
-    goal_yaw_ = yaw_ + yaw_dir * yaw_dist;
+    goal_yaw_ = yaw_start + yaw_dir * yaw_dist;
 
     // Consider yaw in the trajectory duration
     if(yaw_dist > yaw_v_des_*yaw_v_des_ / yaw_a_des_)
@@ -192,8 +210,8 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const
 
     // TODO: Should consider yaw_dot_. See hover() in MAVManager
 
-    gen_trajectory(pos_, goal_, vel_, Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(),
-                   yaw_, goal_yaw_, 0, 0,
+    gen_trajectory(start, goal_, vel_, Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(),
+                   yaw_start, goal_yaw_, 0, 0,
                    traj_duration_, coeffs_, yaw_coeffs_);
 
     goal_set_ = false;
@@ -235,6 +253,9 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const
     yaw_dot_des = yaw_coeffs_[1] + t*(2*yaw_coeffs_[2] + t*(3*yaw_coeffs_[3]));
   }
 
+  last_cmd_pos_ = x;
+  last_cmd_yaw_ = yaw_des;
+ 
   cmd->position.x = x(0), cmd->position.y = x(1), cmd->position.z = x(2);
   cmd->yaw = yaw_des;
   cmd->yaw_dot = yaw_dot_des;
