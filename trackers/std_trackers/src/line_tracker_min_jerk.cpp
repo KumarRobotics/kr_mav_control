@@ -6,6 +6,83 @@
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
 
+class InitialConditions {
+
+  public:
+    void set_last_cmd(quadrotor_msgs::PositionCommand::ConstPtr msg);
+    void set_odom(nav_msgs::Odometry::ConstPtr msg);
+    Eigen::Vector3f pos();
+    Eigen::Vector3f vel();
+    Eigen::Vector3f acc();
+    Eigen::Vector3f jrk();
+    double yaw();
+    double yaw_dot();
+    void reset();
+
+  private:
+    quadrotor_msgs::PositionCommand cmd;
+    nav_msgs::Odometry odom;
+    bool last_cmd_valid;
+};
+void InitialConditions::set_last_cmd(quadrotor_msgs::PositionCommand::ConstPtr msg)
+{
+  this->cmd = *msg;
+  this->last_cmd_valid = true;
+}
+void InitialConditions::set_odom(nav_msgs::Odometry::ConstPtr msg)
+{
+  this->odom = *msg;
+}
+Eigen::Vector3f InitialConditions::pos()
+{
+  if (this->last_cmd_valid)
+    return Eigen::Vector3f(cmd.position.x, cmd.position.y, cmd.position.z);
+  else
+    return Eigen::Vector3f(odom.pose.pose.position.x, odom.pose.pose.position.y, odom.pose.pose.position.z);
+}
+Eigen::Vector3f InitialConditions::vel()
+{
+  if (this->last_cmd_valid)
+    return Eigen::Vector3f(cmd.velocity.x, cmd.velocity.y, cmd.velocity.z);
+  else
+    return Eigen::Vector3f(odom.twist.twist.linear.x, odom.twist.twist.linear.y, odom.twist.twist.linear.z);
+}
+Eigen::Vector3f InitialConditions::acc()
+{
+  if (this->last_cmd_valid)
+    return Eigen::Vector3f(cmd.acceleration.x, cmd.acceleration.y, cmd.acceleration.z);
+  else
+    return Eigen::Vector3f(0,0,0);
+}
+Eigen::Vector3f InitialConditions::jrk()
+{
+  if (this->last_cmd_valid)
+    return Eigen::Vector3f(cmd.jerk.x, cmd.jerk.y, cmd.jerk.z);
+  else
+    return Eigen::Vector3f(0,0,0);
+}
+double InitialConditions::yaw()
+{
+  if (this->last_cmd_valid)
+    return cmd.yaw;
+  else
+    return tf::getYaw(odom.pose.pose.orientation);
+}
+double InitialConditions::yaw_dot()
+{
+  if (this->last_cmd_valid)
+    return cmd.yaw_dot;
+  else
+  {
+    // TODO: Should double check which frame (body or world) this is in
+    return odom.twist.twist.angular.z;
+  }
+}
+void InitialConditions::reset()
+{
+  this->last_cmd_valid = false;
+}
+
 class LineTrackerMinJerk : public trackers_manager::Tracker
 {
  public:
@@ -34,11 +111,12 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
   float v_des_, a_des_, yaw_v_des_, yaw_a_des_;
   bool active_;
 
-  Eigen::Vector3f goal_, last_cmd_pos_, pos_, vel_;
+  InitialConditions ICs_;
+  Eigen::Vector3f goal_;
   ros::Time traj_start_;
   float traj_duration_;
   Eigen::Vector3f coeffs_[6];
-  float yaw_, goal_yaw_, last_cmd_yaw_, yaw_coeffs_[4];
+  float goal_yaw_, last_cmd_yaw_, yaw_coeffs_[4];
 
   double kx_[3], kv_[3];
 };
@@ -49,6 +127,7 @@ LineTrackerMinJerk::LineTrackerMinJerk(void) :
     goal_reached_(true),
     active_(false)
 {
+  ICs_.reset();
 }
 
 void LineTrackerMinJerk::Initialize(const ros::NodeHandle &nh)
@@ -90,18 +169,13 @@ void LineTrackerMinJerk::Deactivate(void)
 {
   goal_set_ = false;
   active_ = false;
+  ICs_.reset();
 }
 
 const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  pos_(0) = msg->pose.pose.position.x;
-  pos_(1) = msg->pose.pose.position.y;
-  pos_(2) = msg->pose.pose.position.z;
-  vel_(0) = msg->twist.twist.linear.x;
-  vel_(1) = msg->twist.twist.linear.y;
-  vel_(2) = msg->twist.twist.linear.z;
-  yaw_ = tf::getYaw(msg->pose.pose.orientation);
   pos_set_ = true;
+  ICs_.set_odom(msg);
 
   const ros::Time t_now = msg->header.stamp;
 
@@ -120,21 +194,12 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const
     traj_duration_ = (float) 0.5;
 
     // Min-Jerk trajectory
-    Eigen::Vector3f start = pos_;
-    if ((last_cmd_pos_ - pos_).norm() < 0.15)
-    {
-      start = last_cmd_pos_;
-      ROS_INFO("Line tracker min jerk using last commanded position as start location");
-    }
-    else
-      ROS_INFO("Line tracker min jerk using pos_ as start location");
+    const float total_dist = (goal_ - ICs_.pos()).norm();
+    const Eigen::Vector3f dir = (goal_ - ICs_.pos()) / total_dist;
+    const float vel_proj = (ICs_.vel()).dot(dir);
 
-    const float total_dist = (goal_ - start).norm();
-    const Eigen::Vector3f dir = (goal_ - start) / total_dist;
-    const float vel_proj = vel_.dot(dir);
-    
     const float t_ramp = (v_des_ - vel_proj) / a_des_;
-   
+
     const float distance_to_v_des = vel_proj * t_ramp + 0.5 * a_des_ * t_ramp * t_ramp;
     const float distance_v_des_to_stop = 0.5 * v_des_ * v_des_ / a_des_;
 
@@ -146,9 +211,9 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const
         (v_des_ - vel_proj) / a_des_                // Ramp up
         + (total_dist - ramping_distance) / v_des_  // Constant velocity
         + v_des_ / a_des_;                          // Ramp down
-     
+
       traj_duration_ = std::max(traj_duration_, t);
-    
+
     } else {
       // In this case, v_des_ is not reached. Assume bang bang acceleration.
 
@@ -162,7 +227,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const
           t_dir = vo / a_des_
             + std::sqrt(2.0)
             * std::sqrt(vo * vo - 2.0 * a_des_ * total_dist) / a_des_;
-   
+
       } else {
           // Ramp up to a velocity towards the goal before ramping down
 
@@ -172,8 +237,8 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const
       }
       traj_duration_ = std::max(traj_duration_, t_dir);
 
-      // The velocity component orthogonal to dir 
-      float v_ortho = (vel_ - dir * vo).norm();
+      // The velocity component orthogonal to dir
+      float v_ortho = (ICs_.vel() - dir * vo).norm();
       float t_non_dir = v_ortho / a_des_      // Ramp to zero velocity
         + std::sqrt(2.0) * v_ortho / a_des_;  // Get back to the dir line
 
@@ -181,37 +246,34 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const
     }
 
     // Find shortest angle and direction to go from yaw_ to goal_yaw_
-    float yaw_start = yaw_;
-    if (std::abs(last_cmd_yaw_ - yaw_) < 8.0 / 180.0 * M_PI) // TODO: Do this more intelligent
-    {
-      yaw_start = last_cmd_yaw_;
-      ROS_INFO("Line tracker min jerk using the last commanded yaw as yaw_start");
-    }
-    else
-      ROS_INFO("Line tracker min jerk using yaw_ as yaw_start");
-    
     float yaw_dist, yaw_dir;
-    yaw_dist = goal_yaw_ - yaw_start;
+    yaw_dist = goal_yaw_ - ICs_.yaw();
     const float pi(M_PI); // Defined so as to force float type
     yaw_dist = std::fmod(yaw_dist, 2*pi);
-    if(yaw_dist > pi)
+
+    // TODO: Should check to make sure yaw_dist isn't inf or something like that
+    while (yaw_dist > pi) {
       yaw_dist -= 2*pi;
-    else if(yaw_dist < -pi)
+    }
+
+    while (yaw_dist < -pi) {
       yaw_dist += 2*pi;
+    }
+
     yaw_dir = (yaw_dist >= 0) ? 1 : -1;
     yaw_dist = std::abs(yaw_dist);
-    goal_yaw_ = yaw_start + yaw_dir * yaw_dist;
+    goal_yaw_ = ICs_.yaw() + yaw_dir * yaw_dist;
 
     // Consider yaw in the trajectory duration
-    if(yaw_dist > yaw_v_des_*yaw_v_des_ / yaw_a_des_)
+    if(yaw_dist > yaw_v_des_ * yaw_v_des_ / yaw_a_des_)
       traj_duration_ = std::max(traj_duration_, yaw_dist/yaw_v_des_ + yaw_v_des_/yaw_a_des_);
     else
       traj_duration_ = std::max(traj_duration_, 2*std::sqrt(yaw_dist/yaw_a_des_));
 
     // TODO: Should consider yaw_dot_. See hover() in MAVManager
 
-    gen_trajectory(start, goal_, vel_, Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(),
-                   yaw_start, goal_yaw_, 0, 0,
+    gen_trajectory(ICs_.pos(), goal_, ICs_.vel(), Eigen::Vector3f::Zero(), ICs_.acc(), Eigen::Vector3f::Zero(),
+                   ICs_.yaw(), goal_yaw_, ICs_.yaw_dot(), 0,
                    traj_duration_, coeffs_, yaw_coeffs_);
 
     goal_set_ = false;
@@ -226,7 +288,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const
     return cmd;
   }
 
-  Eigen::Vector3f x(pos_), v(Eigen::Vector3f::Zero()), a(Eigen::Vector3f::Zero()), j(Eigen::Vector3f::Zero());
+  Eigen::Vector3f x(ICs_.pos()), v(Eigen::Vector3f::Zero()), a(Eigen::Vector3f::Zero()), j(Eigen::Vector3f::Zero());
   double yaw_des, yaw_dot_des;
 
   const float traj_time = (t_now - traj_start_).toSec();
@@ -253,15 +315,14 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const
     yaw_dot_des = yaw_coeffs_[1] + t*(2*yaw_coeffs_[2] + t*(3*yaw_coeffs_[3]));
   }
 
-  last_cmd_pos_ = x;
-  last_cmd_yaw_ = yaw_des;
- 
   cmd->position.x = x(0), cmd->position.y = x(1), cmd->position.z = x(2);
   cmd->yaw = yaw_des;
   cmd->yaw_dot = yaw_dot_des;
   cmd->velocity.x = v(0), cmd->velocity.y = v(1), cmd->velocity.z = v(2);
   cmd->acceleration.x = a(0), cmd->acceleration.y = a(1), cmd->acceleration.z = a(2);
   cmd->jerk.x = j(0), cmd->jerk.y = j(1), cmd->jerk.z = j(2);
+
+  ICs_.set_last_cmd(cmd);
   return cmd;
 }
 
