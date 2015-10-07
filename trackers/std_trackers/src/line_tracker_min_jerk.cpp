@@ -127,7 +127,6 @@ LineTrackerMinJerk::LineTrackerMinJerk(void) :
     goal_reached_(true),
     active_(false)
 {
-  ICs_.reset();
 }
 
 void LineTrackerMinJerk::Initialize(const ros::NodeHandle &nh)
@@ -162,6 +161,7 @@ bool LineTrackerMinJerk::Activate(void)
   {
     active_ = true;
   }
+  ICs_.reset();
   return active_;
 }
 
@@ -169,7 +169,6 @@ void LineTrackerMinJerk::Deactivate(void)
 {
   goal_set_ = false;
   active_ = false;
-  ICs_.reset();
 }
 
 const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs::Odometry::ConstPtr &msg)
