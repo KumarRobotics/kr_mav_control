@@ -250,16 +250,10 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const
     yaw_dist = goal_yaw_ - ICs_.yaw();
     const float pi(M_PI); // Defined so as to force float type
     yaw_dist = std::fmod(yaw_dist, 2*pi);
-
-    // TODO: Should check to make sure yaw_dist isn't inf or something like that
-    while (yaw_dist > pi) {
+    if(yaw_dist > pi)
       yaw_dist -= 2*pi;
-    }
-
-    while (yaw_dist < -pi) {
+    else if(yaw_dist < -pi)
       yaw_dist += 2*pi;
-    }
-
     yaw_dir = (yaw_dist >= 0) ? 1 : -1;
     yaw_dist = std::abs(yaw_dist);
     goal_yaw_ = ICs_.yaw() + yaw_dir * yaw_dist;
