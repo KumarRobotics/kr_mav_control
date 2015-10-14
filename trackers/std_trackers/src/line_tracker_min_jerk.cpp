@@ -27,12 +27,14 @@ class InitialConditions
   Eigen::Vector3f jrk() const { return jrk_; }
   float yaw() const { return yaw_; }
   float yaw_dot() const { return yaw_dot_; }
+  ros::Time time();
   void reset();
 
  private:
   Eigen::Vector3f pos_, vel_, acc_, jrk_;
   float yaw_, yaw_dot_;
   bool last_cmd_valid_;
+  ros::Time time_;
 };
 
 void InitialConditions::set_from_last_cmd(
@@ -45,6 +47,8 @@ void InitialConditions::set_from_last_cmd(
   jrk_ = Eigen::Vector3f(msg->jerk.x, msg->jerk.y, msg->jerk.z);
   yaw_ = msg->yaw;
   yaw_dot_ = msg->yaw_dot;
+
+  time_ = msg->header.stamp;
 
   last_cmd_valid_ = true;
 }
@@ -62,6 +66,19 @@ void InitialConditions::set_from_odom(const nav_msgs::Odometry::ConstPtr &msg)
     yaw_ = tf::getYaw(msg->pose.pose.orientation);
     yaw_dot_ = msg->twist.twist.angular.z; // TODO: Should double check which
                                            // frame (body or world) this is in
+    time_ = ros::Time::now();
+  }
+}
+
+ros::Time InitialConditions::time()
+{
+  // This should always be true, but just in case something odd happens
+  if (std::abs((ros::Time::now() - time_).toSec()) < 0.2)
+    return time_;
+  else
+  {
+    ROS_WARN("line_tracker_min_jerk: last msg time stamp too old. Using current time.");
+    return ros::Time::now();
   }
 }
 
@@ -175,8 +192,8 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
 
   if(goal_set_)
   {
-    traj_start_ = t_now;
-    traj_duration_ = 0.5;
+    traj_start_ = ICs_.time();
+    traj_duration_ = 0.5f;
 
     // Min-Jerk trajectory
     const float total_dist = (goal_ - ICs_.pos()).norm();
@@ -271,6 +288,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
     cmd->yaw_dot = 0;
     cmd->velocity.x = 0, cmd->velocity.y = 0, cmd->velocity.z = 0;
     cmd->acceleration.x = 0, cmd->acceleration.y = 0, cmd->acceleration.z = 0;
+    ICs_.set_from_last_cmd(cmd);
     return cmd;
   }
 
