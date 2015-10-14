@@ -292,23 +292,20 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
   }
   else
   {
-    const float t = traj_time;
-    x = coeffs_[0] +
-        t * (coeffs_[1] +
-             t * (coeffs_[2] +
-                  t * (coeffs_[3] + t * (coeffs_[4] + t * coeffs_[5]))));
-    v = coeffs_[1] +
-        t * (2 * coeffs_[2] +
-             t * (3 * coeffs_[3] + t * (4 * coeffs_[4] + t * 5 * coeffs_[5])));
-    a = 2 * coeffs_[2] +
-        t * (6 * coeffs_[3] + t * (12 * coeffs_[4] + t * 20 * coeffs_[5]));
-    j = 6 * coeffs_[3] + t * (24 * coeffs_[4] + t * 60 * coeffs_[5]);
+    float t = traj_time, t2 = t * t, t3 = t2 * t, t4 = t3 * t, t5 = t4 * t;
 
-    yaw_des =
-        yaw_coeffs_[0] +
-        t * (yaw_coeffs_[1] + t * (yaw_coeffs_[2] + t * (yaw_coeffs_[3])));
+    x = coeffs_[0] + t * coeffs_[1] + t2 * coeffs_[2] + t3 * coeffs_[3] +
+        t4 * coeffs_[4] + t5 * coeffs_[5];
+    v = coeffs_[1] + 2 * t * coeffs_[2] + 3 * t2 * coeffs_[3] +
+        4 * t3 * coeffs_[4] + 5 * t4 * coeffs_[5];
+    a = 2 * coeffs_[2] + 6 * t * coeffs_[3] + 12 * t2 * coeffs_[4] +
+        20 * t3 * coeffs_[5];
+    j = 6 * coeffs_[3] + 24 * t * coeffs_[4] + 60 * t2 * coeffs_[5];
+
+    yaw_des = yaw_coeffs_[0] + t * yaw_coeffs_[1] + t2 * yaw_coeffs_[2] +
+              t3 * yaw_coeffs_[3];
     yaw_dot_des =
-        yaw_coeffs_[1] + t * (2 * yaw_coeffs_[2] + t * (3 * yaw_coeffs_[3]));
+        yaw_coeffs_[1] + 2 * t * yaw_coeffs_[2] + 3 * t2 * yaw_coeffs_[3];
   }
 
   cmd->position.x = x(0), cmd->position.y = x(1), cmd->position.z = x(2);
@@ -352,18 +349,15 @@ void LineTrackerMinJerk::gen_trajectory(
     const float &yawf, const float &yaw_dot_i, const float &yaw_dot_f, float dt,
     Eigen::Vector3f coeffs[6], float yaw_coeffs[4])
 {
-  float dt2 = dt * dt;
-  float dt3 = dt2 * dt;
-  float dt4 = dt3 * dt;
-  float dt5 = dt4 * dt;
+  float dt2 = dt * dt, dt3 = dt2 * dt, dt4 = dt3 * dt, dt5 = dt4 * dt;
 
   Eigen::Matrix<float, 6, 6> A;
-  A << 1, 0, 0, 0, 0, 0,
-       1, dt, dt2, dt3, dt4, dt5,
-       0, 1, 0, 0, 0, 0,
-       0, 1, 2 * dt, 3 * dt2, 4 * dt3, 5 * dt4,
-       0, 0, 2, 0, 0, 0,
-       0, 0, 2, 6 * dt, 12 * dt2, 20 * dt3;
+  A << 1,  0,      0,       0,        0,        0,
+       1, dt,    dt2,     dt3,      dt4,      dt5,
+       0,  1,      0,       0,        0,        0,
+       0,  1, 2 * dt, 3 * dt2,  4 * dt3,  5 * dt4,
+       0,  0,      2,       0,        0,        0,
+       0,  0,      2,  6 * dt, 12 * dt2, 20 * dt3;
 
   Eigen::Matrix<float, 6, 3> b;
   b << xi.transpose(), xf.transpose(), vi.transpose(), vf.transpose(),
@@ -378,10 +372,10 @@ void LineTrackerMinJerk::gen_trajectory(
 
   // Compute the trajectory for the yaw
   Eigen::Matrix<float, 4, 4> A_yaw;
-  A_yaw << 1, 0, 0, 0,
-           1, dt, dt2, dt3,
-           0, 1, 0, 0,
-           0, 1, 2 * dt, 3 * dt2;
+  A_yaw << 1,  0,      0,       0,
+           1, dt,    dt2,     dt3,
+           0,  1,      0,       0,
+           0,  1, 2 * dt, 3 * dt2;
 
   Eigen::Vector4f b_yaw;
   b_yaw << yawi, yawf, yaw_dot_i, yaw_dot_f;
@@ -401,8 +395,9 @@ const quadrotor_msgs::TrackerStatus::Ptr LineTrackerMinJerk::status()
 
   quadrotor_msgs::TrackerStatus::Ptr msg(new quadrotor_msgs::TrackerStatus);
 
-  msg->status = goal_reached_ ? quadrotor_msgs::TrackerStatus::SUCCEEDED
-                              : quadrotor_msgs::TrackerStatus::ACTIVE;
+  msg->status = goal_reached_ ?
+          static_cast<uint8_t>(quadrotor_msgs::TrackerStatus::SUCCEEDED) :
+          static_cast<uint8_t>(quadrotor_msgs::TrackerStatus::ACTIVE);
 
   return msg;
 }
