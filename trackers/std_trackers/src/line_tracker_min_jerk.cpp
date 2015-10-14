@@ -25,8 +25,8 @@ class InitialConditions
   Eigen::Vector3f vel() const { return vel_; }
   Eigen::Vector3f acc() const { return acc_; }
   Eigen::Vector3f jrk() const { return jrk_; }
-  double yaw() const { return yaw_; }
-  double yaw_dot() const { return yaw_dot_; }
+  float yaw() const { return yaw_; }
+  float yaw_dot() const { return yaw_dot_; }
   void reset();
 
  private:
@@ -176,7 +176,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
   if(goal_set_)
   {
     traj_start_ = t_now;
-    traj_duration_ = (float)0.5;
+    traj_duration_ = 0.5;
 
     // Min-Jerk trajectory
     const float total_dist = (goal_ - ICs_.pos()).norm();
@@ -186,8 +186,8 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
     const float t_ramp = (v_des_ - vel_proj) / a_des_;
 
     const float distance_to_v_des =
-        vel_proj * t_ramp + 0.5 * a_des_ * t_ramp * t_ramp;
-    const float distance_v_des_to_stop = 0.5 * v_des_ * v_des_ / a_des_;
+        vel_proj * t_ramp + 0.5f * a_des_ * t_ramp * t_ramp;
+    const float distance_v_des_to_stop = 0.5f * v_des_ * v_des_ / a_des_;
 
     const float ramping_distance = distance_to_v_des + distance_v_des_to_stop;
 
@@ -204,24 +204,24 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
       // In this case, v_des_ is not reached. Assume bang bang acceleration.
 
       float vo = vel_proj;
-      float distance_to_stop = 0.5 * vo * vo / a_des_;
+      float distance_to_stop = 0.5f * vo * vo / a_des_;
 
       float t_dir; // The time required for the component along dir
-      if(vo > 0.0 && total_dist < distance_to_stop)
+      if(vo > 0.0f && total_dist < distance_to_stop)
       {
         // Currently traveling towards the goal and need to overshoot
 
         t_dir = vo / a_des_ +
-                std::sqrt(2.0) *
-                    std::sqrt(vo * vo - 2.0 * a_des_ * total_dist) / a_des_;
+                std::sqrt(2.0f) *
+                    std::sqrt(vo * vo - 2.0f * a_des_ * total_dist) / a_des_;
       }
       else
       {
         // Ramp up to a velocity towards the goal before ramping down
 
         t_dir = -vo / a_des_ +
-                std::sqrt(2.0) *
-                    std::sqrt(vo * vo + 2.0 * a_des_ * total_dist) / a_des_;
+                std::sqrt(2.0f) *
+                    std::sqrt(vo * vo + 2.0f * a_des_ * total_dist) / a_des_;
       }
       traj_duration_ = std::max(traj_duration_, t_dir);
 
@@ -229,7 +229,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
       float v_ortho = (ICs_.vel() - dir * vo).norm();
       float t_non_dir =
           v_ortho / a_des_ // Ramp to zero velocity
-          + std::sqrt(2.0) * v_ortho / a_des_; // Get back to the dir line
+          + std::sqrt(2.0f) * v_ortho / a_des_; // Get back to the dir line
 
       traj_duration_ = std::max(traj_duration_, t_non_dir);
     }
@@ -276,7 +276,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
 
   Eigen::Vector3f x(ICs_.pos()), v(Eigen::Vector3f::Zero()),
       a(Eigen::Vector3f::Zero()), j(Eigen::Vector3f::Zero());
-  double yaw_des, yaw_dot_des;
+  float yaw_des, yaw_dot_des;
 
   const float traj_time = (t_now - traj_start_).toSec();
   if(traj_time >= traj_duration_) // Reached goal
