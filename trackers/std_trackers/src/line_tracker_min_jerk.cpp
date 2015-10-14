@@ -27,7 +27,7 @@ class InitialConditions
   Eigen::Vector3f jrk() const { return jrk_; }
   float yaw() const { return yaw_; }
   float yaw_dot() const { return yaw_dot_; }
-  ros::Time time();
+  ros::Time time() const { return time_; }
   void reset();
 
  private:
@@ -67,18 +67,6 @@ void InitialConditions::set_from_odom(const nav_msgs::Odometry::ConstPtr &msg)
     yaw_dot_ = msg->twist.twist.angular.z; // TODO: Should double check which
                                            // frame (body or world) this is in
     time_ = ros::Time::now();
-  }
-}
-
-ros::Time InitialConditions::time()
-{
-  // This should always be true, but just in case something odd happens
-  if (std::abs((ros::Time::now() - time_).toSec()) < 0.2)
-    return time_;
-  else
-  {
-    ROS_WARN("line_tracker_min_jerk: last msg time stamp too old. Using current time.");
-    return ros::Time::now();
   }
 }
 
