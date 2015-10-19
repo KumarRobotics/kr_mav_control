@@ -71,6 +71,10 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
 
   n.param("quadrotor_name", quad_name_, std::string("quadrotor"));
 
+  double mass;
+  n.param("mass", mass, 0.5);
+  quad_.setMass(mass);
+
   Eigen::Vector3d initial_pos;
   n.param("initial_position/x", initial_pos(0), 0.0);
   n.param("initial_position/y", initial_pos(1), 0.0);
