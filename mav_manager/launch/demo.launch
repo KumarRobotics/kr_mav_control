@@ -46,7 +46,6 @@
       output="screen">
       <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
       <rosparam file="$(find so3_control)/config/gains.yaml"/>
-      <rosparam file="$(find mav_manager)/config/hummingbird_gains.yaml"/>
       <remap from="~odom" to="odom"/>
       <remap from="~cmd" to="position_cmd"/>
     </node>
