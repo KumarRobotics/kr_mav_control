@@ -7,6 +7,7 @@
 #include <nav_msgs/Odometry.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <Eigen/Geometry>
+#include <geometry_msgs/Vector3.h>
 
 namespace QuadrotorSimulator
 {
@@ -16,6 +17,8 @@ class QuadrotorSimulatorBase
  public:
   QuadrotorSimulatorBase(ros::NodeHandle &n);
   void run(void);
+  void extern_force_callback(const geometry_msgs::Vector3::ConstPtr &f_ext);
+  void extern_moment_callback(const geometry_msgs::Vector3::ConstPtr &m_ext);
 
  protected:
   typedef struct _ControlInput
@@ -38,6 +41,7 @@ class QuadrotorSimulatorBase
   virtual ControlInput getControl(const Quadrotor &quad,
                                   const U &cmd) const = 0;
 
+
   Quadrotor quad_;
   U command_;
 
@@ -50,11 +54,14 @@ class QuadrotorSimulatorBase
   ros::Publisher pub_odom_;
   ros::Publisher pub_imu_;
   ros::Subscriber sub_cmd_;
+  ros::Subscriber sub_extern_force_;
+  ros::Subscriber sub_extern_moment_;
   double simulation_rate_;
   double odom_rate_;
   std::string quad_name_;
   tf2_ros::TransformBroadcaster tf_broadcaster_;
 };
+
 
 template <typename T, typename U>
 QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
@@ -62,6 +69,12 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
   pub_odom_ = n.advertise<nav_msgs::Odometry>("odom", 100);
   pub_imu_ = n.advertise<sensor_msgs::Imu>("imu", 100);
   sub_cmd_ = n.subscribe<T>("cmd", 100, &QuadrotorSimulatorBase::cmd_callback,
+                            this, ros::TransportHints().tcpNoDelay());
+  sub_extern_force_ = n.subscribe<geometry_msgs::Vector3>("extern_force", 
+                            100, &QuadrotorSimulatorBase::extern_force_callback, 
+                            this, ros::TransportHints().tcpNoDelay());
+  sub_extern_moment_ = n.subscribe<geometry_msgs::Vector3>("extern_moment", 
+                            100, &QuadrotorSimulatorBase::extern_moment_callback, 
                             this, ros::TransportHints().tcpNoDelay());
 
   n.param("rate/simulation", simulation_rate_, 1000.0);
@@ -138,6 +151,22 @@ void QuadrotorSimulatorBase<T, U>::run(void)
 
     r.sleep();
   }
+}
+
+template <typename T, typename U>
+void QuadrotorSimulatorBase<T, U>::extern_force_callback(const geometry_msgs::Vector3::ConstPtr &f_ext)
+{
+        Eigen::Vector3d f;
+        f << f_ext->x, f_ext->y, f_ext->z;
+        quad_.setExternalForce(f);
+}
+
+template <typename T, typename U>
+void QuadrotorSimulatorBase<T, U>::extern_moment_callback(const geometry_msgs::Vector3::ConstPtr &m_ext)
+{
+        Eigen::Vector3d m;
+        m << m_ext->x, m_ext->y, m_ext->z;
+        quad_.setExternalMoment(m);
 }
 
 template <typename T, typename U>
