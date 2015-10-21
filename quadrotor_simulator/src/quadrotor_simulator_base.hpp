@@ -41,7 +41,6 @@ class QuadrotorSimulatorBase
   virtual ControlInput getControl(const Quadrotor &quad,
                                   const U &cmd) const = 0;
 
-
   Quadrotor quad_;
   U command_;
 
@@ -62,7 +61,6 @@ class QuadrotorSimulatorBase
   tf2_ros::TransformBroadcaster tf_broadcaster_;
 };
 
-
 template <typename T, typename U>
 QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
 {
@@ -70,11 +68,11 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
   pub_imu_ = n.advertise<sensor_msgs::Imu>("imu", 100);
   sub_cmd_ = n.subscribe<T>("cmd", 100, &QuadrotorSimulatorBase::cmd_callback,
                             this, ros::TransportHints().tcpNoDelay());
-  sub_extern_force_ = n.subscribe<geometry_msgs::Vector3>("extern_force", 
-                            100, &QuadrotorSimulatorBase::extern_force_callback, 
+  sub_extern_force_ = n.subscribe<geometry_msgs::Vector3>("extern_force",
+                            10, &QuadrotorSimulatorBase::extern_force_callback,
                             this, ros::TransportHints().tcpNoDelay());
-  sub_extern_moment_ = n.subscribe<geometry_msgs::Vector3>("extern_moment", 
-                            100, &QuadrotorSimulatorBase::extern_moment_callback, 
+  sub_extern_moment_ = n.subscribe<geometry_msgs::Vector3>("extern_moment",
+                            10, &QuadrotorSimulatorBase::extern_moment_callback,
                             this, ros::TransportHints().tcpNoDelay());
 
   n.param("rate/simulation", simulation_rate_, 1000.0);
