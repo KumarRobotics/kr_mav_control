@@ -88,7 +88,7 @@ class MAVManagerServices
     }
 
     // Constructor
-    MAVManagerServices(std::shared_ptr<MAVManager> m) : nh_(""), nh_priv_("~"), mav(m)
+    MAVManagerServices(std::shared_ptr<MAVManager> m) : nh_("mav_manager"), nh_priv_("~"), mav(m)
     {
       srvs_.push_back(nh_.advertiseService("motors", &MAVManagerServices::motors_cb, this));
       srvs_.push_back(nh_.advertiseService("takeoff", &MAVManagerServices::takeoff_cb, this));
