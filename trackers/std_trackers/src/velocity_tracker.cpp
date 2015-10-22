@@ -10,7 +10,7 @@ class VelocityTracker : public trackers_manager::Tracker
   VelocityTracker(void);
 
   void Initialize(const ros::NodeHandle &nh);
-  bool Activate(void);
+  bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
   const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
@@ -48,7 +48,7 @@ void VelocityTracker::Initialize(const ros::NodeHandle &nh)
   position_cmd_.kv[0] = kv_[0], position_cmd_.kv[1] = kv_[1], position_cmd_.kv[2] = kv_[2];
 }
 
-bool VelocityTracker::Activate(void)
+bool VelocityTracker::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
   if(odom_set_)
   {

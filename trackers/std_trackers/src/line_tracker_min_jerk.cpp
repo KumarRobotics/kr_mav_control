@@ -81,7 +81,7 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
   LineTrackerMinJerk(void);
 
   void Initialize(const ros::NodeHandle &nh);
-  bool Activate(void);
+  bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
   const quadrotor_msgs::PositionCommand::ConstPtr update(
@@ -144,7 +144,7 @@ void LineTrackerMinJerk::Initialize(const ros::NodeHandle &nh)
                                 this, ros::TransportHints().tcpNoDelay());
 }
 
-bool LineTrackerMinJerk::Activate(void)
+bool LineTrackerMinJerk::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
   if(goal_set_ && pos_set_)

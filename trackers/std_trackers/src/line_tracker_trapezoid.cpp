@@ -11,7 +11,7 @@ class LineTrackerTrapezoid : public trackers_manager::Tracker
   LineTrackerTrapezoid(void);
 
   void Initialize(const ros::NodeHandle &nh);
-  bool Activate(void);
+  bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
   const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
@@ -65,7 +65,7 @@ void LineTrackerTrapezoid::Initialize(const ros::NodeHandle &nh)
                                 ros::TransportHints().tcpNoDelay());
 }
 
-bool LineTrackerTrapezoid::Activate(void)
+bool LineTrackerTrapezoid::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
   if(goal_set_ && pos_set_)
