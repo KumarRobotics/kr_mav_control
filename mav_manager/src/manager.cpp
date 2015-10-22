@@ -50,8 +50,10 @@ MAVManager::MAVManager()
   if (!priv_nh_.getParam("use_attitude_safety_catch", use_attitude_safety_catch_))
     ROS_WARN("Couldn't find use_attitude_safety_catch param");
 
-  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle_))
+  double max_attitude_angle;
+  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle))
     ROS_WARN("Couldn't find max_attitude_angle param");
+  max_attitude_angle_ = max_attitude_angle;
 
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_distance/goal", 10);
@@ -78,7 +80,7 @@ MAVManager::MAVManager()
   // Services
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
 
-  float m;
+  double m;
   if (!nh_.getParam("mass", m))
     ROS_ERROR("Mass must be set as param.");
   else if (this->set_mass(m))
@@ -137,7 +139,9 @@ bool MAVManager::takeoff() {
   }
 
   // Read takeoff height
-  priv_nh_.param("takeoff_height", takeoff_height_, 0.1f);
+  double takeoff_height;
+  priv_nh_.param("takeoff_height", takeoff_height, 0.1);
+  takeoff_height_ = takeoff_height;
 
   if (takeoff_height_ > 3.0f) {
     ROS_ERROR("Takeoff Height is Dangerously High");
