@@ -11,7 +11,7 @@ class LineTrackerDistance : public trackers_manager::Tracker
   LineTrackerDistance(void);
 
   void Initialize(const ros::NodeHandle &nh);
-  bool Activate(void);
+  bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
   const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
@@ -61,7 +61,7 @@ void LineTrackerDistance::Initialize(const ros::NodeHandle &nh)
                                 ros::TransportHints().tcpNoDelay());
 }
 
-bool LineTrackerDistance::Activate(void)
+bool LineTrackerDistance::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
   if(goal_set_ && pos_set_)

@@ -25,6 +25,7 @@ class TrackersManager : public nodelet::Nodelet
   pluginlib::ClassLoader<trackers_manager::Tracker> *tracker_loader_;
   trackers_manager::Tracker *active_tracker_;
   std::map<std::string, trackers_manager::Tracker*> tracker_map_;
+  quadrotor_msgs::PositionCommand::ConstPtr cmd_;
 };
 
 TrackersManager::TrackersManager(void) :
@@ -94,9 +95,9 @@ void TrackersManager::odom_callback(const nav_msgs::Odometry::ConstPtr &msg)
   {
     if(it->second == active_tracker_)
     {
-      const quadrotor_msgs::PositionCommand::ConstPtr cmd = it->second->update(msg);
-      if(cmd != NULL)
-        pub_cmd_.publish(cmd);
+      cmd_ = it->second->update(msg);
+      if(cmd_ != NULL)
+        pub_cmd_.publish(cmd_);
 
       const quadrotor_msgs::TrackerStatus::Ptr status = it->second->status();
       if(status != NULL)
@@ -128,7 +129,7 @@ bool TrackersManager::transition_callback(trackers_manager::Transition::Request 
     return true;
   }
 
-  if(!it->second->Activate())
+  if(!it->second->Activate(cmd_))
   {
     NODELET_WARN_STREAM("Failed to activate tracker " << req.tracker << ", cannot transition");
     return false;

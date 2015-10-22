@@ -14,7 +14,7 @@ class Tracker
   virtual ~Tracker(void) {}
 
   virtual void Initialize(const ros::NodeHandle &nh) = 0;
-  virtual bool Activate(void) = 0;
+  virtual bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd) = 0;
   virtual void Deactivate(void) = 0;
 
   virtual const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg) = 0;
