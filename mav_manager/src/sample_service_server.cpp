@@ -8,8 +8,8 @@ typedef Eigen::Vector4d Vec4;
 class MAV_Services {
  public:
   // Services
-  ros::ServiceServer srv_motors_, srv_takeoff_, srv_goTo_, srv_setDesVelWorld_,
-      srv_setDesVelBody_, srv_useRadioForVelocity_, srv_hover_, srv_ehover_,
+  ros::ServiceServer srv_motors_, srv_takeoff_, srv_goTo_, srv_setDesVelInWorldFrame_,
+      srv_setDesVelInBodyFrame_, srv_hover_, srv_ehover_,
       srv_eland_, srv_estop_;
 
   // Let's make an MAV
@@ -27,44 +27,36 @@ class MAV_Services {
     return mav_.takeoff();
   }
   bool goTo_cb(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
-    Vec4 goal = Vec4::Zero();
-    nh_priv_.param("goTo/x", goal(0), 0.0);
-    nh_priv_.param("goTo/y", goal(1), 0.0);
-    nh_priv_.param("goTo/z", goal(2), 0.0);
-    nh_priv_.param("goTo/yaw", goal(3), 0.0);
 
-    return mav_.goTo(goal);
+    float x, y, z, yaw;
+    nh_priv_.param("goTo/x", x, 0.0f);
+    nh_priv_.param("goTo/y", y, 0.0f);
+    nh_priv_.param("goTo/z", z, 0.0f);
+    nh_priv_.param("goTo/yaw", yaw, 0.0f);
+
+    return mav_.goTo(x, y, z, yaw);
   }
-  bool setDesVelWorld_cb(std_srvs::Empty::Request &req,
+  bool setDesVelInWorldFrame_cb(std_srvs::Empty::Request &req,
                          std_srvs::Empty::Response &res) {
-    Vec4 goal = Vec4::Zero();
-    nh_priv_.param("desVelWorld/x", goal(0), 0.0);
-    nh_priv_.param("desVelWorld/y", goal(1), 0.0);
-    nh_priv_.param("desVelWorld/z", goal(2), 0.0);
-    nh_priv_.param("desVelWorld/yaw", goal(3), 0.0);
 
-    return mav_.setDesVelWorld(goal);
+    float x, y, z, yaw;
+    nh_priv_.param("desVelWorld/x", x, 0.0f);
+    nh_priv_.param("desVelWorld/y", y, 0.0f);
+    nh_priv_.param("desVelWorld/z", z, 0.0f);
+    nh_priv_.param("desVelWorld/yaw", yaw, 0.0f);
+
+    return mav_.setDesVelInWorldFrame(x, y, z, yaw);
   }
-  bool setDesVelBody_cb(std_srvs::Empty::Request &req,
+  bool setDesVelInBodyFrame_cb(std_srvs::Empty::Request &req,
                         std_srvs::Empty::Response &res) {
-    Vec4 goal = Vec4::Zero();
-    nh_priv_.param("desVelBody/x", goal(0), 0.0);
-    nh_priv_.param("desVelBody/y", goal(1), 0.0);
-    nh_priv_.param("desVelBody/z", goal(2), 0.0);
-    nh_priv_.param("desVelBody/yaw", goal(3), 0.0);
 
-    return mav_.setDesVelBody(goal);
-  }
-  bool useRadioForVelocity_cb(std_srvs::Empty::Request &req,
-                              std_srvs::Empty::Response &res) {
-    // TODO: use mav_.setDesVelBody instead
-    
-    // static bool use_radio_ = true;
-    // if (mav_.useRadioForVelocity(use_radio_)) {
-    //  use_radio_ = !use_radio_;
-    //   return true;
-    // } else
-      return false;
+    float x, y, z, yaw;
+    nh_priv_.param("desVelBody/x", x, 0.0f);
+    nh_priv_.param("desVelBody/y", y, 0.0f);
+    nh_priv_.param("desVelBody/z", z, 0.0f);
+    nh_priv_.param("desVelBody/yaw", yaw, 0.0f);
+
+    return mav_.setDesVelInBodyFrame(x, y, z, yaw);
   }
   bool hover_cb(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
     return mav_.hover();
@@ -87,12 +79,10 @@ class MAV_Services {
     srv_takeoff_ =
         nh_.advertiseService("takeoff", &MAV_Services::takeoff_cb, this);
     srv_goTo_ = nh_.advertiseService("goTo", &MAV_Services::goTo_cb, this);
-    srv_setDesVelWorld_ = nh_.advertiseService(
-        "setDesVelWorld", &MAV_Services::setDesVelWorld_cb, this);
-    srv_setDesVelBody_ = nh_.advertiseService(
-        "setDesVelBody", &MAV_Services::setDesVelBody_cb, this);
-    srv_useRadioForVelocity_ = nh_.advertiseService(
-        "useRadioForVelocity", &MAV_Services::useRadioForVelocity_cb, this);
+    srv_setDesVelInWorldFrame_ = nh_.advertiseService(
+        "setDesVelInWorldFrame", &MAV_Services::setDesVelInWorldFrame_cb, this);
+    srv_setDesVelInBodyFrame_ = nh_.advertiseService(
+        "setDesVelInBodyFrame", &MAV_Services::setDesVelInBodyFrame_cb, this);
     srv_hover_ = nh_.advertiseService("hover", &MAV_Services::hover_cb, this);
     srv_ehover_ =
         nh_.advertiseService("ehover", &MAV_Services::ehover_cb, this);

@@ -1,4 +1,4 @@
-float64[4] goal
+float32[4] goal
 ---
 bool success
 string message

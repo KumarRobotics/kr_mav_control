@@ -78,7 +78,7 @@ MAVManager::MAVManager()
   // Services
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
 
-  double m;
+  float m;
   if (!nh_.getParam("mass", m))
     ROS_ERROR("Mass must be set as param.");
   else if (this->set_mass(m))
@@ -137,9 +137,9 @@ bool MAVManager::takeoff() {
   }
 
   // Read takeoff height
-  priv_nh_.param("takeoff_height", takeoff_height_, 0.1);
+  priv_nh_.param("takeoff_height", takeoff_height_, 0.1f);
 
-  if (takeoff_height_ > 3.0) {
+  if (takeoff_height_ > 3.0f) {
     ROS_ERROR("Takeoff Height is Dangerously High");
     return false;
   }
@@ -154,7 +154,7 @@ bool MAVManager::takeoff() {
   return this->transition(line_tracker_distance);
 }
 
-bool MAVManager::set_mass(double m) {
+bool MAVManager::set_mass(float m) {
   if (m>0)
   {
     mass_ = m;
@@ -198,13 +198,13 @@ bool MAVManager::land() {
   quadrotor_msgs::LineTrackerGoal goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
-  goal.z = home_(2) - 0.1;
+  goal.z = home_(2) - 0.1f;
   pub_goal_line_tracker_distance_.publish(goal);
 
   return this->transition(line_tracker_distance);
 }
 
-bool MAVManager::goTo(double x, double y, double z, double yaw, double v_des, double a_des) {
+bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a_des) {
 
   quadrotor_msgs::LineTrackerGoal goal;
   goal.x   = x;
@@ -223,7 +223,7 @@ bool MAVManager::goTo(Vec4 xyz_yaw, Vec2 v_and_a_des) {
   return this->goTo(xyz_yaw(0), xyz_yaw(1), xyz_yaw(2), xyz_yaw(3),
                     v_and_a_des(0), v_and_a_des(1));
 }
-bool MAVManager::goTo(Vec3 xyz, double yaw, Vec2 v_and_a_des) {
+bool MAVManager::goTo(Vec3 xyz, float yaw, Vec2 v_and_a_des) {
   return this->goTo(xyz(0), xyz(1), xyz(2), yaw,
                     v_and_a_des(0), v_and_a_des(1));
 }
@@ -231,12 +231,12 @@ bool MAVManager::goTo(Vec3 xyz, Vec2 v_and_a_des) {
   return this->goTo(xyz(0), xyz(1), xyz(2), yaw_,
                     v_and_a_des(0), v_and_a_des(1));
 }
-bool MAVManager::goToYaw(double yaw) {
+bool MAVManager::goToYaw(float yaw) {
   return this->goTo(pos_(0), pos_(1), pos_(2), yaw);
 }
 
 // World Velocity commands
-bool MAVManager::setDesVelWorld(double x, double y, double z, double yaw) {
+bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw) {
 
   quadrotor_msgs::FlatOutputs goal;
   goal.x = x;
@@ -254,36 +254,12 @@ bool MAVManager::setDesVelWorld(double x, double y, double z, double yaw) {
 
   return true;
 }
-bool MAVManager::setDesVelWorld(Vec4 vel) {
-  return this->setDesVelWorld(vel(0), vel(1), vel(2), vel(3));
-}
-bool MAVManager::setDesVelWorld(Vec3 xyz) {
-  return this->setDesVelWorld(xyz(0), xyz(1), xyz(2), 0);
-}
-bool MAVManager::setDesVelWorld(Vec3 xyz, double yaw) {
-  return this->setDesVelWorld(xyz(0), xyz(1), xyz(2), yaw);
-}
-bool MAVManager::setDesVelWorld(double x, double y, double z) {
-  return this->setDesVelWorld(x, y, z, 0);
-}
 
 // Body Velocity commands
-bool MAVManager::setDesVelBody(Vec3 xyz, double yaw) {
-  Vec3 vel(odom_q_ * xyz);
-  return this->setDesVelWorld(vel(0), vel(1), vel(2), yaw);
-}
-bool MAVManager::setDesVelBody(Vec4 xyz_yaw) {
-  return this->setDesVelBody(
-      Vec3(xyz_yaw(0), xyz_yaw(1), xyz_yaw(2)), xyz_yaw(3));
-}
-bool MAVManager::setDesVelBody(Vec3 xyz) {
-  return this->setDesVelBody(xyz, 0);
-}
-bool MAVManager::setDesVelBody(double x, double y, double z) {
-  return this->setDesVelBody(Vec3(x, y, z), 0);
-}
-bool MAVManager::setDesVelBody(double x, double y, double z, double yaw) {
-  return this->setDesVelBody(Vec3(x, y, z), yaw);
+bool MAVManager::setDesVelInBodyFrame(float x, float y, float z, float yaw) {
+  Vec3 vel(x, y, z);
+  vel = odom_q_ * vel;
+  return this->setDesVelInWorldFrame(vel(0), vel(1), vel(2), yaw);
 }
 
 bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand &msg) {
@@ -373,7 +349,7 @@ bool MAVManager::set_motors(bool motors) {
   so3_cmd.aux.enable_motors = motors;
 
   // Queue a few to make sure the signal gets through
-  for (short i=0; i<10; i++)
+  for (int i=0; i<10; i++)
     pub_so3_command_.publish(so3_cmd);
 
   motors_ = motors;
@@ -473,19 +449,19 @@ void MAVManager::heartbeat() {
     else
       attitude_limit_timer = 0;
 
-    if (attitude_limit_timer > 0.5)
+    if (attitude_limit_timer > 0.5f)
     {
       // Reset the timer so we don't keep calling ehover
       attitude_limit_timer = 0;
       ROS_WARN("Attitude exceeded threshold of %2.2f deg! Geodesic = %2.2f deg. Entering emergency hover.",
-          max_attitude_angle_ * 180.0 / M_PI, geodesic * 180.0 / M_PI);
+          max_attitude_angle_ * 180.0f / M_PI, geodesic * 180.0f / M_PI);
       this->ehover();
     }
   }
 
   if (this->have_recent_output_data())
   {
-    if (voltage_ < 10.0) // Note: Asctec firmware uses 9V
+    if (voltage_ < 10.0f) // Note: Asctec firmware uses 9V
       ROS_WARN_THROTTLE(10, "Battery voltage = %2.2f V", voltage_);
   }
 
@@ -521,7 +497,7 @@ bool MAVManager::eland() {
     ROS_WARN("Emergency Land");
 
     quadrotor_msgs::PositionCommand goal;
-    goal.acceleration.z = - 0.45;
+    goal.acceleration.z = - 0.45f;
     goal.yaw = yaw_;
 
     return this->setPositionCommand(goal);
@@ -542,25 +518,25 @@ bool MAVManager::estop() {
 
 bool MAVManager::hover() {
 
-  double a_des(0.8); //, yaw_a_des(0.1);
+  const float a_des(0.8); //, yaw_a_des(0.1);
 
-  double v_norm = vel_.norm();
+  const float v_norm = vel_.norm();
   Vec3 dir = vel_ / v_norm;
 
   // Acceleration should be opposite the velocity component
-  Vec3 acc = -dir * a_des;
+  const Vec3 acc = -dir * a_des;
 
   // acc(3) = - copysign(yaw_a_des, yaw_dot_);
 
   // vf = vo + a t   ->    t = (vf - vo) / a
-  double t = v_norm / a_des;
-  // double t_yaw = - yaw_dot_ / yaw_a_des;
+  const float t = v_norm / a_des;
+  // float t_yaw = - yaw_dot_ / yaw_a_des;
 
   // xf = xo + vo * t + 1/2 * a * t^2
   Vec4 goal(
-      pos_(0) + vel_(0)  * t     + 0.5 * acc(0)    * t     * t,
-      pos_(1) + vel_(1)  * t     + 0.5 * acc(1)    * t     * t,
-      pos_(2) + vel_(2)  * t     + 0.5 * acc(2)    * t     * t,
+      pos_(0) + vel_(0)  * t     + 0.5f * acc(0)    * t     * t,
+      pos_(1) + vel_(1)  * t     + 0.5f * acc(1)    * t     * t,
+      pos_(2) + vel_(2)  * t     + 0.5f * acc(2)    * t     * t,
       yaw_);//    + yaw_dot_ * t_yaw + 0.5 * yaw_a_des * t_yaw * t_yaw);
 
   Vec2 v_and_a_des(std::sqrt(vel_.dot(vel_)), a_des);
