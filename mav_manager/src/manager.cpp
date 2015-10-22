@@ -236,7 +236,7 @@ bool MAVManager::goToYaw(double yaw) {
 }
 
 // World Velocity commands
-bool MAVManager::setDesVelWorld(double x, double y, double z, double yaw) {
+bool MAVManager::setDesVelInWorldFrame(double x, double y, double z, double yaw) {
 
   quadrotor_msgs::FlatOutputs goal;
   goal.x = x;
@@ -254,36 +254,12 @@ bool MAVManager::setDesVelWorld(double x, double y, double z, double yaw) {
 
   return true;
 }
-bool MAVManager::setDesVelWorld(Vec4 vel) {
-  return this->setDesVelWorld(vel(0), vel(1), vel(2), vel(3));
-}
-bool MAVManager::setDesVelWorld(Vec3 xyz) {
-  return this->setDesVelWorld(xyz(0), xyz(1), xyz(2), 0);
-}
-bool MAVManager::setDesVelWorld(Vec3 xyz, double yaw) {
-  return this->setDesVelWorld(xyz(0), xyz(1), xyz(2), yaw);
-}
-bool MAVManager::setDesVelWorld(double x, double y, double z) {
-  return this->setDesVelWorld(x, y, z, 0);
-}
 
 // Body Velocity commands
-bool MAVManager::setDesVelBody(Vec3 xyz, double yaw) {
-  Vec3 vel(odom_q_ * xyz);
-  return this->setDesVelWorld(vel(0), vel(1), vel(2), yaw);
-}
-bool MAVManager::setDesVelBody(Vec4 xyz_yaw) {
-  return this->setDesVelBody(
-      Vec3(xyz_yaw(0), xyz_yaw(1), xyz_yaw(2)), xyz_yaw(3));
-}
-bool MAVManager::setDesVelBody(Vec3 xyz) {
-  return this->setDesVelBody(xyz, 0);
-}
-bool MAVManager::setDesVelBody(double x, double y, double z) {
-  return this->setDesVelBody(Vec3(x, y, z), 0);
-}
-bool MAVManager::setDesVelBody(double x, double y, double z, double yaw) {
-  return this->setDesVelBody(Vec3(x, y, z), yaw);
+bool MAVManager::setDesVelInBodyFrame(double x, double y, double z, double yaw) {
+  Vec3 vel(x, y, z);
+  vel = odom_q_ * vel;
+  return this->setDesVelInWorldFrame(vel(0), vel(1), vel(2), yaw);
 }
 
 bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand &msg) {

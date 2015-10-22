@@ -37,22 +37,19 @@ class MAVManagerServices
     }
     bool goTo_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
-      Vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-      res.success = mav->goTo(goal);
+      res.success = mav->goTo(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
       res.message = "Going To...";
       return res.success;
     }
-    bool setDesVelWorld_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
+    bool setDesVelInWorldFrame_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
-      Vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-      res.success = mav->setDesVelWorld(goal);
+      res.success = mav->setDesVelInWorldFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
       res.message = "World Velocity";
       return res.success;
     }
-    bool setDesVelBody_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
+    bool setDesVelInBodyFrame_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
-      Vec4 goal(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
-      res.success = mav->setDesVelBody(goal);
+      res.success = mav->setDesVelInBodyFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
       res.message = "Body Velocity";
       return res.success;
     }
@@ -94,8 +91,8 @@ class MAVManagerServices
       srvs_.push_back(nh_.advertiseService("takeoff", &MAVManagerServices::takeoff_cb, this));
       srvs_.push_back(nh_.advertiseService("goHome", &MAVManagerServices::goHome_cb, this));
       srvs_.push_back(nh_.advertiseService("goTo", &MAVManagerServices::goTo_cb, this));
-      srvs_.push_back(nh_.advertiseService("setDesVelWorld", &MAVManagerServices::setDesVelWorld_cb, this));
-      srvs_.push_back(nh_.advertiseService("setDesVelBody", &MAVManagerServices::setDesVelBody_cb, this));
+      srvs_.push_back(nh_.advertiseService("setDesVelInWorldFrame", &MAVManagerServices::setDesVelInWorldFrame_cb, this));
+      srvs_.push_back(nh_.advertiseService("setDesVelInBodyFrame", &MAVManagerServices::setDesVelInBodyFrame_cb, this));
       srvs_.push_back(nh_.advertiseService("hover", &MAVManagerServices::hover_cb, this));
       srvs_.push_back(nh_.advertiseService("ehover", &MAVManagerServices::ehover_cb, this));
       srvs_.push_back(nh_.advertiseService("land", &MAVManagerServices::land_cb, this));

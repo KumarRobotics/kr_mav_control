@@ -61,17 +61,8 @@ class MAVManager
     bool goTo(Vec3 xyz, double yaw, Vec2 v_and_a_des = Vec2::Zero());
     bool goTo(Vec3 xyz, Vec2 v_and_a_des = Vec2::Zero());  // Uses Current yaw
 
-    bool setDesVelWorld(double x, double y, double z, double yaw);
-    bool setDesVelWorld(Vec4 xyz_yaw);
-    bool setDesVelWorld(Vec3 xyz);
-    bool setDesVelWorld(Vec3 xyz, double yaw);
-    bool setDesVelWorld(double x, double y, double z);
-
-    bool setDesVelBody(Vec3 xyz, double yaw);
-    bool setDesVelBody(Vec4 xyz_yaw);
-    bool setDesVelBody(Vec3 xyz);
-    bool setDesVelBody(double x, double y, double z);
-    bool setDesVelBody(double x, double y, double z, double yaw);
+    bool setDesVelInWorldFrame(double x, double y, double z, double yaw);
+    bool setDesVelInBodyFrame(double x, double y, double z, double yaw);
 
     // Yaw control
     bool goToYaw(double);

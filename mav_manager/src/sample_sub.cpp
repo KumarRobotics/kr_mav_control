@@ -10,8 +10,8 @@ ros::Subscriber
   sub_motors_,
   sub_takeoff_,
   sub_goTo_,
-  sub_setDesVelWorld_,
-  sub_setDesVelBody_,
+  sub_setDesVelInWorldFrame_,
+  sub_setDesVelInBodyFrame_,
   sub_hover_,
   sub_ehover_,
   sub_estop_;
@@ -40,21 +40,18 @@ class MAV_Subscribers
   }
   void goTo_cb(const geometry_msgs::Pose &msg)
   {
-    Vec4 goal(msg.position.x, msg.position.y, msg.position.z, tf::getYaw(msg.orientation));
-    if (!mav_.goTo(goal))
+    if (!mav_.goTo(msg.position.x, msg.position.y, msg.position.z, tf::getYaw(msg.orientation)))
     {
       ROS_ERROR("GoTo failed");
     }
   }
-  void setDesVelWorld_cb(const geometry_msgs::Twist &msg)
+  void setDesVelInWorldFrame_cb(const geometry_msgs::Twist &msg)
   {
-    Vec4 goal(msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.z);
-    mav_.setDesVelWorld(goal);
+    mav_.setDesVelInWorldFrame(msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.z);
   }
-  void setDesVelBody_cb(const geometry_msgs::Twist &msg)
+  void setDesVelInBodyFrame_cb(const geometry_msgs::Twist &msg)
   {
-    Vec4 goal(msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.z);
-    mav_.setDesVelBody(goal);
+    mav_.setDesVelInBodyFrame(msg.linear.x, msg.linear.y, msg.linear.z, msg.angular.z);
   }
   void hover_cb(const std_msgs::Empty &msg)
   {
@@ -87,8 +84,8 @@ int main(int argc, char **argv)
   sub_motors_ = nh.subscribe("motors", 10, &MAV_Subscribers::motors_cb, &mav_subs);
   sub_takeoff_ = nh.subscribe("takeoff", 10, &MAV_Subscribers::takeoff_cb, &mav_subs);
   sub_goTo_ = nh.subscribe("goTo", 10, &MAV_Subscribers::goTo_cb, &mav_subs);
-  sub_setDesVelWorld_ = nh.subscribe("setDesVelWorld", 10, &MAV_Subscribers::setDesVelWorld_cb, &mav_subs);
-  sub_setDesVelBody_ = nh.subscribe("setDesVelBody", 10, &MAV_Subscribers::setDesVelBody_cb, &mav_subs);
+  sub_setDesVelInWorldFrame_ = nh.subscribe("setDesVelInWorldFrame", 10, &MAV_Subscribers::setDesVelInWorldFrame_cb, &mav_subs);
+  sub_setDesVelInBodyFrame_ = nh.subscribe("setDesVelInBodyFrame", 10, &MAV_Subscribers::setDesVelInBodyFrame_cb, &mav_subs);
   sub_hover_ = nh.subscribe("hover", 10, &MAV_Subscribers::hover_cb, &mav_subs);
   sub_ehover_ = nh.subscribe("ehover", 10, &MAV_Subscribers::ehover_cb, &mav_subs);
   sub_estop_ = nh.subscribe("estop", 10, &MAV_Subscribers::estop_cb, &mav_subs);
