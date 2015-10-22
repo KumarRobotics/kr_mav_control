@@ -1,10 +1,10 @@
 <launch>
-  
+
   <arg name="model" default="quadrotor"/>
-  <arg name="sim" value="1"/>
-  <arg name="vicon" value="1"/>
-  <arg name="vicon_fps" value="100"/>
-  <arg name="slow_baud_rate" value="true"/>
+  <arg name="sim" default="1"/>
+  <arg name="vicon" default="1"/>
+  <arg name="vicon_fps" default="100"/>
+  <arg name="slow_baud_rate" default="true"/>
   <arg name="mass" default="0.5"/>
 
   <!-- Launch vicon odometry node -->
@@ -18,7 +18,7 @@
 
   <group ns="$(arg model)">
 
-    <param name="mass" value="$(arg mass)"/> 
+    <param name="mass" value="$(arg mass)"/>
 
     <rosparam file="$(find mav_manager)/config/params.yaml"/>
 
@@ -33,7 +33,7 @@
       <remap from="~imu" to="imu"/>
       <remap from="~cmd" to="so3_cmd"/>
     </node>
-    
+
     <node pkg="nodelet"
       type="nodelet"
       name="standalone_nodelet"
@@ -110,7 +110,7 @@
       unless="$(arg sim)">
       <remap from="~serial" to="from_robot"/>
     </node>
-    
+
     <include file="$(find mav_manager)/launch/manager.launch"/>
 
   </group>
