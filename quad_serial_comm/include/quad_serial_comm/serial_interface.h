@@ -1,5 +1,5 @@
-#ifndef _ENCODE_SERIAL_MSG_H_
-#define _ENCODE_SERIAL_MSG_H_
+#ifndef QUAD_SERIAL_COMM_SERIAL_INTERFACE_H
+#define QUAD_SERIAL_COMM_SERIAL_INTERFACE_H
 
 #include <vector>
 #include <quadrotor_msgs/Serial.h>

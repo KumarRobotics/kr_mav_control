@@ -1,5 +1,5 @@
-#ifndef __QUADROTOR_SIMULATOR_QUADROTOR_H__
-#define __QUADROTOR_SIMULATOR_QUADROTOR_H__
+#ifndef QUADROTOR_SIMULATOR_QUADROTOR_H
+#define QUADROTOR_SIMULATOR_QUADROTOR_H
 
 #include <boost/array.hpp>
 #include <Eigen/Core>
