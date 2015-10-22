@@ -39,7 +39,7 @@ class MAVManager
     std::string active_tracker() { return active_tracker_; }
     bool need_imu() { return need_imu_; }
     bool need_odom() { return need_odom_; }
-    short tracker_status() { return tracker_status_; }
+    uint8_t tracker_status() { return tracker_status_; }
 
     // Mutators
     bool set_mass(float m);
@@ -102,7 +102,7 @@ class MAVManager
     void heartbeat();
 
     std::string active_tracker_;
-    short tracker_status_;
+    uint8_t tracker_status_;
     bool transition(const std::string &tracker_str);
 
     ros::Time last_odom_t_, last_imu_t_, last_output_data_t_, last_heartbeat_t_;
