@@ -78,7 +78,7 @@ MAVManager::MAVManager()
   // Services
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
 
-  double m;
+  float m;
   if (!nh_.getParam("mass", m))
     ROS_ERROR("Mass must be set as param.");
   else if (this->set_mass(m))
@@ -137,7 +137,7 @@ bool MAVManager::takeoff() {
   }
 
   // Read takeoff height
-  priv_nh_.param("takeoff_height", takeoff_height_, 0.1);
+  priv_nh_.param("takeoff_height", takeoff_height_, 0.1f);
 
   if (takeoff_height_ > 3.0) {
     ROS_ERROR("Takeoff Height is Dangerously High");
@@ -154,7 +154,7 @@ bool MAVManager::takeoff() {
   return this->transition(line_tracker_distance);
 }
 
-bool MAVManager::set_mass(double m) {
+bool MAVManager::set_mass(float m) {
   if (m>0)
   {
     mass_ = m;
@@ -204,7 +204,7 @@ bool MAVManager::land() {
   return this->transition(line_tracker_distance);
 }
 
-bool MAVManager::goTo(double x, double y, double z, double yaw, double v_des, double a_des) {
+bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a_des) {
 
   quadrotor_msgs::LineTrackerGoal goal;
   goal.x   = x;
@@ -223,7 +223,7 @@ bool MAVManager::goTo(Vec4 xyz_yaw, Vec2 v_and_a_des) {
   return this->goTo(xyz_yaw(0), xyz_yaw(1), xyz_yaw(2), xyz_yaw(3),
                     v_and_a_des(0), v_and_a_des(1));
 }
-bool MAVManager::goTo(Vec3 xyz, double yaw, Vec2 v_and_a_des) {
+bool MAVManager::goTo(Vec3 xyz, float yaw, Vec2 v_and_a_des) {
   return this->goTo(xyz(0), xyz(1), xyz(2), yaw,
                     v_and_a_des(0), v_and_a_des(1));
 }
@@ -231,12 +231,12 @@ bool MAVManager::goTo(Vec3 xyz, Vec2 v_and_a_des) {
   return this->goTo(xyz(0), xyz(1), xyz(2), yaw_,
                     v_and_a_des(0), v_and_a_des(1));
 }
-bool MAVManager::goToYaw(double yaw) {
+bool MAVManager::goToYaw(float yaw) {
   return this->goTo(pos_(0), pos_(1), pos_(2), yaw);
 }
 
 // World Velocity commands
-bool MAVManager::setDesVelInWorldFrame(double x, double y, double z, double yaw) {
+bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw) {
 
   quadrotor_msgs::FlatOutputs goal;
   goal.x = x;
@@ -256,7 +256,7 @@ bool MAVManager::setDesVelInWorldFrame(double x, double y, double z, double yaw)
 }
 
 // Body Velocity commands
-bool MAVManager::setDesVelInBodyFrame(double x, double y, double z, double yaw) {
+bool MAVManager::setDesVelInBodyFrame(float x, float y, float z, float yaw) {
   Vec3 vel(x, y, z);
   vel = odom_q_ * vel;
   return this->setDesVelInWorldFrame(vel(0), vel(1), vel(2), yaw);
@@ -518,9 +518,9 @@ bool MAVManager::estop() {
 
 bool MAVManager::hover() {
 
-  double a_des(0.8); //, yaw_a_des(0.1);
+  float a_des(0.8); //, yaw_a_des(0.1);
 
-  double v_norm = vel_.norm();
+  float v_norm = vel_.norm();
   Vec3 dir = vel_ / v_norm;
 
   // Acceleration should be opposite the velocity component
@@ -529,8 +529,8 @@ bool MAVManager::hover() {
   // acc(3) = - copysign(yaw_a_des, yaw_dot_);
 
   // vf = vo + a t   ->    t = (vf - vo) / a
-  double t = v_norm / a_des;
-  // double t_yaw = - yaw_dot_ / yaw_a_des;
+  float t = v_norm / a_des;
+  // float t_yaw = - yaw_dot_ / yaw_a_des;
 
   // xf = xo + vo * t + 1/2 * a * t^2
   Vec4 goal(

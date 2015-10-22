@@ -6,10 +6,6 @@
 #include <mav_manager/Trigger.h>
 #include <mav_manager/Vec4.h>
 
-// Typedefs
-typedef Eigen::Vector3d Vec3;
-typedef Eigen::Vector4d Vec4;
-
 class MAVManagerServices
 {
   public:

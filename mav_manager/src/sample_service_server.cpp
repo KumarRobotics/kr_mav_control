@@ -27,33 +27,34 @@ class MAV_Services {
     return mav_.takeoff();
   }
   bool goTo_cb(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
-    double x, y, z, yaw;
-    nh_priv_.param("goTo/x", x, 0.0);
-    nh_priv_.param("goTo/y", y, 0.0);
-    nh_priv_.param("goTo/z", z, 0.0);
-    nh_priv_.param("goTo/yaw", yaw, 0.0);
- 
+
+    float x, y, z, yaw;
+    nh_priv_.param("goTo/x", x, 0.0f);
+    nh_priv_.param("goTo/y", y, 0.0f);
+    nh_priv_.param("goTo/z", z, 0.0f);
+    nh_priv_.param("goTo/yaw", yaw, 0.0f);
+
     return mav_.goTo(x, y, z, yaw);
   }
   bool setDesVelInWorldFrame_cb(std_srvs::Empty::Request &req,
                          std_srvs::Empty::Response &res) {
 
-    double x, y, z, yaw;
-    nh_priv_.param("desVelWorld/x", x, 0.0);
-    nh_priv_.param("desVelWorld/y", y, 0.0);
-    nh_priv_.param("desVelWorld/z", z, 0.0);
-    nh_priv_.param("desVelWorld/yaw", yaw, 0.0);
+    float x, y, z, yaw;
+    nh_priv_.param("desVelWorld/x", x, 0.0f);
+    nh_priv_.param("desVelWorld/y", y, 0.0f);
+    nh_priv_.param("desVelWorld/z", z, 0.0f);
+    nh_priv_.param("desVelWorld/yaw", yaw, 0.0f);
 
     return mav_.setDesVelInWorldFrame(x, y, z, yaw);
   }
   bool setDesVelInBodyFrame_cb(std_srvs::Empty::Request &req,
                         std_srvs::Empty::Response &res) {
 
-    double x, y, z, yaw; 
-    nh_priv_.param("desVelBody/x", x, 0.0);
-    nh_priv_.param("desVelBody/y", y, 0.0);
-    nh_priv_.param("desVelBody/z", z, 0.0);
-    nh_priv_.param("desVelBody/yaw", yaw, 0.0);
+    float x, y, z, yaw;
+    nh_priv_.param("desVelBody/x", x, 0.0f);
+    nh_priv_.param("desVelBody/y", y, 0.0f);
+    nh_priv_.param("desVelBody/z", z, 0.0f);
+    nh_priv_.param("desVelBody/yaw", yaw, 0.0f);
 
     return mav_.setDesVelInBodyFrame(x, y, z, yaw);
   }
