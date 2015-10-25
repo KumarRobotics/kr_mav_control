@@ -109,6 +109,10 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
 template <typename T, typename U>
 void QuadrotorSimulatorBase<T, U>::run(void)
 {
+  // initialize command
+  typename T::Ptr empty_cmd = boost::make_shared<T>();
+  cmd_callback(empty_cmd);
+
   QuadrotorSimulatorBase::ControlInput control;
 
   nav_msgs::Odometry odom_msg;
