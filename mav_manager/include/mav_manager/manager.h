@@ -4,6 +4,7 @@
 // Standard C++
 #include <string>
 #include <Eigen/Geometry>
+#include <array> 
 
 // ROS related
 #include <ros/ros.h>
@@ -79,7 +80,7 @@ class MAVManager
     float pressure_height() {return pressure_height_;}
     float pressure_dheight() {return pressure_dheight_;}
     float* magnetic_field() {return magnetic_field_;}
-    unsigned char* radio() {return radio_;}
+    std::array<uint8_t,8> radio() {return radio_;}
 
     // Safety
     bool hover();
@@ -121,7 +122,7 @@ class MAVManager
     bool need_imu_, need_output_data_, need_odom_, use_attitude_safety_catch_;
     bool home_set_, serial_, motors_;
     float voltage_, pressure_height_, pressure_dheight_, magnetic_field_[3];
-    unsigned char radio_[8];
+    std::array<uint8_t, 8> radio_;
 
     // Publishers
     ros::Publisher

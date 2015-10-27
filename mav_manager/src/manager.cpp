@@ -382,7 +382,7 @@ void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg)
   magnetic_field_[0] = msg->magnetic_field.x;
   magnetic_field_[1] = msg->magnetic_field.y;
   magnetic_field_[2] = msg->magnetic_field.z;
-  for (unsigned char i=0; i<8; i++)
+  for (uint8_t i = 0; i < radio_.size(); i++)
     radio_[i] = msg->radio_channel[i];
 
   this->heartbeat();
