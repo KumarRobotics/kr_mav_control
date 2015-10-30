@@ -40,21 +40,6 @@ MAVManager::MAVManager()
       need_odom_(true),
       use_attitude_safety_catch_(true) {
 
-  // Load Params
-  if (!priv_nh_.getParam("need_imu", need_imu_))
-    ROS_WARN("Couldn't find need_imu param");
-
-  if (!priv_nh_.getParam("need_output_data", need_output_data_))
-    ROS_WARN("Couldn't find need_output_data param");
-
-  if (!priv_nh_.getParam("use_attitude_safety_catch", use_attitude_safety_catch_))
-    ROS_WARN("Couldn't find use_attitude_safety_catch param");
-
-  double max_attitude_angle;
-  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle))
-    ROS_WARN("Couldn't find max_attitude_angle param");
-  max_attitude_angle_ = max_attitude_angle;
-
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_distance/goal", 10);
   pub_goal_min_jerk_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_min_jerk/goal", 10);
@@ -70,15 +55,33 @@ MAVManager::MAVManager()
   heartbeat_sub_ = nh_.subscribe("/heartbeat", 10, &MAVManager::heartbeat_cb, this);
   tracker_status_sub_ = nh_.subscribe("trackers_manager/status", 10, &MAVManager::tracker_status_cb, this);
 
-  // Conditional subscribers
-  if (need_output_data_)
-    output_data_sub_ = nh_.subscribe("quad_decode_msg/output_data", 10, &MAVManager::output_data_cb, this);
+  // Services
+  srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
 
+  // Wait until the service server is started
+  while (!this->transition(null_tracker_str)) {
+    ROS_WARN("Activation of NullTracker failed. Trying again shortly...");
+    ros::Duration(1.0).sleep();
+  }
+
+  // Load params after we are sure that we have stuff loaded
+  if (!priv_nh_.getParam("need_imu", need_imu_))
+    ROS_WARN("Couldn't find need_imu param");
   if (need_imu_)
     imu_sub_ = nh_.subscribe("quad_decode_msg/imu", 10, &MAVManager::imu_cb, this);
 
-  // Services
-  srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
+  if (!priv_nh_.getParam("need_output_data", need_output_data_))
+    ROS_WARN("Couldn't find need_output_data param");
+  if (need_output_data_)
+    output_data_sub_ = nh_.subscribe("quad_decode_msg/output_data", 10, &MAVManager::output_data_cb, this);
+
+  if (!priv_nh_.getParam("use_attitude_safety_catch", use_attitude_safety_catch_))
+    ROS_WARN("Couldn't find use_attitude_safety_catch param");
+
+  double max_attitude_angle;
+  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle))
+    ROS_WARN("Couldn't find max_attitude_angle param");
+  max_attitude_angle_ = max_attitude_angle;
 
   double m;
   if (!nh_.getParam("mass", m))
@@ -87,12 +90,6 @@ MAVManager::MAVManager()
     ROS_INFO("MAVManager using mass = %2.2f.", mass_);
   else
     ROS_ERROR("Mass failed to set. Perhaps mass <= 0?");
-
-  // Wait until the service server is started
-  while (!this->transition(null_tracker_str)) {
-    ROS_WARN("Activation of NullTracker failed. Trying again shortly...");
-    ros::Duration(0.25).sleep();
-  }
 
   // Disable motors
   if (!this->set_motors(false))
