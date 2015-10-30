@@ -17,71 +17,93 @@ class MAVManagerServices
       res.success = mav->set_motors(req.b);
       res.message = "Motors ";
       res.message += req.b ? "on" : "off";
+      if (res.success)
+        last_cb_ = "motors";
       return res.success;
     }
     bool takeoff_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
       res.success = mav->takeoff();
       res.message = "Takeoff";
+      if (res.success)
+        last_cb_ = "takeoff";
       return res.success;
     }
     bool goHome_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
       res.success = mav->goHome();
       res.message = "Going home";
+      if (res.success)
+        last_cb_ = "goHome";
       return res.success;
     }
     bool goTo_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
       res.success = mav->goTo(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
       res.message = "Going To...";
+      if (res.success)
+        last_cb_ = "goTo";
       return res.success;
     }
     bool setDesVelInWorldFrame_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
       res.success = mav->setDesVelInWorldFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
       res.message = "World Velocity";
+      if (res.success)
+        last_cb_ = "setDesVelInWorldFrmae";
       return res.success;
     }
     bool setDesVelInBodyFrame_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
       res.success = mav->setDesVelInBodyFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
       res.message = "Body Velocity";
+      if (res.success)
+        last_cb_ = "setDesVelInBodyFrame";
       return res.success;
     }
     bool hover_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
       res.success = mav->hover();
       res.message = "Hover";
+      if (res.success)
+        last_cb_ = "hover";
       return res.success;
     }
     bool ehover_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
       res.success = mav->ehover();
       res.message = "Emergency Hover";
+      if (res.success)
+        last_cb_ = "ehover";
       return res.success;
     }
     bool land_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
       res.success = mav->land();
       res.message = "Landing";
+      if (res.success)
+        last_cb_ = "land";
       return res.success;
     }
     bool eland_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
       res.success = mav->eland();
       res.message = "Emergency Landing";
+      if (res.success)
+        last_cb_ = "eland";
       return res.success;
     }
     bool estop_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
     {
       res.success = mav->estop();
       res.message = "Emergency Stop";
+      if (res.success)
+        last_cb_ = "estop";
       return res.success;
     }
 
     // Constructor
-    MAVManagerServices(std::shared_ptr<MAVManager> m) : nh_("~"), mav(m)
+    MAVManagerServices(std::shared_ptr<MAVManager> m) : nh_("~"), mav(m), last_cb_("")
     {
       srvs_.push_back(nh_.advertiseService("motors", &MAVManagerServices::motors_cb, this));
       srvs_.push_back(nh_.advertiseService("takeoff", &MAVManagerServices::takeoff_cb, this));
@@ -102,6 +124,8 @@ class MAVManagerServices
 
     // Let's make an MAV pointer
     std::shared_ptr<MAVManager> mav;
+
+    std::string last_cb_;
 };
 
 #endif /* MAV_MANAGER_SERVICES_H */
