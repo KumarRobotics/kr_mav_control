@@ -44,6 +44,7 @@ MAVManager::MAVManager()
   pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_distance/goal", 10);
   pub_goal_min_jerk_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_min_jerk/goal", 10);
   pub_goal_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/velocity_tracker/goal", 10);
+  pub_goal_position_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/velocity_tracker/position_velocity_goal", 10);
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
   pub_so3_command_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
@@ -237,14 +238,19 @@ bool MAVManager::goToYaw(float yaw) {
 }
 
 // World Velocity commands
-bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw) {
+bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw, bool use_position_feedback) {
 
   quadrotor_msgs::FlatOutputs goal;
   goal.x = x;
   goal.y = y;
   goal.z = z;
   goal.yaw = yaw;
-  pub_goal_velocity_.publish(goal);
+
+  if (use_position_feedback)
+    pub_goal_position_velocity_.publish(goal);
+  else
+    pub_goal_velocity_.publish(goal);
+
   ROS_INFO("Desired World velocity: (%1.4f, %1.4f, %1.4f, %1.4f)",
       goal.x, goal.y, goal.z, goal.yaw);
 
@@ -257,10 +263,10 @@ bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw) {
 }
 
 // Body Velocity commands
-bool MAVManager::setDesVelInBodyFrame(float x, float y, float z, float yaw) {
+bool MAVManager::setDesVelInBodyFrame(float x, float y, float z, float yaw, bool use_position_feedback) {
   Vec3 vel(x, y, z);
   vel = odom_q_ * vel;
-  return this->setDesVelInWorldFrame(vel(0), vel(1), vel(2), yaw);
+  return this->setDesVelInWorldFrame(vel(0), vel(1), vel(2), yaw, use_position_feedback);
 }
 
 bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand &msg) {
