@@ -528,28 +528,35 @@ bool MAVManager::hover() {
   const float a_des(0.8); //, yaw_a_des(0.1);
 
   const float v_norm = vel_.norm();
-  Vec3 dir = vel_ / v_norm;
 
-  // Acceleration should be opposite the velocity component
-  const Vec3 acc = -dir * a_des;
+  if (v_norm > 1e-2)
+  {
+    Vec3 dir = vel_ / v_norm;
 
-  // acc(3) = - copysign(yaw_a_des, yaw_dot_);
+    // Acceleration should be opposite the velocity component
+    const Vec3 acc = -dir * a_des;
 
-  // vf = vo + a t   ->    t = (vf - vo) / a
-  const float t = v_norm / a_des;
-  // float t_yaw = - yaw_dot_ / yaw_a_des;
+    // acc(3) = - copysign(yaw_a_des, yaw_dot_);
 
-  // xf = xo + vo * t + 1/2 * a * t^2
-  Vec4 goal(
-      pos_(0) + vel_(0)  * t     + 0.5f * acc(0)    * t     * t,
-      pos_(1) + vel_(1)  * t     + 0.5f * acc(1)    * t     * t,
-      pos_(2) + vel_(2)  * t     + 0.5f * acc(2)    * t     * t,
-      yaw_);//    + yaw_dot_ * t_yaw + 0.5 * yaw_a_des * t_yaw * t_yaw);
+    // vf = vo + a t   ->    t = (vf - vo) / a
+    const float t = v_norm / a_des;
+    // float t_yaw = - yaw_dot_ / yaw_a_des;
 
-  Vec2 v_and_a_des(std::sqrt(vel_.dot(vel_)), a_des);
+    // xf = xo + vo * t + 1/2 * a * t^2
+    Vec4 goal(
+        pos_(0) + vel_(0)  * t     + 0.5f * acc(0)    * t     * t,
+        pos_(1) + vel_(1)  * t     + 0.5f * acc(1)    * t     * t,
+        pos_(2) + vel_(2)  * t     + 0.5f * acc(2)    * t     * t,
+        yaw_);//    + yaw_dot_ * t_yaw + 0.5 * yaw_a_des * t_yaw * t_yaw);
 
-  ROS_DEBUG("Coasting to hover...");
-  return this->goTo(goal, v_and_a_des);
+    Vec2 v_and_a_des(std::sqrt(vel_.dot(vel_)), a_des);
+
+    ROS_DEBUG("Coasting to hover...");
+    return this->goTo(goal, v_and_a_des);
+  }
+
+  ROS_DEBUG("Hovering in place...");
+  return this->goTo(pos_(0), pos_(1), pos_(2), pos_(3));
 }
 
 bool MAVManager::ehover() {

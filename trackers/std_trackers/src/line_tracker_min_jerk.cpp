@@ -167,13 +167,13 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
   pos_set_ = true;
   ICs_.set_from_odom(msg);
 
-  const ros::Time t_now = msg->header.stamp;
+  const ros::Time t_now = ros::Time::now();
 
   if(!active_)
     return quadrotor_msgs::PositionCommand::Ptr();
 
   quadrotor_msgs::PositionCommand::Ptr cmd(new quadrotor_msgs::PositionCommand);
-  cmd->header.stamp = ros::Time::now();
+  cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
   cmd->kx[0] = kx_[0], cmd->kx[1] = kx_[1], cmd->kx[2] = kx_[2];
   cmd->kv[0] = kv_[0], cmd->kv[1] = kv_[1], cmd->kv[2] = kv_[2];

@@ -156,19 +156,17 @@ void QuadrotorSimulatorBase<T, U>::run(void)
 }
 
 template <typename T, typename U>
-void QuadrotorSimulatorBase<T, U>::extern_force_callback(const geometry_msgs::Vector3::ConstPtr &f_ext)
+void QuadrotorSimulatorBase<T, U>::extern_force_callback(
+    const geometry_msgs::Vector3::ConstPtr &f_ext)
 {
-        Eigen::Vector3d f;
-        f << f_ext->x, f_ext->y, f_ext->z;
-        quad_.setExternalForce(f);
+  quad_.setExternalForce(Eigen::Vector3d(f_ext->x, f_ext->y, f_ext->z));
 }
 
 template <typename T, typename U>
-void QuadrotorSimulatorBase<T, U>::extern_moment_callback(const geometry_msgs::Vector3::ConstPtr &m_ext)
+void QuadrotorSimulatorBase<T, U>::extern_moment_callback(
+    const geometry_msgs::Vector3::ConstPtr &m_ext)
 {
-        Eigen::Vector3d m;
-        m << m_ext->x, m_ext->y, m_ext->z;
-        quad_.setExternalMoment(m);
+  quad_.setExternalMoment(Eigen::Vector3d(m_ext->x, m_ext->y, m_ext->z));
 }
 
 template <typename T, typename U>
