@@ -9,7 +9,7 @@ endif()
 find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs nav_msgs sensor_msgs tf2_ros cmake_modules)
 find_package(Eigen REQUIRED)
 
-include_directories(include include/odeint-v2/include ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+include_directories(include ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS
@@ -21,6 +21,9 @@ add_library(quadrotor_dynamics src/dynamics/Quadrotor.cpp)
 
 add_executable(quadrotor_simulator_so3 src/quadrotor_simulator_so3.cpp)
 target_link_libraries(quadrotor_simulator_so3 quadrotor_dynamics ${catkin_LIBRARIES})
+add_dependencies(quadrotor_simulator_so3 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
 
 add_executable(quadrotor_simulator_trpy src/quadrotor_simulator_trpy.cpp)
 target_link_libraries(quadrotor_simulator_trpy quadrotor_dynamics ${catkin_LIBRARIES})
+add_dependencies(quadrotor_simulator_trpy ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
