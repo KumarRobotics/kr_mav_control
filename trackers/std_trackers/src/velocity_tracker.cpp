@@ -23,16 +23,16 @@ class VelocityTracker : public trackers_manager::Tracker
   ros::Subscriber sub_vel_cmd_, sub_position_vel_cmd_;
   quadrotor_msgs::PositionCommand position_cmd_;
   bool odom_set_, active_, use_position_gains_;
-  double cur_yaw_, cmd_yaw_;
-  double dt_;
-  ros::Time last_t_;
-  double kx_[3], kv_[3], pos_[3];
+  double last_t_;
+  double kx_[3], kv_[3];
+  double pos_[3], cur_yaw_;
 };
 
 VelocityTracker::VelocityTracker(void) :
     odom_set_(false),
     active_(false),
-    use_position_gains_(false)
+    use_position_gains_(false),
+    last_t_(0)
 {
 }
 
@@ -50,33 +50,29 @@ void VelocityTracker::Initialize(const ros::NodeHandle &nh)
   sub_vel_cmd_ = priv_nh.subscribe("goal", 10, &VelocityTracker::velocity_cmd_cb, this,
                                    ros::TransportHints().tcpNoDelay());
 
-  sub_position_vel_cmd_ = priv_nh.subscribe("position_velocity_goal", 10, &VelocityTracker::position_velocity_cmd_cb, this,
-                                   ros::TransportHints().tcpNoDelay());
+  sub_position_vel_cmd_ = priv_nh.subscribe("position_velocity_goal", 10, &VelocityTracker::position_velocity_cmd_cb,
+                                            this, ros::TransportHints().tcpNoDelay());
 
   position_cmd_.kv[0] = kv_[0], position_cmd_.kv[1] = kv_[1], position_cmd_.kv[2] = kv_[2];
 }
 
 bool VelocityTracker::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
-  if (cmd != NULL)
+  if(cmd)
   {
-    active_ = true;
-
-    last_t_ = ros::Time::now();
-
-    cmd_yaw_ = cmd->yaw;
     position_cmd_.position = cmd->position;
+    position_cmd_.yaw = cmd->yaw;
+
+    active_ = true;
   }
   else if(odom_set_)
   {
-    active_ = true;
-
-    last_t_ = ros::Time::now();
-
-    cmd_yaw_ = cur_yaw_;
     position_cmd_.position.x = pos_[0];
     position_cmd_.position.y = pos_[1];
     position_cmd_.position.z = pos_[2];
+    position_cmd_.yaw = cur_yaw_;
+
+    active_ = true;
   }
 
   return active_;
@@ -85,6 +81,8 @@ bool VelocityTracker::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &
 void VelocityTracker::Deactivate(void)
 {
   active_ = false;
+  odom_set_ = false;
+  last_t_ = 0;
 }
 
 const quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
@@ -92,25 +90,27 @@ const quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const na
   pos_[0] = msg->pose.pose.position.x;
   pos_[1] = msg->pose.pose.position.y;
   pos_[2] = msg->pose.pose.position.z;
-
   cur_yaw_ = tf::getYaw(msg->pose.pose.orientation);
   odom_set_ = true;
-
-  dt_ = ros::Time::now().toSec() - last_t_.toSec();
-  last_t_ = ros::Time::now();
-
-  cmd_yaw_ = cur_yaw_ + dt_ * position_cmd_.yaw_dot;
 
   if(!active_)
     return quadrotor_msgs::PositionCommand::Ptr();
 
-  if (use_position_gains_)
+
+  if(last_t_ == 0)
+    last_t_ = ros::Time::now().toSec();
+
+  const double t_now =  ros::Time::now().toSec();
+  const double dt = t_now - last_t_;
+  last_t_ = t_now;
+
+  if(use_position_gains_)
   {
     position_cmd_.kx[0] = kx_[0], position_cmd_.kx[1] = kx_[1], position_cmd_.kx[2] = kx_[2];
 
-    position_cmd_.position.x = position_cmd_.position.x + dt_ * position_cmd_.velocity.x;
-    position_cmd_.position.y = position_cmd_.position.y + dt_ * position_cmd_.velocity.y;
-    position_cmd_.position.z = position_cmd_.position.z + dt_ * position_cmd_.velocity.z;
+    position_cmd_.position.x = position_cmd_.position.x + dt * position_cmd_.velocity.x;
+    position_cmd_.position.y = position_cmd_.position.y + dt * position_cmd_.velocity.y;
+    position_cmd_.position.z = position_cmd_.position.z + dt * position_cmd_.velocity.z;
   }
   else
   {
@@ -120,12 +120,12 @@ const quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const na
     position_cmd_.position.y = pos_[1];
     position_cmd_.position.z = pos_[2];
   }
+  position_cmd_.yaw = position_cmd_.yaw + dt * position_cmd_.yaw_dot;
 
   position_cmd_.header.stamp = msg->header.stamp;
   position_cmd_.header.frame_id = msg->header.frame_id;
-  position_cmd_.yaw = cmd_yaw_;
 
-  return quadrotor_msgs::PositionCommand::Ptr(new quadrotor_msgs::PositionCommand(position_cmd_));
+  return quadrotor_msgs::PositionCommand::ConstPtr(new quadrotor_msgs::PositionCommand(position_cmd_));
 }
 
 void VelocityTracker::velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPtr &msg)
