@@ -6,12 +6,12 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 
 find_package(catkin REQUIRED COMPONENTS cmake_modules geometry_msgs tf trackers_manager)
 find_package(Eigen REQUIRED)
 
-include_directories(${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+include_directories(include ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include

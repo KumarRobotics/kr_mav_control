@@ -68,7 +68,7 @@ void Radio::updateFromMsg(const quadrotor_msgs::OutputData::ConstPtr &msg)
   n_channels = msg->radio_channel.size();
   channel_values.resize(n_channels);
 
-  for (int i = 0; i < channel_values.size(); i++)
+  for (unsigned int i = 0; i < channel_values.size(); i++)
     channel_values[i] = msg->radio_channel[i];
 }
 
