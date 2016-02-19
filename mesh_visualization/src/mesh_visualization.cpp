@@ -39,17 +39,17 @@ static void any_callback(const topic_tools::ShapeShifter::ConstPtr &msg)
 
   if(msg->getDataType() == "geometry_msgs/PoseStamped")
   {
-    auto pose_msg{msg->instantiate<geometry_msgs::PoseStamped>()};
+    auto pose_msg = msg->instantiate<geometry_msgs::PoseStamped>();
     publishMarker(pose_msg->header.frame_id, pose_msg->pose);
   }
   else if(msg->getDataType() == "geometry_msgs/PoseWithCovarianceStamped")
   {
-    auto pose_msg{msg->instantiate<geometry_msgs::PoseWithCovarianceStamped>()};
+    auto pose_msg = msg->instantiate<geometry_msgs::PoseWithCovarianceStamped>();
     publishMarker(pose_msg->header.frame_id, pose_msg->pose.pose);
   }
   else if(msg->getDataType() == "nav_msgs/Odometry")
   {
-    auto odom_msg{msg->instantiate<nav_msgs::Odometry>()};
+    auto odom_msg = msg->instantiate<nav_msgs::Odometry>();
     publishMarker(odom_msg->header.frame_id, odom_msg->pose.pose);
   }
   else
