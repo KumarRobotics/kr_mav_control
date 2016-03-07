@@ -93,6 +93,7 @@ float Radio::deadband(float val) {
 //////////////////////
 //////////////////////
 
+// TODO: Combine this into the radio class above, and instantiate as an object (not inherit) in the trackers
 namespace std_trackers
 {
   class RadioTracker
@@ -112,10 +113,10 @@ namespace std_trackers
   void RadioTracker::StartOutputDataSubscriber(const ros::NodeHandle &nh)
   {
     std::array<bool,4> flags = {{false, false, false, false}};
-    flags[0] = nh.getParam("radio/x_channel",   radio.x_channel);
-    flags[1] = nh.getParam("radio/y_channel",   radio.y_channel);
-    flags[2] = nh.getParam("radio/z_channel",   radio.z_channel);
-    flags[3] = nh.getParam("radio/yaw_channel", radio.yaw_channel);
+    flags[0] = nh.getParam("radio/x_channel_index",   radio.x_channel);
+    flags[1] = nh.getParam("radio/y_channel_index",   radio.y_channel);
+    flags[2] = nh.getParam("radio/z_channel_index",   radio.z_channel);
+    flags[3] = nh.getParam("radio/yaw_channel_index", radio.yaw_channel);
 
     bool flag = true;
     for (uint8_t i=0; i < flags.size(); i++) {
