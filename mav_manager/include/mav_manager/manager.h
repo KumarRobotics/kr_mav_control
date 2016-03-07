@@ -82,6 +82,9 @@ class MAVManager
     float* magnetic_field() {return magnetic_field_;}
     std::array<uint8_t,8> radio() {return radio_;}
 
+    // Try this
+    bool transition(const std::string &tracker_str);
+
     // Safety
     bool hover();
     bool ehover();
@@ -104,7 +107,7 @@ class MAVManager
 
     std::string active_tracker_;
     uint8_t tracker_status_;
-    bool transition(const std::string &tracker_str);
+    //bool transition(const std::string &tracker_str);
 
     ros::Time last_odom_t_, last_imu_t_, last_output_data_t_, last_heartbeat_t_;
 
