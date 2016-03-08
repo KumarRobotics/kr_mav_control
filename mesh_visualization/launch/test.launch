@@ -3,7 +3,7 @@
     type="mesh_visualization"
     name="mesh_visualization"
     output="screen">
-    <param name="mesh_resource" value="package://mesh_visualization/meshes/hummingbird.mesh"/>
+    <param name="mesh_resource" value="package://mesh_visualization/mesh/hummingbird.mesh"/>
     <param name="color/r" value="0.0"/>
     <param name="color/g" value="0.0"/>
     <param name="color/b" value="1.0"/>
