@@ -1,5 +1,4 @@
-#include <so3_control/SO3Control.h>
-#include <iostream>
+#include "so3_control/SO3Control.h"
 
 SO3Control::SO3Control()
   : mass_(0.5),
@@ -66,7 +65,7 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
   //std::cout << "Force: " << force_.transpose() << std::endl;
 
   Eigen::Vector3f b1c, b2c, b3c;
-  Eigen::Vector3f b1d(cos(des_yaw), sin(des_yaw), 0);
+  Eigen::Vector3f b1d(std::cos(des_yaw), std::sin(des_yaw), 0);
 
   if(force_.norm() > 1e-6)
     b3c.noalias() = force_.normalized();
@@ -78,7 +77,7 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
 
   const Eigen::Vector3f force_dot = kx.asDiagonal()*e_vel + mass_*des_jerk; // Ignoring kv*e_acc and ki*e_pos terms
   const Eigen::Vector3f b3c_dot = b3c.cross(force_dot/force_.norm()).cross(b3c);
-  const Eigen::Vector3f b1d_dot(-sin(des_yaw)*des_yaw_dot, cos(des_yaw)*des_yaw_dot, 0);
+  const Eigen::Vector3f b1d_dot(-std::sin(des_yaw)*des_yaw_dot, std::cos(des_yaw)*des_yaw_dot, 0);
   const Eigen::Vector3f b2c_dot = b3c_dot.cross(b1d) + b3c.cross(b1d_dot);
   const Eigen::Vector3f b1c_dot = b2c_dot.cross(b3c) + b2c.cross(b3c_dot);
 
