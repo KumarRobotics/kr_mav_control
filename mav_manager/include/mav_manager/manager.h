@@ -93,7 +93,7 @@ class MAVManager
     bool eland();
     bool estop();
 
-  private:
+  protected:
 
     ros::NodeHandle nh_;
     ros::NodeHandle priv_nh_;

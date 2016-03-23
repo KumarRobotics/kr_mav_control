@@ -5,3 +5,4 @@ trackers:
 #  - std_trackers/LineTrackerYaw
   - std_trackers/VelocityTracker
   - std_trackers/NullTracker
+  - traj_tracker/TrajTrackerSampled
