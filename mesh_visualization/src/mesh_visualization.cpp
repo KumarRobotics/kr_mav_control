@@ -5,7 +5,7 @@
 #include <topic_tools/shape_shifter.h>
 #include <visualization_msgs/Marker.h>
 
-static std::string mesh_resource;
+static std::string mesh_resource, new_frame_id;
 static ros::Publisher pub_vis;
 static double color_r, color_g, color_b, color_a;
 static double scale_x, scale_y, scale_z;
@@ -14,7 +14,7 @@ static void publishMarker(const std::string &frame_id,
                           const geometry_msgs::Pose &pose)
 {
   visualization_msgs::Marker marker;
-  marker.header.frame_id = frame_id;
+  marker.header.frame_id = (new_frame_id == "") ? frame_id : new_frame_id;
   marker.header.stamp = ros::Time(); // time 0 so that the marker will be
                                      // displayed regardless of the current time
   marker.ns = ros::this_node::getName();
@@ -74,6 +74,8 @@ int main(int argc, char **argv)
   nh.param("scale/x", scale_x, 1.0);
   nh.param("scale/y", scale_y, 1.0);
   nh.param("scale/z", scale_z, 1.0);
+
+  nh.param("new_frame_id", new_frame_id, std::string(""));
 
   ros::Subscriber any_sub = nh.subscribe("input", 10, &any_callback,
                                          ros::TransportHints().tcpNoDelay());
