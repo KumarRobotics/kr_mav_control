@@ -1,0 +1,12 @@
+<launch>
+  <arg name="input" default="/quadrotor/odom"/>
+  <arg name="new_frame_id" default=""/>
+
+  <node pkg="pose_visualization"
+    type="pose_visualization"
+    name="pose_visualization"
+    output="screen">
+    <param name="new_frame_id" value="$(arg new_frame_id)"/>
+    <remap from="~input" to="$(arg input)"/>
+  </node>
+</launch>
