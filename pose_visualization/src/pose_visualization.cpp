@@ -4,7 +4,6 @@
 #include <nav_msgs/Odometry.h>
 #include <quadrotor_msgs/PositionCommand.h>
 #include <topic_tools/shape_shifter.h>
-#include <tf/transform_datatypes.h>
 
 static std::string g_new_frame_id;
 static ros::Publisher g_pub_pose;
@@ -44,7 +43,10 @@ static void any_callback(const topic_tools::ShapeShifter::ConstPtr &msg)
     auto cmd_msg = msg->instantiate<quadrotor_msgs::PositionCommand>();
     geometry_msgs::Pose cmd_pose;
     cmd_pose.position = cmd_msg->position;
-    cmd_pose.orientation = tf::createQuaternionMsgFromYaw(cmd_msg->yaw);
+    cmd_pose.orientation.x = 0;
+    cmd_pose.orientation.y = 0;
+    cmd_pose.orientation.z = std::sin(cmd_msg->yaw / 2);
+    cmd_pose.orientation.w = std::cos(cmd_msg->yaw / 2);
     publishPoseStamped(cmd_msg->header.frame_id, cmd_pose);
   }
   else

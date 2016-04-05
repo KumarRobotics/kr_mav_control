@@ -9,7 +9,7 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 
 list(APPEND CATKIN_DEPENDENCIES geometry_msgs nav_msgs quadrotor_msgs
-  roscpp tf topic_tools)
+  roscpp topic_tools)
 
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_DEPENDENCIES})
 
