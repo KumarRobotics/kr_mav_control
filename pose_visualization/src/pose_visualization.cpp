@@ -8,12 +8,13 @@
 static std::string g_new_frame_id;
 static ros::Publisher g_pub_pose;
 
-static void publishPoseStamped(const std::string &frame_id,
+static void publishPoseStamped(const std_msgs::Header &header,
                                const geometry_msgs::Pose &pose)
 {
   geometry_msgs::PoseStamped pose_msg;
-  pose_msg.header.frame_id = (g_new_frame_id == "") ? frame_id : g_new_frame_id;
-  pose_msg.header.stamp = ros::Time::now();
+  pose_msg.header = header;
+  if(g_new_frame_id != "")
+    pose_msg.header.frame_id = g_new_frame_id;
   pose_msg.pose = pose;
   g_pub_pose.publish(pose_msg);
 }
@@ -25,18 +26,18 @@ static void any_callback(const topic_tools::ShapeShifter::ConstPtr &msg)
   if(msg->getDataType() == "geometry_msgs/PoseStamped")
   {
     auto pose_msg = msg->instantiate<geometry_msgs::PoseStamped>();
-    publishPoseStamped(pose_msg->header.frame_id, pose_msg->pose);
+    publishPoseStamped(pose_msg->header, pose_msg->pose);
   }
   else if(msg->getDataType() == "geometry_msgs/PoseWithCovarianceStamped")
   {
     auto pose_msg =
         msg->instantiate<geometry_msgs::PoseWithCovarianceStamped>();
-    publishPoseStamped(pose_msg->header.frame_id, pose_msg->pose.pose);
+    publishPoseStamped(pose_msg->header, pose_msg->pose.pose);
   }
   else if(msg->getDataType() == "nav_msgs/Odometry")
   {
     auto odom_msg = msg->instantiate<nav_msgs::Odometry>();
-    publishPoseStamped(odom_msg->header.frame_id, odom_msg->pose.pose);
+    publishPoseStamped(odom_msg->header, odom_msg->pose.pose);
   }
   else if(msg->getDataType() == "quadrotor_msgs/PositionCommand")
   {
@@ -47,7 +48,7 @@ static void any_callback(const topic_tools::ShapeShifter::ConstPtr &msg)
     cmd_pose.orientation.y = 0;
     cmd_pose.orientation.z = std::sin(cmd_msg->yaw / 2);
     cmd_pose.orientation.w = std::cos(cmd_msg->yaw / 2);
-    publishPoseStamped(cmd_msg->header.frame_id, cmd_pose);
+    publishPoseStamped(cmd_msg->header, cmd_pose);
   }
   else
   {
