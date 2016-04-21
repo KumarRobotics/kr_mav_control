@@ -7,7 +7,7 @@
 #include <nav_msgs/Odometry.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <Eigen/Geometry>
-#include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/Vector3Stamped.h>
 
 namespace QuadrotorSimulator
 {
@@ -17,8 +17,8 @@ class QuadrotorSimulatorBase
  public:
   QuadrotorSimulatorBase(ros::NodeHandle &n);
   void run(void);
-  void extern_force_callback(const geometry_msgs::Vector3::ConstPtr &f_ext);
-  void extern_moment_callback(const geometry_msgs::Vector3::ConstPtr &m_ext);
+  void extern_force_callback(const geometry_msgs::Vector3Stamped::ConstPtr &f_ext);
+  void extern_moment_callback(const geometry_msgs::Vector3Stamped::ConstPtr &m_ext);
 
  protected:
   typedef struct _ControlInput
@@ -68,10 +68,10 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
   pub_imu_ = n.advertise<sensor_msgs::Imu>("imu", 100);
   sub_cmd_ = n.subscribe<T>("cmd", 100, &QuadrotorSimulatorBase::cmd_callback,
                             this, ros::TransportHints().tcpNoDelay());
-  sub_extern_force_ = n.subscribe<geometry_msgs::Vector3>("extern_force",
+  sub_extern_force_ = n.subscribe<geometry_msgs::Vector3Stamped>("extern_force",
                             10, &QuadrotorSimulatorBase::extern_force_callback,
                             this, ros::TransportHints().tcpNoDelay());
-  sub_extern_moment_ = n.subscribe<geometry_msgs::Vector3>("extern_moment",
+  sub_extern_moment_ = n.subscribe<geometry_msgs::Vector3Stamped>("extern_moment",
                             10, &QuadrotorSimulatorBase::extern_moment_callback,
                             this, ros::TransportHints().tcpNoDelay());
 
@@ -157,16 +157,18 @@ void QuadrotorSimulatorBase<T, U>::run(void)
 
 template <typename T, typename U>
 void QuadrotorSimulatorBase<T, U>::extern_force_callback(
-    const geometry_msgs::Vector3::ConstPtr &f_ext)
+    const geometry_msgs::Vector3Stamped::ConstPtr &f_ext)
 {
-  quad_.setExternalForce(Eigen::Vector3d(f_ext->x, f_ext->y, f_ext->z));
+  quad_.setExternalForce(Eigen::Vector3d(
+        f_ext->vector.x, f_ext->vector.y, f_ext->vector.z));
 }
 
 template <typename T, typename U>
 void QuadrotorSimulatorBase<T, U>::extern_moment_callback(
-    const geometry_msgs::Vector3::ConstPtr &m_ext)
+    const geometry_msgs::Vector3Stamped::ConstPtr &m_ext)
 {
-  quad_.setExternalMoment(Eigen::Vector3d(m_ext->x, m_ext->y, m_ext->z));
+  quad_.setExternalMoment(Eigen::Vector3d(
+        m_ext->vector.x, m_ext->vector.y, m_ext->vector.z));
 }
 
 template <typename T, typename U>
