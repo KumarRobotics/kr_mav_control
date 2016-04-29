@@ -26,3 +26,15 @@ target_link_libraries(so3_control_nodelet SO3Control ${catkin_LIBRARIES})
 add_library(so3_trpy_control src/so3_trpy_control.cpp)
 add_dependencies(so3_trpy_control ${catkin_EXPORTED_TARGETS})
 target_link_libraries(so3_trpy_control SO3Control ${catkin_LIBRARIES})
+
+install(TARGETS
+    SO3Control
+    so3_control_nodelet
+    so3_trpy_control
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+install(FILES nodelet_plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

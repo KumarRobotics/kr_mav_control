@@ -20,3 +20,12 @@ catkin_package(
 add_executable(mesh_visualization src/mesh_visualization.cpp)
 add_dependencies(mesh_visualization ${catkin_EXPORTED_TARGETS})
 target_link_libraries(mesh_visualization ${catkin_LIBRARIES})
+
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
+install(DIRECTORY mesh/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/mesh)

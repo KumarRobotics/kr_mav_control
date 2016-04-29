@@ -53,7 +53,6 @@ add_library(mav_manager src/manager.cpp)
 add_dependencies(mav_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(mav_manager ${catkin_LIBRARIES})
 
-
 add_executable(mav_manager_node src/sample.cpp)
 target_link_libraries(mav_manager_node mav_manager ${catkin_LIBRARIES})
 
@@ -62,3 +61,16 @@ target_link_libraries(mav_manager_sub mav_manager ${catkin_LIBRARIES})
 
 add_executable(mav_manager_services src/sample_service_server.cpp)
 target_link_libraries(mav_manager_services mav_manager ${catkin_LIBRARIES})
+
+install(TARGETS
+    mav_manager
+    mav_manager_node
+    mav_manager_sub
+    mav_manager_services
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
