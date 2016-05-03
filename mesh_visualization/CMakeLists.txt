@@ -17,6 +17,8 @@ catkin_package(
   CATKIN_DEPENDS geometry_msgs nav_msgs roscpp topic_tools visualization_msgs
   DEPENDS)
 
+include_directories(${catkin_INCLUDE_DIRS})
+
 add_executable(mesh_visualization src/mesh_visualization.cpp)
 add_dependencies(mesh_visualization ${catkin_EXPORTED_TARGETS})
 target_link_libraries(mesh_visualization ${catkin_LIBRARIES})
