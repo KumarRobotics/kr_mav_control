@@ -23,4 +23,14 @@ add_library(pid_control_nodelet src/pid_control_nodelet.cpp)
 add_dependencies(pid_control_nodelet ${catkin_EXPORTED_TARGETS})
 target_link_libraries(pid_control_nodelet PIDControl ${catkin_LIBRARIES})
 
+install(TARGETS
+    PIDControl
+    pid_control_nodelet
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY config/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config)
+install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 install(FILES nodelet_plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

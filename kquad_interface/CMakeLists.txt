@@ -28,4 +28,14 @@ target_link_libraries(kquad_interface ${CMAKE_THREAD_LIBS_INIT})
 add_library(kquad_interface_nodelet src/kquad_interface_nodelet.cpp)
 target_link_libraries(kquad_interface_nodelet kquad_interface ${catkin_LIBRARIES})
 
+install(TARGETS
+    kquad_interface
+    kquad_interface_nodelet
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
 install(FILES nodelet_plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
