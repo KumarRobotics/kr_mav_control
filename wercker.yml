@@ -3,7 +3,7 @@ box: ros:jade-robot
 build:
   steps:
     - install-packages:
-      packages: g++ libeigen3-dev
+      packages: g++ libeigen3-dev openssh-client
     - script:
       name: initialize git submodules
       code: |
