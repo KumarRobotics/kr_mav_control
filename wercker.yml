@@ -1,0 +1,19 @@
+box: ros:jade-robot
+
+build:
+  steps:
+    - install-packages:
+      packages: g++ libeigen3-dev openssh-client
+    - script:
+      name: initialize git submodules
+      code: |
+        git submodule update --init --recursive
+    - script:
+      name: build
+      code: |
+        cd ..
+        mkdir -p catkin_ws/src
+        mv source catkin_ws/src/
+        cd catkin_ws
+        catkin_init_workspace src
+        catkin_make -DCMAKE_BUILD_TYPE=Release
