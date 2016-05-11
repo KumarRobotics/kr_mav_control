@@ -298,7 +298,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
   }
   else
   {
-    float t = traj_time, t2 = t * t, t3 = t2 * t, t4 = t3 * t, t5 = t4 * t;
+    float t = traj_time / traj_duration_, t2 = t * t, t3 = t2 * t, t4 = t3 * t, t5 = t4 * t;
 
     x = coeffs_[0] + t * coeffs_[1] + t2 * coeffs_[2] + t3 * coeffs_[3] +
         t4 * coeffs_[4] + t5 * coeffs_[5];
@@ -312,6 +312,12 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
               t3 * yaw_coeffs_[3];
     yaw_dot_des =
         yaw_coeffs_[1] + 2 * t * yaw_coeffs_[2] + 3 * t2 * yaw_coeffs_[3];
+
+    // Scale based on the trajectory duration
+    v = v / traj_duration_;
+    a = a / (traj_duration_ * traj_duration_);
+    j = j / (traj_duration_ * traj_duration_ * traj_duration_);
+    yaw_dot_des = yaw_dot_des / traj_duration_;
   }
 
   cmd->position.x = x(0), cmd->position.y = x(1), cmd->position.z = x(2);
@@ -355,39 +361,41 @@ void LineTrackerMinJerk::gen_trajectory(
     const float &yawf, const float &yaw_dot_i, const float &yaw_dot_f, float dt,
     Eigen::Vector3f coeffs[6], float yaw_coeffs[4])
 {
-  float dt2 = dt * dt, dt3 = dt2 * dt, dt4 = dt3 * dt, dt5 = dt4 * dt;
+  // We can use a dt of 1 to ensure that our system will be numerically conditioned.
+  // For more information, see line_tracker_min_jerk_numerical_issues.m
 
-  Eigen::Matrix<float, 6, 6> A;
-  A << 1,  0,      0,       0,        0,        0,
-       1, dt,    dt2,     dt3,      dt4,      dt5,
-       0,  1,      0,       0,        0,        0,
-       0,  1, 2 * dt, 3 * dt2,  4 * dt3,  5 * dt4,
-       0,  0,      2,       0,        0,        0,
-       0,  0,      2,  6 * dt, 12 * dt2, 20 * dt3;
+  Eigen::Matrix<float, 6, 6> Ainv;
+  Ainv <<   1,    0,    0,    0,    0,    0,
+            0,    0,    1,    0,    0,    0,
+            0,    0,    0,    0,  0.5,    0,
+          -10,   10,   -6,   -4, -1.5,  0.5,
+           15,  -15,    8,    7,  1.5,   -1,
+           -6,    6,   -3,   -3, -0.5,  0.5;
 
   Eigen::Matrix<float, 6, 3> b;
-  b << xi.transpose(), xf.transpose(), vi.transpose(), vf.transpose(),
-      ai.transpose(), af.transpose();
+  b << xi.transpose(), xf.transpose(),
+      dt * vi.transpose(), dt * vf.transpose(),
+      dt * dt * ai.transpose(), dt * dt * af.transpose();
 
   Eigen::Matrix<float, 6, 3> x;
-  x = A.colPivHouseholderQr().solve(b);
+  x = Ainv * b;
   for(int i = 0; i < 6; i++)
   {
     coeffs[i] = x.row(i).transpose();
   }
 
   // Compute the trajectory for the yaw
-  Eigen::Matrix<float, 4, 4> A_yaw;
-  A_yaw << 1,  0,      0,       0,
-           1, dt,    dt2,     dt3,
-           0,  1,      0,       0,
-           0,  1, 2 * dt, 3 * dt2;
+  Eigen::Matrix<float, 4, 4> A_yaw_inv;
+  A_yaw_inv <<  1,  0,  0,  0,
+                0,  0,  1,  0,
+               -3,  3, -2, -1,
+                2, -2,  1,  1;
 
   Eigen::Vector4f b_yaw;
-  b_yaw << yawi, yawf, yaw_dot_i, yaw_dot_f;
+  b_yaw << yawi, yawf, dt * yaw_dot_i, dt * yaw_dot_f;
 
   Eigen::Vector4f x_yaw;
-  x_yaw = A_yaw.colPivHouseholderQr().solve(b_yaw);
+  x_yaw = A_yaw_inv * b_yaw;
   for(int i = 0; i < 4; i++)
   {
     yaw_coeffs[i] = x_yaw(i);
