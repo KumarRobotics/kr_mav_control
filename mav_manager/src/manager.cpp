@@ -206,7 +206,7 @@ bool MAVManager::land() {
   return this->transition(line_tracker_distance);
 }
 
-bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a_des) {
+bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a_des, bool relative) {
 
   quadrotor_msgs::LineTrackerGoal goal;
   goal.x   = x;
@@ -215,9 +215,11 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
   goal.yaw = yaw;
   goal.v_des = v_des;
   goal.a_des = a_des;
+  goal.relative = relative;
 
   pub_goal_min_jerk_.publish(goal);
-  ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}", x, y, z, yaw);
+  ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}%s",
+      x, y, z, yaw, (relative ? " relative to the current position." : "."));
 
   return this->transition(line_tracker_min_jerk);
 }

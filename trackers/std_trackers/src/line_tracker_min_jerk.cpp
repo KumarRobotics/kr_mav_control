@@ -5,75 +5,7 @@
 #include <quadrotor_msgs/TrackerStatus.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
-
-/**
- * Class to hold initial conditions for trajectory generation.
- * In most cases we would want to have consecutive trajectories to smoothly
- * transition from one to another, so we need to keep the desired command
- * continuous. This class stores the last command so as to use it as an initial
- * condition for the next trajectory leading to a smooth desired command.
- * Previously, we used the current odom of the robot to set the initial
- * condition and if the robot had some tracking error, it would lead to a jump
- * in the desired which we want to avoid.
- */
-class InitialConditions
-{
- public:
-  void set_from_last_cmd(const quadrotor_msgs::PositionCommand::ConstPtr &msg);
-  void set_from_odom(const nav_msgs::Odometry::ConstPtr &msg);
-  Eigen::Vector3f pos() const { return pos_; }
-  Eigen::Vector3f vel() const { return vel_; }
-  Eigen::Vector3f acc() const { return acc_; }
-  Eigen::Vector3f jrk() const { return jrk_; }
-  float yaw() const { return yaw_; }
-  float yaw_dot() const { return yaw_dot_; }
-  ros::Time time() const { return time_; }
-  void reset();
-
- private:
-  Eigen::Vector3f pos_, vel_, acc_, jrk_;
-  float yaw_, yaw_dot_;
-  bool last_cmd_valid_;
-  ros::Time time_;
-};
-
-void InitialConditions::set_from_last_cmd(
-    const quadrotor_msgs::PositionCommand::ConstPtr &msg)
-{
-  pos_ = Eigen::Vector3f(msg->position.x, msg->position.y, msg->position.z);
-  vel_ = Eigen::Vector3f(msg->velocity.x, msg->velocity.y, msg->velocity.z);
-  acc_ = Eigen::Vector3f(msg->acceleration.x, msg->acceleration.y,
-                         msg->acceleration.z);
-  jrk_ = Eigen::Vector3f(msg->jerk.x, msg->jerk.y, msg->jerk.z);
-  yaw_ = msg->yaw;
-  yaw_dot_ = msg->yaw_dot;
-
-  time_ = msg->header.stamp;
-
-  last_cmd_valid_ = true;
-}
-
-void InitialConditions::set_from_odom(const nav_msgs::Odometry::ConstPtr &msg)
-{
-  if(!last_cmd_valid_)
-  {
-    pos_ = Eigen::Vector3f(msg->pose.pose.position.x, msg->pose.pose.position.y,
-                           msg->pose.pose.position.z);
-    vel_ = Eigen::Vector3f(msg->twist.twist.linear.x, msg->twist.twist.linear.y,
-                           msg->twist.twist.linear.z);
-    acc_ = Eigen::Vector3f(0, 0, 0);
-    jrk_ = Eigen::Vector3f(0, 0, 0);
-    yaw_ = tf::getYaw(msg->pose.pose.orientation);
-    yaw_dot_ = msg->twist.twist.angular.z; // TODO: Should double check which
-                                           // frame (body or world) this is in
-    time_ = ros::Time::now();
-  }
-}
-
-void InitialConditions::reset()
-{
-  last_cmd_valid_ = false;
-}
+#include <initial_conditions.h>
 
 class LineTrackerMinJerk : public trackers_manager::Tracker
 {
@@ -157,6 +89,7 @@ bool LineTrackerMinJerk::Activate(const quadrotor_msgs::PositionCommand::ConstPt
 
 void LineTrackerMinJerk::Deactivate(void)
 {
+  ICs_.reset();
   goal_set_ = false;
   active_ = false;
 }
@@ -339,6 +272,12 @@ void LineTrackerMinJerk::goal_callback(
   goal_(1) = msg->y;
   goal_(2) = msg->z;
   goal_yaw_ = msg->yaw;
+
+  if (msg->relative)
+  {
+    goal_ += ICs_.pos();
+    goal_yaw_ += ICs_.yaw();
+  }
 
   if(msg->v_des > 0)
     v_des_ = msg->v_des;
