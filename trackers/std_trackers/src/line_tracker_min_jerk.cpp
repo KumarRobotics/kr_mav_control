@@ -370,7 +370,7 @@ void LineTrackerMinJerk::gen_trajectory(
             0,    0,    0,    0,  0.5,    0,
           -10,   10,   -6,   -4, -1.5,  0.5,
            15,  -15,    8,    7,  1.5,   -1,
-           -6,    6,   -3,   -3, -1.5,  0.5;
+           -6,    6,   -3,   -3, -0.5,  0.5;
 
   Eigen::Matrix<float, 6, 3> b;
   b << xi.transpose(), xf.transpose(),

@@ -84,7 +84,15 @@ A = [ 1,  0,  0,  0,  0,  0;
 %       0,  0,  b,  0,  0,  0;
 %       0,  0,  b,  f,  g,  h];
 % Ainv = subs(simplify(inv(A)), {'a','b','c','d','e','f','g','h'}, {1,2,3,4,5,6,12,20})
-% 
+
+Ainv = [...
+    1,   0,  0,  0,    0,   0;
+    0,   0,  1,  0,    0,   0;
+    0,   0,  0,  0,  1/2,   0;
+  -10,  10, -6, -4, -3/2, 1/2;
+   15, -15,  8,  7,  3/2,  -1;
+   -6,   6, -3, -3, -1/2, 1/2];
+
 % A_yaw = [ 1,  0,  0,  0;
 %           1,  1,  1,  1;
 %           0,  1,  0,  0;
@@ -106,7 +114,7 @@ disp(['New method, condition number:', num2str(cond(A))]);
 bcs([3,4]) = total_t   * bcs([3,4]);        % Velocities
 bcs([5,6]) = total_t^2 * bcs([5,6]);        % Accelerations
 
-x = A \ bcs;
+x = Ainv * bcs;
 
 end
 
