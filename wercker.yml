@@ -2,8 +2,11 @@ box: ros:jade-robot
 
 build:
   steps:
-    - install-packages:
-      packages: g++ libeigen3-dev openssh-client
+    - script:
+      name: install dependencies
+      code: |
+        sudo apt-get update
+        sudo apt-get install g++ libeigen3-dev
     - script:
       name: initialize git submodules
       code: |
