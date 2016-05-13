@@ -8,6 +8,8 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <Eigen/Geometry>
 #include <geometry_msgs/Vector3Stamped.h>
+#include <vector>
+#include <random>
 
 namespace QuadrotorSimulator
 {
@@ -47,7 +49,7 @@ class QuadrotorSimulatorBase
  private:
   void stateToOdomMsg(const Quadrotor::State &state,
                       nav_msgs::Odometry &odom) const;
-  void quadToImuMsg(const Quadrotor &quad, sensor_msgs::Imu &imu) const;
+  void quadToImuMsg(const Quadrotor &quad, sensor_msgs::Imu &imu);
   void tfBroadcast(const nav_msgs::Odometry &odom_msg);
 
   ros::Publisher pub_odom_;
@@ -59,6 +61,10 @@ class QuadrotorSimulatorBase
   double odom_rate_;
   std::string quad_name_;
   tf2_ros::TransformBroadcaster tf_broadcaster_;
+
+  // For IMU noise
+  Eigen::Vector3d acc_sigma_, angvel_sigma_;
+  std::default_random_engine generator_;
 };
 
 template <typename T, typename U>
@@ -104,6 +110,13 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
   state.x(2) = initial_pos(2);
   state.R = initial_q.matrix();
   quad_.setState(state);
+
+  // IMU noise parameters
+  std::vector<double> acc_sigma, angvel_sigma;
+  n.param("sigma/accel", acc_sigma, std::vector<double>(3,0));
+  n.param("sigma/angvel", angvel_sigma, std::vector<double>(3,0));
+  acc_sigma_ = Eigen::Vector3d::Map(acc_sigma.data());
+  angvel_sigma_ = Eigen::Vector3d::Map(angvel_sigma.data());
 }
 
 template <typename T, typename U>
@@ -196,7 +209,7 @@ void QuadrotorSimulatorBase<T, U>::stateToOdomMsg(
 
 template <typename T, typename U>
 void QuadrotorSimulatorBase<T, U>::quadToImuMsg(const Quadrotor &quad,
-                                                sensor_msgs::Imu &imu) const
+                                                sensor_msgs::Imu &imu) 
 {
   const Quadrotor::State state = quad.getState();
   Eigen::Quaterniond q(state.R);
@@ -205,9 +218,16 @@ void QuadrotorSimulatorBase<T, U>::quadToImuMsg(const Quadrotor &quad,
   imu.orientation.z = q.z();
   imu.orientation.w = q.w();
 
-  imu.angular_velocity.x = state.omega(0);
-  imu.angular_velocity.y = state.omega(1);
-  imu.angular_velocity.z = state.omega(2);
+  std::normal_distribution<double> p_dist = std::normal_distribution<double>(0,angvel_sigma_[0]);
+  std::normal_distribution<double> q_dist = std::normal_distribution<double>(0,angvel_sigma_[1]);
+  std::normal_distribution<double> r_dist = std::normal_distribution<double>(0,angvel_sigma_[2]);
+  std::normal_distribution<double> ax_dist = std::normal_distribution<double>(0,acc_sigma_[0]);
+  std::normal_distribution<double> ay_dist = std::normal_distribution<double>(0,acc_sigma_[1]);
+  std::normal_distribution<double> az_dist = std::normal_distribution<double>(0,acc_sigma_[2]);
+
+  imu.angular_velocity.x = state.omega(0) + p_dist(generator_);
+  imu.angular_velocity.y = state.omega(1) + q_dist(generator_);
+  imu.angular_velocity.z = state.omega(2) + r_dist(generator_);
 
   const double kf = quad.getPropellerThrustCoefficient();
   const double m = quad.getMass();
@@ -224,9 +244,10 @@ void QuadrotorSimulatorBase<T, U>::quadToImuMsg(const Quadrotor &quad,
     acc = thrust / m * Eigen::Vector3d(0, 0, 1) + state.R * external_force / m;
   }
 
-  imu.linear_acceleration.x = acc(0);
-  imu.linear_acceleration.y = acc(1);
-  imu.linear_acceleration.z = acc(2);
+
+  imu.linear_acceleration.x = acc(0) + ax_dist(generator_);
+  imu.linear_acceleration.y = acc(1) + ay_dist(generator_);
+  imu.linear_acceleration.z = acc(2) + az_dist(generator_);
 }
 
 template <typename T, typename U>
