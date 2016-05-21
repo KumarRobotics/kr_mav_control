@@ -28,6 +28,9 @@ class Quadrotor
   double getMass(void) const;
   void setMass(double mass);
 
+  double getMu (void) const;
+  void setMu (double mu);
+
   double getGravity(void) const;
   void setGravity(double g);
 
@@ -81,6 +84,7 @@ class Quadrotor
 
   double g_; // gravity
   double mass_;
+  double mu_; // drag coefficient
   Eigen::Matrix3d J_; // Inertia
   double kf_;
   double km_;

@@ -86,6 +86,10 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
   n.param("mass", mass, 0.5);
   quad_.setMass(mass);
 
+  double mu;
+  n.param("mu", mu, 0.0);
+  quad_.setMu(mu);
+
   Eigen::Vector3d initial_pos;
   n.param("initial_position/x", initial_pos(0), 0.0);
   n.param("initial_position/y", initial_pos(1), 0.0);
@@ -219,9 +223,18 @@ void QuadrotorSimulatorBase<T, U>::quadToImuMsg(const Quadrotor &quad,
   {
     acc = state.R * (external_force / m + Eigen::Vector3d(0, 0, g));
   }
-  else
+  else 
   {
-    acc = thrust / m * Eigen::Vector3d(0, 0, 1) + state.R * external_force / m;
+    acc = thrust / m * Eigen::Vector3d(0, 0, 1) + state.R.transpose() * external_force / m;
+    if(quad.getMu() != 0)
+    {
+      double mu = quad.getMu();
+      Eigen::Matrix3d P;
+      P << 1, 0, 0,
+           0, 1, 0,
+           0, 0, 0;
+      acc = acc - mu*P*state.R.transpose()*state.v;
+    }
   }
 
   imu.linear_acceleration.x = acc(0);
