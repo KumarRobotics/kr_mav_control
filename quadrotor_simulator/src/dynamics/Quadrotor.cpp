@@ -124,7 +124,7 @@ void Quadrotor::operator()(const Quadrotor::InternalState &x, Quadrotor::Interna
     P << 1, 0, 0, 
          0, 1, 0, 
          0, 0, 0;
-    v_dot = v_dot - mu_*R*P*R.transpose()*cur_state.v;
+    v_dot = v_dot - mu_/mass_*R*P*R.transpose()*cur_state.v;
   }
   R_dot = R*omega_hat;
   omega_dot = J_.inverse()*(moments - cur_state.omega.cross(J_*cur_state.omega) + external_moment_);

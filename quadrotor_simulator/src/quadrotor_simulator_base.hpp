@@ -229,11 +229,12 @@ void QuadrotorSimulatorBase<T, U>::quadToImuMsg(const Quadrotor &quad,
     if(quad.getMu() != 0)
     {
       double mu = quad.getMu();
+      double mass = quad.getMass();
       Eigen::Matrix3d P;
       P << 1, 0, 0,
            0, 1, 0,
            0, 0, 0;
-      acc = acc - mu*P*state.R.transpose()*state.v;
+      acc = acc - mu/mass*P*state.R.transpose()*state.v;
     }
   }
 
