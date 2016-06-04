@@ -71,11 +71,11 @@ void TrackersManager::onInit(void)
     }
     catch(pluginlib::LibraryLoadException &e)
     {
-      NODELET_ERROR_STREAM("Could not load library for the tracker " << tracker_name);
+      NODELET_ERROR_STREAM("Could not load library for the tracker " << tracker_name << ": " << e.what());
     }
     catch(pluginlib::CreateClassException &e)
     {
-      NODELET_ERROR_STREAM("Could not create an instance of the tracker " << tracker_name);
+      NODELET_ERROR_STREAM("Could not create an instance of the tracker " << tracker_name << ": " << e.what());
     }
   }
 
