@@ -1,4 +1,4 @@
-box: ros:jade-robot
+box: ros:kinetic-robot
 
 build:
   steps:
@@ -6,7 +6,7 @@ build:
       name: install dependencies
       code: |
         sudo apt-get update
-        sudo apt-get install g++ libeigen3-dev
+        sudo apt-get install -qy g++ libeigen3-dev
     - script:
       name: initialize git submodules
       code: |
