@@ -42,3 +42,11 @@ target_link_libraries(encode_msgs ${catkin_LIBRARIES})
 add_library(decode_msgs src/decode_msgs.cpp)
 add_dependencies(decode_msgs ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(decode_msgs ${catkin_LIBRARIES})
+
+install(TARGETS encode_msgs decode_msgs
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})

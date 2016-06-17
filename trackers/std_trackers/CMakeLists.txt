@@ -35,12 +35,24 @@ add_library(line_tracker_yaw src/line_tracker_yaw.cpp)
 add_dependencies(line_tracker_yaw ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(line_tracker_yaw ${catkin_LIBRARIES})
 
-##
 add_library(null_tracker src/null_tracker.cpp)
 add_dependencies(null_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(null_tracker ${catkin_LIBRARIES})
 
-##
 add_library(velocity_tracker src/velocity_tracker.cpp)
 add_dependencies(velocity_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(velocity_tracker ${catkin_LIBRARIES})
+
+install(TARGETS
+    line_tracker_min_jerk
+    line_tracker_trapezoid
+    line_tracker_distance
+    line_tracker_yaw
+    null_tracker
+    velocity_tracker
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(FILES plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
