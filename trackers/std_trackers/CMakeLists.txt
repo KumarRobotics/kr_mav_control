@@ -6,15 +6,15 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
 find_package(catkin REQUIRED COMPONENTS cmake_modules geometry_msgs tf trackers_manager)
 find_package(Eigen REQUIRED)
 
-include_directories(include ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+include_directories(${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 catkin_package(
-  INCLUDE_DIRS include
+  INCLUDE_DIRS
   LIBRARIES
   CATKIN_DEPENDS geometry_msgs tf trackers_manager
   DEPENDS Eigen)
@@ -50,19 +50,9 @@ install(TARGETS
     line_tracker_yaw
     null_tracker
     velocity_tracker
-    radio_tracker_velocity
-    radio_tracker_simulator
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(FILES plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-
-add_library(radio_tracker_velocity src/radio_tracker_velocity.cpp)
-add_dependencies(radio_tracker_velocity ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(radio_tracker_velocity ${catkin_LIBRARIES})
-
-add_library(radio_tracker_simulator src/radio_tracker_simulator.cpp)
-add_dependencies(radio_tracker_simulator ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(radio_tracker_simulator ${catkin_LIBRARIES})

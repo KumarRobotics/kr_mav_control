@@ -5,5 +5,3 @@ trackers:
 #  - std_trackers/LineTrackerYaw
   - std_trackers/VelocityTracker
   - std_trackers/NullTracker
-  - std_trackers/RadioTrackerVelocity
-  - std_trackers/RadioTrackerSimulator

@@ -9,9 +9,3 @@ trackers_manager:
     default_a_des: 1.0
     default_yaw_v_des: 0.8
     default_yaw_a_des: 0.2
-
-  radio:
-    x_channel_index: 0
-    y_channel_index: 1
-    z_channel_index: 2
-    yaw_channel_index: 3
