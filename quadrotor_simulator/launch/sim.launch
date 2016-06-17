@@ -51,7 +51,7 @@
       <param name="color/g" value="0.0"/>
       <param name="color/b" value="1.0"/>
       <param name="color/a" value="0.7"/>
-      <remap from="~odom" to="odom"/>
+      <remap from="~input" to="odom"/>
     </node>
 
   </group>

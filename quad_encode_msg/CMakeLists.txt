@@ -19,3 +19,12 @@ catkin_package(
 add_library(quad_encode_msg_nodelet src/quad_encode_msg_nodelet.cpp)
 add_dependencies(quad_encode_msg_nodelet ${catkin_EXPORTED_TARGETS})
 target_link_libraries(quad_encode_msg_nodelet ${catkin_LIBRARIES})
+
+install(TARGETS
+    quad_encode_msg_nodelet
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(FILES nodelet_plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

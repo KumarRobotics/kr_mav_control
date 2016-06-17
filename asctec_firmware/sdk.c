@@ -344,7 +344,7 @@ void SDK_mainloop(void)
   {
     // The lower limit of servo_val is 6000 and the upper limit is 12000
     // for a valid pwm signal (i.e. 1ms to 2ms pulse width)
-    int servo_val = PWM_cmd_input.pwm[0] / 255.0 * 6000 + 6000;
+    int servo_val = PWM_cmd_input.pwm[0] * 6000 / 255 + 6000;
     PTU_update(servo_val);
   }
 }

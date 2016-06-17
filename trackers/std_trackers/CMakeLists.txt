@@ -43,6 +43,22 @@ add_library(velocity_tracker src/velocity_tracker.cpp)
 add_dependencies(velocity_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(velocity_tracker ${catkin_LIBRARIES})
 
+install(TARGETS
+    line_tracker_min_jerk
+    line_tracker_trapezoid
+    line_tracker_distance
+    line_tracker_yaw
+    null_tracker
+    velocity_tracker
+    radio_tracker_velocity
+    radio_tracker_simulator
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(FILES plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
 add_library(radio_tracker_velocity src/radio_tracker_velocity.cpp)
 add_dependencies(radio_tracker_velocity ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(radio_tracker_velocity ${catkin_LIBRARIES})
