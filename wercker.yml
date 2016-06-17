@@ -12,6 +12,11 @@ build:
       code: |
         git submodule update --init --recursive
     - script:
+      name: rosdep update
+      code: |
+        sudo rosdep init
+        rosdep update
+    - script:
       name: build
       code: |
         cd ..
@@ -19,4 +24,5 @@ build:
         mv source catkin_ws/src/
         cd catkin_ws
         catkin_init_workspace src
+        rosdep install --from-paths src --ignore-src -y -r
         catkin_make -DCMAKE_BUILD_TYPE=Release
