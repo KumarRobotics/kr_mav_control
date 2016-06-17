@@ -3,16 +3,16 @@ box: ros:kinetic-robot
 build:
   steps:
     - script:
+      name: initialize git submodules
+      code: |
+        git submodule update --init --recursive
+    - script:
       name: install dependencies
       code: |
         sudo apt-get update
         sudo apt-get install -qy g++ libeigen3-dev
         rosdep update
         rosdep install --from-paths . --ignore-src -y -r
-    - script:
-      name: initialize git submodules
-      code: |
-        git submodule update --init --recursive
     - script:
       name: build
       code: |
