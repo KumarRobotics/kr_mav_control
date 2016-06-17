@@ -42,3 +42,19 @@
     </description>
   </class>
 </library>
+
+<library path="lib/libradio_tracker_velocity">
+  <class name="std_trackers/RadioTrackerVelocity" type="RadioTrackerVelocity" base_class_type="trackers_manager::Tracker">
+    <description>
+      This controller uses the radio to command a desired velocity for the robot.
+    </description>
+  </class>
+</library>
+
+<library path="lib/libradio_tracker_simulator">
+  <class name="std_trackers/RadioTrackerSimulator" type="RadioTrackerSimulator" base_class_type="trackers_manager::Tracker">
+    <description>
+      This controller uses the radio to command the robot.
+    </description>
+  </class>
+</library>

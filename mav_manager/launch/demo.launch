@@ -49,6 +49,7 @@
       <rosparam file="$(find so3_control)/config/gains.yaml"/>
       <remap from="~odom" to="odom"/>
       <remap from="~cmd" to="position_cmd"/>
+      <remap from="~output_data" to="quad_decode_msg/output_data"/>
     </node>
 
     <node pkg="nodelet"
@@ -111,7 +112,6 @@
       <remap from="~serial" to="from_robot"/>
     </node>
 
-    <include file="$(find mav_manager)/launch/manager.launch"/>
-
+    <include file="$(find mav_manager)/launch/manager.launch"/> 
   </group>
 </launch>
