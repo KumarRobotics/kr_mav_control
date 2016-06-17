@@ -7,15 +7,12 @@ build:
       code: |
         sudo apt-get update
         sudo apt-get install -qy g++ libeigen3-dev
+        rosdep update
+        rosdep install --from-paths . --ignore-src -y -r
     - script:
       name: initialize git submodules
       code: |
         git submodule update --init --recursive
-    - script:
-      name: rosdep update
-      code: |
-        sudo rosdep init
-        rosdep update
     - script:
       name: build
       code: |
@@ -24,5 +21,4 @@ build:
         mv source catkin_ws/src/
         cd catkin_ws
         catkin_init_workspace src
-        rosdep install --from-paths src --ignore-src -y -r
         catkin_make -DCMAKE_BUILD_TYPE=Release
