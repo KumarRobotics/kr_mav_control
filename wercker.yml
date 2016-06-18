@@ -12,7 +12,7 @@ build:
         sudo apt-get update
         sudo apt-get install -qy g++ libeigen3-dev
         rosdep update
-        rosdep install --from-paths . --ignore-src -y -r
+        rosdep install --from-paths . --ignore-src -y -r --as-root apt:false
     - script:
       name: build
       code: |
