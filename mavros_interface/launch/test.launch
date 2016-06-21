@@ -1,0 +1,28 @@
+<launch>
+  <arg name="robot" default="/"/>
+  <arg name="odom" default="odom"/>
+  <arg name="so3_cmd" default="so3_cmd"/>
+  <arg name="kf" default="8.54858e-06"/>
+  <arg name="lin_cof_a" default="0.0015"/>
+  <arg name="lin_int_b" default="-1.5334"/>
+ 
+  <group ns="$(arg robot)">
+    <node pkg="nodelet"
+      type="nodelet"
+      args="standalone mavros_interface/SO3CmdToMavros"
+      name="so3cmd_to_mavros"
+      required="true"
+      clear_params="true"
+      output="screen">
+      <param name="cof_a" value="$(arg cof_a)"/>
+      <param name="power_b" value="$(arg power_b)"/>
+      <param name="lin_cof_a" value="$(arg lin_cof_a)"/>
+      <param name="lin_int_b" value="$(arg lin_int_b)"/>
+      <remap from="~odom" to="$(arg odom)"/>
+      <remap from="~so3_cmd" to="$(arg so3_cmd)"/>
+      <remap from="~imu" to="mavros/imu/data" />
+      <remap from="~attitude_raw" to="mavros/setpoint_raw/attitude" />
+      <remap from="~odom_pose" to="mavros/vision_pose/pose" />
+    </node>
+  </group>
+</launch>
