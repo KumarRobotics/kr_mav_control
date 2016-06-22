@@ -50,7 +50,7 @@ class MAVManagerServices
       res.success = mav->goTo(req.goal[0], req.goal[1], req.goal[2], req.goal[3], 0.0, 0.0, true);
       res.message = "Going To Relative Position...";
       if (res.success)
-        last_cb_ = "goTo";
+        last_cb_ = "goToRelative";
       return res.success;
     }
     bool setDesVelInWorldFrame_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
