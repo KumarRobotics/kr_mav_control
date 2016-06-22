@@ -12,16 +12,15 @@
  * in the desired, which we want to avoid.
  */
 
-#include <iostream>
 #include <tf/transform_datatypes.h>
 #include <initial_conditions.h>
 
-void InitialConditions::set_from_last_cmd(
+void InitialConditions::set_from_cmd(
     const quadrotor_msgs::PositionCommand::ConstPtr &msg)
 {
   if (msg == NULL)
   {
-    ROS_WARN("Null PositionCommand recieved. Not setting initial condition."); 
+    ROS_WARN("Null PositionCommand recieved. Not setting initial condition.");
     return;
   }
 
@@ -35,12 +34,12 @@ void InitialConditions::set_from_last_cmd(
 
   time_ = msg->header.stamp;
 
-  last_cmd_valid_ = true;
+  cmd_valid_ = true;
 }
 
 void InitialConditions::set_from_odom(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  if(!last_cmd_valid_)
+  if(!cmd_valid_)
   {
     pos_ = Eigen::Vector3f(msg->pose.pose.position.x, msg->pose.pose.position.y,
                            msg->pose.pose.position.z);
@@ -57,5 +56,5 @@ void InitialConditions::set_from_odom(const nav_msgs::Odometry::ConstPtr &msg)
 
 void InitialConditions::reset()
 {
-  last_cmd_valid_ = false;
+  cmd_valid_ = false;
 }

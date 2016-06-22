@@ -9,7 +9,7 @@
 class InitialConditions
 {
  public:
-  void set_from_last_cmd(const quadrotor_msgs::PositionCommand::ConstPtr &msg);
+  void set_from_cmd(const quadrotor_msgs::PositionCommand::ConstPtr &msg);
   void set_from_odom(const nav_msgs::Odometry::ConstPtr &msg);
   Eigen::Vector3f pos() const { return pos_; }
   Eigen::Vector3f vel() const { return vel_; }
@@ -23,7 +23,7 @@ class InitialConditions
  private:
   Eigen::Vector3f pos_, vel_, acc_, jrk_;
   float yaw_, yaw_dot_;
-  bool last_cmd_valid_;
+  bool cmd_valid_;
   ros::Time time_;
 };
 
