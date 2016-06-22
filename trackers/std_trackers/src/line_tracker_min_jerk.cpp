@@ -209,7 +209,8 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
     cmd->yaw_dot = 0;
     cmd->velocity.x = 0, cmd->velocity.y = 0, cmd->velocity.z = 0;
     cmd->acceleration.x = 0, cmd->acceleration.y = 0, cmd->acceleration.z = 0;
-    ICs_.set_from_last_cmd(cmd);
+
+    ICs_.set_from_cmd(cmd);
     return cmd;
   }
 
@@ -261,7 +262,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
   cmd->acceleration.z = a(2);
   cmd->jerk.x = j(0), cmd->jerk.y = j(1), cmd->jerk.z = j(2);
 
-  ICs_.set_from_last_cmd(cmd);
+  ICs_.set_from_cmd(cmd);
   return cmd;
 }
 
@@ -277,12 +278,19 @@ void LineTrackerMinJerk::goal_callback(
   {
     goal_ += ICs_.pos();
     goal_yaw_ += ICs_.yaw();
+    ROS_INFO("line_tracker_min_jerk using relative command");
   }
 
   if(msg->v_des > 0)
+  {
     v_des_ = msg->v_des;
+    ROS_INFO("line_tracker_min_jerk using v_des as specified in the goal message");
+  }
   else
+  {
     v_des_ = default_v_des_;
+    ROS_INFO("line_tracker_min_jerk using default_v_des_");
+  }
 
   if(msg->a_des > 0)
     a_des_ = msg->a_des;
