@@ -55,7 +55,7 @@ class MAVManagerServices
     }
     bool setDesVelInWorldFrame_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
-      res.success = mav->setDesVelInWorldFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
+      res.success = mav->setDesVelInWorldFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3], true);
       res.message = "World Velocity";
       if (res.success)
         last_cb_ = "setDesVelInWorldFrmae";
@@ -63,7 +63,7 @@ class MAVManagerServices
     }
     bool setDesVelInBodyFrame_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
-      res.success = mav->setDesVelInBodyFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
+      res.success = mav->setDesVelInBodyFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3], true);
       res.message = "Body Velocity";
       if (res.success)
         last_cb_ = "setDesVelInBodyFrame";
