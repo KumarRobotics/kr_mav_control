@@ -221,7 +221,7 @@ void QuadrotorSimulatorBase<T, U>::quadToImuMsg(const Quadrotor &quad,
   }
   else
   {
-    acc = thrust / m * Eigen::Vector3d(0, 0, 1) + state.R * external_force / m;
+    acc = thrust / m * Eigen::Vector3d(0, 0, 1) + state.R.transpose() * external_force / m;
   }
 
   imu.linear_acceleration.x = acc(0);
