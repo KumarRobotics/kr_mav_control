@@ -4,7 +4,7 @@
 // Standard C++
 #include <string>
 #include <Eigen/Geometry>
-#include <array> 
+#include <array>
 
 // ROS related
 #include <ros/ros.h>
@@ -91,6 +91,8 @@ class MAVManager
     bool eland();
     bool estop();
 
+    bool transition(const std::string &tracker_str);
+
   private:
 
     ros::NodeHandle nh_;
@@ -105,7 +107,6 @@ class MAVManager
 
     std::string active_tracker_;
     uint8_t tracker_status_;
-    bool transition(const std::string &tracker_str);
 
     ros::Time last_odom_t_, last_imu_t_, last_output_data_t_, last_heartbeat_t_;
 
