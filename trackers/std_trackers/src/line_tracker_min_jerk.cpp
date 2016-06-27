@@ -41,7 +41,7 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
   ros::Time traj_start_;
   float traj_duration_;
   Eigen::Vector3f coeffs_[6];
-  float goal_yaw_, last_cmd_yaw_, yaw_coeffs_[4];
+  float goal_yaw_, yaw_coeffs_[4];
 
   double kx_[3], kv_[3];
 };

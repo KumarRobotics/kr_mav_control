@@ -20,6 +20,7 @@ catkin_package(
   DEPENDS Eigen)
 
 add_library(initial_conditions src/initial_conditions.cpp)
+target_link_libraries(initial_conditions ${catkin_LIBRARIES})
 
 add_library(line_tracker_min_jerk src/line_tracker_min_jerk.cpp)
 add_dependencies(line_tracker_min_jerk ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
@@ -27,15 +28,15 @@ target_link_libraries(line_tracker_min_jerk initial_conditions ${catkin_LIBRARIE
 
 add_library(line_tracker_trapezoid src/line_tracker_trapezoid.cpp)
 add_dependencies(line_tracker_trapezoid ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(line_tracker_trapezoid ${catkin_LIBRARIES})
+target_link_libraries(line_tracker_trapezoid initial_conditions ${catkin_LIBRARIES})
 
 add_library(line_tracker_distance src/line_tracker_distance.cpp)
 add_dependencies(line_tracker_distance ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(line_tracker_distance ${catkin_LIBRARIES})
+target_link_libraries(line_tracker_distance initial_conditions ${catkin_LIBRARIES})
 
 add_library(line_tracker_yaw src/line_tracker_yaw.cpp)
 add_dependencies(line_tracker_yaw ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(line_tracker_yaw ${catkin_LIBRARIES})
+target_link_libraries(line_tracker_yaw initial_conditions ${catkin_LIBRARIES})
 
 add_library(null_tracker src/null_tracker.cpp)
 add_dependencies(null_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})

@@ -148,9 +148,8 @@ bool MAVManager::takeoff() {
 
   ROS_INFO("Initiating launch sequence...");
   quadrotor_msgs::LineTrackerGoal goal;
-  goal.x = pos_(0);
-  goal.y = pos_(1);
-  goal.z = pos_(2) + takeoff_height_;
+  goal.z = takeoff_height_;
+  goal.relative = true;
   pub_goal_line_tracker_distance_.publish(goal);
 
   return this->transition(line_tracker_distance);
