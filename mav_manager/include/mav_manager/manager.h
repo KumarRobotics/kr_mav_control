@@ -56,7 +56,7 @@ class MAVManager
     // Movement
     bool takeoff();
 
-    bool goTo(float x, float y, float z, float yaw, float v_des = 0, float a_des = 0);
+    bool goTo(float x, float y, float z, float yaw, float v_des = 0.0f, float a_des = 0.0f, bool relative = false);
     bool goTo(Vec4 xyz_yaw, Vec2 v_and_a_des = Vec2::Zero());
     bool goTo(Vec3 xyz, float yaw, Vec2 v_and_a_des = Vec2::Zero());
     bool goTo(Vec3 xyz, Vec2 v_and_a_des = Vec2::Zero());  // Uses Current yaw

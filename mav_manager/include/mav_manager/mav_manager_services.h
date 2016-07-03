@@ -45,9 +45,17 @@ class MAVManagerServices
         last_cb_ = "goTo";
       return res.success;
     }
+    bool goToRelative_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
+    {
+      res.success = mav->goTo(req.goal[0], req.goal[1], req.goal[2], req.goal[3], 0.0, 0.0, true);
+      res.message = "Going To Relative Position...";
+      if (res.success)
+        last_cb_ = "goToRelative";
+      return res.success;
+    }
     bool setDesVelInWorldFrame_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
-      res.success = mav->setDesVelInWorldFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
+      res.success = mav->setDesVelInWorldFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3], true);
       res.message = "World Velocity";
       if (res.success)
         last_cb_ = "setDesVelInWorldFrmae";
@@ -55,7 +63,7 @@ class MAVManagerServices
     }
     bool setDesVelInBodyFrame_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
-      res.success = mav->setDesVelInBodyFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
+      res.success = mav->setDesVelInBodyFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3], true);
       res.message = "Body Velocity";
       if (res.success)
         last_cb_ = "setDesVelInBodyFrame";
@@ -109,6 +117,7 @@ class MAVManagerServices
       srvs_.push_back(nh_.advertiseService("takeoff", &MAVManagerServices::takeoff_cb, this));
       srvs_.push_back(nh_.advertiseService("goHome", &MAVManagerServices::goHome_cb, this));
       srvs_.push_back(nh_.advertiseService("goTo", &MAVManagerServices::goTo_cb, this));
+      srvs_.push_back(nh_.advertiseService("goToRelative", &MAVManagerServices::goToRelative_cb, this));
       srvs_.push_back(nh_.advertiseService("setDesVelInWorldFrame", &MAVManagerServices::setDesVelInWorldFrame_cb, this));
       srvs_.push_back(nh_.advertiseService("setDesVelInBodyFrame", &MAVManagerServices::setDesVelInBodyFrame_cb, this));
       srvs_.push_back(nh_.advertiseService("hover", &MAVManagerServices::hover_cb, this));
