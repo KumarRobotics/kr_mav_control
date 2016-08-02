@@ -59,11 +59,9 @@ MAVManager::MAVManager()
   // Services
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
 
-  // Wait until the service server is started
-  while (!this->transition(null_tracker_str)) {
-    ROS_WARN("Activation of NullTracker failed. Trying again shortly...");
-    ros::Duration(1.0).sleep();
-  }
+  srv_transition_.waitForExistence();
+  if (!this->transition(null_tracker_str))
+    ROS_FATAL("Activation of NullTracker failed.");
 
   // Load params after we are sure that we have stuff loaded
   if (!priv_nh_.getParam("need_imu", need_imu_))
