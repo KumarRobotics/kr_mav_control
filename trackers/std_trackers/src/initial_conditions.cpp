@@ -15,6 +15,17 @@
 #include <tf/transform_datatypes.h>
 #include <initial_conditions.h>
 
+InitialConditions::InitialConditions() :
+  pos_(Eigen::Vector3f::Zero()),
+  vel_(Eigen::Vector3f::Zero()),
+  acc_(Eigen::Vector3f::Zero()),
+  jrk_(Eigen::Vector3f::Zero()),
+  yaw_(0.0f),
+  yaw_dot_(0.0f),
+  cmd_valid_(false)
+{
+}
+
 void InitialConditions::set_from_cmd(
     const quadrotor_msgs::PositionCommand::ConstPtr &msg)
 {
@@ -32,8 +43,6 @@ void InitialConditions::set_from_cmd(
   yaw_ = msg->yaw;
   yaw_dot_ = msg->yaw_dot;
 
-  time_ = msg->header.stamp;
-
   cmd_valid_ = true;
 }
 
@@ -50,7 +59,6 @@ void InitialConditions::set_from_odom(const nav_msgs::Odometry::ConstPtr &msg)
     yaw_ = tf::getYaw(msg->pose.pose.orientation);
     yaw_dot_ = msg->twist.twist.angular.z; // TODO: Should double check which
                                            // frame (body or world) this is in
-    time_ = ros::Time::now();
   }
 }
 
