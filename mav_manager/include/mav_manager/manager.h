@@ -61,6 +61,9 @@ class MAVManager
     bool goTo(Vec3 xyz, float yaw, Vec2 v_and_a_des = Vec2::Zero());
     bool goTo(Vec3 xyz, Vec2 v_and_a_des = Vec2::Zero());  // Uses Current yaw
 
+    bool goToTimed(float x, float y, float z, float yaw, float v_des = 0.0f, float a_des = 0.0f,
+        bool relative = false, ros::Duration duration = ros::Duration(0), ros::Time start_time = ros::Time::now());
+
     bool setDesVelInWorldFrame(float x, float y, float z, float yaw, bool use_position_feedback = false);
     bool setDesVelInBodyFrame(float x, float y, float z, float yaw, bool use_position_feedback = false);
 
@@ -129,6 +132,7 @@ class MAVManager
     // Publishers
     ros::Publisher
       pub_goal_min_jerk_,
+      pub_goal_min_jerk_timed_,
       pub_goal_line_tracker_distance_,
       pub_goal_velocity_,
       pub_goal_position_velocity_,
