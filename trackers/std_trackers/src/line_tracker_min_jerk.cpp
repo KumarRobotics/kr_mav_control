@@ -83,7 +83,6 @@ bool LineTrackerMinJerk::Activate(const quadrotor_msgs::PositionCommand::ConstPt
   {
     active_ = true;
   }
-  ICs_.reset();
   return active_;
 }
 
@@ -113,7 +112,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
 
   if(goal_set_)
   {
-    traj_start_ = ICs_.time();
+    traj_start_ = ros::Time::now();
     traj_duration_ = 0.5f;
 
     // Min-Jerk trajectory
