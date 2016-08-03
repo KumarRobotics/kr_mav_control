@@ -354,9 +354,14 @@ bool MAVManager::set_motors(bool motors) {
   so3_cmd.orientation.w = 1.0;
   so3_cmd.aux.enable_motors = motors;
 
-  // Queue a few to make sure the signal gets through
+  // Queue a few to make sure the signal gets through.
+  // Also, the crazyflie interface throttles commands to 30 Hz, so this needs
+  // to have a sufficent duration.
   for (int i=0; i<10; i++)
+  {
     pub_so3_command_.publish(so3_cmd);
+    ros::Duration(1.0/100.0).sleep();
+  }
 
   motors_ = motors;
   return true;
