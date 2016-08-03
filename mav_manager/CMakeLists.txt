@@ -31,6 +31,7 @@ add_service_files(
     Bool.srv
     Trigger.srv
     Vec4.srv
+    GoalTimed.srv
 )
 generate_messages()
 
