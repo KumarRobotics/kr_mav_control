@@ -76,7 +76,6 @@ bool LineTrackerTrapezoid::Activate(const quadrotor_msgs::PositionCommand::Const
     start_yaw_ = cur_yaw_;
     active_ = true;
   }
-  ICs_.reset();
   return active_;
 }
 
