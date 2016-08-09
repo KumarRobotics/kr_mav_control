@@ -74,7 +74,6 @@ bool LineTrackerDistance::Activate(const quadrotor_msgs::PositionCommand::ConstP
     start_yaw_ = yaw_;
     active_ = true;
   }
-  ICs_.reset();
   return active_;
 }
 
