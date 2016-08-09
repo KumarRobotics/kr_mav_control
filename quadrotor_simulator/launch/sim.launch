@@ -7,6 +7,7 @@
       <param name="rate/odom" value="100.0"/>
       <remap from="~odom" to="odom"/>
       <remap from="~cmd" to="so3_cmd"/>
+      <rosparam file="$(find quadrotor_simulator)/config/dynamic_params.yaml"/>
     </node>
 
     <node pkg="nodelet"

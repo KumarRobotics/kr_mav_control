@@ -86,6 +86,40 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
   n.param("mass", mass, 0.5);
   quad_.setMass(mass);
 
+  double Ixx, Iyy, Izz;
+  n.param("Ixx", Ixx, 2.64e-3);
+  n.param("Iyy", Iyy, 2.64e-3);
+  n.param("Izz", Izz, 4.96e-3);
+  quad_.setInertia(Eigen::Vector3d(Ixx, Iyy, Izz).asDiagonal()); 
+
+  double g;
+  n.param("g", g, 9.81);
+  quad_.setGravity(g);
+
+  double prop_radius;
+  n.param("prop_radius", prop_radius, 0.099);
+  quad_.setPropRadius(prop_radius);
+
+  double kf;
+  n.param("kf", kf, 5.55e-8);
+  quad_.setPropellerThrustCoefficient(kf);
+
+  double  arm_length;
+  n.param("arm_length", arm_length, 0.17);
+
+  double motor_time_constant;
+  n.param("motor_time_constant", kf, 1.0/20.0);
+  quad_.setMotorTimeConstant(motor_time_constant);
+
+  double min_rpm;
+  n.param("min_rpm", min_rpm, 1500.0);
+  quad_.setMinRPM(min_rpm);
+
+  double max_rpm;
+  n.param("max_rpm", max_rpm, 7500.0);
+  quad_.setMaxRPM(max_rpm);
+
+
   Eigen::Vector3d initial_pos;
   n.param("initial_position/x", initial_pos(0), 0.0);
   n.param("initial_position/y", initial_pos(1), 0.0);
