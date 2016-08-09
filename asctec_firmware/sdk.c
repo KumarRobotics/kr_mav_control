@@ -66,9 +66,9 @@ static const float I[3][3] = { {1.0e-2, 0, 0},
                                {0, 0, 2.0e-2} };
 #endif
 
-// RPMSCALE = 1/38.7
-static const float RPMSCALE = 0.025839793;
-static const int MIN_RPM = 1200;
+// http://wiki.asctec.de/display/AR/List+of+all+predefined+variables%2C+commands+and+parameters
+static const float RPMSCALE = 0.026578073; // 1/37.625
+static const int MIN_RPM = 1075;
 
 struct WO_SDK_STRUCT WO_SDK;
 struct WO_CTRL_INPUT WO_CTRL_Input;
