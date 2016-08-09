@@ -67,7 +67,6 @@ bool SmoothVelTracker::Activate(const quadrotor_msgs::PositionCommand::ConstPtr 
     start_time_ = ros::Time::now();
     active_ = true;
   }
-  ICs_.reset();
   return active_;
 }
 
@@ -95,12 +94,12 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
   // Get elapsed time
   ros::Time current_time = ros::Time::now();
   ros::Duration elapsed_time = current_time - start_time_;
-  double t = elapsed_time.toSec();
+  double t = elapsed_time.toSec()/ramp_time_;
   double t2 = t*t, t3 = t*t*t, t4 = t*t*t*t, t5 = t*t*t*t*t;
 
   // Test each case to generate trajectory
   Eigen::Vector3f pos, vel, acc;
-  if(t > total_time_)
+  if(elapsed_time.toSec() > total_time_)
   {
     pos = start_pos_ + total_dist_*dir_;
     cmd->position.x = pos(0), cmd->position.y = pos(1), cmd->position.z = pos(2);
@@ -109,7 +108,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     goal_reached_ = true;
     goal_set_ = false;
   }
-  else if(t < ramp_time_)
+  else if(elapsed_time.toSec() < ramp_time_)
   {
     double dist = vel_coeffs_(4)*t5/5.0 + vel_coeffs_(3)*t4/4.0 + vel_coeffs_(2)*t3/3.0 + vel_coeffs_(1)*t2/2.0 + vel_coeffs_(0)*t;
     double speed = vel_coeffs_(4)*t4 + vel_coeffs_(3)*t3 + vel_coeffs_(2)*t2 + vel_coeffs_(1)*t + vel_coeffs_(0);
@@ -121,7 +120,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     cmd->velocity.x = vel(0), cmd->velocity.y = vel(1), cmd->velocity.z = vel(2);
     cmd->acceleration.x = acc(0), cmd->acceleration.y = acc(1), cmd->acceleration.z = acc(2);
   }
-  else if(t < total_time_ - ramp_time_)
+  else if(elapsed_time.toSec() < total_time_ - ramp_time_)
   {
     double dist = ramp_dist_ + target_speed_*(t - ramp_time_);
     pos = start_pos_ + dist*dir_;
@@ -132,7 +131,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
   }
   else
   {
-    double te = total_time_ - t;
+    double te = (total_time_ - elapsed_time.toSec())/ramp_time_;
     double te2 = te*te, te3 = te*te*te, te4 = te*te*te*te, te5 = te*te*te*te*te;
     double dist_from_end = vel_coeffs_(4)*te5/5.0 + vel_coeffs_(3)*te4/4.0 + vel_coeffs_(2)*te3/3.0 + vel_coeffs_(1)*te2/2.0 + vel_coeffs_(0)*te;
     double dist = total_dist_ - dist_from_end;
@@ -169,19 +168,19 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
     dir_ = (goal_pos - start_pos_).normalized();
 
     // Compute the coefficients
-    Eigen::Matrix<double,5,5> A;
-    A << 1,          0,                 0,                   0,                   0, 
-         1, ramp_time_, pow(ramp_time_,2),   pow(ramp_time_,3),   pow(ramp_time_,4),
-         0,          1,                 0,                   0,                   0, 
-         0,          1,      2*ramp_time_, 3*pow(ramp_time_,2), 4*pow(ramp_time_,3), 
-         0,          0,                 2,                   0,                   0;
+    Eigen::Matrix<double,5,5> Ainv;
+    Ainv <<  1,  0,  0,  0,   0, 
+             0,  0,  1,  0,   0,
+             0,  0,  0,  0, 0.5,
+            -4,  4, -3, -1,  -1,
+             3, -3,  2,  1, 0.5;
     Eigen::Matrix<double,5,1> b;
     b << 0, target_speed_, 0, 0, 0;
-    vel_coeffs_ = A.colPivHouseholderQr().solve(b);
+    vel_coeffs_ = Ainv*b;
 
     // Compute the ramp distance
-    ramp_dist_ = vel_coeffs_(4)*pow(ramp_time_,5)/5.0 + vel_coeffs_(3)*pow(ramp_time_,4)/4.0 + vel_coeffs_(2)*pow(ramp_time_,3)/3.0
-                                                      + vel_coeffs_(1)*pow(ramp_time_,2)/2.0 + vel_coeffs_(0)*ramp_time_;
+    ramp_dist_ = vel_coeffs_(4)/5.0 + vel_coeffs_(3)/4.0 + vel_coeffs_(2)/3.0 + vel_coeffs_(1)/2.0 + vel_coeffs_(0);
+
     // Check to make sure that twice the ramp distance is less than the entire distance
     if(2*ramp_dist_ < total_dist_)
     {
