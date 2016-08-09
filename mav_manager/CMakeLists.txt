@@ -28,8 +28,6 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
 add_service_files(
   DIRECTORY srv
   FILES
-    Bool.srv
-    Trigger.srv
     Vec4.srv
 )
 generate_messages()
