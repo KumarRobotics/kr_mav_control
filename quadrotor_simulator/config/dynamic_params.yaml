@@ -8,5 +8,5 @@ kf_: 0.00000000555
 prop_radius_: 0.099
 arm_length_: 0.17
 motor_time_constant_: 0.05
-min_rpm_: 1500
-max_rpm_: 3500
+min_rpm: 1500
+max_rpm: 7500
