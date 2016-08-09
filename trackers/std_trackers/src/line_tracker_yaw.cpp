@@ -88,6 +88,7 @@ bool LineTrackerYaw::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &c
 
     traj_start_ = ros::Time::now();
   }
+  ICs_.reset();
   return active_;
 }
 
