@@ -6,7 +6,6 @@
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
 #include <initial_conditions.h>
-#include <cmath>
 
 class SmoothVelTracker : public trackers_manager::Tracker
 {
@@ -31,7 +30,7 @@ class SmoothVelTracker : public trackers_manager::Tracker
   double ramp_time_, total_time_;
   bool active_;
   InitialConditions ICs_;
-  ros::Time start_time_;
+  ros::Time start_time_, test_start_time_;
   Eigen::Vector3f start_pos_, dir_;
   Eigen::Matrix<double,5,1> vel_coeffs_;
   double kx_[3], kv_[3];
@@ -40,6 +39,7 @@ class SmoothVelTracker : public trackers_manager::Tracker
 SmoothVelTracker::SmoothVelTracker(void)
     : goal_set_(false), goal_reached_(true), active_(false)
 {
+  test_start_time_ = ros::Time::now();
 }
 
 void SmoothVelTracker::Initialize(const ros::NodeHandle &nh)
@@ -63,10 +63,7 @@ bool SmoothVelTracker::Activate(const quadrotor_msgs::PositionCommand::ConstPtr 
 {
   // Only allow activation if a goal has been set
   if(goal_set_)
-  {
-    start_time_ = ros::Time::now();
     active_ = true;
-  }
   return active_;
 }
 
@@ -80,11 +77,20 @@ void SmoothVelTracker::Deactivate(void)
 const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     const nav_msgs::Odometry::ConstPtr &msg)
 {
-  // Set the initial conditions
-  ICs_.set_from_odom(msg);
-
   if(!active_)
+  {
+    ICs_.set_from_odom(msg);
     return quadrotor_msgs::PositionCommand::Ptr();
+  }
+
+  if(goal_reached_)
+    ICs_.set_from_odom(msg);
+
+  if(goal_set_)
+  {
+    start_time_ = ros::Time::now();
+    goal_set_ = false;
+  }
 
   // Set gains
   quadrotor_msgs::PositionCommand::Ptr cmd(new quadrotor_msgs::PositionCommand);
@@ -106,7 +112,6 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     cmd->velocity.x = 0, cmd->velocity.y = 0, cmd->velocity.z = 0;
     cmd->acceleration.x = 0, cmd->acceleration.y = 0, cmd->acceleration.z = 0;
     goal_reached_ = true;
-    goal_set_ = false;
   }
   else if(elapsed_time.toSec() < ramp_time_)
   {
@@ -186,9 +191,6 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
     {
       // Compute total time of trajectory
       total_time_ = (total_dist_ - 2*ramp_dist_)/target_speed_ + 2*ramp_time_;
-      
-      // Set the start time 
-      start_time_ = ros::Time::now();
 
       // Set goal_set to true and goal_reached to false
       goal_set_ = true;
