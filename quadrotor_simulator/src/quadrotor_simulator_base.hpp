@@ -108,7 +108,7 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
   n.param("arm_length", arm_length, 0.17);
 
   double motor_time_constant;
-  n.param("motor_time_constant", kf, 1.0/20.0);
+  n.param("motor_time_constant", motor_time_constant, 1.0/20.0);
   quad_.setMotorTimeConstant(motor_time_constant);
 
   double min_rpm;
