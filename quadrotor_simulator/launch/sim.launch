@@ -55,7 +55,5 @@
       <remap from="~input" to="odom"/>
     </node>
 
-    <include file="$(find mav_manager)/launch/manager.launch"/>
-
   </group>
 </launch>
