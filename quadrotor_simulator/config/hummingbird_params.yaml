@@ -1,9 +1,9 @@
-Ixx: 0.00264
-Iyy: 0.00264
-Izz: 0.00496
+gravity: 9.81
 mass: 0.5
-g: 9.81
-thrust_coefficient: 0.0000000555
+Ixx: 2.64e-3
+Iyy: 2.64e-3
+Izz: 4.96e-3
+thrust_coefficient: 5.55e-8
 prop_radius: 0.099
 arm_length: 0.17
 motor_time_constant: 0.05

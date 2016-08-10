@@ -82,43 +82,44 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
 
   n.param("quadrotor_name", quad_name_, std::string("quadrotor"));
 
-  double mass;
-  n.param("mass", mass, 0.5);
+#define GET_PARAM(param)                       \
+  double param;                                \
+  if(!n.getParam(#param, param))               \
+  {                                            \
+    ROS_FATAL(#param " not set");              \
+    throw std::logic_error(#param " not set"); \
+  }
+
+  GET_PARAM(mass);
   quad_.setMass(mass);
 
-  double Ixx, Iyy, Izz;
-  n.param("Ixx", Ixx, 2.64e-3);
-  n.param("Iyy", Iyy, 2.64e-3);
-  n.param("Izz", Izz, 4.96e-3);
-  quad_.setInertia(Eigen::Vector3d(Ixx, Iyy, Izz).asDiagonal()); 
+  GET_PARAM(Ixx);
+  GET_PARAM(Iyy);
+  GET_PARAM(Izz);
+  quad_.setInertia(Eigen::Vector3d(Ixx, Iyy, Izz).asDiagonal());
 
-  double g;
-  n.param("g", g, 9.81);
-  quad_.setGravity(g);
+  GET_PARAM(gravity);
+  quad_.setGravity(gravity);
 
-  double prop_radius;
-  n.param("prop_radius", prop_radius, 0.099);
+  GET_PARAM(prop_radius);
   quad_.setPropRadius(prop_radius);
 
-  double thrust_coefficient;
-  n.param("thrust_coefficient", thrust_coefficient, 5.55e-8);
+  GET_PARAM(thrust_coefficient);
   quad_.setPropellerThrustCoefficient(thrust_coefficient);
 
-  double  arm_length;
-  n.param("arm_length", arm_length, 0.17);
+  GET_PARAM(arm_length);
+  quad_.setArmLength(arm_length);
 
-  double motor_time_constant;
-  n.param("motor_time_constant", motor_time_constant, 1.0/20.0);
+  GET_PARAM(motor_time_constant);
   quad_.setMotorTimeConstant(motor_time_constant);
 
-  double min_rpm;
-  n.param("min_rpm", min_rpm, 1500.0);
+  GET_PARAM(min_rpm);
   quad_.setMinRPM(min_rpm);
 
-  double max_rpm;
-  n.param("max_rpm", max_rpm, 7500.0);
+  GET_PARAM(max_rpm);
   quad_.setMaxRPM(max_rpm);
 
+#undef GET_PARAM
 
   Eigen::Vector3d initial_pos;
   n.param("initial_position/x", initial_pos(0), 0.0);
