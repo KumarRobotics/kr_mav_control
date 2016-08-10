@@ -4,8 +4,8 @@ Iyy: 0.00264
 Izz: 0.00496
 mass: 0.5
 g: 9.81
-kf: 0.00000000555
-prop_radius: 0.099
+thrust_coefficient: 0.000000555
+prop_radius: 0.04915
 arm_length: 0.17
 motor_time_constant: 0.05
 min_rpm: 1500

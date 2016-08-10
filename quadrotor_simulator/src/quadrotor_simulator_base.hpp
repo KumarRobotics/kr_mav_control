@@ -100,9 +100,9 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
   n.param("prop_radius", prop_radius, 0.099);
   quad_.setPropRadius(prop_radius);
 
-  double kf;
-  n.param("kf", kf, 5.55e-8);
-  quad_.setPropellerThrustCoefficient(kf);
+  double thrust_coefficient;
+  n.param("thrust_coefficient", thrust_coefficient, 5.55e-8);
+  quad_.setPropellerThrustCoefficient(thrust_coefficient);
 
   double  arm_length;
   n.param("arm_length", arm_length, 0.17);
