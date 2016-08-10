@@ -36,7 +36,7 @@
       required="true"
       output="screen">
       <rosparam file="$(find so3_control)/config/gains.yaml"/>
-      <param name="mass" value="0.25"/>
+      <param name="mass" value="0.5"/>
       <remap from="~odom" to="odom"/>
       <remap from="~position_cmd" to="position_cmd"/>
       <remap from="~so3_cmd" to="so3_cmd"/>
@@ -54,6 +54,8 @@
       <param name="color/a" value="0.7"/>
       <remap from="~input" to="odom"/>
     </node>
+
+    <include file="$(find mav_manager)/launch/manager.launch"/>
 
   </group>
 </launch>
