@@ -1,10 +1,22 @@
 #dynamic model parameters
+#Ixx: 0.000601
+#Iyy: 0.000589
+#Izz: 0.001076
+#mass: 0.25
+#g: 9.81
+#thrust_coefficient: 0.000050618
+#prop_radius: 0.04915
+#arm_length: 0.105
+#motor_time_constant: 0.05
+#min_rpm: 5500
+#max_rpm: 16400
+
 Ixx: 0.00264
 Iyy: 0.00264
 Izz: 0.00496
 mass: 0.5
 g: 9.81
-thrust_coefficient: 0.000000555
+thrust_coefficient: 0.0000000555
 prop_radius: 0.04915
 arm_length: 0.17
 motor_time_constant: 0.05
