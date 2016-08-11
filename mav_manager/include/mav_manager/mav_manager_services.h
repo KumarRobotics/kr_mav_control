@@ -2,8 +2,8 @@
 #define MAV_MANAGER_SERVICES_H
 
 #include <mav_manager/manager.h>
-#include <mav_manager/Bool.h>
-#include <mav_manager/Trigger.h>
+#include <std_srvs/SetBool.h>
+#include <std_srvs/Trigger.h>
 #include <mav_manager/Vec4.h>
 
 class MAVManagerServices
@@ -12,30 +12,30 @@ class MAVManagerServices
 
     std::vector<ros::ServiceServer> srvs_;
 
-    bool motors_cb(mav_manager::Bool::Request &req, mav_manager::Bool::Response &res)
+    bool motors_cb(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
     {
-      res.success = mav->set_motors(req.b);
+      res.success = mav->set_motors(req.data);
       res.message = "Motors ";
-      res.message += req.b ? "on" : "off";
+      res.message += req.data ? "on" : "off";
       if (res.success)
         last_cb_ = "motors";
-      return res.success;
+      return true;
     }
-    bool takeoff_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
+    bool takeoff_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
     {
       res.success = mav->takeoff();
       res.message = "Takeoff";
       if (res.success)
         last_cb_ = "takeoff";
-      return res.success;
+      return true;
     }
-    bool goHome_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
+    bool goHome_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
     {
       res.success = mav->goHome();
       res.message = "Going home";
       if (res.success)
         last_cb_ = "goHome";
-      return res.success;
+      return true;
     }
     bool goTo_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
@@ -43,7 +43,7 @@ class MAVManagerServices
       res.message = "Going To...";
       if (res.success)
         last_cb_ = "goTo";
-      return res.success;
+      return true;
     }
     bool goToRelative_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
@@ -59,7 +59,7 @@ class MAVManagerServices
       res.message = "World Velocity";
       if (res.success)
         last_cb_ = "setDesVelInWorldFrmae";
-      return res.success;
+      return true;
     }
     bool setDesVelInBodyFrame_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
@@ -67,47 +67,47 @@ class MAVManagerServices
       res.message = "Body Velocity";
       if (res.success)
         last_cb_ = "setDesVelInBodyFrame";
-      return res.success;
+      return true;
     }
-    bool hover_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
+    bool hover_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
     {
       res.success = mav->hover();
       res.message = "Hover";
       if (res.success)
         last_cb_ = "hover";
-      return res.success;
+      return true;
     }
-    bool ehover_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
+    bool ehover_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
     {
       res.success = mav->ehover();
       res.message = "Emergency Hover";
       if (res.success)
         last_cb_ = "ehover";
-      return res.success;
+      return true;
     }
-    bool land_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
+    bool land_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
     {
       res.success = mav->land();
       res.message = "Landing";
       if (res.success)
         last_cb_ = "land";
-      return res.success;
+      return true;
     }
-    bool eland_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
+    bool eland_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
     {
       res.success = mav->eland();
       res.message = "Emergency Landing";
       if (res.success)
         last_cb_ = "eland";
-      return res.success;
+      return true;
     }
-    bool estop_cb(mav_manager::Trigger::Request &req, mav_manager::Trigger::Response &res)
+    bool estop_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
     {
       res.success = mav->estop();
       res.message = "Emergency Stop";
       if (res.success)
         last_cb_ = "estop";
-      return res.success;
+      return true;
     }
 
     // Constructor
