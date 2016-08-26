@@ -82,9 +82,44 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
 
   n.param("quadrotor_name", quad_name_, std::string("quadrotor"));
 
-  double mass;
-  n.param("mass", mass, 0.5);
+#define GET_PARAM(param)                       \
+  double param;                                \
+  if(!n.getParam(#param, param))               \
+  {                                            \
+    ROS_FATAL(#param " not set");              \
+    throw std::logic_error(#param " not set"); \
+  }
+
+  GET_PARAM(mass);
   quad_.setMass(mass);
+
+  GET_PARAM(Ixx);
+  GET_PARAM(Iyy);
+  GET_PARAM(Izz);
+  quad_.setInertia(Eigen::Vector3d(Ixx, Iyy, Izz).asDiagonal());
+
+  GET_PARAM(gravity);
+  quad_.setGravity(gravity);
+
+  GET_PARAM(prop_radius);
+  quad_.setPropRadius(prop_radius);
+
+  GET_PARAM(thrust_coefficient);
+  quad_.setPropellerThrustCoefficient(thrust_coefficient);
+
+  GET_PARAM(arm_length);
+  quad_.setArmLength(arm_length);
+
+  GET_PARAM(motor_time_constant);
+  quad_.setMotorTimeConstant(motor_time_constant);
+
+  GET_PARAM(min_rpm);
+  quad_.setMinRPM(min_rpm);
+
+  GET_PARAM(max_rpm);
+  quad_.setMaxRPM(max_rpm);
+
+#undef GET_PARAM
 
   Eigen::Vector3d initial_pos;
   n.param("initial_position/x", initial_pos(0), 0.0);

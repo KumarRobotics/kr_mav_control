@@ -4,6 +4,7 @@
       type="quadrotor_simulator_so3"
       name="quadrotor_simulator_so3"
       output="screen">
+      <rosparam file="$(find quadrotor_simulator)/config/hummingbird_params.yaml"/>
       <param name="rate/odom" value="100.0"/>
       <remap from="~odom" to="odom"/>
       <remap from="~cmd" to="so3_cmd"/>
