@@ -28,8 +28,8 @@ class Quadrotor
   double getMass(void) const;
   void setMass(double mass);
 
-  double getMu (void) const;
-  void setMu (double mu);
+  double getDragCoefficient(void) const;
+  void setDragCoefficient(double drag_coefficient);
 
   double getGravity(void) const;
   void setGravity(double g);
@@ -84,7 +84,6 @@ class Quadrotor
 
   double g_; // gravity
   double mass_;
-  double mu_; // drag coefficient
   Eigen::Matrix3d J_; // Inertia
   double kf_;
   double km_;
@@ -93,6 +92,7 @@ class Quadrotor
   double motor_time_constant_; // unit: sec
   double max_rpm_;
   double min_rpm_;
+  double drag_coefficient_;
   Quadrotor::State state_;
   Eigen::Array4d input_;
   Eigen::Vector3d external_force_;

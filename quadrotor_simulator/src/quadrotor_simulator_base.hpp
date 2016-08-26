@@ -86,9 +86,9 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
   n.param("mass", mass, 0.5);
   quad_.setMass(mass);
 
-  double mu;
-  n.param("mu", mu, 0.0);
-  quad_.setMu(mu);
+  double drag_coefficient;
+  n.param("drag_coefficient", drag_coefficient, 0.0);
+  quad_.setDragCoefficient(drag_coefficient);
 
   Eigen::Vector3d initial_pos;
   n.param("initial_position/x", initial_pos(0), 0.0);
@@ -223,18 +223,18 @@ void QuadrotorSimulatorBase<T, U>::quadToImuMsg(const Quadrotor &quad,
   {
     acc = state.R * (external_force / m + Eigen::Vector3d(0, 0, g));
   }
-  else 
+  else
   {
     acc = thrust / m * Eigen::Vector3d(0, 0, 1) + state.R.transpose() * external_force / m;
-    if(quad.getMu() != 0)
+    if(quad.getDragCoefficient() != 0)
     {
-      double mu = quad.getMu();
-      double mass = quad.getMass();
+      const double drag_coefficient = quad.getDragCoefficient();
+      const double mass = quad.getMass();
       Eigen::Matrix3d P;
       P << 1, 0, 0,
            0, 1, 0,
            0, 0, 0;
-      acc = acc - mu/mass*P*state.R.transpose()*state.v;
+      acc = acc - drag_coefficient / mass * P * state.R.transpose() * state.v;
     }
   }
 
