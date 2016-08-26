@@ -28,6 +28,9 @@ class SO3CmdToQualcomm : public nodelet::Nodelet
   ros::Subscriber odom_sub_;
   ros::Subscriber imu_sub_;
 
+
+  int motor_status;
+
   double so3_cmd_timeout_;
   ros::Time last_so3_cmd_time_;
   quadrotor_msgs::SO3Command last_so3_cmd_;
@@ -63,11 +66,81 @@ void SO3CmdToQualcomm::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
   }
 }
 
+void SO3CmdToQualcomm::motors_on(){
+
+
+     int counter_motors = 0;
+		do{
+		//call the update 0 success
+		int res_update = sn_update_data();
+		if(res_update ==  -1){
+		printf("\nINIT 1: flight software non functional\n");
+		return;
+		}
+		//send minimum thrust and identity attitude
+		sn_send_thrust_att_ang_vel_command (0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+		
+		//run the props 0 success
+		//int r = sn_spin_props();
+		//if(r == -1)
+		  //printf("\nINIT 2: not able to send spinning command\n");
+		
+		//controller state
+		//int size_cached_struct;
+		counter_motors++;
+
+		}
+		while(counter_motors > 100);//snav_cached_data_struct->general_status.props_state != SN_PROPS_STATE_SPINNING);
+		
+		//sn_send_thrust_att_ang_vel_command (0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+		int r = sn_spin_props();
+		if(r == -1)
+		  printf("\nINIT 2: not able to send spinning command\n");
+		else
+			motor_status = 1;
+		  
+		if(snav_cached_data_struct->general_status.props_state == SN_PROPS_STATE_SPINNING)
+		  printf("\nINIT 5: all the propellers are spinnig\n");
+		else
+		  printf("\nINIT 5: all the propellers are not spinnig\n");
+
+}
+
+
+void SO3CmdToQualcomm::motors_off(){
+
+		do{
+		//call the update 0 success
+		int res_update = sn_update_data();
+	      	//stop the props 0 success
+		int r = sn_stop_props();
+		if(r == -1)
+		  printf("\nOUT 1: not able to send switch off propellers\n");
+		//send minimum thrust and identity attitude
+		sn_send_thrust_att_ang_vel_command (0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+		motor_status = 0;
+		}
+		while(snav_cached_data_struct->general_status.props_state == SN_PROPS_STATE_SPINNING);
+		
+		//check the propellers status
+		if(snav_cached_data_struct->general_status.props_state == SN_PROPS_STATE_SPINNING)
+		  printf("\nOUT 2: all the propellers are still spinnig\n");
+		else
+		  printf("\nOUT 2: all the propellers are now off\n");
+
+}
+
 void SO3CmdToQualcomm::so3_cmd_callback(
     const quadrotor_msgs::SO3Command::ConstPtr &msg)
 {
   if(!so3_cmd_set_)
     so3_cmd_set_ = true;
+
+//switch on motors
+  if(msg->aux.enable_motors && !motor_status)
+  	motors_on();
+  else if(!msg->aux.enable_motors)
+  	motors_off();
 
   // grab desired forces and rotation from so3
   const Eigen::Vector3d f_des(msg->force.x, msg->force.y, msg->force.z);
@@ -81,6 +154,7 @@ void SO3CmdToQualcomm::so3_cmd_callback(
       tf::Quaternion(imu_q_.x(), imu_q_.y(), imu_q_.z(), imu_q_.w());
   tf::Quaternion odom_tf =
       tf::Quaternion(odom_q_.x(), odom_q_.y(), odom_q_.z(), odom_q_.w());
+
 
   // extract RPY's
   //double imu_roll, imu_pitch, imu_yaw;
@@ -138,7 +212,8 @@ void SO3CmdToQualcomm::so3_cmd_callback(
   //throttle = std::max(0.0, throttle);
 
   //if(!msg->aux.enable_motors)
-   // throttle = 0;
+    //throttle = 0;
+
 
   // publish messages
   //auto setpoint_msg = boost::make_shared<mavros_msgs::AttitudeTarget>();
@@ -182,7 +257,7 @@ void SO3CmdToQualcomm::onInit(void)
   odom_set_ = false;
   imu_set_ = false;
   so3_cmd_set_ = false;
-
+   motor_status = 0;
   //attitude_raw_pub_ =
       //priv_nh.advertise<mavros_msgs::AttitudeTarget>("attitude_raw", 10);
 
