@@ -21,6 +21,9 @@ class SO3CmdToQualcomm : public nodelet::Nodelet
   void motors_on();
   void motors_off();
 
+  //controller state
+  SnavCachedData *snav_cached_data_struct;
+  
   bool odom_set_, imu_set_, so3_cmd_set_;
   Eigen::Quaterniond odom_q_, imu_q_;
 
@@ -260,6 +263,12 @@ void SO3CmdToQualcomm::onInit(void)
   imu_set_ = false;
   so3_cmd_set_ = false;
    motor_status = 0;
+	snav_cached_data_struct = NULL;
+if (sn_get_flight_data_ptr(sizeof(SnavCachedData), &snav_cached_data_struct) != 0)
+  {
+    printf("\nFailed to get flight data pointer!\n");
+    return;
+  }
   //attitude_raw_pub_ =
       //priv_nh.advertise<mavros_msgs::AttitudeTarget>("attitude_raw", 10);
 
