@@ -7,6 +7,7 @@
 #include <tf/transform_datatypes.h>
 #include <initial_conditions.h>
 #include <cmath>
+#define DEBUG
 
 class SmoothVelTracker : public trackers_manager::Tracker
 {
@@ -50,8 +51,6 @@ void SmoothVelTracker::Initialize(const ros::NodeHandle &nh)
   nh.param("gains/vel/x", kv_[0], 2.2f);
   nh.param("gains/vel/y", kv_[1], 2.2f);
   nh.param("gains/vel/z", kv_[2], 4.0f);
-
-  nh.param("ramp_time", ramp_time_, 2.0f);
 
   ros::NodeHandle priv_nh(nh, "smooth_vel_tracker");
 
@@ -97,9 +96,9 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
   // Get elapsed time
   ros::Time current_time = ros::Time::now();
   ros::Duration elapsed_time = current_time - start_time_;
-  double t = elapsed_time.toSec();
-  double ts = t / ramp_time_; //scaled time
-  double ts2 = ts*ts, ts3 = ts*ts*ts, ts4 = ts*ts*ts*ts; 
+  float t = elapsed_time.toSec();
+  float ts = t / ramp_time_; //scaled time
+  float ts2 = ts*ts, ts3 = ts*ts*ts, ts4 = ts*ts*ts*ts; 
 
   // Test each case to generate trajectory
   Eigen::Vector3f pos, vel, acc;
@@ -113,9 +112,9 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
   }
   else if(t < ramp_time_)
   {
-    double dist = (vel_coeffs_(4)*ts4/5.0 + vel_coeffs_(3)*ts3/4.0 + vel_coeffs_(2)*ts2/3.0 + vel_coeffs_(1)*ts/2.0 + vel_coeffs_(0))*t;
-    double speed = vel_coeffs_(4)*ts4 + vel_coeffs_(3)*ts3 + vel_coeffs_(2)*ts2 + vel_coeffs_(1)*ts + vel_coeffs_(0);
-    double accel = (4*vel_coeffs_(4)*ts3 + 3*vel_coeffs_(3)*ts2 + 2*vel_coeffs_(2)*ts + vel_coeffs_(1))/ramp_time_;
+    float dist = (vel_coeffs_(4)*ts4/5.0 + vel_coeffs_(3)*ts3/4.0 + vel_coeffs_(2)*ts2/3.0 + vel_coeffs_(1)*ts/2.0 + vel_coeffs_(0))*t;
+    float speed = vel_coeffs_(4)*ts4 + vel_coeffs_(3)*ts3 + vel_coeffs_(2)*ts2 + vel_coeffs_(1)*ts + vel_coeffs_(0);
+    float accel = (4*vel_coeffs_(4)*ts3 + 3*vel_coeffs_(3)*ts2 + 2*vel_coeffs_(2)*ts + vel_coeffs_(1))/ramp_time_;
     pos = start_pos_ + dist*dir_;
     vel = speed*dir_;
     acc = accel*dir_;
@@ -125,7 +124,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
   }
   else if(t < total_time_ - ramp_time_)
   {
-    double dist = ramp_dist_ + target_speed_*(t - ramp_time_);
+    float dist = ramp_dist_ + target_speed_*(t - ramp_time_);
     pos = start_pos_ + dist*dir_;
     vel = target_speed_*dir_; 
     cmd->position.x = pos(0), cmd->position.y = pos(1), cmd->position.z = pos(2);
@@ -134,13 +133,13 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
   }
   else
   {
-    double te = total_time_ - elapsed_time.toSec(); // time from end
-    double tes = te/ramp_time_; // scaled time from end
-    double tes2 = tes*tes, tes3 = tes*tes*tes, tes4 = tes*tes*tes*tes;
-    double dist_from_end = (vel_coeffs_(4)*tes4/5.0 + vel_coeffs_(3)*tes3/4.0 + vel_coeffs_(2)*tes2/3.0 + vel_coeffs_(1)*tes/2.0 + vel_coeffs_(0))*te;
-    double dist = total_dist_ - dist_from_end;
-    double speed = vel_coeffs_(4)*tes4 + vel_coeffs_(3)*tes3 + vel_coeffs_(2)*tes2 + vel_coeffs_(1)*tes + vel_coeffs_(0);
-    double accel = (4*vel_coeffs_(4)*tes3 + 3*vel_coeffs_(3)*tes2 + 2*vel_coeffs_(2)*tes + vel_coeffs_(1))/ramp_time_;
+    float te = total_time_ - elapsed_time.toSec(); // time from end
+    float tes = te/ramp_time_; // scaled time from end
+    float tes2 = tes*tes, tes3 = tes*tes*tes, tes4 = tes*tes*tes*tes;
+    float dist_from_end = (vel_coeffs_(4)*tes4/5.0 + vel_coeffs_(3)*tes3/4.0 + vel_coeffs_(2)*tes2/3.0 + vel_coeffs_(1)*tes/2.0 + vel_coeffs_(0))*te;
+    float dist = total_dist_ - dist_from_end;
+    float speed = vel_coeffs_(4)*tes4 + vel_coeffs_(3)*tes3 + vel_coeffs_(2)*tes2 + vel_coeffs_(1)*tes + vel_coeffs_(0);
+    float accel = (4*vel_coeffs_(4)*tes3 + 3*vel_coeffs_(3)*tes2 + 2*vel_coeffs_(2)*tes + vel_coeffs_(1))/ramp_time_;
     pos = start_pos_ + dist*dir_;
     vel = speed*dir_;
     acc = -accel*dir_;
@@ -156,23 +155,30 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
 {
 
   // Make sure user specifies desired velocity
-  if(msg->v_des > 0)
+  if(msg->v_des > 0 && msg->a_des > 0)
   {
     // Set the start position
     Eigen::Vector3f start_pos = ICs_.pos();
 
-    // Get target speed
+    // Get target speed and acceleration
     target_speed_ = msg->v_des;
+    float target_accel = msg->a_des;
+    ramp_time_ = target_speed_/target_accel;
 
     // Find goal position
     Eigen::Vector3f goal_pos;
     goal_pos(0) = msg->x, goal_pos(1) = msg->y, goal_pos(2) = msg->z;
     if(msg->relative)
-      goal_pos += start_pos_; 
+      goal_pos += start_pos; 
+
+#ifdef DEBUG
+    std::cout << "goal_pos: " << goal_pos.transpose() << std::endl;
+    std::cout << "start_pos: " << start_pos.transpose() << std::endl;
+#endif
 
     // Find distance and direction to goal
-    double total_dist = (goal_pos - start_pos_).norm();
-    Eigen::Vector3f dir = (goal_pos - start_pos_).normalized();
+    const float total_dist = (goal_pos - start_pos).norm();
+    Eigen::Vector3f dir = (goal_pos - start_pos).normalized();
 
     // Compute the coefficients
     Eigen::Matrix<float,5,5> Ainv;
@@ -187,7 +193,11 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
 
     // Compute the ramp distance
     ramp_dist_ = (vel_coeffs_(4)/5.0 + vel_coeffs_(3)/4.0 + vel_coeffs_(2)/3.0 + vel_coeffs_(1)/2.0 + vel_coeffs_(0))*ramp_time_;
+
+#ifdef DEBUG
     std::cout << "ramp dist: " << ramp_dist_ << std::endl;
+    std::cout << "total dist: " << total_dist << std::endl;
+#endif
 
     // Check to make sure that twice the ramp distance is less than the entire distance
     if(2*ramp_dist_ < total_dist)
@@ -199,7 +209,10 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
 
       // Compute total time of trajectory
       total_time_ = (total_dist_ - 2*ramp_dist_)/target_speed_ + 2*ramp_time_;
+
+#ifdef DEBUG
       std::cout << "total time: " << total_time_ << std::endl;
+#endif
 
       // Set goal_set to true and goal_reached to false
       goal_set_ = true;
@@ -207,12 +220,12 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
     }
     else
     {
-      ROS_ERROR("ramp time is too high");
+      ROS_ERROR("increase the ramp acceleration");
     }
   }
   else
   {
-    ROS_ERROR("v_des must be set to the target velocity!");
+    ROS_ERROR("v_des and a_des must be nonzero!");
   }
 }
 
