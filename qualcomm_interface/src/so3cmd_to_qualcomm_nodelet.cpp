@@ -18,6 +18,8 @@ class SO3CmdToQualcomm : public nodelet::Nodelet
   void so3_cmd_callback(const quadrotor_msgs::SO3Command::ConstPtr &msg);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void imu_callback(const sensor_msgs::Imu::ConstPtr &pose);
+  void motors_on();
+  void motors_off();
 
   bool odom_set_, imu_set_, so3_cmd_set_;
   Eigen::Quaterniond odom_q_, imu_q_;
