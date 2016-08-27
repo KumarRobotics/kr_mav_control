@@ -106,15 +106,16 @@ void SO3CmdToQualcomm::motors_on(){
 		counter_motors++;
 
 		}
-		while(counter_motors > 100);//snav_cached_data_struct->general_status.props_state != SN_PROPS_STATE_SPINNING);
+		while(counter_motors > 500);//snav_cached_data_struct->general_status.props_state != SN_PROPS_STATE_SPINNING);
 		
 		//sn_send_thrust_att_ang_vel_command (0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+		for(int i = 0; i<10; i++){
 		int r = sn_spin_props();
 		if(r == -1)
 		  printf("\nINIT 2: not able to send spinning command\n");
 		else
 			motor_status = 1;
-		  
+		  }
 		if(snav_cached_data_struct->general_status.props_state == SN_PROPS_STATE_SPINNING)
 		  printf("\nINIT 5: all the propellers are spinnig\n");
 		else
