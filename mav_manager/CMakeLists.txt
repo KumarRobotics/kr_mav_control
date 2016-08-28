@@ -28,8 +28,6 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
 add_service_files(
   DIRECTORY srv
   FILES
-    Bool.srv
-    Trigger.srv
     Vec4.srv
     GoalTimed.srv
 )
@@ -60,14 +58,10 @@ target_link_libraries(mav_manager_node mav_manager ${catkin_LIBRARIES})
 add_executable(mav_manager_sub src/sample_sub.cpp)
 target_link_libraries(mav_manager_sub mav_manager ${catkin_LIBRARIES})
 
-add_executable(mav_manager_services src/sample_service_server.cpp)
-target_link_libraries(mav_manager_services mav_manager ${catkin_LIBRARIES})
-
 install(TARGETS
     mav_manager
     mav_manager_node
     mav_manager_sub
-    mav_manager_services
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
