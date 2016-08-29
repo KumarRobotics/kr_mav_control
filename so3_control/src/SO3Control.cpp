@@ -78,7 +78,10 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
   const Eigen::Vector3f force_dot = kx.asDiagonal()*e_vel + mass_*des_jerk; // Ignoring kv*e_acc and ki*e_pos terms
   const Eigen::Vector3f b3c_dot = b3c.cross(force_dot/force_.norm()).cross(b3c);
   const Eigen::Vector3f b1d_dot(-std::sin(des_yaw)*des_yaw_dot, std::cos(des_yaw)*des_yaw_dot, 0);
-  const Eigen::Vector3f b2c_dot = b3c_dot.cross(b1d) + b3c.cross(b1d_dot);
+  const Eigen::Vector3f x = b3c.cross(b1d)/ b3c.cross(b1d).norm();
+  const Eigen::Vector3f x_dot = b3c_dot.cross(b1d) + b3c.cross(b1d_dot);
+  const Eigen::Vector3f b2c_dot = x_dot/x.norm() - x * x_dot.dot(x)/(x.norm() * x.norm() * x.norm());
+  //const Eigen::Vector3f b2c_dot = b3c_dot.cross(b1d) + b3c.cross(b1d_dot);
   const Eigen::Vector3f b1c_dot = b2c_dot.cross(b3c) + b2c.cross(b3c_dot);
 
   Eigen::Matrix3f R;
