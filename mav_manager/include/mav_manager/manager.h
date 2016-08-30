@@ -117,6 +117,7 @@ class MAVManager
     float yaw_, yaw_dot_;
     float takeoff_height_;
     float max_attitude_angle_;
+    float odom_timeout_;
 
     Vec3 home_, goal_;
     float goal_yaw_, home_yaw_;
