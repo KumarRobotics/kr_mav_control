@@ -306,21 +306,17 @@ void LineTrackerMinJerk::goal_callback(
     ROS_INFO("line_tracker_min_jerk using relative command");
   }
 
-  if(msg->v_des > 0)
-  {
+  if(msg->v_des > 0.0)
     v_des_ = msg->v_des;
-    ROS_INFO("line_tracker_min_jerk using v_des as specified in the goal message");
-  }
   else
-  {
     v_des_ = default_v_des_;
-    ROS_INFO("line_tracker_min_jerk using default_v_des_");
-  }
 
-  if(msg->a_des > 0)
+  if(msg->a_des > 0.0)
     a_des_ = msg->a_des;
   else
     a_des_ = default_a_des_;
+  
+  ROS_DEBUG("line_tracker_min_jerk using v_des = %2.2f m/s and a_des = %2.2f m/s^2", v_des_, a_des_);
 
   goal_set_ = true;
   goal_reached_ = false;
@@ -336,6 +332,7 @@ void LineTrackerMinJerk::goal_callback_timed(
   goal_duration_ = msg->duration;
   traj_start_ = msg->t_start;
   traj_start_set_ = true;
+  ROS_DEBUG("Starting trajectory in %2.2f seconds.", (traj_start_ - ros::Time::now()).toSec());
 
   if (msg->relative)
   {
@@ -344,21 +341,18 @@ void LineTrackerMinJerk::goal_callback_timed(
     ROS_INFO("line_tracker_min_jerk using relative command");
   }
 
-  if(msg->v_des > 0)
-  {
+  // JT: Does this actually matter?
+  if(msg->v_des > 0.0)
     v_des_ = msg->v_des;
-    ROS_INFO("line_tracker_min_jerk using v_des as specified in the goal message");
-  }
   else
-  {
     v_des_ = default_v_des_;
-    ROS_INFO("line_tracker_min_jerk using default_v_des_");
-  }
 
-  if(msg->a_des > 0)
+  if(msg->a_des > 0.0)
     a_des_ = msg->a_des;
   else
     a_des_ = default_a_des_;
+    
+  ROS_DEBUG("line_tracker_min_jerk using v_des = %2.2f m/s and a_des = %2.2f m/s^2", v_des_, a_des_);
 
   goal_set_ = true;
   goal_reached_ = false;

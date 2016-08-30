@@ -217,7 +217,7 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
   goal.relative = relative;
 
   pub_goal_min_jerk_.publish(goal);
-  ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}%s",
+  ROS_INFO("Going to {%2.2f, %2.2f, %2.2f, %2.2f}%s",
       x, y, z, yaw, (relative ? " relative to the current position." : "."));
 
   return this->transition(line_tracker_min_jerk);
@@ -237,7 +237,7 @@ bool MAVManager::goToTimed(float x, float y, float z, float yaw, float v_des, fl
   goal.relative = relative;
 
   pub_goal_min_jerk_timed_.publish(goal);
-  ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}%s with duration %2.2f",
+  ROS_INFO("Going to {%2.2f, %2.2f, %2.2f, %2.2f}%s with duration %2.2f",
       x, y, z, yaw, (relative ? " relative to the current position." : ""), duration.toSec());
 
   return this->transition(line_tracker_min_jerk);

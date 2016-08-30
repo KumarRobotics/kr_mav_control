@@ -1,0 +1,13 @@
+gravity: 9.81
+mass: 0.029
+prop_radius: 0.0225
+arm_length: 0.046
+motor_time_constant: 0.00001 # TODO
+min_rpm: 0 # TODO
+max_rpm: 10000 #TODO
+# The following values are from:
+# http://groups.csail.mit.edu/robotics-center/public_papers/Landry15.pdf
+Ixx: 2.395e-5
+Iyy: 2.395e-5
+Izz: 3.235e-5
+thrust_coefficient: 5.507e-5 # (0.005022 N s^2 / rad^2) * (1 min / 60 s)^2 * (2*pi rad / rev)^2

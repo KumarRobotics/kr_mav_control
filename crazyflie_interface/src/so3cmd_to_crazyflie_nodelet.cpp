@@ -7,7 +7,6 @@
 //  angular.z = yawrate [-200 to 200 degrees/second] (note this is not yaw!)
 
 #include <Eigen/Geometry>
-#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 #include <nodelet/nodelet.h>
@@ -30,10 +29,8 @@ class SO3CmdToCrazyflie : public nodelet::Nodelet
 
   bool odom_set_, so3_cmd_set_;
   Eigen::Quaterniond q_odom_;
-  double kf_, lin_cof_a_, lin_int_b_;
 
   ros::Publisher attitude_raw_pub_;
-  ros::Publisher odom_pose_pub_; // For sending PoseStamped to firmware.
   ros::Publisher crazy_cmd_vel_pub_;
 
   ros::Subscriber so3_cmd_sub_;
@@ -63,12 +60,6 @@ void SO3CmdToCrazyflie::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
   q_odom_ = Eigen::Quaterniond(
       odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
       odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
-
-  // Publish PoseStamped for mavros vision_pose plugin
-  auto odom_pose_msg = boost::make_shared<geometry_msgs::PoseStamped>();
-  odom_pose_msg->header = odom->header;
-  odom_pose_msg->pose = odom->pose.pose;
-  odom_pose_pub_.publish(odom_pose_msg);
 }
 
 void SO3CmdToCrazyflie::so3_cmd_callback(
@@ -89,6 +80,10 @@ void SO3CmdToCrazyflie::so3_cmd_callback(
 
   const float yaw_cur = std::atan2(R_cur(1,0), R_cur(0,0));
   const float yaw_des = std::atan2(R_des(1,0), R_des(0,0));
+
+  // Map these into the current body frame (based on yaw)
+  // TODO: Make sure this transformation is correct
+  // Eigen::Matrix3d R_des_new = R_des * Eigen::AngleAxisd(yaw_cur - yaw_des, Eigen::Vector3d::UnitZ());
   float pitch_des = -std::asin(R_des(2,0));
   float roll_des = std::atan2(R_des(2,1), R_des(2,2));
 
@@ -99,7 +94,7 @@ void SO3CmdToCrazyflie::so3_cmd_callback(
   //ROS_INFO("thrust_f is %2.5f newtons", thrust_f);
   thrust_f = std::max(thrust_f, 0.0);
   
-  thrust_f = thrust_f*1000/9.8; // Force in grams
+  thrust_f = thrust_f*1000/9.81; // Force in grams
   //ROS_INFO("thrust_f is %2.5f grams", thrust_f);
 
   //ROS_INFO("coeffs are %2.2f, %2.2f, %2.2f", c1_, c2_, c3_);
@@ -127,7 +122,8 @@ void SO3CmdToCrazyflie::so3_cmd_callback(
   else if(e_yaw < -M_PI)
     e_yaw += 2*M_PI;
 
-  float yaw_rate_des = msg->kR[2] * e_yaw;
+  // TODO: Figure out why this needs a negative sign
+  float yaw_rate_des = - msg->kR[2] * e_yaw * 180 / M_PI;
 
 
   // If the crazyflie motors are timed out, we need to send a zero message in order to get them to start
@@ -190,9 +186,6 @@ void SO3CmdToCrazyflie::onInit(void)
   // TODO make sure this is publishing to the right place
   crazy_cmd_vel_pub_ =
       priv_nh.advertise<geometry_msgs::Twist>("cmd_vel_fast", 10);
-
-  odom_pose_pub_ =
-      priv_nh.advertise<geometry_msgs::PoseStamped>("odom_pose", 10);
 
   so3_cmd_sub_ =
       priv_nh.subscribe("so3_cmd", 10, &SO3CmdToCrazyflie::so3_cmd_callback, this,

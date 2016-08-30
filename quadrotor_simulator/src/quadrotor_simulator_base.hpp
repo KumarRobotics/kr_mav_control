@@ -82,12 +82,18 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
 
   n.param("quadrotor_name", quad_name_, std::string("quadrotor"));
 
-#define GET_PARAM(param)                       \
-  double param;                                \
-  if(!n.getParam(#param, param))               \
-  {                                            \
-    ROS_FATAL(#param " not set");              \
-    throw std::logic_error(#param " not set"); \
+#define GET_PARAM(param)                                    \
+  double param;                                             \
+  if(!n.hasParam(#param))                                   \
+  {                                                         \
+    ROS_WARN("Simulator sleeping to wait for %s.", #param); \
+    ros::Duration(0.5).sleep();                             \
+  }                                                         \
+                                                            \
+  if(!n.getParam(#param, param))                            \
+  {                                                         \
+    ROS_FATAL(#param " not set");                           \
+    throw std::logic_error(#param " not set");              \
   }
 
   GET_PARAM(mass);
