@@ -30,6 +30,7 @@ class SmoothVelTracker : public trackers_manager::Tracker
   float target_speed_; 
   float ramp_dist_, total_dist_;
   float ramp_time_, total_time_;
+  float goal_yaw_;
   bool active_;
   InitialConditions ICs_;
   ros::Time start_time_;
@@ -149,6 +150,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     cmd->velocity.x = vel(0), cmd->velocity.y = vel(1), cmd->velocity.z = vel(2);
     cmd->acceleration.x = acc(0), cmd->acceleration.y = acc(1), cmd->acceleration.z = acc(2);
   }
+  cmd->yaw = goal_yaw_;
   ICs_.set_from_cmd(cmd);
   return cmd;
 }
@@ -219,6 +221,9 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
       // Set goal_set to true and goal_reached to false
       goal_set_ = true;
       goal_reached_ = false;
+
+      // Set the target yaw
+      goal_yaw_ = msg->yaw;
     }
     else
     {
