@@ -35,7 +35,7 @@ class SmoothVelTracker : public trackers_manager::Tracker
   InitialConditions ICs_;
   ros::Time start_time_;
   Eigen::Vector3f start_pos_, dir_;
-  Eigen::Matrix<float,5,1> vel_coeffs_;
+  Eigen::Matrix<float,7,1> vel_coeffs_;
   float kx_[3], kv_[3];
 };
 
@@ -101,30 +101,45 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
   ros::Duration elapsed_time = current_time - start_time_;
   float t = elapsed_time.toSec();
   float ts = t / ramp_time_; //scaled time
-  float ts2 = ts*ts, ts3 = ts*ts*ts, ts4 = ts*ts*ts*ts; 
+  float ts2 = ts*ts;
+  float ts3 = ts2*ts;
+  float ts4 = ts3*ts;
+  float ts5 = ts4*ts;
+  float ts6 = ts5*ts;
+  float ts7 = ts6*ts;
+  float ts8 = ts7*ts;
 
   // Test each case to generate trajectory
-  Eigen::Vector3f pos, vel, acc;
+  Eigen::Vector3f pos, vel, acc, jrk;
   if(t > total_time_)
   {
     pos = start_pos_ + total_dist_*dir_;
     cmd->position.x = pos(0), cmd->position.y = pos(1), cmd->position.z = pos(2);
     cmd->velocity.x = 0, cmd->velocity.y = 0, cmd->velocity.z = 0;
     cmd->acceleration.x = 0, cmd->acceleration.y = 0, cmd->acceleration.z = 0;
+    cmd->jerk.x = 0, cmd->jerk.y = 0, cmd->jerk.z = 0;
     cmd->yaw = goal_yaw_;
     goal_reached_ = true;
   }
   else if(t < ramp_time_)
   {
-    float dist = (vel_coeffs_(4)*ts4/5.0 + vel_coeffs_(3)*ts3/4.0 + vel_coeffs_(2)*ts2/3.0 + vel_coeffs_(1)*ts/2.0 + vel_coeffs_(0))*t;
-    float speed = vel_coeffs_(4)*ts4 + vel_coeffs_(3)*ts3 + vel_coeffs_(2)*ts2 + vel_coeffs_(1)*ts + vel_coeffs_(0);
-    float accel = (4*vel_coeffs_(4)*ts3 + 3*vel_coeffs_(3)*ts2 + 2*vel_coeffs_(2)*ts + vel_coeffs_(1))/ramp_time_;
+    float dist = ramp_time_*(vel_coeffs_(0)/2*ts2 + vel_coeffs_(1)/3*ts3 + vel_coeffs_(2)/4*ts4 
+                           + vel_coeffs_(3)/5*ts5 + vel_coeffs_(4)/6*ts6 + vel_coeffs_(5)/7*ts7
+                           + vel_coeffs_(6)/8*ts8);
+    float speed = vel_coeffs_(0)*ts + vel_coeffs_(1)*ts2 + vel_coeffs_(2)*ts3 + vel_coeffs_(3)*ts4
+                + vel_coeffs_(4)*ts5 + vel_coeffs_(5)*ts6 + vel_coeffs_(6)*ts7;
+    float accel = (vel_coeffs_(0) + 2*vel_coeffs_(1)*ts + 3*vel_coeffs_(2)*ts2 + 4*vel_coeffs_(3)*ts3
+                 + 5*vel_coeffs_(4)*ts4 + 6*vel_coeffs_(5)*ts5 + 7*vel_coeffs_(6)*ts6)/ramp_time_;
+    float jerk = (2*vel_coeffs_(1) + 6*vel_coeffs_(2)*ts + 12*vel_coeffs_(3)*ts2
+                + 20*vel_coeffs_(4)*ts3 + 30*vel_coeffs_(5)*ts4 + 42*vel_coeffs_(6)*ts5)/(ramp_time_*ramp_time_);
     pos = start_pos_ + dist*dir_;
     vel = speed*dir_;
     acc = accel*dir_;
+    jrk = jerk*dir_;
     cmd->position.x = pos(0), cmd->position.y = pos(1), cmd->position.z = pos(2);
     cmd->velocity.x = vel(0), cmd->velocity.y = vel(1), cmd->velocity.z = vel(2);
     cmd->acceleration.x = acc(0), cmd->acceleration.y = acc(1), cmd->acceleration.z = acc(2);
+    cmd->jerk.x = jrk(0), cmd->jerk.y = jrk(1), cmd->jerk.z = jrk(2);
     cmd->yaw = start_yaw_ + (goal_yaw_-start_yaw_)*t/total_time_;
   }
   else if(t < total_time_ - ramp_time_)
@@ -135,23 +150,38 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     cmd->position.x = pos(0), cmd->position.y = pos(1), cmd->position.z = pos(2);
     cmd->velocity.x = vel(0), cmd->velocity.y = vel(1), cmd->velocity.z = vel(2);
     cmd->acceleration.x = 0, cmd->acceleration.y = 0, cmd->acceleration.z = 0;
+    cmd->jerk.x = 0, cmd->jerk.y = 0, cmd->jerk.z = 0;
     cmd->yaw = start_yaw_ + (goal_yaw_-start_yaw_)*t/total_time_;
   }
   else
   {
     float te = total_time_ - elapsed_time.toSec(); // time from end
     float tes = te/ramp_time_; // scaled time from end
-    float tes2 = tes*tes, tes3 = tes*tes*tes, tes4 = tes*tes*tes*tes;
-    float dist_from_end = (vel_coeffs_(4)*tes4/5.0 + vel_coeffs_(3)*tes3/4.0 + vel_coeffs_(2)*tes2/3.0 + vel_coeffs_(1)*tes/2.0 + vel_coeffs_(0))*te;
+    float tes2 = tes*tes; 
+    float tes3 = tes2*tes; 
+    float tes4 = tes3*tes;
+    float tes5 = tes4*tes;
+    float tes6 = tes5*tes;
+    float tes7 = tes6*tes;
+    float tes8 = tes7*tes;
+    float dist_from_end = ramp_time_*(vel_coeffs_(0)/2*tes2 + vel_coeffs_(1)/3*tes3 + vel_coeffs_(2)/4*tes4 
+                           + vel_coeffs_(3)/5*tes5 + vel_coeffs_(4)/6*tes6 + vel_coeffs_(5)/7*tes7
+                           + vel_coeffs_(6)/8*tes8);
     float dist = total_dist_ - dist_from_end;
-    float speed = vel_coeffs_(4)*tes4 + vel_coeffs_(3)*tes3 + vel_coeffs_(2)*tes2 + vel_coeffs_(1)*tes + vel_coeffs_(0);
-    float accel = (4*vel_coeffs_(4)*tes3 + 3*vel_coeffs_(3)*tes2 + 2*vel_coeffs_(2)*tes + vel_coeffs_(1))/ramp_time_;
+    float speed = vel_coeffs_(0)*tes + vel_coeffs_(1)*tes2 + vel_coeffs_(2)*tes3 + vel_coeffs_(3)*tes4
+                + vel_coeffs_(4)*tes5 + vel_coeffs_(5)*tes6 + vel_coeffs_(6)*tes7;
+    float accel = (vel_coeffs_(0) + 2*vel_coeffs_(1)*tes + 3*vel_coeffs_(2)*tes2 + 4*vel_coeffs_(3)*tes3
+                 + 5*vel_coeffs_(4)*tes4 + 6*vel_coeffs_(5)*tes5 + 7*vel_coeffs_(6)*tes6)/ramp_time_;
+    float jerk = (2*vel_coeffs_(1) + 6*vel_coeffs_(2)*tes + 12*vel_coeffs_(3)*tes2
+          + 20*vel_coeffs_(4)*tes3 + 30*vel_coeffs_(5)*tes4 + 42*vel_coeffs_(6)*tes5)/(ramp_time_*ramp_time_);
     pos = start_pos_ + dist*dir_;
     vel = speed*dir_;
     acc = -accel*dir_;
+    jrk = -jerk*dir_;
     cmd->position.x = pos(0), cmd->position.y = pos(1), cmd->position.z = pos(2);
     cmd->velocity.x = vel(0), cmd->velocity.y = vel(1), cmd->velocity.z = vel(2);
     cmd->acceleration.x = acc(0), cmd->acceleration.y = acc(1), cmd->acceleration.z = acc(2);
+    cmd->jerk.x = jrk(0), cmd->jerk.y = jrk(1), cmd->jerk.z = jrk(2);
     cmd->yaw = start_yaw_ + (goal_yaw_-start_yaw_)*t/total_time_;
   }
   ICs_.set_from_cmd(cmd);
@@ -188,18 +218,22 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
     Eigen::Vector3f dir = (goal_pos - start_pos).normalized();
 
     // Compute the coefficients
-    Eigen::Matrix<float,5,5> Ainv;
-    Ainv <<  1,  0,  0,  0,   0, 
-             0,  0,  1,  0,   0,
-             0,  0,  0,  0, 0.5,
-            -4,  4, -3, -1,  -1,
-             3, -3,  2,  1, 0.5;
-    Eigen::Matrix<float,5,1> b;
-    b << 0, target_speed_, 0, 0, 0;
+    Eigen::Matrix<float,7,7> Ainv;
+    Ainv <<  0, 1, 0, 0, 0, 0, 0, 
+             0, 0, 0, 0.5, 0, 0, 0,
+             0, 0, 0, 0, 0, 1.0/6.0, 0,
+             35, -20, -15, -5, 2.5, -2.0/3.0, -1.0/6.0,
+             -84, 45, 39, 10, -7, 1, 0.5, 
+             70, -36, -34, -7.5, 6.5, -2.0/3.0, -0.5, 
+             -20, 10, 10, 2, -2, 1.0/6.0, 1.0/6.0;
+
+    Eigen::Matrix<float,7,1> b;
+    b << target_speed_, 0, 0, 0, 0, 0, 0;
     vel_coeffs_ = Ainv*b;
 
     // Compute the ramp distance
-    ramp_dist_ = (vel_coeffs_(4)/5.0 + vel_coeffs_(3)/4.0 + vel_coeffs_(2)/3.0 + vel_coeffs_(1)/2.0 + vel_coeffs_(0))*ramp_time_;
+    ramp_dist_ = (vel_coeffs_(0)/2 + vel_coeffs_(1)/3 + vel_coeffs_(2)/4 + vel_coeffs_(3)/5
+                + vel_coeffs_(4)/6 + vel_coeffs_(5)/7 + vel_coeffs_(6)/8)*ramp_time_;
 
 #ifdef DEBUG
     std::cout << "ramp dist: " << ramp_dist_ << std::endl;
