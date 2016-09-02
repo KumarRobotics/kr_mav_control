@@ -272,8 +272,8 @@ void mainloop(void) //mainloop is triggered at 1 kHz
     unsigned int i;
     for(i = 0; i < 8; i++)
       Output_Data.radio[i] = RO_ALL_Data.channel[i]/16;
-    //for(i = 0; i < 4; i++)
-    //  Output_Data.rpm[i] = RO_ALL_Data.motor_rpm[i];
+    for(i = 0; i < 4; i++)
+      Output_Data.rpm[i] = RO_ALL_Data.motor_rpm[i];
 
     Output_Data.seq = seq;
 

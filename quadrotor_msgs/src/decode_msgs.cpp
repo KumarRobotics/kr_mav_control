@@ -47,8 +47,8 @@ bool decodeOutputData(const std::vector<uint8_t> &data,
   {
     output.radio_channel[i] = output_data.radio[i];
   }
-  //for(int i = 0; i < 4; i++)
-  //  output.motor_rpm[i] = output_data.rpm[i];
+  for(int i = 0; i < 4; i++)
+    output.motor_rpm[i] = output_data.rpm[i] * 64;
 
   output.seq = output_data.seq;
 
