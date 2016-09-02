@@ -4,6 +4,7 @@
 #include <quadrotor_msgs/TrackerStatus.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
+#include <initial_conditions.h>
 
 class LineTrackerDistance : public trackers_manager::Tracker
 {
@@ -26,6 +27,7 @@ class LineTrackerDistance : public trackers_manager::Tracker
   float v_des_, a_des_;
   bool active_;
 
+  InitialConditions ICs_;
   Eigen::Vector3f start_, goal_, pos_;
   float yaw_, start_yaw_;
   double kx_[3], kv_[3];
@@ -77,6 +79,7 @@ bool LineTrackerDistance::Activate(const quadrotor_msgs::PositionCommand::ConstP
 
 void LineTrackerDistance::Deactivate(void)
 {
+  ICs_.reset();
   goal_set_ = false;
   active_ = false;
 }
@@ -88,6 +91,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerDistance::update(cons
   pos_(2) = msg->pose.pose.position.z;
   yaw_ = tf::getYaw(msg->pose.pose.orientation);
   pos_set_ = true;
+  ICs_.set_from_odom(msg);
 
   static ros::Time t_prev;
   const double dT = (msg->header.stamp - t_prev).toSec();
@@ -109,6 +113,8 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerDistance::update(cons
     cmd->position.x = goal_(0), cmd->position.y = goal_(1), cmd->position.z = goal_(2);
     cmd->velocity.x = 0, cmd->velocity.y = 0, cmd->velocity.z = 0;
     cmd->acceleration.x = 0, cmd->acceleration.y = 0, cmd->acceleration.z = 0;
+
+    ICs_.set_from_cmd(cmd);
     return cmd;
   }
 
@@ -168,6 +174,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerDistance::update(cons
   cmd->position.x = x(0), cmd->position.y = x(1), cmd->position.z = x(2);
   cmd->velocity.x = v(0), cmd->velocity.y = v(1), cmd->velocity.z = v(2);
   cmd->acceleration.x = a(0), cmd->acceleration.y = a(1), cmd->acceleration.z = a(2);
+  ICs_.set_from_cmd(cmd);
   return cmd;
 }
 
@@ -176,6 +183,9 @@ void LineTrackerDistance::goal_callback(const quadrotor_msgs::LineTrackerGoal::C
   goal_(0) = msg->x;
   goal_(1) = msg->y;
   goal_(2) = msg->z;
+
+  if (msg->relative)
+    goal_ += ICs_.pos();
 
   if(msg->v_des > 0)
     v_des_ = msg->v_des;

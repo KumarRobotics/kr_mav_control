@@ -59,11 +59,9 @@ MAVManager::MAVManager()
   // Services
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
 
-  // Wait until the service server is started
-  while (!this->transition(null_tracker_str)) {
-    ROS_WARN("Activation of NullTracker failed. Trying again shortly...");
-    ros::Duration(1.0).sleep();
-  }
+  srv_transition_.waitForExistence();
+  if (!this->transition(null_tracker_str))
+    ROS_FATAL("Activation of NullTracker failed.");
 
   // Load params after we are sure that we have stuff loaded
   if (!priv_nh_.getParam("need_imu", need_imu_))
@@ -148,9 +146,8 @@ bool MAVManager::takeoff() {
 
   ROS_INFO("Initiating launch sequence...");
   quadrotor_msgs::LineTrackerGoal goal;
-  goal.x = pos_(0);
-  goal.y = pos_(1);
-  goal.z = pos_(2) + takeoff_height_;
+  goal.z = takeoff_height_;
+  goal.relative = true;
   pub_goal_line_tracker_distance_.publish(goal);
 
   return this->transition(line_tracker_distance);
@@ -206,7 +203,7 @@ bool MAVManager::land() {
   return this->transition(line_tracker_distance);
 }
 
-bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a_des) {
+bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a_des, bool relative) {
 
   quadrotor_msgs::LineTrackerGoal goal;
   goal.x   = x;
@@ -215,9 +212,11 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
   goal.yaw = yaw;
   goal.v_des = v_des;
   goal.a_des = a_des;
+  goal.relative = relative;
 
   pub_goal_min_jerk_.publish(goal);
-  ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}", x, y, z, yaw);
+  ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}%s",
+      x, y, z, yaw, (relative ? " relative to the current position." : "."));
 
   return this->transition(line_tracker_min_jerk);
 }

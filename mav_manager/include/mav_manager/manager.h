@@ -4,7 +4,7 @@
 // Standard C++
 #include <string>
 #include <Eigen/Geometry>
-#include <array> 
+#include <array>
 
 // ROS related
 #include <ros/ros.h>
@@ -56,7 +56,7 @@ class MAVManager
     // Movement
     bool takeoff();
 
-    bool goTo(float x, float y, float z, float yaw, float v_des = 0, float a_des = 0);
+    bool goTo(float x, float y, float z, float yaw, float v_des = 0.0f, float a_des = 0.0f, bool relative = false);
     bool goTo(Vec4 xyz_yaw, Vec2 v_and_a_des = Vec2::Zero());
     bool goTo(Vec3 xyz, float yaw, Vec2 v_and_a_des = Vec2::Zero());
     bool goTo(Vec3 xyz, Vec2 v_and_a_des = Vec2::Zero());  // Uses Current yaw
@@ -91,6 +91,8 @@ class MAVManager
     bool eland();
     bool estop();
 
+    bool transition(const std::string &tracker_str);
+
   private:
 
     ros::NodeHandle nh_;
@@ -105,7 +107,6 @@ class MAVManager
 
     std::string active_tracker_;
     uint8_t tracker_status_;
-    bool transition(const std::string &tracker_str);
 
     ros::Time last_odom_t_, last_imu_t_, last_output_data_t_, last_heartbeat_t_;
 
