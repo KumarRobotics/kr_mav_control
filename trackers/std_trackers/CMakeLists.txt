@@ -46,6 +46,10 @@ add_library(velocity_tracker src/velocity_tracker.cpp)
 add_dependencies(velocity_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(velocity_tracker ${catkin_LIBRARIES})
 
+add_library(smooth_vel_tracker src/smooth_vel_tracker.cpp)
+add_dependencies(smooth_vel_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(smooth_vel_tracker ${catkin_LIBRARIES})
+
 install(TARGETS
     initial_conditions
     line_tracker_min_jerk
@@ -54,6 +58,7 @@ install(TARGETS
     line_tracker_yaw
     null_tracker
     velocity_tracker
+    smooth_vel_tracker
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
