@@ -8,5 +8,5 @@ float64 pressure_dheight
 float64 pressure_height
 geometry_msgs/Vector3 magnetic_field
 uint8[8] radio_channel
-uint16[4] motor_rpm
+int16[4] motor_rpm
 uint8 seq
