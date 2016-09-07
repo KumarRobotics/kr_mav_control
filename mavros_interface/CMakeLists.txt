@@ -7,7 +7,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
-find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs geometry_msgs mavros_msgs quadrotor_msgs nodelet cmake_modules)
+find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs geometry_msgs mavros_msgs quadrotor_msgs tf eigen_conversions nodelet cmake_modules)
 find_package(Eigen 3 REQUIRED)
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
@@ -15,7 +15,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
 catkin_package(
   INCLUDE_DIRS
   LIBRARIES
-  CATKIN_DEPENDS roscpp nav_msgs geometry_msgs quadrotor_msgs mavros_msgs nodelet
+  CATKIN_DEPENDS roscpp nav_msgs geometry_msgs quadrotor_msgs mavros_msgs tf eigen_conversions nodelet
   DEPENDS Eigen)
 
 add_library(so3cmd_to_mavros_nodelet src/so3cmd_to_mavros_nodelet.cpp)

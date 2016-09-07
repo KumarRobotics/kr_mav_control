@@ -8,6 +8,9 @@
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64.h>
 #include <tf/transform_datatypes.h>
+#include <tf/transform_broadcaster.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <eigen_conversions/eigen_msg.h>
 
 class SO3CmdToMavros : public nodelet::Nodelet
 {
@@ -25,6 +28,7 @@ class SO3CmdToMavros : public nodelet::Nodelet
 
   ros::Publisher attitude_raw_pub_;
   ros::Publisher odom_pose_pub_; // For sending PoseStamped to firmware.
+  ros::Publisher odom_pub_;      // For conversion to our convention
 
   ros::Subscriber so3_cmd_sub_;
   ros::Subscriber odom_sub_;
@@ -33,6 +37,7 @@ class SO3CmdToMavros : public nodelet::Nodelet
   double so3_cmd_timeout_;
   ros::Time last_so3_cmd_time_;
   quadrotor_msgs::SO3Command last_so3_cmd_;
+  tf::TransformBroadcaster tf_broadcaster_;
 };
 
 void SO3CmdToMavros::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
@@ -41,15 +46,44 @@ void SO3CmdToMavros::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
     odom_set_ = true;
 
   odom_q_ = Eigen::Quaterniond(
-      odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
-      odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
+      odom->pose.pose.orientation.w,
+      odom->pose.pose.orientation.x,
+      odom->pose.pose.orientation.y,
+      odom->pose.pose.orientation.z);
 
   // Publish PoseStamped for mavros vision_pose plugin
   auto odom_pose_msg = boost::make_shared<geometry_msgs::PoseStamped>();
   odom_pose_msg->header = odom->header;
   odom_pose_msg->pose = odom->pose.pose;
   odom_pose_pub_.publish(odom_pose_msg);
-}
+
+
+  // tf broadcaster
+  geometry_msgs::TransformStamped ts;
+
+  ts.header.stamp = odom->header.stamp;
+  ts.header.frame_id = odom->header.frame_id;
+  ts.child_frame_id = odom->child_frame_id;
+
+  ts.transform.translation.x = odom->pose.pose.position.x;
+  ts.transform.translation.y = odom->pose.pose.position.y;
+  ts.transform.translation.z = odom->pose.pose.position.z;
+
+  ts.transform.rotation = odom->pose.pose.orientation;
+
+  tf_broadcaster_.sendTransform(ts);
+
+
+  // Publish Odometry but with velocity in the world frame
+  auto new_odom = boost::make_shared<nav_msgs::Odometry>(*odom);
+
+  Eigen::Vector3d body_frame_linear_vel, world_frame_linear_vel;
+  tf::vectorMsgToEigen(odom->twist.twist.linear, body_frame_linear_vel);
+  world_frame_linear_vel = odom_q_.inverse() * body_frame_linear_vel;
+  tf::vectorEigenToMsg(world_frame_linear_vel, new_odom->twist.twist.linear);
+
+  odom_pub_.publish(new_odom);
+};
 
 void SO3CmdToMavros::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
 {
@@ -119,16 +153,10 @@ void SO3CmdToMavros::so3_cmd_callback(
                       R_des(0, 2) * R_cur(0, 2) + R_des(1, 2) * R_cur(1, 2) +
                       R_des(2, 2) * R_cur(2, 2)));
 
-  double throttle = 0.0;
-  if(Psi < 1.0f) // Position control stability guaranteed only when Psi < 1
-  {
-    throttle = f_des(0) * R_cur(0, 2) + f_des(1) * R_cur(1, 2) +
-               f_des(2) * R_cur(2, 2);
-  }
-  else
-  {
-    ROS_WARN_THROTTLE(1,"psi > 1.0, throttle set to 0.0 in mavros_interface.");
-  }
+  if(Psi >= 1.0f) // Position control stability guaranteed only when Psi < 1
+    ROS_WARN_THROTTLE(1, "psi = %2.2f >= 1.0, attitude controller may not be stable.", Psi);
+
+  double throttle = f_des(0) * R_cur(0, 2) + f_des(1) * R_cur(1, 2) + f_des(2) * R_cur(2, 2);
 
   // Scale force to be proportional to rotor velocity (rad/s).
   // Note: This ignores the number of propellers.
@@ -195,20 +223,24 @@ void SO3CmdToMavros::onInit(void)
   so3_cmd_set_ = false;
 
   attitude_raw_pub_ =
-      priv_nh.advertise<mavros_msgs::AttitudeTarget>("attitude_raw", 10);
+    priv_nh.advertise<mavros_msgs::AttitudeTarget>("attitude_raw", 10);
 
   odom_pose_pub_ =
-      priv_nh.advertise<geometry_msgs::PoseStamped>("odom_pose", 10);
+    priv_nh.advertise<geometry_msgs::PoseStamped>("odom_pose", 10);
+
+  odom_pub_ =
+    priv_nh.advertise<nav_msgs::Odometry>("odom", 10);
 
   so3_cmd_sub_ =
-      priv_nh.subscribe("so3_cmd", 10, &SO3CmdToMavros::so3_cmd_callback, this,
-                        ros::TransportHints().tcpNoDelay());
+    priv_nh.subscribe("so3_cmd", 1, &SO3CmdToMavros::so3_cmd_callback, this,
+    ros::TransportHints().tcpNoDelay());
 
-  odom_sub_ = priv_nh.subscribe("odom", 10, &SO3CmdToMavros::odom_callback,
-                                this, ros::TransportHints().tcpNoDelay());
+  odom_sub_ =
+    priv_nh.subscribe("mavros/local_position/odom", 1, &SO3CmdToMavros::odom_callback, this,
+    ros::TransportHints().tcpNoDelay());
 
-  imu_sub_ = priv_nh.subscribe("imu", 10, &SO3CmdToMavros::imu_callback, this,
-                               ros::TransportHints().tcpNoDelay());
+  imu_sub_ = priv_nh.subscribe("imu", 1, &SO3CmdToMavros::imu_callback, this,
+    ros::TransportHints().tcpNoDelay());
 }
 
 #include <pluginlib/class_list_macros.h>
