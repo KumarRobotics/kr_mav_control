@@ -177,7 +177,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     pos = start_pos_ + dist*dir_;
     vel = speed*dir_;
     acc = -accel*dir_;
-    jrk = -jerk*dir_;
+    jrk = jerk*dir_;
     cmd->position.x = pos(0), cmd->position.y = pos(1), cmd->position.z = pos(2);
     cmd->velocity.x = vel(0), cmd->velocity.y = vel(1), cmd->velocity.z = vel(2);
     cmd->acceleration.x = acc(0), cmd->acceleration.y = acc(1), cmd->acceleration.z = acc(2);
