@@ -28,6 +28,14 @@ class MAVManager
     typedef Eigen::Vector4f    Vec4;
     typedef Eigen::Quaternionf Quat;
 
+    enum Status {
+      INIT,
+      MOTORS_OFF,
+      IDLE,
+      ELAND,
+      ESTOP,
+      FLYING};
+
     MAVManager();
 
     // Accessors
@@ -41,6 +49,7 @@ class MAVManager
     bool need_imu() { return need_imu_; }
     bool need_odom() { return need_odom_; }
     uint8_t tracker_status() { return tracker_status_; }
+    Status status() { return status_; }
 
     // Mutators
     bool set_mass(float m);
@@ -107,6 +116,8 @@ class MAVManager
 
     std::string active_tracker_;
     uint8_t tracker_status_;
+
+    Status status_;
 
     ros::Time last_odom_t_, last_imu_t_, last_output_data_t_, last_heartbeat_t_;
 
