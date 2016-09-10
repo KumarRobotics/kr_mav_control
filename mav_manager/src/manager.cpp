@@ -299,7 +299,7 @@ bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand &msg) 
   // TODO: Need to keep publishing a position command if there is no update.
   // Otherwise, no so3_command will be published.
 
-  if (this->motors() && status_ == FLYING)
+  if (this->motors() && status_ != ESTOP)
   {
     bool flag(true);
 
@@ -527,7 +527,7 @@ bool MAVManager::eland() {
   // TODO: This should also check a height threshold or something along those
   // lines. For example, if the rotors are idle and the robot hasn't even
   // left the ground, we don't want them to spin up faster.
-  if (this->motors() && status_ == FLYING)
+  if (this->motors() && (status_ == FLYING || status_ == ELAND))
   {
     ROS_WARN("Emergency Land");
 
