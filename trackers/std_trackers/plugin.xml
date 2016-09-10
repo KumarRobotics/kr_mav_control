@@ -42,3 +42,11 @@
     </description>
   </class>
 </library>
+
+<library path="lib/libsmooth_vel_tracker">
+  <class name="std_trackers/SmoothVelTracker" type="SmoothVelTracker" base_class_type="trackers_manager::Tracker">
+    <description>
+      This controller goes from point A to point B trying to maintain constant velocity with a smooth ramp up.
+    </description>
+  </class>
+</library>

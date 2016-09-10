@@ -90,6 +90,8 @@ MAVManager::MAVManager()
   else
     ROS_ERROR("Mass failed to set. Perhaps mass <= 0?");
 
+  priv_nh_.param("odom_timeout",odom_timeout_,0.1f);
+
   // Disable motors
   if (!this->set_motors(false))
     ROS_ERROR("Could not disable motors");
@@ -584,7 +586,7 @@ bool MAVManager::transition(const std::string &tracker_str) {
 }
 
 bool MAVManager::have_recent_odom() {
-  return (ros::Time::now() - last_odom_t_).toSec() < 0.1;
+  return (ros::Time::now() - last_odom_t_).toSec() < odom_timeout_;
 }
 
 bool MAVManager::have_recent_imu() {
