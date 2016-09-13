@@ -106,6 +106,7 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
   quad_.setMotorTimeConstant(get_param("motor_time_constant"));
   quad_.setMinRPM(get_param("min_rpm"));
   quad_.setMaxRPM(get_param("max_rpm"));
+  quad_.setDragCoefficient(get_param("drag_coefficient"));
 
   Eigen::Vector3d initial_pos;
   n.param("initial_position/x", initial_pos(0), 0.0);
@@ -244,6 +245,16 @@ void QuadrotorSimulatorBase<T, U>::quadToImuMsg(const Quadrotor &quad,
   {
     acc = thrust / m * Eigen::Vector3d(0, 0, 1) +
           state.R.transpose() * external_force / m;
+    if(quad.getDragCoefficient() != 0)
+    {
+      const double drag_coefficient = quad.getDragCoefficient();
+      const double mass = quad.getMass();
+      Eigen::Matrix3d P;
+      P << 1, 0, 0,
+           0, 1, 0,
+           0, 0, 0;
+      acc -= drag_coefficient / mass * P * state.R.transpose() * state.v;
+    }
   }
 
   imu.linear_acceleration.x = acc(0);
