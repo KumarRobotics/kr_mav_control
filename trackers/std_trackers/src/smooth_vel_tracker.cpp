@@ -7,7 +7,6 @@
 #include <tf/transform_datatypes.h>
 #include <initial_conditions.h>
 #include <cmath>
-#define DEBUG
 
 class SmoothVelTracker : public trackers_manager::Tracker
 {
@@ -208,11 +207,6 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
     if(msg->relative)
       goal_pos += start_pos; 
 
-#ifdef DEBUG
-    std::cout << "goal_pos: " << goal_pos.transpose() << std::endl;
-    std::cout << "start_pos: " << start_pos.transpose() << std::endl;
-#endif
-
     // Find distance and direction to goal
     const float total_dist = (goal_pos - start_pos).norm();
     Eigen::Vector3f dir = (goal_pos - start_pos).normalized();
@@ -235,11 +229,6 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
     ramp_dist_ = (vel_coeffs_(0)/2 + vel_coeffs_(1)/3 + vel_coeffs_(2)/4 + vel_coeffs_(3)/5
                 + vel_coeffs_(4)/6 + vel_coeffs_(5)/7 + vel_coeffs_(6)/8)*ramp_time_;
 
-#ifdef DEBUG
-    std::cout << "ramp dist: " << ramp_dist_ << std::endl;
-    std::cout << "total dist: " << total_dist << std::endl;
-#endif
-
     // Check to make sure that twice the ramp distance is less than the entire distance
     if(2*ramp_dist_ < total_dist)
     {
@@ -250,10 +239,6 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
 
       // Compute total time of trajectory
       total_time_ = (total_dist_ - 2*ramp_dist_)/target_speed_ + 2*ramp_time_;
-
-#ifdef DEBUG
-      std::cout << "total time: " << total_time_ << std::endl;
-#endif
 
       // Set the target yaw
       start_yaw_ = ICs_.yaw();
