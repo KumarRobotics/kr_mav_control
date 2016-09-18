@@ -109,7 +109,7 @@ void SO3CmdToMavros::so3_cmd_callback(
       q_des;
 
   // check psi for stability
-  const Eigen::Matrix3d R_des(q_des_transformed);
+  const Eigen::Matrix3d R_des(q_des);
   const Eigen::Matrix3d R_cur(odom_q_);
 
   const float Psi =
