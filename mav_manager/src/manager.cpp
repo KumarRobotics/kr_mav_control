@@ -52,9 +52,9 @@ MAVManager::MAVManager()
   // pwm_command_pub_ = nh_ ...
 
   // Subscribers
-  odom_sub_ = nh_.subscribe("odom", 10, &MAVManager::odometry_cb, this);
-  heartbeat_sub_ = nh_.subscribe("/heartbeat", 10, &MAVManager::heartbeat_cb, this);
-  tracker_status_sub_ = nh_.subscribe("trackers_manager/status", 10, &MAVManager::tracker_status_cb, this);
+  odom_sub_ = nh_.subscribe("odom", 10, &MAVManager::odometry_cb, this, ros::TransportHints().tcpNoDelay());
+  heartbeat_sub_ = nh_.subscribe("/heartbeat", 10, &MAVManager::heartbeat_cb, this, ros::TransportHints().tcpNoDelay());
+  tracker_status_sub_ = nh_.subscribe("trackers_manager/status", 10, &MAVManager::tracker_status_cb, this, ros::TransportHints().tcpNoDelay());
 
   // Services
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
@@ -89,6 +89,8 @@ MAVManager::MAVManager()
     ROS_INFO("MAVManager using mass = %2.2f.", mass_);
   else
     ROS_ERROR("Mass failed to set. Perhaps mass <= 0?");
+
+  priv_nh_.param("odom_timeout", odom_timeout_, 0.1f);
 
   // Disable motors
   if (!this->set_motors(false))
@@ -584,7 +586,7 @@ bool MAVManager::transition(const std::string &tracker_str) {
 }
 
 bool MAVManager::have_recent_odom() {
-  return (ros::Time::now() - last_odom_t_).toSec() < 0.1;
+  return (ros::Time::now() - last_odom_t_).toSec() < odom_timeout_;
 }
 
 bool MAVManager::have_recent_imu() {

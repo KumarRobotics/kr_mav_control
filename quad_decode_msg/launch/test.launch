@@ -1,15 +1,14 @@
 <launch>
-  <node pkg="nodelet"
-    type="nodelet"
-    name="quad_serial_comm"
-    args="standalone quad_serial_comm/QuadSerialComm"
-    output="screen">
-    <param name="device" value="/dev/ttyUSB0"/>
-    <param name="baud_rate" value="230400"/>
-    <remap from="~from_robot" to="from_robot"/>
-  </node>
 
-  <node pkg="nodelet"
+  <arg name="device" default="/dev/ttyUSB0"/>
+  <arg name="baud_rate" default="230400"/>
+
+  <include file="$(find quad_serial_comm)/launch/test.launch">
+    <arg name="device" value="$(arg device)"/>
+    <arg name="baud_rate" default="$(arg baud_rate)"/>
+  </include>
+
+   <node pkg="nodelet"
     type="nodelet"
     name="quad_decode_msg"
     args="standalone quad_decode_msg/QuadDecodeMsg"
