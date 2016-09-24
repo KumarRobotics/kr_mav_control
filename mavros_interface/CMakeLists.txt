@@ -7,26 +7,33 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
-find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs geometry_msgs mavros_msgs quadrotor_msgs tf eigen_conversions nodelet cmake_modules)
+find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs geometry_msgs quadrotor_msgs tf eigen_conversions nodelet cmake_modules)
 find_package(Eigen 3 REQUIRED)
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
+# If mavros_msgs not found, don't build but do not cause a build error
+find_package(mavros_msgs)
 
-catkin_package(
-  INCLUDE_DIRS
-  LIBRARIES
-  CATKIN_DEPENDS roscpp nav_msgs geometry_msgs quadrotor_msgs mavros_msgs tf eigen_conversions nodelet
-  DEPENDS Eigen)
+if(NOT ${mavros_msgs_FOUND})
+  message(WARNING "NOTE: mavros_msgs not found so not building mavros_interface")
+else()
+  include_directories(${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
 
-add_library(so3cmd_to_mavros_nodelet src/so3cmd_to_mavros_nodelet.cpp)
-add_dependencies(so3cmd_to_mavros_nodelet ${catkin_EXPORTED_TARGETS})
-target_link_libraries(so3cmd_to_mavros_nodelet ${catkin_LIBRARIES})
+  catkin_package(
+    INCLUDE_DIRS
+    LIBRARIES
+    CATKIN_DEPENDS roscpp nav_msgs geometry_msgs quadrotor_msgs mavros_msgs tf eigen_conversions nodelet
+    DEPENDS Eigen)
 
-install(TARGETS so3cmd_to_mavros_nodelet
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+  add_library(so3cmd_to_mavros_nodelet src/so3cmd_to_mavros_nodelet.cpp)
+  add_dependencies(so3cmd_to_mavros_nodelet ${catkin_EXPORTED_TARGETS})
+  target_link_libraries(so3cmd_to_mavros_nodelet ${catkin_LIBRARIES})
 
-install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
-install(FILES nodelet_plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+  install(TARGETS so3cmd_to_mavros_nodelet
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    )
+
+  install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
+  install(FILES nodelet_plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+endif()

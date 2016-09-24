@@ -1,6 +1,6 @@
 trackers_manager:
 
-  line_tracker:
+  line_tracker_distance:
     default_v_des: 2.0
     default_a_des: 1.0
 
