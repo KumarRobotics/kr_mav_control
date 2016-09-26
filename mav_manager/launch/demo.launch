@@ -20,8 +20,6 @@
 
     <param name="mass" value="$(arg mass)"/>
 
-    <rosparam file="$(find mav_manager)/config/params.yaml"/>
-
     <node pkg="quadrotor_simulator"
       type="quadrotor_simulator_so3"
       name="quadrotor_simulator_so3"
@@ -49,6 +47,7 @@
       clear_params="true"
       output="screen">
       <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
+      <rosparam file="$(find trackers_manager)/config/tracker_params.yaml"/>
       <rosparam file="$(find so3_control)/config/gains.yaml"/>
       <remap from="~odom" to="odom"/>
       <remap from="~cmd" to="position_cmd"/>
