@@ -81,40 +81,10 @@
       <remap from="~input" to="odom"/>
     </node>
 
-    <!-- For serial communication -->
-    <node pkg="nodelet"
-      type="nodelet"
-      name="quad_serial_comm"
-      args="load quad_serial_comm/QuadSerialComm standalone_nodelet"
-      output="screen"
-      unless="$(arg sim)">
-      <param name="device" value="/dev/ttyUSB0"/>
-      <param name="baud_rate" value="57600" if="$(arg slow_baud_rate)"/>
-      <param name="baud_rate" value="230400" unless="$(arg slow_baud_rate)"/>
-      <remap from="~to_robot" to="to_robot"/>
-      <remap from="~from_robot" to="from_robot"/>
-    </node>
-
-    <node pkg="nodelet"
-      type="nodelet"
-      name="quad_encode_msg"
-      args="load quad_encode_msg/QuadEncodeMsg standalone_nodelet"
-      output="screen"
-      clear_params="true"
-      unless="$(arg sim)">
-      <remap from="~so3_cmd" to="so3_cmd"/>
-      <remap from="~serial_msg" to="to_robot"/>
-    </node>
-
-    <node pkg="nodelet"
-      type="nodelet"
-      name="quad_decode_msg"
-      args="load quad_decode_msg/QuadDecodeMsg standalone_nodelet"
-      output="screen"
-      clear_params="true"
-      unless="$(arg sim)">
-      <remap from="~serial" to="from_robot"/>
-    </node>
+    <include file="$(find mav_manager)/launch/asctec_comms.launch" unless="$(arg sim)">
+      <arg name="slow_baud_rate" value="$(arg slow_baud_rate)"/>
+      <arg name="remote" value="false"/>
+    </include>
 
     <include file="$(find mav_manager)/launch/manager.launch"/>
 
