@@ -55,6 +55,7 @@ MAVManager::MAVManager()
   odom_sub_ = nh_.subscribe("odom", 10, &MAVManager::odometry_cb, this, ros::TransportHints().tcpNoDelay());
   heartbeat_sub_ = nh_.subscribe("/heartbeat", 10, &MAVManager::heartbeat_cb, this, ros::TransportHints().tcpNoDelay());
   tracker_status_sub_ = nh_.subscribe("trackers_manager/status", 10, &MAVManager::tracker_status_cb, this, ros::TransportHints().tcpNoDelay());
+  set_mass_sub_ = nh_.subscribe("set_mass", 10, &MAVManager::set_mass, this, ros::TransportHints().tcpNoDelay());
 
   // Services
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
@@ -85,9 +86,7 @@ MAVManager::MAVManager()
   double m;
   if (!nh_.getParam("mass", m))
     ROS_ERROR("Mass must be set as param.");
-  else if (this->set_mass(m))
-    ROS_INFO("MAVManager using mass = %2.2f.", mass_);
-  else
+  else if (!this->set_mass(m))
     ROS_ERROR("Mass failed to set. Perhaps mass <= 0?");
 
   priv_nh_.param("odom_timeout", odom_timeout_, 0.1f);
@@ -159,6 +158,7 @@ bool MAVManager::set_mass(float m) {
   if (m>0)
   {
     mass_ = m;
+    ROS_INFO("MAVManager using mass: %2.3f kg.", mass_);
     return true;
   }
   else
@@ -166,6 +166,11 @@ bool MAVManager::set_mass(float m) {
     ROS_ERROR("Mass must be > 0");
     return false;
   }
+}
+
+void MAVManager::set_mass(const std_msgs::Float32::ConstPtr &msg)
+{
+  this->set_mass(msg->data);
 }
 
 bool MAVManager::setHome() {

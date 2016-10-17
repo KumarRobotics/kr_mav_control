@@ -30,7 +30,6 @@
       if="$(arg sim)">
       <rosparam file="$(find quadrotor_simulator)/config/hummingbird_params.yaml"/>
       <param name="rate/odom" value="100.0"/>
-      <param name="mass" value="$(arg mass)"/>
       <remap from="~odom" to="odom"/>
       <remap from="~imu" to="imu"/>
       <remap from="~cmd" to="so3_cmd"/>
