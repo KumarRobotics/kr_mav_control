@@ -138,10 +138,11 @@ void PIDControlNodelet::enable_motors_callback(const std_msgs::Bool::ConstPtr &m
 
 void PIDControlNodelet::onInit(void)
 {
-  ros::NodeHandle n(getPrivateNodeHandle());
+  ros::NodeHandle n(getNodeHandle());
+  ros::NodeHandle priv_nh(getPrivateNodeHandle());
 
   std::string quadrotor_name;
-  n.param("quadrotor_name", quadrotor_name, std::string("quadrotor"));
+  priv_nh.param("quadrotor_name", quadrotor_name, std::string("quadrotor"));
   frame_id_ = "/" + quadrotor_name;
 
   double mass;
@@ -149,10 +150,10 @@ void PIDControlNodelet::onInit(void)
   controller_.setMass(mass);
   controller_.setMaxIntegral(mass*3);
 
-  n.param("use_external_yaw", use_external_yaw_, true);
+  priv_nh.param("use_external_yaw", use_external_yaw_, true);
 
   double max_roll_pitch;
-  n.param("max_roll_pitch", max_roll_pitch, 30.0);
+  priv_nh.param("max_roll_pitch", max_roll_pitch, 30.0);
   max_roll_pitch_ = max_roll_pitch;
 
   double ki_x, ki_y, ki_z, ki_yaw;

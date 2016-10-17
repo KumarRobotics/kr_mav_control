@@ -210,10 +210,11 @@ void SO3TRPYControlNodelet::corrections_callback(const quadrotor_msgs::Correctio
 
 void SO3TRPYControlNodelet::onInit(void)
 {
-  ros::NodeHandle n(getPrivateNodeHandle());
+  ros::NodeHandle n(getNodeHandle());
+  ros::NodeHandle priv_nh(getPrivateNodeHandle());
 
   std::string quadrotor_name;
-  n.param("quadrotor_name", quadrotor_name, std::string("quadrotor"));
+  priv_nh.param("quadrotor_name", quadrotor_name, std::string("quadrotor"));
   frame_id_ = "/" + quadrotor_name;
 
   double mass;
@@ -222,7 +223,7 @@ void SO3TRPYControlNodelet::onInit(void)
   controller_.setMass(mass_);
   controller_.setGravity(g_);
 
-  n.param("use_external_yaw", use_external_yaw_, true);
+  priv_nh.param("use_external_yaw", use_external_yaw_, true);
 
   double ki_x, ki_y, ki_z, ki_yaw;
   n.param("gains/ki/x", ki_x, 0.0);
@@ -255,7 +256,7 @@ void SO3TRPYControlNodelet::onInit(void)
                                   ros::TransportHints().tcpNoDelay());
   enable_motors_sub_ = n.subscribe("motors", 2, &SO3TRPYControlNodelet::enable_motors_callback, this,
                                    ros::TransportHints().tcpNoDelay());
-  corrections_sub_ = n.subscribe("corrections", 10, &SO3TRPYControlNodelet::corrections_callback, this,
+  corrections_sub_ = priv_nh.subscribe("corrections", 10, &SO3TRPYControlNodelet::corrections_callback, this,
                                  ros::TransportHints().tcpNoDelay());
 }
 

@@ -42,6 +42,8 @@
       args="manager"
       output="screen"/>
 
+    <rosparam file="$(find so3_control)/config/gains.yaml"/>
+
     <node pkg="nodelet"
       type="nodelet"
       name="trackers_manager"
@@ -49,7 +51,6 @@
       clear_params="true"
       output="screen">
       <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
-      <rosparam file="$(find so3_control)/config/gains.yaml"/>
       <remap from="~odom" to="odom"/>
       <remap from="~cmd" to="position_cmd"/>
     </node>
@@ -61,12 +62,6 @@
       required="true"
       clear_params="true"
       output="screen">
-      <rosparam file="$(find so3_control)/config/gains.yaml"/>
-      <param name="mass" value="$(arg mass)"/>
-      <remap from="~odom" to="odom"/>
-      <remap from="~position_cmd" to="position_cmd"/>
-      <remap from="~so3_cmd" to="so3_cmd"/>
-      <remap from="~motors" to="motors"/>
     </node>
 
     <node pkg="mesh_visualization"
