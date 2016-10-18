@@ -12,7 +12,7 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
  public:
   LineTrackerMinJerk(void);
 
-  void Initialize(const ros::NodeHandle &nh);
+  void Initialize(const ros::NodeHandle &nh, const ros::NodeHandle &parent_nh);
   bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
@@ -51,14 +51,14 @@ LineTrackerMinJerk::LineTrackerMinJerk(void)
 {
 }
 
-void LineTrackerMinJerk::Initialize(const ros::NodeHandle &nh)
+void LineTrackerMinJerk::Initialize(const ros::NodeHandle &nh, const ros::NodeHandle &parent_nh)
 {
-  nh.param("gains/pos/x", kx_[0], 2.5);
-  nh.param("gains/pos/y", kx_[1], 2.5);
-  nh.param("gains/pos/z", kx_[2], 5.0);
-  nh.param("gains/vel/x", kv_[0], 2.2);
-  nh.param("gains/vel/y", kv_[1], 2.2);
-  nh.param("gains/vel/z", kv_[2], 4.0);
+  parent_nh.param("gains/pos/x", kx_[0], 2.5);
+  parent_nh.param("gains/pos/y", kx_[1], 2.5);
+  parent_nh.param("gains/pos/z", kx_[2], 5.0);
+  parent_nh.param("gains/vel/x", kv_[0], 2.2);
+  parent_nh.param("gains/vel/y", kv_[1], 2.2);
+  parent_nh.param("gains/vel/z", kv_[2], 4.0);
 
   ros::NodeHandle priv_nh(nh, "line_tracker_min_jerk");
 

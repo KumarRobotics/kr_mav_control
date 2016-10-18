@@ -5,7 +5,7 @@
 class NullTracker : public trackers_manager::Tracker
 {
  public:
-  void Initialize(const ros::NodeHandle &nh);
+  void Initialize(const ros::NodeHandle &nh, const ros::NodeHandle &parent_nh);
   bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
@@ -13,7 +13,7 @@ class NullTracker : public trackers_manager::Tracker
   const quadrotor_msgs::TrackerStatus::Ptr status();
 };
 
-void NullTracker::Initialize(const ros::NodeHandle &nh)
+void NullTracker::Initialize(const ros::NodeHandle &nh, const ros::NodeHandle &parent_nh)
 {
 }
 

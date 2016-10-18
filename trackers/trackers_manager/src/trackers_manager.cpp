@@ -51,6 +51,7 @@ TrackersManager::~TrackersManager(void)
 void TrackersManager::onInit(void)
 {
   ros::NodeHandle priv_nh(getPrivateNodeHandle());
+  ros::NodeHandle nh(getNodeHandle());
 
   XmlRpc::XmlRpcValue tracker_list;
   priv_nh.getParam("trackers", tracker_list);
@@ -66,7 +67,7 @@ void TrackersManager::onInit(void)
 #else
       trackers_manager::Tracker *c = tracker_loader_->createClassInstance(tracker_name);
 #endif
-      c->Initialize(priv_nh);
+      c->Initialize(priv_nh, nh);
       tracker_map_.insert(std::make_pair(tracker_name, c));
     }
     catch(pluginlib::LibraryLoadException &e)

@@ -11,6 +11,7 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Empty.h>
+#include <std_msgs/Float32.h>
 
 // quadrotor_control
 #include <quadrotor_msgs/PositionCommand.h>
@@ -47,6 +48,9 @@ class MAVManager
     void set_need_imu(bool flag)  {need_imu_ = flag;} // TODO: Consider not allowing this to be toggled after takeoff
     void set_need_odom(bool flag) {need_odom_ = flag;} // TODO: Consider not allowing this to be toggled after takeoff
     void set_use_attitude_safety_catch(bool flag) {use_attitude_safety_catch_ = flag;}
+
+    // Mutators (for subscribers)
+    void set_mass(const std_msgs::Float32::ConstPtr &msg);
 
     // Home Methods
     bool setHome();                 // Uses the current position and yaw
@@ -146,7 +150,8 @@ class MAVManager
       imu_sub_,
       output_data_sub_,
       heartbeat_sub_,
-      tracker_status_sub_;
+      tracker_status_sub_,
+      set_mass_sub_;
 
     // Services
     ros::ServiceClient srv_transition_;

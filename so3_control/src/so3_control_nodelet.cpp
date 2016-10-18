@@ -5,6 +5,7 @@
 #include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/Corrections.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/Float32.h>
 #include <Eigen/Geometry>
 #include <so3_control/SO3Control.h>
 #include <tf/transform_datatypes.h>
@@ -35,10 +36,11 @@ class SO3ControlNodelet : public nodelet::Nodelet
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void enable_motors_callback(const std_msgs::Bool::ConstPtr &msg);
   void corrections_callback(const quadrotor_msgs::Corrections::ConstPtr &msg);
+  void mass_callback(const std_msgs::Float32::ConstPtr &msg);
 
   SO3Control controller_;
   ros::Publisher so3_command_pub_;
-  ros::Subscriber odom_sub_, position_cmd_sub_, enable_motors_sub_, corrections_sub_;
+  ros::Subscriber odom_sub_, position_cmd_sub_, enable_motors_sub_, corrections_sub_, mass_sub_;
 
   bool position_cmd_updated_, position_cmd_init_;
   std::string frame_id_;
@@ -156,12 +158,20 @@ void SO3ControlNodelet::corrections_callback(const quadrotor_msgs::Corrections::
   corrections_[2] = msg->angle_corrections[1];
 }
 
+void SO3ControlNodelet::mass_callback(const std_msgs::Float32::ConstPtr &msg)
+{
+  mass_ = msg->data;
+  controller_.setMass(mass_);
+  ROS_INFO("so3_control now using mass: %2.3f kg", mass_);
+}
+
 void SO3ControlNodelet::onInit(void)
 {
-  ros::NodeHandle n(getPrivateNodeHandle());
+  ros::NodeHandle n(getNodeHandle());
+  ros::NodeHandle priv_nh(getPrivateNodeHandle());
 
   std::string quadrotor_name;
-  n.param("quadrotor_name", quadrotor_name, std::string("quadrotor"));
+  priv_nh.param("quadrotor_name", quadrotor_name, std::string("quadrotor"));
   frame_id_ = "/" + quadrotor_name;
 
   double mass;
@@ -170,7 +180,7 @@ void SO3ControlNodelet::onInit(void)
   controller_.setMass(mass_);
   controller_.setGravity(g_);
 
-  n.param("use_external_yaw", use_external_yaw_, true);
+  priv_nh.param("use_external_yaw", use_external_yaw_, true);
 
   double ki_x, ki_y, ki_z;
   n.param("gains/ki/x", ki_x, 0.0);
@@ -200,7 +210,9 @@ void SO3ControlNodelet::onInit(void)
                                   ros::TransportHints().tcpNoDelay());
   enable_motors_sub_ = n.subscribe("motors", 2, &SO3ControlNodelet::enable_motors_callback, this,
                                    ros::TransportHints().tcpNoDelay());
-  corrections_sub_ = n.subscribe("corrections", 10, &SO3ControlNodelet::corrections_callback, this,
+  corrections_sub_ = priv_nh.subscribe("corrections", 10, &SO3ControlNodelet::corrections_callback, this,
+                                 ros::TransportHints().tcpNoDelay());
+  mass_sub_ = n.subscribe("set_mass", 10, &SO3ControlNodelet::mass_callback, this,
                                  ros::TransportHints().tcpNoDelay());
 
   so3_command_pub_ = n.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
