@@ -12,7 +12,7 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <eigen_conversions/eigen_msg.h>
 
-class SO3CmdToMavros : public nodelet::Nodelet
+class MavrosInterface : public nodelet::Nodelet
 {
  public:
   void onInit(void);
@@ -40,7 +40,7 @@ class SO3CmdToMavros : public nodelet::Nodelet
   tf::TransformBroadcaster tf_broadcaster_;
 };
 
-void SO3CmdToMavros::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
+void MavrosInterface::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
   if(!odom_set_)
     odom_set_ = true;
@@ -85,7 +85,7 @@ void SO3CmdToMavros::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
   odom_pub_.publish(new_odom);
 };
 
-void SO3CmdToMavros::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
+void MavrosInterface::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
 {
   if(!imu_set_)
     imu_set_ = true;
@@ -105,7 +105,7 @@ void SO3CmdToMavros::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
   }
 }
 
-void SO3CmdToMavros::so3_cmd_callback(
+void MavrosInterface::so3_cmd_callback(
     const quadrotor_msgs::SO3Command::ConstPtr &msg)
 {
   if(!so3_cmd_set_)
@@ -192,7 +192,7 @@ void SO3CmdToMavros::so3_cmd_callback(
   last_so3_cmd_time_ = ros::Time::now();
 }
 
-void SO3CmdToMavros::onInit(void)
+void MavrosInterface::onInit(void)
 {
   ros::NodeHandle priv_nh(getPrivateNodeHandle());
 
@@ -232,16 +232,16 @@ void SO3CmdToMavros::onInit(void)
     priv_nh.advertise<nav_msgs::Odometry>("odom", 10);
 
   so3_cmd_sub_ =
-    priv_nh.subscribe("so3_cmd", 1, &SO3CmdToMavros::so3_cmd_callback, this,
+    priv_nh.subscribe("so3_cmd", 1, &MavrosInterface::so3_cmd_callback, this,
     ros::TransportHints().tcpNoDelay());
 
   odom_sub_ =
-    priv_nh.subscribe("mavros/local_position/odom", 1, &SO3CmdToMavros::odom_callback, this,
+    priv_nh.subscribe("mavros/local_position/odom", 1, &MavrosInterface::odom_callback, this,
     ros::TransportHints().tcpNoDelay());
 
-  imu_sub_ = priv_nh.subscribe("imu", 1, &SO3CmdToMavros::imu_callback, this,
+  imu_sub_ = priv_nh.subscribe("imu", 1, &MavrosInterface::imu_callback, this,
     ros::TransportHints().tcpNoDelay());
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(SO3CmdToMavros, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(MavrosInterface, nodelet::Nodelet);

@@ -24,11 +24,11 @@ else()
     CATKIN_DEPENDS roscpp nav_msgs geometry_msgs quadrotor_msgs mavros_msgs tf eigen_conversions nodelet
     DEPENDS Eigen)
 
-  add_library(so3cmd_to_mavros_nodelet src/so3cmd_to_mavros_nodelet.cpp)
-  add_dependencies(so3cmd_to_mavros_nodelet ${catkin_EXPORTED_TARGETS})
-  target_link_libraries(so3cmd_to_mavros_nodelet ${catkin_LIBRARIES})
+  add_library(mavros_interface_nodelet src/mavros_interface_nodelet.cpp)
+  add_dependencies(mavros_interface_nodelet ${catkin_EXPORTED_TARGETS})
+  target_link_libraries(mavros_interface_nodelet ${catkin_LIBRARIES})
 
-  install(TARGETS so3cmd_to_mavros_nodelet
+  install(TARGETS mavros_interface_nodelet
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
