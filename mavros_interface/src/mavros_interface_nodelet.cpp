@@ -217,14 +217,14 @@ void MavrosInterface::onInit(void)
     ros::TransportHints().tcpNoDelay());
 
   // Conversion from ROS odom convention to our convention for the linear velocity frame
-  std::string odom_pub_topic;
-  priv_nh.param<std::string>("publish_mavros_converted_odom_to", odom_pub_topic, "");
-  if (odom_pub_topic != "")
+  bool convert_mavros_odom;
+  priv_nh.param<bool>("convert_mavros_odom", convert_mavros_odom, false);
+  if (convert_mavros_odom)
   {
-    mavros_odom_sub_ = priv_nh.subscribe("mavros/local_position/odom", 1, &MavrosInterface::mavros_odom_callback, this,
+    mavros_odom_sub_ = priv_nh.subscribe("mavros/local_position/odom", 10, &MavrosInterface::mavros_odom_callback, this,
           ros::TransportHints().tcpNoDelay());
     
-    odom_pub_ = priv_nh.advertise<nav_msgs::Odometry>(odom_pub_topic, 10);
+    odom_pub_ = priv_nh.advertise<nav_msgs::Odometry>("converted_mavros_odom", 10);
   }
 }
 
