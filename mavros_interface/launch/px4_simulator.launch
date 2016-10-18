@@ -1,0 +1,75 @@
+<launch>
+  <arg name="model" default="quadrotor"/>
+  <arg name="mass"  default="1.5"/>
+  <arg name="odom"  default="mavros/local_position/odom"/>
+  
+  <group ns="$(arg model)">
+    
+    <param name="mass" value="$(arg mass)"/>
+    <rosparam file="$(find mav_manager)/config/params.yaml"/>
+
+    <!-- Note: The following must be in your bashrc. -->
+    <!-- 
+    SRC_DIR=~/path/to/px4/firmware
+    export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:${SRC_DIR}/Tools/sitl_gazebo/models
+    export GAZEBO_PLUGIN_PATH=${SRC_DIR}/Tools/sitl_gazebo/Build/:${GAZEBO_PLUGIN_PATH}
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${SRC_DIR}/Tools/sitl_gazebo/Build/msgs/
+    export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:${SRC_DIR}
+    -->
+    <!-- px4 firmware and gazebo simulator -->
+    <include file="$(find px4)/launch/mavros_posix_sitl.launch">
+    <!-- include file="$(find mavros_interface)/launch/px4/mavros_posix_sitl.launch" -->
+      <arg name="headless" value="true"/>
+      <arg name="gui" value="false"/>
+      <arg name="ns" value="/$(arg model)"/>
+    </include>
+
+    <!-- mavros -->
+    <!-- 
+    <include file="$(find mavros)/launch/px4.launch">
+      <arg name="fcu_url" default="udp://:14540@localhost:14557" />
+    </include>
+    -->
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="standalone_nodelet"
+      args="manager"
+      output="screen"/>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="trackers_manager"
+      args="load trackers_manager/TrackersManager standalone_nodelet"
+      output="screen">
+      <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
+      <rosparam file="$(find so3_control)/config/gains.yaml"/>
+      <remap from="~odom" to="odom"/>
+      <remap from="~cmd" to="position_cmd"/>
+    </node>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      args="load so3_control/SO3ControlNodelet standalone_nodelet"
+      name="so3_control"
+      required="true"
+      output="screen">
+      <rosparam file="$(find so3_control)/config/gains.yaml"/>
+      <param name="mass" value="$(arg mass)"/>
+      <remap from="~odom" to="odom"/>
+      <remap from="~position_cmd" to="position_cmd"/>
+      <remap from="~so3_cmd" to="so3_cmd"/>
+      <remap from="~motors" to="motors"/>
+    </node>
+
+    <include file="$(find mavros_interface)/launch/mavros_interface.launch">
+      <arg name="standalone" value="false"/>
+    </include>
+
+    <include file="$(find mav_manager)/launch/manager.launch"/>
+
+    <include file="$(find mesh_visualization)/launch/test.launch"/>
+
+  </group>
+
+</launch>

@@ -1,0 +1,37 @@
+<launch>
+  <arg name="kf" default="8.54858e-06"/>
+  <arg name="lin_cof_a" default="0.0015"/>
+  <arg name="lin_int_b" default="-1.5334"/>
+  <arg name="standalone" default="false"/>
+  <arg name="nodelet_name" default="standalone_nodelet"/>
+  
+  <node pkg="nodelet"
+    type="nodelet"
+    name="$(arg nodelet_name)"
+    args="manager"
+    output="screen"
+    if="$(arg standalone)"/>
+
+  <node pkg="nodelet"
+    type="nodelet"
+    name="mavros_interface"
+    args="load mavros_interface/MavrosInterface $(arg nodelet_name)"
+    required="true"
+    clear_params="true"
+    output="screen">
+    
+    <param name="kf" value="$(arg kf)"/>
+    <param name="lin_cof_a" value="$(arg lin_cof_a)"/>
+    <param name="lin_int_b" value="$(arg lin_int_b)"/>
+    <param name="convert_mavros_odom" value="true"/>
+
+    <remap from="~odom" to="odom"/>
+    <remap from="~mavros/local_position/odom" to="mavros/local_position/odom"/>
+    <remap from="~so3_cmd" to="so3_cmd"/>
+    <remap from="~imu" to="mavros/imu/data" />
+    <remap from="~attitude_raw" to="mavros/setpoint_raw/attitude" />
+    <remap from="~converted_mavros_odom" to="odom" />
+    <!-- remap from="~odom_pose" to="mavros/vision_pose/pose" / -->
+  </node>
+
+</launch>
