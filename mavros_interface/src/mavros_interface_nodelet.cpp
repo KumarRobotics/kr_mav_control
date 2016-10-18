@@ -21,9 +21,10 @@ class MavrosInterface : public nodelet::Nodelet
   void so3_cmd_callback(const quadrotor_msgs::SO3Command::ConstPtr &msg);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void imu_callback(const sensor_msgs::Imu::ConstPtr &pose);
+  void mavros_odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
 
   bool odom_set_, imu_set_, so3_cmd_set_;
-  Eigen::Quaterniond odom_q_, imu_q_;
+  Eigen::Quaterniond odom_q_, mavros_q_;
   double kf_, lin_cof_a_, lin_int_b_;
 
   ros::Publisher attitude_raw_pub_;
@@ -31,7 +32,7 @@ class MavrosInterface : public nodelet::Nodelet
   ros::Publisher odom_pub_;      // For conversion to our convention
 
   ros::Subscriber so3_cmd_sub_;
-  ros::Subscriber odom_sub_;
+  ros::Subscriber odom_sub_, mavros_odom_sub_;
   ros::Subscriber imu_sub_;
 
   double so3_cmd_timeout_;
@@ -40,6 +41,7 @@ class MavrosInterface : public nodelet::Nodelet
   tf::TransformBroadcaster tf_broadcaster_;
 };
 
+/* This is the odometry for the frame that control is computed in */
 void MavrosInterface::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
   if(!odom_set_)
@@ -50,31 +52,11 @@ void MavrosInterface::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
       odom->pose.pose.orientation.x,
       odom->pose.pose.orientation.y,
       odom->pose.pose.orientation.z);
+};
 
-  // Publish PoseStamped for mavros vision_pose plugin
-  auto odom_pose_msg = boost::make_shared<geometry_msgs::PoseStamped>();
-  odom_pose_msg->header = odom->header;
-  odom_pose_msg->pose = odom->pose.pose;
-  odom_pose_pub_.publish(odom_pose_msg);
-
-
-  // tf broadcaster
-  geometry_msgs::TransformStamped ts;
-
-  ts.header.stamp = odom->header.stamp;
-  ts.header.frame_id = odom->header.frame_id;
-  ts.child_frame_id = odom->child_frame_id;
-
-  ts.transform.translation.x = odom->pose.pose.position.x;
-  ts.transform.translation.y = odom->pose.pose.position.y;
-  ts.transform.translation.z = odom->pose.pose.position.z;
-
-  ts.transform.rotation = odom->pose.pose.orientation;
-
-  tf_broadcaster_.sendTransform(ts);
-
-
-  // Publish Odometry but with velocity in the world frame
+void MavrosInterface::mavros_odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
+{
+  // Publish Odometry but with linear velocity in header.frame_id frame
   auto new_odom = boost::make_shared<nav_msgs::Odometry>(*odom);
 
   Eigen::Vector3d body_frame_linear_vel, world_frame_linear_vel;
@@ -90,8 +72,7 @@ void MavrosInterface::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
   if(!imu_set_)
     imu_set_ = true;
 
-  imu_q_ = Eigen::Quaterniond(pose->orientation.w, pose->orientation.x,
-                              pose->orientation.y, pose->orientation.z);
+  mavros_q_ = Eigen::Quaterniond(pose->orientation.w, pose->orientation.x, pose->orientation.y, pose->orientation.z);
 
   if(so3_cmd_set_ &&
      ((ros::Time::now() - last_so3_cmd_time_).toSec() >= so3_cmd_timeout_))
@@ -114,14 +95,11 @@ void MavrosInterface::so3_cmd_callback(
   // grab desired forces and rotation from so3
   const Eigen::Vector3d f_des(msg->force.x, msg->force.y, msg->force.z);
 
-  const Eigen::Quaterniond q_des(msg->orientation.w, msg->orientation.x,
-                                 msg->orientation.y, msg->orientation.z);
+  const Eigen::Quaterniond q_des(msg->orientation.w, msg->orientation.x, msg->orientation.y, msg->orientation.z);
 
   // convert to tf::Quaternion
-  tf::Quaternion imu_tf =
-      tf::Quaternion(imu_q_.x(), imu_q_.y(), imu_q_.z(), imu_q_.w());
-  tf::Quaternion odom_tf =
-      tf::Quaternion(odom_q_.x(), odom_q_.y(), odom_q_.z(), odom_q_.w());
+  tf::Quaternion imu_tf = tf::Quaternion(mavros_q_.x(), mavros_q_.y(), mavros_q_.z(), mavros_q_.w());
+  tf::Quaternion odom_tf = tf::Quaternion(odom_q_.x(), odom_q_.y(), odom_q_.z(), odom_q_.w());
 
   // extract RPY's
   double imu_roll, imu_pitch, imu_yaw;
@@ -228,19 +206,26 @@ void MavrosInterface::onInit(void)
   odom_pose_pub_ =
     priv_nh.advertise<geometry_msgs::PoseStamped>("odom_pose", 10);
 
-  odom_pub_ =
-    priv_nh.advertise<nav_msgs::Odometry>("odom", 10);
-
   so3_cmd_sub_ =
     priv_nh.subscribe("so3_cmd", 1, &MavrosInterface::so3_cmd_callback, this,
     ros::TransportHints().tcpNoDelay());
 
   odom_sub_ =
-    priv_nh.subscribe("mavros/local_position/odom", 1, &MavrosInterface::odom_callback, this,
-    ros::TransportHints().tcpNoDelay());
-
+    priv_nh.subscribe("odom", 1, &MavrosInterface::odom_callback, this, ros::TransportHints().tcpNoDelay());
+  
   imu_sub_ = priv_nh.subscribe("imu", 1, &MavrosInterface::imu_callback, this,
     ros::TransportHints().tcpNoDelay());
+
+  // Conversion from ROS odom convention to our convention for the linear velocity frame
+  std::string odom_pub_topic;
+  priv_nh.param<std::string>("publish_mavros_converted_odom_to", odom_pub_topic, "");
+  if (odom_pub_topic != "")
+  {
+    mavros_odom_sub_ = priv_nh.subscribe("mavros/local_position/odom", 1, &MavrosInterface::mavros_odom_callback, this,
+          ros::TransportHints().tcpNoDelay());
+    
+    odom_pub_ = priv_nh.advertise<nav_msgs::Odometry>(odom_pub_topic, 10);
+  }
 }
 
 #include <pluginlib/class_list_macros.h>
