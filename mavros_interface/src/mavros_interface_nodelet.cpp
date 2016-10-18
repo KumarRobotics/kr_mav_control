@@ -28,7 +28,6 @@ class MavrosInterface : public nodelet::Nodelet
   double kf_, lin_cof_a_, lin_int_b_;
 
   ros::Publisher attitude_raw_pub_;
-  ros::Publisher odom_pose_pub_; // For sending PoseStamped to firmware.
   ros::Publisher odom_pub_;      // For conversion to our convention
 
   ros::Subscriber so3_cmd_sub_;
@@ -202,9 +201,6 @@ void MavrosInterface::onInit(void)
 
   attitude_raw_pub_ =
     priv_nh.advertise<mavros_msgs::AttitudeTarget>("attitude_raw", 10);
-
-  odom_pose_pub_ =
-    priv_nh.advertise<geometry_msgs::PoseStamped>("odom_pose", 10);
 
   so3_cmd_sub_ =
     priv_nh.subscribe("so3_cmd", 1, &MavrosInterface::so3_cmd_callback, this,
