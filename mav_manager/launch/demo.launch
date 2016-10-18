@@ -20,19 +20,7 @@
 
     <param name="mass" value="$(arg mass)"/>
 
-    <node pkg="quadrotor_simulator"
-      type="quadrotor_simulator_so3"
-      name="quadrotor_simulator_so3"
-      output="screen"
-      clear_params="true"
-      if="$(arg sim)">
-      <rosparam file="$(find quadrotor_simulator)/config/hummingbird_params.yaml"/>
-      <param name="rate/odom" value="100.0"/>
-      <param name="mass" value="$(arg mass)"/>
-      <remap from="~odom" to="odom"/>
-      <remap from="~imu" to="imu"/>
-      <remap from="~cmd" to="so3_cmd"/>
-    </node>
+    <include file="$(find quadrotor_simulator)/launch/sim.launch" if="$(arg sim)"/>
 
     <node pkg="nodelet"
       type="nodelet"
