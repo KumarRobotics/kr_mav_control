@@ -1,5 +1,5 @@
 <launch>
-  <arg name="input" default="/quadrotor/odom"/>
+  <arg name="input" default="odom"/>
   <arg name="new_frame_id" default=""/>
 
   <node pkg="mesh_visualization"
