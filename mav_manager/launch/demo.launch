@@ -61,6 +61,11 @@
       required="true"
       clear_params="true"
       output="screen">
+      <remap from="~odom" to="odom"/>
+      <remap from="~position_cmd" to="position_cmd"/>
+      <remap from="~so3_cmd" to="so3_cmd"/>
+      <remap from="~motors" to="motors"/>
+      <remap from="~set_mass" to="set_mass"/>
     </node>
 
     <node pkg="mesh_visualization"

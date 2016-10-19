@@ -164,15 +164,15 @@ void PIDControlNodelet::onInit(void)
   ki_[0] = ki_x, ki_[1] = ki_y, ki_[2] = ki_z;
   ki_yaw_ = ki_yaw;
 
-  odom_sub_ = n.subscribe("odom", 10, &PIDControlNodelet::odom_callback, this,
+  odom_sub_ = priv_nh.subscribe("odom", 10, &PIDControlNodelet::odom_callback, this,
                           ros::TransportHints().tcpNoDelay());
-  position_cmd_sub_ = n.subscribe("position_cmd", 10, &PIDControlNodelet::position_cmd_callback, this,
+  position_cmd_sub_ = priv_nh.subscribe("position_cmd", 10, &PIDControlNodelet::position_cmd_callback, this,
                                   ros::TransportHints().tcpNoDelay());
 
-  enable_motors_sub_ = n.subscribe("motors", 2, &PIDControlNodelet::enable_motors_callback, this,
+  enable_motors_sub_ = priv_nh.subscribe("motors", 2, &PIDControlNodelet::enable_motors_callback, this,
                                    ros::TransportHints().tcpNoDelay());
 
-  trpy_command_pub_ = n.advertise<quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
+  trpy_command_pub_ = priv_nh.advertise<quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
 }
 
 #include <pluginlib/class_list_macros.h>

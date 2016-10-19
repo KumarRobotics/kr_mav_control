@@ -260,14 +260,14 @@ void SO3TRPYControlNodelet::onInit(void)
 
   trpy_command_pub_ = n.advertise<quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
 
-  odom_sub_ = n.subscribe("odom", 10, &SO3TRPYControlNodelet::odom_callback, this, ros::TransportHints().tcpNoDelay());
-  position_cmd_sub_ = n.subscribe("position_cmd", 10, &SO3TRPYControlNodelet::position_cmd_callback, this,
+  odom_sub_ = priv_nh.subscribe("odom", 10, &SO3TRPYControlNodelet::odom_callback, this, ros::TransportHints().tcpNoDelay());
+  position_cmd_sub_ = priv_nh.subscribe("position_cmd", 10, &SO3TRPYControlNodelet::position_cmd_callback, this,
                                   ros::TransportHints().tcpNoDelay());
-  enable_motors_sub_ = n.subscribe("motors", 2, &SO3TRPYControlNodelet::enable_motors_callback, this,
+  enable_motors_sub_ = priv_nh.subscribe("motors", 2, &SO3TRPYControlNodelet::enable_motors_callback, this,
                                    ros::TransportHints().tcpNoDelay());
   corrections_sub_ = priv_nh.subscribe("corrections", 10, &SO3TRPYControlNodelet::corrections_callback, this,
                                  ros::TransportHints().tcpNoDelay());
-  mass_sub_ = n.subscribe("set_mass", 10, &SO3TRPYControlNodelet::mass_callback, this,
+  mass_sub_ = priv_nh.subscribe("set_mass", 10, &SO3TRPYControlNodelet::mass_callback, this,
                                  ros::TransportHints().tcpNoDelay());
 }
 
