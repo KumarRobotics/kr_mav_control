@@ -55,12 +55,18 @@ void MavrosInterface::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 
 void MavrosInterface::mavros_odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
+  Eigen::Quaterniond q = Eigen::Quaterniond(
+      odom->pose.pose.orientation.w,
+      odom->pose.pose.orientation.x,
+      odom->pose.pose.orientation.y,
+      odom->pose.pose.orientation.z);
+
   // Publish Odometry but with linear velocity in header.frame_id frame
   auto new_odom = boost::make_shared<nav_msgs::Odometry>(*odom);
 
   Eigen::Vector3d body_frame_linear_vel, world_frame_linear_vel;
   tf::vectorMsgToEigen(odom->twist.twist.linear, body_frame_linear_vel);
-  world_frame_linear_vel = odom_q_.inverse() * body_frame_linear_vel;
+  world_frame_linear_vel = q * body_frame_linear_vel;
   tf::vectorEigenToMsg(world_frame_linear_vel, new_odom->twist.twist.linear);
 
   odom_pub_.publish(new_odom);
