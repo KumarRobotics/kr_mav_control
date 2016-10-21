@@ -153,6 +153,7 @@ class MAVManager
       pub_goal_yaw_,
       pub_so3_command_,
       pub_position_command_,
+      pub_status_,
       pub_pwm_command_;
 
     // Subscribers
