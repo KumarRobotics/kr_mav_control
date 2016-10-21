@@ -9,6 +9,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Empty.h>
+#include <std_msgs/UInt8.h>
 #include <tf/transform_datatypes.h>
 
 // quadrotor_control
@@ -50,6 +51,7 @@ MAVManager::MAVManager()
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
   pub_so3_command_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
   pub_position_command_ = nh_.advertise<quadrotor_msgs::PositionCommand>("position_cmd", 10);
+  pub_status_ = priv_nh_.advertise<std_msgs::UInt8>("status", 10);
   // pwm_command_pub_ = nh_ ...
 
   // Subscribers
@@ -438,6 +440,11 @@ void MAVManager::heartbeat() {
     return;
   else
     last_heartbeat_t_ = t;
+
+  // Publish the status
+  std_msgs::UInt8 status_msg;
+  status_msg.data = status_;
+  pub_status_.publish(status_msg);
 
   // Checking for odom
   if (this->motors() && need_odom_ && !this->have_recent_odom()) {
