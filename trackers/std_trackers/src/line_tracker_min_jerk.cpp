@@ -6,6 +6,8 @@
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
 #include <initial_conditions.h>
+#include <dynamic_reconfigure/server.h>
+#include <std_trackers/GainsConfig.h>
 
 class LineTrackerMinJerk : public trackers_manager::Tracker
 {
@@ -22,6 +24,7 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
 
  private:
   void goal_callback(const quadrotor_msgs::LineTrackerGoal::ConstPtr &msg);
+  void gains_callback(std_trackers::GainsConfig &g, uint32_t level);
 
   void gen_trajectory(const Eigen::Vector3f &xi, const Eigen::Vector3f &xf,
                       const Eigen::Vector3f &vi, const Eigen::Vector3f &vf,
@@ -44,6 +47,12 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
   float goal_yaw_, yaw_coeffs_[4];
 
   double kx_[3], kv_[3];
+
+  // Dynamic reconfigure
+  boost::recursive_mutex config_mutex_;
+  typedef std_trackers::GainsConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 };
 
 LineTrackerMinJerk::LineTrackerMinJerk(void)
@@ -74,6 +83,21 @@ void LineTrackerMinJerk::Initialize(const ros::NodeHandle &nh, const ros::NodeHa
 
   sub_goal_ = priv_nh.subscribe("goal", 10, &LineTrackerMinJerk::goal_callback,
                                 this, ros::TransportHints().tcpNoDelay());
+
+  // Set up dynamic reconfigure
+  reconfigure_server_.reset(new ReconfigureServer(config_mutex_, priv_nh));
+  ReconfigureServer::CallbackType f = boost::bind(&LineTrackerMinJerk::gains_callback, this, _1, _2);
+  reconfigure_server_->setCallback(f);
+
+  // Use loaded params
+  Config config;
+  config.kpx = kx_[0];
+  config.kpy = kx_[1];
+  config.kpz = kx_[2];
+  config.kdx = kv_[0];
+  config.kdy = kv_[1];
+  config.kdz = kv_[2];
+  reconfigure_server_->updateConfig(config);
 }
 
 bool LineTrackerMinJerk::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
@@ -360,6 +384,20 @@ const quadrotor_msgs::TrackerStatus::Ptr LineTrackerMinJerk::status()
           static_cast<uint8_t>(quadrotor_msgs::TrackerStatus::ACTIVE);
 
   return msg;
+}
+
+void LineTrackerMinJerk::gains_callback(std_trackers::GainsConfig &config, uint32_t level)
+{
+  ROS_INFO("Setting gains:  kp: [%2.2f, %2.2f, %2.2f], kd: [%2.2f, %2.2f, %2.2f]",
+      config.kpx, config.kpy, config.kpz, config.kdx, config.kdy, config.kdz);
+
+  kx_[0] = config.kpx;
+  kx_[1] = config.kpy;
+  kx_[2] = config.kpz;
+
+  kv_[0] = config.kdx;
+  kv_[1] = config.kdy;
+  kv_[2] = config.kdz;
 }
 
 #include <pluginlib/class_list_macros.h>

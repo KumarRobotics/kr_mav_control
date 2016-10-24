@@ -16,6 +16,7 @@
   <depend>geometry_msgs</depend>
   <depend>tf</depend>
   <depend>trackers_manager</depend>
+  <depend>dynamic_reconfigure</depend>
 
   <export>
     <trackers_manager plugin="${prefix}/plugin.xml"/>
