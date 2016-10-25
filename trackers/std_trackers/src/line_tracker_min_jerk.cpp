@@ -84,11 +84,6 @@ void LineTrackerMinJerk::Initialize(const ros::NodeHandle &nh, const ros::NodeHa
   sub_goal_ = priv_nh.subscribe("goal", 10, &LineTrackerMinJerk::goal_callback,
                                 this, ros::TransportHints().tcpNoDelay());
 
-  // Set up dynamic reconfigure
-  reconfigure_server_.reset(new ReconfigureServer(config_mutex_, priv_nh));
-  ReconfigureServer::CallbackType f = boost::bind(&LineTrackerMinJerk::gains_callback, this, _1, _2);
-  reconfigure_server_->setCallback(f);
-
   // Use loaded params
   Config config;
   config.kpx = kx_[0];
@@ -97,7 +92,12 @@ void LineTrackerMinJerk::Initialize(const ros::NodeHandle &nh, const ros::NodeHa
   config.kdx = kv_[0];
   config.kdy = kv_[1];
   config.kdz = kv_[2];
+
+  // Set up dynamic reconfigure
+  reconfigure_server_.reset(new ReconfigureServer(config_mutex_, priv_nh));
   reconfigure_server_->updateConfig(config);
+  ReconfigureServer::CallbackType f = boost::bind(&LineTrackerMinJerk::gains_callback, this, _1, _2);
+  reconfigure_server_->setCallback(f);
 }
 
 bool LineTrackerMinJerk::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
