@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <nodelet/nodelet.h>
 #include <nav_msgs/Odometry.h>
+#include <tf/transform_datatypes.h>
 #include <pluginlib/class_loader.h>
 #include <trackers_manager/Tracker.h>
 #include <trackers_manager/Transition.h>
@@ -20,6 +21,7 @@ class TrackersManager : public nodelet::Nodelet
 
   ros::Subscriber sub_odom_;
   ros::Publisher pub_cmd_;
+  ros::Publisher pub_cmd_odom_;
   ros::Publisher pub_status_;
   ros::ServiceServer srv_tracker_;
   pluginlib::ClassLoader<trackers_manager::Tracker> *tracker_loader_;
@@ -84,6 +86,7 @@ void TrackersManager::onInit(void)
                                 ros::TransportHints().tcpNoDelay());
 
   pub_cmd_ = priv_nh.advertise<quadrotor_msgs::PositionCommand>("cmd", 10);
+  pub_cmd_odom_ = priv_nh.advertise<nav_msgs::Odometry>("cmd_odom", 10);
   pub_status_ = priv_nh.advertise<quadrotor_msgs::TrackerStatus>("status", 10);
 
   srv_tracker_ = priv_nh.advertiseService("transition", &TrackersManager::transition_callback, this);
@@ -98,7 +101,22 @@ void TrackersManager::odom_callback(const nav_msgs::Odometry::ConstPtr &msg)
     {
       cmd_ = it->second->update(msg);
       if(cmd_ != NULL)
+      {
         pub_cmd_.publish(cmd_);
+
+        nav_msgs::Odometry cmd_odom_msg;
+        cmd_odom_msg.header.stamp = cmd_->header.stamp;
+        cmd_odom_msg.header.frame_id = "local_origin";
+        cmd_odom_msg.pose.pose.position = cmd_->position;
+        tf::Quaternion q;
+        q.setEuler(0,0,cmd_->yaw);
+        cmd_odom_msg.pose.pose.orientation.x = q.x();
+        cmd_odom_msg.pose.pose.orientation.y = q.y();
+        cmd_odom_msg.pose.pose.orientation.z = q.z();
+        cmd_odom_msg.pose.pose.orientation.w = q.w();
+
+        pub_cmd_odom_.publish(cmd_odom_msg);
+      }
 
       const quadrotor_msgs::TrackerStatus::Ptr status = it->second->status();
       if(status != NULL)
