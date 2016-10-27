@@ -210,8 +210,8 @@ void SO3ControlNodelet::onInit(void)
   corrections_[0] = corrections[0], corrections_[1] = corrections[1], corrections_[2] = corrections[2];
 
   float max_pos_int, max_pos_int_b;
-  n.param("max_pos_int", max_pos_int, 0.5);
-  n.param("mas_pos_int_b", max_pos_int_b, 0.5);
+  n.param("max_pos_int", max_pos_int, 0.5f);
+  n.param("mas_pos_int_b", max_pos_int_b, 0.5f);
   controller_.setMaxIntegral(max_pos_int);
   controller_.setMaxIntegralBody(max_pos_int_b);
 
