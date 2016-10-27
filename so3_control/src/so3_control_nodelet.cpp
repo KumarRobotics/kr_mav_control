@@ -19,6 +19,7 @@ class SO3ControlNodelet : public nodelet::Nodelet
       des_yaw_(0),
       des_yaw_dot_(0),
       current_yaw_(0),
+      current_orientation_(Eigen::Quaternionf::Identity()),
       enable_motors_(false),
       use_external_yaw_(false),
       have_odom_(false),
@@ -46,13 +47,14 @@ class SO3ControlNodelet : public nodelet::Nodelet
   bool position_cmd_updated_, position_cmd_init_;
   std::string frame_id_;
 
-  Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, kx_, kv_, ki_;
+  Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, kx_, kv_, ki_, kib_;
   float des_yaw_, des_yaw_dot_;
   float current_yaw_;
   bool enable_motors_, use_external_yaw_, have_odom_;
   float kR_[3], kOm_[3], corrections_[3];
   float mass_;
   const float g_;
+  Eigen::Quaternionf current_orientation_;
 };
 
 
@@ -65,11 +67,14 @@ void SO3ControlNodelet::publishSO3Command(void)
   }
 
   Eigen::Vector3f ki = Eigen::Vector3f::Zero();
+  Eigen::Vector3f kib = Eigen::Vector3f::Zero();
   if(enable_motors_)
   {
     ki = ki_;
+    kib = kib_;
   }
-  controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki);
+
+  controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki, kib);
 
   const Eigen::Vector3f &force = controller_.getComputedForce();
   const Eigen::Quaternionf &orientation = controller_.getComputedOrientation();
@@ -132,8 +137,12 @@ void SO3ControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 
   current_yaw_ = tf::getYaw(odom->pose.pose.orientation);
 
+  current_orientation_ = Eigen::Quaternionf(odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
+                                            odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
+
   controller_.setPosition(position);
   controller_.setVelocity(velocity);
+  controller_.setCurrentOrientation(current_orientation_);
 
   if(position_cmd_init_)
   {
@@ -196,6 +205,12 @@ void SO3ControlNodelet::onInit(void)
   n.param("gains/ki/y", ki_y, 0.0);
   n.param("gains/ki/z", ki_z, 0.0);
   ki_[0] = ki_x, ki_[1] = ki_y, ki_[2] = ki_z;
+
+  double kib_x, kib_y, kib_z;
+  n.param("gains/kib/x", kib_x, 0.0);
+  n.param("gains/kib/y", kib_y, 0.0);
+  n.param("gains/kib/z", kib_z, 0.0);
+  kib_[0] = kib_x, kib_[1] = kib_y, kib_[2] = kib_z;
 
   double kR[3], kOm[3];
   n.param("gains/rot/x", kR[0], 1.5);
