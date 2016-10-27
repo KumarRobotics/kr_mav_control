@@ -228,6 +228,11 @@ void SO3ControlNodelet::onInit(void)
   n.param("corrections/p", corrections[2], 0.0);
   corrections_[0] = corrections[0], corrections_[1] = corrections[1], corrections_[2] = corrections[2];
 
+  float max_pos_int, max_pos_int_b;
+  n.param("max_pos_int", max_pos_int, 0.5);
+  n.param("mas_pos_int_b", max_pos_int_b, 0.5);
+  controller_.setMaxIntegral(max_pos_int);
+  controller_.setMaxIntegralBody(max_pos_int_b);
 
   odom_sub_ = priv_nh.subscribe("odom", 10, &SO3ControlNodelet::odom_callback, this, ros::TransportHints().tcpNoDelay());
   position_cmd_sub_ = priv_nh.subscribe("position_cmd", 10, &SO3ControlNodelet::position_cmd_callback, this,
