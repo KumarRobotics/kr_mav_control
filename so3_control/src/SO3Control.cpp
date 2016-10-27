@@ -1,9 +1,13 @@
+#include <ros/console.h>
+#include <tf/transform_datatypes.h>
 #include "so3_control/SO3Control.h"
 
 SO3Control::SO3Control()
   : mass_(0.5),
     g_(9.81),
-    max_pos_int_(0.5)
+    max_pos_int_(0.5),
+    max_pos_int_b_(0.5),
+    current_orientation_(Eigen::Quaternionf::Identity())
 {
 }
 
@@ -32,6 +36,16 @@ void SO3Control::setMaxIntegral(const float max_integral)
   max_pos_int_ = max_integral;
 }
 
+void SO3Control::setMaxIntegralBody(const float max_integral_b)
+{
+  max_pos_int_b_ = max_integral_b;
+}
+
+void SO3Control::setCurrentOrientation(const Eigen::Quaternionf q)
+{
+  current_orientation_ = q;
+}
+
 void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
                                   const Eigen::Vector3f &des_vel,
                                   const Eigen::Vector3f &des_acc,
@@ -40,7 +54,8 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
                                   const float des_yaw_dot,
                                   const Eigen::Vector3f &kx,
                                   const Eigen::Vector3f &kv,
-                                  const Eigen::Vector3f &ki)
+                                  const Eigen::Vector3f &ki,
+                                  const Eigen::Vector3f &ki_b)
 {
   const Eigen::Vector3f e_pos = des_pos - pos_;
   const Eigen::Vector3f e_vel = des_vel - vel_;
@@ -56,11 +71,28 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
     else if(pos_int_(i) < -max_pos_int_)
       pos_int_(i) = -max_pos_int_;
   }
+  ROS_INFO_THROTTLE(2, "Integrated world disturbance [N]: {x: %2.2f, y: %2.2f, z: %2.2f}", pos_int_(0), pos_int_(1), pos_int_(2));
+
+  Eigen::Quaternionf q(current_orientation_);
+  const Eigen::Vector3f e_pos_b = q.inverse() * e_pos;
+  for(int i = 0; i < 3; i++)
+  {
+    if(kx(i) != 0)
+      pos_int_b_(i) += ki_b(i) * e_pos_b(i);
+
+    // Limit integral term in the body
+    if(pos_int_b_(i) > max_pos_int_b_)
+      pos_int_b_(i) = max_pos_int_b_;
+    else if(pos_int_b_(i) < -max_pos_int_b_)
+      pos_int_b_(i) = -max_pos_int_b_;
+
+   }
+   ROS_INFO_THROTTLE(2, "Integrated body disturbance [N]: {x: %2.2f, y: %2.2f, z: %2.2f}", pos_int_b_(0), pos_int_b_(1), pos_int_b_(2));
 
   //std::cout << "pos_int: " << pos_int_.transpose() << std::endl;
 
-  force_.noalias() = kx.asDiagonal()*e_pos  + kv.asDiagonal()*e_vel + pos_int_ + mass_*g_*Eigen::Vector3f(0, 0, 1) +
-      mass_ * des_acc;
+  force_.noalias() = kx.asDiagonal()*e_pos + kv.asDiagonal()*e_vel + pos_int_ + q*pos_int_b_ 
+                     + mass_*g_*Eigen::Vector3f(0, 0, 1) + mass_ * des_acc;
 
   //std::cout << "Force: " << force_.transpose() << std::endl;
 
@@ -111,4 +143,5 @@ const Eigen::Vector3f &SO3Control::getComputedAngularVelocity(void)
 void SO3Control::resetIntegrals(void)
 {
   pos_int_ = Eigen::Vector3f::Zero();
+  pos_int_b_ = Eigen::Vector3f::Zero();
 }
