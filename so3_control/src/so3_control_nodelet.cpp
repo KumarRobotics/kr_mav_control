@@ -20,6 +20,7 @@ class SO3ControlNodelet : public nodelet::Nodelet
       current_yaw_(0),
       enable_motors_(false),
       use_external_yaw_(false),
+      have_odom_(false),
       g_(9.81)
   {
     controller_.resetIntegrals();
@@ -46,7 +47,7 @@ class SO3ControlNodelet : public nodelet::Nodelet
   Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, kx_, kv_, ki_;
   float des_yaw_, des_yaw_dot_;
   float current_yaw_;
-  bool enable_motors_, use_external_yaw_;
+  bool enable_motors_, use_external_yaw_, have_odom_;
   float kR_[3], kOm_[3], corrections_[3];
   float mass_;
   const float g_;
@@ -55,6 +56,12 @@ class SO3ControlNodelet : public nodelet::Nodelet
 
 void SO3ControlNodelet::publishSO3Command(void)
 {
+  if (!have_odom_)
+  {
+    ROS_WARN("No odometry! Not publishing SO3Command.");
+    return;
+  }
+
   Eigen::Vector3f ki = Eigen::Vector3f::Zero();
   if(enable_motors_)
   {
@@ -112,6 +119,8 @@ void SO3ControlNodelet::position_cmd_callback(const quadrotor_msgs::PositionComm
 
 void SO3ControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
+  have_odom_ = true;
+
   const Eigen::Vector3f position(odom->pose.pose.position.x,
                                  odom->pose.pose.position.y,
                                  odom->pose.pose.position.z);

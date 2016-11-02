@@ -9,6 +9,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Empty.h>
+#include <std_msgs/UInt8.h>
 #include <tf/transform_datatypes.h>
 
 // quadrotor_control
@@ -26,6 +27,7 @@ MAVManager::MAVManager()
     : nh_(""),
       priv_nh_("~"),
       active_tracker_(""),
+      status_(INIT),
       last_odom_t_(0.0),
       last_imu_t_(0.0),
       last_output_data_t_(0.0),
@@ -49,6 +51,7 @@ MAVManager::MAVManager()
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
   pub_so3_command_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
   pub_position_command_ = nh_.advertise<quadrotor_msgs::PositionCommand>("position_cmd", 10);
+  pub_status_ = priv_nh_.advertise<std_msgs::UInt8>("status", 10);
   // pwm_command_pub_ = nh_ ...
 
   // Subscribers
@@ -84,7 +87,7 @@ MAVManager::MAVManager()
 
   double m;
   if (!nh_.getParam("mass", m))
-    ROS_ERROR("Mass must be set as param.");
+    ROS_ERROR("MAV Manager requires mass to be set as a param.");
   else if (this->set_mass(m))
     ROS_INFO("MAVManager using mass = %2.2f.", mass_);
   else
@@ -125,8 +128,8 @@ bool MAVManager::takeoff() {
 
   if (!this->setHome()) return false;
 
-  if (!this->motors()) {
-    ROS_WARN("Cannot takeoff until motors are enabled.");
+  if (!this->motors() || status_ != IDLE) {
+    ROS_WARN("Cannot takeoff unless motors are idling.");
     return false;
   }
 
@@ -152,12 +155,19 @@ bool MAVManager::takeoff() {
   goal.relative = true;
   pub_goal_line_tracker_distance_.publish(goal);
 
-  return this->transition(line_tracker_distance);
+  if (this->transition(line_tracker_distance))
+  {
+    status_ = FLYING;
+    return true;
+  }
+  else
+    return false;
 }
 
 bool MAVManager::set_mass(float m) {
   if (m>0)
   {
+    // TODO: This should update the mass in so3_control and everywhere else that is necessary.
     mass_ = m;
     return true;
   }
@@ -195,6 +205,12 @@ bool MAVManager::goHome() {
 
 bool MAVManager::land() {
 
+  if (!this->motors() || status_ != FLYING)
+  {
+    ROS_WARN("Not landing since the robot is not already flying.");
+    return false;
+  }
+
   ROS_INFO("Initiating landing sequence...");
   quadrotor_msgs::LineTrackerGoal goal;
   goal.x = pos_(0);
@@ -206,6 +222,12 @@ bool MAVManager::land() {
 }
 
 bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a_des, bool relative) {
+
+  if (!this->motors() || status_ != FLYING)
+  {
+    ROS_WARN("The robot must be flying before using the goTo method.");
+    return false;
+  }
 
   quadrotor_msgs::LineTrackerGoal goal;
   goal.x   = x;
@@ -241,6 +263,12 @@ bool MAVManager::goToYaw(float yaw) {
 // World Velocity commands
 bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw, bool use_position_feedback) {
 
+  if (!this->motors() || status_ != FLYING)
+  {
+    ROS_WARN("The robot must be flying with motors on before setting a desired velocity.");
+    return false;
+  }
+
   quadrotor_msgs::FlatOutputs goal;
   goal.x = x;
   goal.y = y;
@@ -275,7 +303,7 @@ bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand &msg) 
   // TODO: Need to keep publishing a position command if there is no update.
   // Otherwise, no so3_command will be published.
 
-  if (this->motors())
+  if (this->motors() && status_ != ESTOP)
   {
     bool flag(true);
 
@@ -291,7 +319,7 @@ bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand &msg) 
   }
   else
   {
-    ROS_WARN("You are trying to set a position command, but the motors have not been enabled yet");
+    ROS_WARN("Refusing to set PositionCommand since motors are off or robot is not flying.");
     return false;
   }
 }
@@ -301,7 +329,7 @@ bool MAVManager::setSO3Command(const quadrotor_msgs::SO3Command &msg) {
   // Note: To enable motors, the motors method must be used
   if (!this->motors())
   {
-    ROS_WARN("Cannot publish an SO3Command until motors have been enabled using the motors method");
+    ROS_WARN("Refusing to publish an SO3Command until motors have been enabled using the motors method.");
     return false;
   }
 
@@ -361,6 +389,7 @@ bool MAVManager::set_motors(bool motors) {
     pub_so3_command_.publish(so3_cmd);
 
   motors_ = motors;
+  status_ = motors_ ? IDLE : MOTORS_OFF;
   return true;
 }
 
@@ -414,6 +443,11 @@ void MAVManager::heartbeat() {
   else
     last_heartbeat_t_ = t;
 
+  // Publish the status
+  std_msgs::UInt8 status_msg;
+  status_msg.data = status_;
+  pub_status_.publish(status_msg);
+
   // Checking for odom
   if (this->motors() && need_odom_ && !this->have_recent_odom()) {
     ROS_WARN("No recent odometry!");
@@ -439,6 +473,8 @@ void MAVManager::heartbeat() {
     // Determine a geodesic angle from hover at the same yaw
     double yaw, pitch, roll;
     tf::Matrix3x3 R;
+
+    // TODO: Don't check mocap odom if we have imu feedback
 
     // If we don't have IMU feedback, imu_q_ will be the identity rotation
     tf::Matrix3x3(imu_q).getEulerYPR(yaw, pitch, roll);
@@ -500,7 +536,7 @@ bool MAVManager::eland() {
   // TODO: This should also check a height threshold or something along those
   // lines. For example, if the rotors are idle and the robot hasn't even
   // left the ground, we don't want them to spin up faster.
-  if (this->motors())
+  if (this->motors() && (status_ == FLYING || status_ == ELAND))
   {
     ROS_WARN("Emergency Land");
 
@@ -508,7 +544,13 @@ bool MAVManager::eland() {
     goal.acceleration.z = - 0.45f;
     goal.yaw = yaw_;
 
-    return this->setPositionCommand(goal);
+    if (this->setPositionCommand(goal))
+    {
+      status_ = ELAND;
+      return true;
+    }
+    else
+      return false;
   }
   else
     return this->set_motors(false);
@@ -521,7 +563,13 @@ bool MAVManager::estop() {
   pub_estop_.publish(estop_cmd);
 
   // Disarm motors
-  return this->set_motors(false);
+  if (this->set_motors(false))
+  {
+    status_ = ESTOP;
+    return true;
+  }
+  else
+    return false;
 }
 
 bool MAVManager::hover() {
@@ -561,6 +609,13 @@ bool MAVManager::hover() {
 }
 
 bool MAVManager::ehover() {
+
+  if (!this->motors() || status_ != FLYING)
+  {
+    ROS_WARN("Will not call emergency hover unless the robot is already flying.");
+    return false;
+  }
+
   quadrotor_msgs::LineTrackerGoal goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
