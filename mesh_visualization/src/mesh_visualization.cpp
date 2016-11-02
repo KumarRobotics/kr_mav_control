@@ -77,10 +77,10 @@ int main(int argc, char **argv)
 
   nh.param("new_frame_id", new_frame_id, std::string(""));
 
-  ros::Subscriber any_sub = nh.subscribe("input", 10, &any_callback,
-                                         ros::TransportHints().tcpNoDelay());
   pub_vis = nh.advertise<visualization_msgs::Marker>("robot", 10);
 
+  ros::Subscriber any_sub = nh.subscribe("input", 10, &any_callback,
+                                         ros::TransportHints().tcpNoDelay());
   ros::spin();
 
   return 0;
