@@ -203,6 +203,9 @@ void SO3ControlNodelet::onInit(void)
   n.param("corrections/p", corrections[2], 0.0);
   corrections_[0] = corrections[0], corrections_[1] = corrections[1], corrections_[2] = corrections[2];
 
+  double max_tilt_angle;
+  n.param("max_tilt_angle", max_tilt_angle, M_PI);
+  controller_.setMaxTiltAngle(max_tilt_angle);
 
   so3_command_pub_ = n.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
 
