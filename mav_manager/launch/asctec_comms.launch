@@ -1,8 +1,8 @@
 <launch>
 
   <arg name="slow_baud_rate"/>
-  <arg name="standalone" default="false"/>
-  <arg name="nodelet_name" default="standalone_nodelet"/>
+  <arg name="start_nodelet_manager" default="false"/>
+  <arg name="nodelet_manager_name" default="nodelet_manager"/>
   <arg name="device" default="/dev/ttyUSB0"/>
 
   <!-- Arguments for running quad_serial_comm on a remote machine -->
@@ -11,16 +11,16 @@
 
   <node pkg="nodelet"
     type="nodelet"
-    name="$(arg nodelet_name)"
+    name="$(arg nodelet_manager_name)"
     args="manager"
     output="screen"
-    if="$(arg standalone)"/>
+    if="$(arg start_nodelet_manager)"/>
 
   <!-- Run quad_serial_comm locally -->
   <node pkg="nodelet"
     type="nodelet"
     name="quad_serial_comm"
-    args="load quad_serial_comm/QuadSerialComm $(arg nodelet_name)"
+    args="load quad_serial_comm/QuadSerialComm $(arg nodelet_manager_name)"
     output="screen"
     unless="$(arg remote)">
     <param name="device" value="$(arg device)"/>
@@ -48,7 +48,7 @@
   <node pkg="nodelet"
     type="nodelet"
     name="quad_encode_msg"
-    args="load quad_encode_msg/QuadEncodeMsg $(arg nodelet_name)"
+    args="load quad_encode_msg/QuadEncodeMsg $(arg nodelet_manager_name)"
     output="screen">
     <remap from="~so3_cmd" to="so3_cmd"/>
     <remap from="~serial_msg" to="to_robot"/>
@@ -57,7 +57,7 @@
   <node pkg="nodelet"
     type="nodelet"
     name="quad_decode_msg"
-    args="load quad_decode_msg/QuadDecodeMsg $(arg nodelet_name)"
+    args="load quad_decode_msg/QuadDecodeMsg $(arg nodelet_manager_name)"
     output="screen">
     <remap from="~serial" to="from_robot"/>
   </node>
