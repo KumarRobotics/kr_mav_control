@@ -4,7 +4,7 @@ Ixx: 0.000601
 Iyy: 0.000589
 Izz: 0.001076
 thrust_coefficient: 4.1790e-09
-prop_radius: 0.099
+prop_radius: 0.05
 arm_length: 0.1075
 motor_time_constant: 0.05
 min_rpm: 5500
