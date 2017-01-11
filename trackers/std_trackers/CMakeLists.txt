@@ -15,28 +15,28 @@ include_directories(include ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES
+  LIBRARIES flat_state
   CATKIN_DEPENDS geometry_msgs tf trackers_manager
   DEPENDS Eigen)
 
-add_library(initial_conditions src/initial_conditions.cpp)
-target_link_libraries(initial_conditions ${catkin_LIBRARIES})
+add_library(flat_state src/flat_state.cpp)
+target_link_libraries(flat_state ${catkin_LIBRARIES})
 
 add_library(line_tracker_min_jerk src/line_tracker_min_jerk.cpp)
 add_dependencies(line_tracker_min_jerk ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(line_tracker_min_jerk initial_conditions ${catkin_LIBRARIES})
+target_link_libraries(line_tracker_min_jerk flat_state ${catkin_LIBRARIES})
 
 add_library(line_tracker_trapezoid src/line_tracker_trapezoid.cpp)
 add_dependencies(line_tracker_trapezoid ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(line_tracker_trapezoid initial_conditions ${catkin_LIBRARIES})
+target_link_libraries(line_tracker_trapezoid flat_state ${catkin_LIBRARIES})
 
 add_library(line_tracker_distance src/line_tracker_distance.cpp)
 add_dependencies(line_tracker_distance ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(line_tracker_distance initial_conditions ${catkin_LIBRARIES})
+target_link_libraries(line_tracker_distance flat_state ${catkin_LIBRARIES})
 
 add_library(line_tracker_yaw src/line_tracker_yaw.cpp)
 add_dependencies(line_tracker_yaw ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(line_tracker_yaw initial_conditions ${catkin_LIBRARIES})
+target_link_libraries(line_tracker_yaw flat_state ${catkin_LIBRARIES})
 
 add_library(null_tracker src/null_tracker.cpp)
 add_dependencies(null_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
@@ -47,7 +47,7 @@ add_dependencies(velocity_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_E
 target_link_libraries(velocity_tracker ${catkin_LIBRARIES})
 
 install(TARGETS
-    initial_conditions
+    flat_state
     line_tracker_min_jerk
     line_tracker_trapezoid
     line_tracker_distance
@@ -59,4 +59,5 @@ install(TARGETS
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 install(FILES plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

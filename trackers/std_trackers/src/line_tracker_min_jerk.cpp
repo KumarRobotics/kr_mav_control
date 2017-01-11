@@ -5,7 +5,7 @@
 #include <quadrotor_msgs/TrackerStatus.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
-#include <initial_conditions.h>
+#include <std_trackers/flat_state.h>
 
 class LineTrackerMinJerk : public trackers_manager::Tracker
 {
@@ -36,7 +36,7 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
   float v_des_, a_des_, yaw_v_des_, yaw_a_des_;
   bool active_;
 
-  InitialConditions ICs_;
+  FlatState ICs_;
   Eigen::Vector3f goal_;
   ros::Time traj_start_;
   float traj_duration_;

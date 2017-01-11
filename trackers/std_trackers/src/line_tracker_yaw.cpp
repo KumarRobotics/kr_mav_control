@@ -4,7 +4,7 @@
 #include <quadrotor_msgs/TrackerStatus.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
-#include <initial_conditions.h>
+#include <std_trackers/flat_state.h>
 
 class LineTrackerYaw : public trackers_manager::Tracker
 {
@@ -29,7 +29,7 @@ class LineTrackerYaw : public trackers_manager::Tracker
   bool active_;
   ros::Time traj_start_;
 
-  InitialConditions ICs_;
+  FlatState ICs_;
   Eigen::Vector3f start_pos_, goal_pos_, pos_;
   Eigen::Vector3f translation_dir_;
   float translation_dist_;

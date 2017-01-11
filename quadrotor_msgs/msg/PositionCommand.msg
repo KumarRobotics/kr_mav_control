@@ -3,7 +3,9 @@ geometry_msgs/Point position
 geometry_msgs/Vector3 velocity
 geometry_msgs/Vector3 acceleration
 geometry_msgs/Vector3 jerk
+geometry_msgs/Vector3 snap
 float64 yaw
 float64 yaw_dot
+float64 yaw_ddot
 float64[3] kx
 float64[3] kv
