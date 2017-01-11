@@ -233,6 +233,12 @@ void SO3ControlNodelet::onInit(void)
   n.param("mas_pos_int_b", max_pos_int_b, 0.5f);
   controller_.setMaxIntegral(max_pos_int);
   controller_.setMaxIntegralBody(max_pos_int_b);
+  
+  double max_tilt_angle;
+  n.param("max_tilt_angle", max_tilt_angle, M_PI);
+  controller_.setMaxTiltAngle(max_tilt_angle);
+
+  so3_command_pub_ = priv_nh.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
 
   odom_sub_ = priv_nh.subscribe("odom", 10, &SO3ControlNodelet::odom_callback, this, ros::TransportHints().tcpNoDelay());
   position_cmd_sub_ = priv_nh.subscribe("position_cmd", 10, &SO3ControlNodelet::position_cmd_callback, this,
@@ -243,8 +249,6 @@ void SO3ControlNodelet::onInit(void)
                                  ros::TransportHints().tcpNoDelay());
   mass_sub_ = priv_nh.subscribe("set_mass", 10, &SO3ControlNodelet::mass_callback, this,
                                  ros::TransportHints().tcpNoDelay());
-
-  so3_command_pub_ = priv_nh.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
 }
 
 #include <pluginlib/class_list_macros.h>

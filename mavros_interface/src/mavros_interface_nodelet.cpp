@@ -26,6 +26,7 @@ class MavrosInterface : public nodelet::Nodelet
   bool odom_set_, imu_set_, so3_cmd_set_;
   Eigen::Quaterniond odom_q_, mavros_q_;
   double kf_, lin_cof_a_, lin_int_b_;
+  int num_props_;
 
   ros::Publisher attitude_raw_pub_;
   ros::Publisher odom_pub_;      // For conversion to our convention
@@ -120,7 +121,7 @@ void MavrosInterface::so3_cmd_callback(
   const tf::Quaternion tf_imu_odom_yaw = imu_tf_yaw * odom_tf_yaw.inverse();
 
   // transform!
-  Eigen::Quaterniond q_des_transformed =
+  const Eigen::Quaterniond q_des_transformed =
       Eigen::Quaterniond(tf_imu_odom_yaw.w(), tf_imu_odom_yaw.x(),
                          tf_imu_odom_yaw.y(), tf_imu_odom_yaw.z()) *
       q_des;
@@ -141,11 +142,10 @@ void MavrosInterface::so3_cmd_callback(
 
   double throttle = f_des(0) * R_cur(0, 2) + f_des(1) * R_cur(1, 2) + f_des(2) * R_cur(2, 2);
 
-  // Scale force to be proportional to rotor velocity (rad/s).
-  // Note: This ignores the number of propellers.
-  throttle = std::sqrt(throttle / kf_);
+  // Scale force to individual rotor velocities (rad/s).
+  throttle = std::sqrt(throttle / num_props_ / kf_);
 
-  // Scaling from proportional rotor velocity (rad/s) to att_throttle for pixhawk
+  // Scaling from rotor velocity (rad/s) to att_throttle for pixhawk
   throttle = lin_cof_a_ * throttle + lin_int_b_;
 
   // clamp from 0.0 to 1.0
@@ -180,19 +180,22 @@ void MavrosInterface::onInit(void)
   ros::NodeHandle priv_nh(getPrivateNodeHandle());
 
   // get thrust scaling parameters
-  // Note that this is ignoring a constant based on the number of props, which
-  // is captured with the lin_cof_a variable later.
-  if(priv_nh.getParam("kf", kf_))
-    ROS_INFO("Using kf=%F so that prop speed = sqrt(f / kf) to scale force to speed.", kf_);
+  if(priv_nh.getParam("num_props", num_props_))
+    ROS_INFO("Got number of props: %d", num_props_);
   else
-    ROS_ERROR("Must set kf param for thrust scaling. Motor speed = sqrt(thrust / kf)");
+    ROS_ERROR("Must set num_props param");
 
-  ROS_ASSERT_MSG(kf_ > 0, "kf must be positive. kf = %d", kf_);
+  if(priv_nh.getParam("kf", kf_))
+    ROS_INFO("Using kf=%g so that prop speed = sqrt(f / num_props / kf) to scale force to speed.", kf_);
+  else
+    ROS_ERROR("Must set kf param for thrust scaling. Motor speed = sqrt(thrust / num_props / kf)");
+
+  ROS_ASSERT_MSG(kf_ > 0, "kf must be positive. kf = %g", kf_);
 
   // get thrust scaling parameters
   if(priv_nh.getParam("lin_cof_a", lin_cof_a_) &&
      priv_nh.getParam("lin_int_b", lin_int_b_))
-    ROS_INFO("Using %F*x + %F to scale prop speed to att_throttle.", lin_cof_a_,
+    ROS_INFO("Using %g*x + %g to scale prop speed to att_throttle.", lin_cof_a_,
              lin_int_b_);
   else
     ROS_ERROR("Must set coefficients for thrust scaling (scaling from rotor "

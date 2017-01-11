@@ -7,7 +7,8 @@ SO3Control::SO3Control()
     g_(9.81),
     max_pos_int_(0.5),
     max_pos_int_b_(0.5),
-    current_orientation_(Eigen::Quaternionf::Identity())
+    current_orientation_(Eigen::Quaternionf::Identity()),
+    cos_max_tilt_angle_(-1.0)
 {
 }
 
@@ -44,6 +45,12 @@ void SO3Control::setMaxIntegralBody(const float max_integral_b)
 void SO3Control::setCurrentOrientation(const Eigen::Quaternionf q)
 {
   current_orientation_ = q;
+}
+
+void SO3Control::setMaxTiltAngle(const float max_tilt_angle)
+{
+  if(max_tilt_angle > 0 && max_tilt_angle <= M_PI)
+    cos_max_tilt_angle_ = std::cos(max_tilt_angle);
 }
 
 void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
@@ -91,23 +98,37 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
 
   //std::cout << "pos_int: " << pos_int_.transpose() << std::endl;
 
-  force_.noalias() = kx.asDiagonal()*e_pos + kv.asDiagonal()*e_vel + pos_int_ + q*pos_int_b_ 
-                     + mass_*g_*Eigen::Vector3f(0, 0, 1) + mass_ * des_acc;
+  const Eigen::Vector3f acc_grav = g_ * Eigen::Vector3f::UnitZ();
+  const Eigen::Vector3f acc_control = kx.asDiagonal() * e_pos + kv.asDiagonal() * e_vel + pos_int_ + q*pos_int_b_ + des_acc;
+  Eigen::Vector3f acc_total = acc_control + acc_grav;
+
+  // Check and limit tilt angle
+  float lambda = 1.0f;
+  if(Eigen::Vector3f::UnitZ().dot(acc_total.normalized()) < cos_max_tilt_angle_)
+  {
+    const float x = acc_control.x(), y = acc_control.y(), z = acc_control.z();
+    const float cot_max_tilt_angle = cos_max_tilt_angle_ / std::sqrt(1 - cos_max_tilt_angle_ * cos_max_tilt_angle_);
+    lambda = -g_ / (z - std::sqrt(x * x + y * y) * cot_max_tilt_angle);
+    if(lambda > 0 && lambda <= 1)
+      acc_total = lambda * acc_control + acc_grav;
+  }
+
+  force_.noalias() = mass_ * acc_total;
 
   //std::cout << "Force: " << force_.transpose() << std::endl;
 
   Eigen::Vector3f b1c, b2c, b3c;
-  Eigen::Vector3f b2d(-std::sin(des_yaw), std::cos(des_yaw), 0);
+  const Eigen::Vector3f b2d(-std::sin(des_yaw), std::cos(des_yaw), 0);
 
   if(force_.norm() > 1e-6)
     b3c.noalias() = force_.normalized();
   else
-    b3c.noalias() = Eigen::Vector3f(0, 0, 1);
+    b3c.noalias() = Eigen::Vector3f::UnitZ();
 
   b1c.noalias() = b2d.cross(b3c).normalized();
   b2c.noalias() = b3c.cross(b1c).normalized();
 
-  const Eigen::Vector3f force_dot = kx.asDiagonal()*e_vel + mass_*des_jerk; // Ignoring kv*e_acc and ki*e_pos terms
+  const Eigen::Vector3f force_dot = mass_*lambda*(kx.asDiagonal()*e_vel + des_jerk); // Ignoring kv*e_acc and ki*e_pos terms
   const Eigen::Vector3f b3c_dot = b3c.cross(force_dot/force_.norm()).cross(b3c);
   const Eigen::Vector3f b2d_dot(-std::cos(des_yaw)*des_yaw_dot, -std::sin(des_yaw)*des_yaw_dot, 0);
   const Eigen::Vector3f b1c_dot = b1c.cross(((b2d_dot.cross(b3c)+b2d.cross(b3c_dot))/(b2d.cross(b3c)).norm()).cross(b1c));
@@ -122,7 +143,6 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
 
   const Eigen::Matrix3f omega_hat = R.transpose()*R_dot;
   angular_velocity_ = Eigen::Vector3f(omega_hat(2,1), omega_hat(0,2), omega_hat(1,0));
-
 }
 
 const Eigen::Vector3f &SO3Control::getComputedForce(void)

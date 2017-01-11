@@ -16,6 +16,7 @@ class SO3Control
   void setMaxIntegralBody(const float max_integral_b);
   void setCurrentOrientation(const Eigen::Quaternionf curent_orientation);
   void resetIntegrals(void);
+  void setMaxTiltAngle(const float max_tilt_angle);
 
   void calculateControl(const Eigen::Vector3f &des_pos,
                         const Eigen::Vector3f &des_vel,
@@ -43,6 +44,7 @@ class SO3Control
   float max_pos_int_;
   float max_pos_int_b_;
   Eigen::Quaternionf current_orientation_;
+  float cos_max_tilt_angle_;
 
   // Outputs of the controller
   Eigen::Vector3f force_;
