@@ -4,7 +4,7 @@
 #include <quadrotor_msgs/TrackerStatus.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
-#include <initial_conditions.h>
+#include <std_trackers/flat_state.h>
 
 class LineTrackerDistance : public trackers_manager::Tracker
 {
@@ -27,7 +27,7 @@ class LineTrackerDistance : public trackers_manager::Tracker
   float v_des_, a_des_;
   bool active_;
 
-  InitialConditions ICs_;
+  FlatState ICs_;
   Eigen::Vector3f start_, goal_, pos_;
   float yaw_, start_yaw_;
   double kx_[3], kv_[3];
