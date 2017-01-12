@@ -4,6 +4,7 @@
 #include <quadrotor_msgs/TrackerStatus.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
+#include <initial_conditions.h>
 
 class LineTrackerTrapezoid : public trackers_manager::Tracker
 {
@@ -28,6 +29,7 @@ class LineTrackerTrapezoid : public trackers_manager::Tracker
   float v_des_, a_des_;
   bool active_;
 
+  InitialConditions ICs_;
   Eigen::Vector3f start_pos_, goal_, pos_;
   ros::Time traj_start_;
   float cur_yaw_, start_yaw_;
@@ -79,6 +81,7 @@ bool LineTrackerTrapezoid::Activate(const quadrotor_msgs::PositionCommand::Const
 
 void LineTrackerTrapezoid::Deactivate(void)
 {
+  ICs_.reset();
   goal_set_ = false;
   active_ = false;
 }
@@ -90,6 +93,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerTrapezoid::update(con
   pos_(2) = msg->pose.pose.position.z;
   cur_yaw_ = tf::getYaw(msg->pose.pose.orientation);
   pos_set_ = true;
+  ICs_.set_from_odom(msg);
 
   const ros::Time t_now = msg->header.stamp;
 
@@ -107,11 +111,11 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerTrapezoid::update(con
   if(goal_set_)
   {
     traj_start_ = t_now;
-    start_pos_ = pos_;
-    start_yaw_ = cur_yaw_;
+    start_pos_ = ICs_.pos();
+    start_yaw_ = ICs_.yaw();
     cmd->yaw = start_yaw_;
 
-    const float total_dist = (goal_-pos_).norm();
+    const float total_dist = (goal_-start_pos_).norm();
     if(total_dist > v_des_*v_des_/a_des_)
     {
       t_accel_ = v_des_/a_des_;
@@ -130,6 +134,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerTrapezoid::update(con
     cmd->position.x = goal_(0), cmd->position.y = goal_(1), cmd->position.z = goal_(2);
     cmd->velocity.x = 0, cmd->velocity.y = 0, cmd->velocity.z = 0;
     cmd->acceleration.x = 0, cmd->acceleration.y = 0, cmd->acceleration.z = 0;
+    ICs_.set_from_cmd(cmd);
     return cmd;
   }
 
@@ -175,6 +180,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerTrapezoid::update(con
   cmd->position.x = x(0), cmd->position.y = x(1), cmd->position.z = x(2);
   cmd->velocity.x = v(0), cmd->velocity.y = v(1), cmd->velocity.z = v(2);
   cmd->acceleration.x = a(0), cmd->acceleration.y = a(1), cmd->acceleration.z = a(2);
+  ICs_.set_from_cmd(cmd);
   return cmd;
 }
 
@@ -183,6 +189,9 @@ void LineTrackerTrapezoid::goal_callback(const quadrotor_msgs::LineTrackerGoal::
   goal_(0) = msg->x;
   goal_(1) = msg->y;
   goal_(2) = msg->z;
+
+  if (msg->relative)
+    goal_ += ICs_.pos();
 
   if (msg->v_des > 0)
     v_des_ = msg->v_des;

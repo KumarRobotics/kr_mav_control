@@ -4,7 +4,7 @@
 // Standard C++
 #include <string>
 #include <Eigen/Geometry>
-#include <array> 
+#include <array>
 
 // ROS related
 #include <ros/ros.h>
@@ -28,6 +28,14 @@ class MAVManager
     typedef Eigen::Vector4f    Vec4;
     typedef Eigen::Quaternionf Quat;
 
+    enum Status {
+      INIT,
+      MOTORS_OFF,
+      IDLE,
+      ELAND,
+      ESTOP,
+      FLYING};
+
     MAVManager();
 
     // Accessors
@@ -41,6 +49,7 @@ class MAVManager
     bool need_imu() { return need_imu_; }
     bool need_odom() { return need_odom_; }
     uint8_t tracker_status() { return tracker_status_; }
+    Status status() { return status_; }
 
     // Mutators
     bool set_mass(float m);
@@ -56,13 +65,14 @@ class MAVManager
     // Movement
     bool takeoff();
 
-    bool goTo(float x, float y, float z, float yaw, float v_des = 0, float a_des = 0);
+    bool goTo(float x, float y, float z, float yaw, float v_des = 0.0f, float a_des = 0.0f, bool relative = false);
     bool goTo(Vec4 xyz_yaw, Vec2 v_and_a_des = Vec2::Zero());
     bool goTo(Vec3 xyz, float yaw, Vec2 v_and_a_des = Vec2::Zero());
     bool goTo(Vec3 xyz, Vec2 v_and_a_des = Vec2::Zero());  // Uses Current yaw
 
-    bool setDesVelInWorldFrame(float x, float y, float z, float yaw);
-    bool setDesVelInBodyFrame(float x, float y, float z, float yaw);
+    bool setDesVelInWorldFrame(float x, float y, float z, float yaw, bool use_position_feedback = false);
+    bool setDesVelInBodyFrame(float x, float y, float z, float yaw, bool use_position_feedback = false);
+
     // Yaw control
     bool goToYaw(float);
 
@@ -94,6 +104,9 @@ class MAVManager
     bool estop();
 
   protected:
+    bool transition(const std::string &tracker_str);
+
+  //private:
 
     ros::NodeHandle nh_;
     ros::NodeHandle priv_nh_;
@@ -107,7 +120,8 @@ class MAVManager
 
     std::string active_tracker_;
     uint8_t tracker_status_;
-    //bool transition(const std::string &tracker_str);
+
+    Status status_;
 
     ros::Time last_odom_t_, last_imu_t_, last_output_data_t_, last_heartbeat_t_;
 
@@ -118,6 +132,7 @@ class MAVManager
     float yaw_, yaw_dot_;
     float takeoff_height_;
     float max_attitude_angle_;
+    float odom_timeout_;
 
     Vec3 home_, goal_;
     float goal_yaw_, home_yaw_;
@@ -138,6 +153,7 @@ class MAVManager
       pub_goal_yaw_,
       pub_so3_command_,
       pub_position_command_,
+      pub_status_,
       pub_pwm_command_;
 
     // Subscribers

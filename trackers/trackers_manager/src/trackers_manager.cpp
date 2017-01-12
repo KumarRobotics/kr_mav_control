@@ -71,19 +71,19 @@ void TrackersManager::onInit(void)
     }
     catch(pluginlib::LibraryLoadException &e)
     {
-      NODELET_ERROR_STREAM("Could not load library for the tracker " << tracker_name);
+      NODELET_ERROR_STREAM("Could not load library for the tracker " << tracker_name << ": " << e.what());
     }
     catch(pluginlib::CreateClassException &e)
     {
-      NODELET_ERROR_STREAM("Could not create an instance of the tracker " << tracker_name);
+      NODELET_ERROR_STREAM("Could not create an instance of the tracker " << tracker_name << ": " << e.what());
     }
   }
 
-  sub_odom_ = priv_nh.subscribe("odom", 10, &TrackersManager::odom_callback, this,
-                                ros::TransportHints().tcpNoDelay());
-
   pub_cmd_ = priv_nh.advertise<quadrotor_msgs::PositionCommand>("cmd", 10);
   pub_status_ = priv_nh.advertise<quadrotor_msgs::TrackerStatus>("status", 10);
+
+  sub_odom_ = priv_nh.subscribe("odom", 10, &TrackersManager::odom_callback, this,
+                                ros::TransportHints().tcpNoDelay());
 
   srv_tracker_ = priv_nh.advertiseService("transition", &TrackersManager::transition_callback, this);
 }

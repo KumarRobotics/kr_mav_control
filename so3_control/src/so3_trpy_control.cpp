@@ -7,7 +7,6 @@
 #include <std_msgs/Bool.h>
 #include <Eigen/Geometry>
 #include <so3_control/SO3Control.h>
-#include <tf/transform_datatypes.h>
 
 #define CLAMP(x,min,max) ((x) < (min)) ? (min) : ((x) > (max)) ? (max) : (x)
 
@@ -81,10 +80,10 @@ void SO3TRPYControlNodelet::publishCommand(void)
   const Eigen::Matrix3f R_des(q_des);
   const Eigen::Matrix3f R_cur(current_orientation_);
 
-  const float yaw_cur = atan2f(R_cur(1,0), R_cur(0,0));
-  const float yaw_des = atan2f(R_des(1,0), R_des(0,0));
-  const float pitch_des = -asinf(R_des(2,0));
-  const float roll_des = atan2f(R_des(2,1), R_des(2,2));
+  const float yaw_cur = std::atan2(R_cur(1,0), R_cur(0,0));
+  const float yaw_des = std::atan2(R_des(1,0), R_des(0,0));
+  const float pitch_des = -std::asin(R_des(2,0));
+  const float roll_des = std::atan2(R_des(2,1), R_des(2,2));
 
   const float Psi = 0.5f*(3.0f - (R_des(0,0)*R_cur(0,0) + R_des(1,0)*R_cur(1,0) + R_des(2,0)*R_cur(2,0) +
                                   R_des(0,1)*R_cur(0,1) + R_des(1,1)*R_cur(1,1) + R_des(2,1)*R_cur(2,1) +
@@ -248,6 +247,10 @@ void SO3TRPYControlNodelet::onInit(void)
   n.param("corrections/r", corrections[1], 0.0);
   n.param("corrections/p", corrections[2], 0.0);
   corrections_[0] = corrections[0], corrections_[1] = corrections[1], corrections_[2] = corrections[2];
+
+  double max_tilt_angle;
+  n.param("max_tilt_angle", max_tilt_angle, M_PI);
+  controller_.setMaxTiltAngle(max_tilt_angle);
 
   trpy_command_pub_ = n.advertise<quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
 

@@ -4,6 +4,7 @@
       type="quadrotor_simulator_so3"
       name="quadrotor_simulator_so3"
       output="screen">
+      <rosparam file="$(find quadrotor_simulator)/config/hummingbird_params.yaml"/>
       <param name="rate/odom" value="100.0"/>
       <remap from="~odom" to="odom"/>
       <remap from="~cmd" to="so3_cmd"/>
@@ -51,7 +52,7 @@
       <param name="color/g" value="0.0"/>
       <param name="color/b" value="1.0"/>
       <param name="color/a" value="0.7"/>
-      <remap from="~odom" to="odom"/>
+      <remap from="~input" to="odom"/>
     </node>
 
   </group>

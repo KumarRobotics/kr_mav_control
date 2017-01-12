@@ -67,14 +67,14 @@ void QuadEncodeMsg::onInit(void)
 
   priv_nh.param("channel", channel_, 0);
 
+  serial_msg_pub_ = priv_nh.advertise<quadrotor_msgs::Serial>("serial_msg", 10);
+
   so3_cmd_sub_ = priv_nh.subscribe("so3_cmd", 10, &QuadEncodeMsg::so3_cmd_callback, this,
                                                   ros::TransportHints().tcpNoDelay());
   trpy_cmd_sub_ = priv_nh.subscribe("trpy_cmd", 10, &QuadEncodeMsg::trpy_cmd_callback, this,
                                     ros::TransportHints().tcpNoDelay());
   pwm_cmd_sub_ = priv_nh.subscribe("pwm_cmd", 10, &QuadEncodeMsg::pwm_cmd_callback, this,
                                                   ros::TransportHints().tcpNoDelay());
-
-  serial_msg_pub_ = priv_nh.advertise<quadrotor_msgs::Serial>("serial_msg", 10);
 }
 
 #include <pluginlib/class_list_macros.h>

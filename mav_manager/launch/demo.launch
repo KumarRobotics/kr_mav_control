@@ -26,7 +26,9 @@
       type="quadrotor_simulator_so3"
       name="quadrotor_simulator_so3"
       output="screen"
+      clear_params="true"
       if="$(arg sim)">
+      <rosparam file="$(find quadrotor_simulator)/config/hummingbird_params.yaml"/>
       <param name="rate/odom" value="100.0"/>
       <param name="mass" value="$(arg mass)"/>
       <remap from="~odom" to="odom"/>
@@ -44,6 +46,7 @@
       type="nodelet"
       name="trackers_manager"
       args="load trackers_manager/TrackersManager standalone_nodelet"
+      clear_params="true"
       output="screen">
       <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
       <rosparam file="$(find so3_control)/config/gains.yaml"/>
@@ -56,6 +59,7 @@
       args="load so3_control/SO3ControlNodelet standalone_nodelet"
       name="so3_control"
       required="true"
+      clear_params="true"
       output="screen">
       <rosparam file="$(find so3_control)/config/gains.yaml"/>
       <param name="mass" value="$(arg mass)"/>
@@ -75,7 +79,7 @@
       <param name="color/g" value="0.0"/>
       <param name="color/b" value="1.0"/>
       <param name="color/a" value="0.7"/>
-      <remap from="~odom" to="odom"/>
+      <remap from="~input" to="odom"/>
     </node>
 
     <!-- For serial communication -->
@@ -97,6 +101,7 @@
       name="quad_encode_msg"
       args="load quad_encode_msg/QuadEncodeMsg standalone_nodelet"
       output="screen"
+      clear_params="true"
       unless="$(arg sim)">
       <remap from="~so3_cmd" to="so3_cmd"/>
       <remap from="~serial_msg" to="to_robot"/>
@@ -107,6 +112,7 @@
       name="quad_decode_msg"
       args="load quad_decode_msg/QuadDecodeMsg standalone_nodelet"
       output="screen"
+      clear_params="true"
       unless="$(arg sim)">
       <remap from="~serial" to="from_robot"/>
     </node>

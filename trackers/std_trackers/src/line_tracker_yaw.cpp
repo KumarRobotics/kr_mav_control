@@ -4,6 +4,7 @@
 #include <quadrotor_msgs/TrackerStatus.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
+#include <initial_conditions.h>
 
 class LineTrackerYaw : public trackers_manager::Tracker
 {
@@ -28,6 +29,7 @@ class LineTrackerYaw : public trackers_manager::Tracker
   bool active_;
   ros::Time traj_start_;
 
+  InitialConditions ICs_;
   Eigen::Vector3f start_pos_, goal_pos_, pos_;
   Eigen::Vector3f translation_dir_;
   float translation_dist_;
@@ -91,6 +93,7 @@ bool LineTrackerYaw::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &c
 
 void LineTrackerYaw::Deactivate(void)
 {
+  ICs_.reset();
   goal_set_ = false;
   active_ = false;
 }
@@ -102,6 +105,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerYaw::update(const nav
   pos_(2) = msg->pose.pose.position.z;
   yaw_ = tf::getYaw(msg->pose.pose.orientation);
   pos_set_ = true;
+  ICs_.set_from_odom(msg);
 
   // Timing
   ros::Time t_now = ros::Time::now(); //msg->header.stamp;
@@ -232,6 +236,13 @@ void LineTrackerYaw::goal_callback(const quadrotor_msgs::LineTrackerGoal::ConstP
   goal_pos_(1) = msg->y;
   goal_pos_(2) = msg->z;
   goal_yaw_ = msg->yaw;
+
+  if (msg->relative)
+  {
+    goal_pos_ += ICs_.pos();
+    goal_yaw_ += ICs_.yaw();
+    ROS_INFO("line_tracker_yaw using relative command");
+  }
 
   if(msg->v_des > 0)
     v_des_ = msg->v_des;

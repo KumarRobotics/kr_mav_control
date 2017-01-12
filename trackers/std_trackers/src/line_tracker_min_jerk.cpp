@@ -5,75 +5,7 @@
 #include <quadrotor_msgs/TrackerStatus.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
-
-/**
- * Class to hold initial conditions for trajectory generation.
- * In most cases we would want to have consecutive trajectories to smoothly
- * transition from one to another, so we need to keep the desired command
- * continuous. This class stores the last command so as to use it as an initial
- * condition for the next trajectory leading to a smooth desired command.
- * Previously, we used the current odom of the robot to set the initial
- * condition and if the robot had some tracking error, it would lead to a jump
- * in the desired which we want to avoid.
- */
-class InitialConditions
-{
- public:
-  void set_from_last_cmd(const quadrotor_msgs::PositionCommand::ConstPtr &msg);
-  void set_from_odom(const nav_msgs::Odometry::ConstPtr &msg);
-  Eigen::Vector3f pos() const { return pos_; }
-  Eigen::Vector3f vel() const { return vel_; }
-  Eigen::Vector3f acc() const { return acc_; }
-  Eigen::Vector3f jrk() const { return jrk_; }
-  float yaw() const { return yaw_; }
-  float yaw_dot() const { return yaw_dot_; }
-  ros::Time time() const { return time_; }
-  void reset();
-
- private:
-  Eigen::Vector3f pos_, vel_, acc_, jrk_;
-  float yaw_, yaw_dot_;
-  bool last_cmd_valid_;
-  ros::Time time_;
-};
-
-void InitialConditions::set_from_last_cmd(
-    const quadrotor_msgs::PositionCommand::ConstPtr &msg)
-{
-  pos_ = Eigen::Vector3f(msg->position.x, msg->position.y, msg->position.z);
-  vel_ = Eigen::Vector3f(msg->velocity.x, msg->velocity.y, msg->velocity.z);
-  acc_ = Eigen::Vector3f(msg->acceleration.x, msg->acceleration.y,
-                         msg->acceleration.z);
-  jrk_ = Eigen::Vector3f(msg->jerk.x, msg->jerk.y, msg->jerk.z);
-  yaw_ = msg->yaw;
-  yaw_dot_ = msg->yaw_dot;
-
-  time_ = msg->header.stamp;
-
-  last_cmd_valid_ = true;
-}
-
-void InitialConditions::set_from_odom(const nav_msgs::Odometry::ConstPtr &msg)
-{
-  if(!last_cmd_valid_)
-  {
-    pos_ = Eigen::Vector3f(msg->pose.pose.position.x, msg->pose.pose.position.y,
-                           msg->pose.pose.position.z);
-    vel_ = Eigen::Vector3f(msg->twist.twist.linear.x, msg->twist.twist.linear.y,
-                           msg->twist.twist.linear.z);
-    acc_ = Eigen::Vector3f(0, 0, 0);
-    jrk_ = Eigen::Vector3f(0, 0, 0);
-    yaw_ = tf::getYaw(msg->pose.pose.orientation);
-    yaw_dot_ = msg->twist.twist.angular.z; // TODO: Should double check which
-                                           // frame (body or world) this is in
-    time_ = ros::Time::now();
-  }
-}
-
-void InitialConditions::reset()
-{
-  last_cmd_valid_ = false;
-}
+#include <initial_conditions.h>
 
 class LineTrackerMinJerk : public trackers_manager::Tracker
 {
@@ -109,7 +41,7 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
   ros::Time traj_start_;
   float traj_duration_;
   Eigen::Vector3f coeffs_[6];
-  float goal_yaw_, last_cmd_yaw_, yaw_coeffs_[4];
+  float goal_yaw_, yaw_coeffs_[4];
 
   double kx_[3], kv_[3];
 };
@@ -151,12 +83,12 @@ bool LineTrackerMinJerk::Activate(const quadrotor_msgs::PositionCommand::ConstPt
   {
     active_ = true;
   }
-  ICs_.reset();
   return active_;
 }
 
 void LineTrackerMinJerk::Deactivate(void)
 {
+  ICs_.reset();
   goal_set_ = false;
   active_ = false;
 }
@@ -180,7 +112,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
 
   if(goal_set_)
   {
-    traj_start_ = ICs_.time();
+    traj_start_ = ros::Time::now();
     traj_duration_ = 0.5f;
 
     // Min-Jerk trajectory
@@ -276,7 +208,8 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
     cmd->yaw_dot = 0;
     cmd->velocity.x = 0, cmd->velocity.y = 0, cmd->velocity.z = 0;
     cmd->acceleration.x = 0, cmd->acceleration.y = 0, cmd->acceleration.z = 0;
-    ICs_.set_from_last_cmd(cmd);
+
+    ICs_.set_from_cmd(cmd);
     return cmd;
   }
 
@@ -298,7 +231,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
   }
   else
   {
-    float t = traj_time, t2 = t * t, t3 = t2 * t, t4 = t3 * t, t5 = t4 * t;
+    float t = traj_time / traj_duration_, t2 = t * t, t3 = t2 * t, t4 = t3 * t, t5 = t4 * t;
 
     x = coeffs_[0] + t * coeffs_[1] + t2 * coeffs_[2] + t3 * coeffs_[3] +
         t4 * coeffs_[4] + t5 * coeffs_[5];
@@ -312,6 +245,12 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
               t3 * yaw_coeffs_[3];
     yaw_dot_des =
         yaw_coeffs_[1] + 2 * t * yaw_coeffs_[2] + 3 * t2 * yaw_coeffs_[3];
+
+    // Scale based on the trajectory duration
+    v = v / traj_duration_;
+    a = a / (traj_duration_ * traj_duration_);
+    j = j / (traj_duration_ * traj_duration_ * traj_duration_);
+    yaw_dot_des = yaw_dot_des / traj_duration_;
   }
 
   cmd->position.x = x(0), cmd->position.y = x(1), cmd->position.z = x(2);
@@ -322,7 +261,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
   cmd->acceleration.z = a(2);
   cmd->jerk.x = j(0), cmd->jerk.y = j(1), cmd->jerk.z = j(2);
 
-  ICs_.set_from_last_cmd(cmd);
+  ICs_.set_from_cmd(cmd);
   return cmd;
 }
 
@@ -334,10 +273,23 @@ void LineTrackerMinJerk::goal_callback(
   goal_(2) = msg->z;
   goal_yaw_ = msg->yaw;
 
+  if (msg->relative)
+  {
+    goal_ += ICs_.pos();
+    goal_yaw_ += ICs_.yaw();
+    ROS_INFO("line_tracker_min_jerk using relative command");
+  }
+
   if(msg->v_des > 0)
+  {
     v_des_ = msg->v_des;
+    ROS_INFO("line_tracker_min_jerk using v_des as specified in the goal message");
+  }
   else
+  {
     v_des_ = default_v_des_;
+    ROS_INFO("line_tracker_min_jerk using default_v_des_");
+  }
 
   if(msg->a_des > 0)
     a_des_ = msg->a_des;
@@ -355,39 +307,41 @@ void LineTrackerMinJerk::gen_trajectory(
     const float &yawf, const float &yaw_dot_i, const float &yaw_dot_f, float dt,
     Eigen::Vector3f coeffs[6], float yaw_coeffs[4])
 {
-  float dt2 = dt * dt, dt3 = dt2 * dt, dt4 = dt3 * dt, dt5 = dt4 * dt;
+  // We can use a dt of 1 to ensure that our system will be numerically conditioned.
+  // For more information, see line_tracker_min_jerk_numerical_issues.m
 
-  Eigen::Matrix<float, 6, 6> A;
-  A << 1,  0,      0,       0,        0,        0,
-       1, dt,    dt2,     dt3,      dt4,      dt5,
-       0,  1,      0,       0,        0,        0,
-       0,  1, 2 * dt, 3 * dt2,  4 * dt3,  5 * dt4,
-       0,  0,      2,       0,        0,        0,
-       0,  0,      2,  6 * dt, 12 * dt2, 20 * dt3;
+  Eigen::Matrix<float, 6, 6> Ainv;
+  Ainv <<   1,    0,    0,    0,    0,    0,
+            0,    0,    1,    0,    0,    0,
+            0,    0,    0,    0,  0.5,    0,
+          -10,   10,   -6,   -4, -1.5,  0.5,
+           15,  -15,    8,    7,  1.5,   -1,
+           -6,    6,   -3,   -3, -0.5,  0.5;
 
   Eigen::Matrix<float, 6, 3> b;
-  b << xi.transpose(), xf.transpose(), vi.transpose(), vf.transpose(),
-      ai.transpose(), af.transpose();
+  b << xi.transpose(), xf.transpose(),
+      dt * vi.transpose(), dt * vf.transpose(),
+      dt * dt * ai.transpose(), dt * dt * af.transpose();
 
   Eigen::Matrix<float, 6, 3> x;
-  x = A.colPivHouseholderQr().solve(b);
+  x = Ainv * b;
   for(int i = 0; i < 6; i++)
   {
     coeffs[i] = x.row(i).transpose();
   }
 
   // Compute the trajectory for the yaw
-  Eigen::Matrix<float, 4, 4> A_yaw;
-  A_yaw << 1,  0,      0,       0,
-           1, dt,    dt2,     dt3,
-           0,  1,      0,       0,
-           0,  1, 2 * dt, 3 * dt2;
+  Eigen::Matrix<float, 4, 4> A_yaw_inv;
+  A_yaw_inv <<  1,  0,  0,  0,
+                0,  0,  1,  0,
+               -3,  3, -2, -1,
+                2, -2,  1,  1;
 
   Eigen::Vector4f b_yaw;
-  b_yaw << yawi, yawf, yaw_dot_i, yaw_dot_f;
+  b_yaw << yawi, yawf, dt * yaw_dot_i, dt * yaw_dot_f;
 
   Eigen::Vector4f x_yaw;
-  x_yaw = A_yaw.colPivHouseholderQr().solve(b_yaw);
+  x_yaw = A_yaw_inv * b_yaw;
   for(int i = 0; i < 4; i++)
   {
     yaw_coeffs[i] = x_yaw(i);
