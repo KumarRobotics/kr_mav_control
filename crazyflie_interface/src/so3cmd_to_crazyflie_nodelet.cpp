@@ -82,10 +82,9 @@ void SO3CmdToCrazyflie::so3_cmd_callback(
   const float yaw_des = std::atan2(R_des(1,0), R_des(0,0));
 
   // Map these into the current body frame (based on yaw)
-  // TODO: Make sure this transformation is correct
-  // Eigen::Matrix3d R_des_new = R_des * Eigen::AngleAxisd(yaw_cur - yaw_des, Eigen::Vector3d::UnitZ());
-  float pitch_des = -std::asin(R_des(2,0));
-  float roll_des = std::atan2(R_des(2,1), R_des(2,2));
+  Eigen::Matrix3d R_des_new = R_des * Eigen::AngleAxisd(yaw_cur - yaw_des, Eigen::Vector3d::UnitZ());
+  float pitch_des = -std::asin(R_des_new(2,0));
+  float roll_des = std::atan2(R_des_new(2,1), R_des_new(2,2));
 
   roll_des = roll_des * 180 / M_PI;
   pitch_des = pitch_des * 180 / M_PI;
@@ -123,7 +122,7 @@ void SO3CmdToCrazyflie::so3_cmd_callback(
     e_yaw += 2*M_PI;
 
   // TODO: Figure out why this needs a negative sign
-  float yaw_rate_des = - msg->kR[2] * e_yaw * 180 / M_PI;
+  float yaw_rate_des = ((- msg->kR[2] * e_yaw) + msg->angular_velocity.z) * (180 / M_PI);
 
 
   // If the crazyflie motors are timed out, we need to send a zero message in order to get them to start
@@ -142,6 +141,7 @@ void SO3CmdToCrazyflie::so3_cmd_callback(
     // ROS_INFO("commanded thrust is %2.2f", CLAMP(thrust_pwm, 0, thrust_pwm_max_));
 
     crazy_vel_cmd->angular.z = yaw_rate_des;
+    // ROS_INFO("commanded yaw rate is %2.2f", yaw_rate_des); //yaw_debug
 
     crazy_cmd_vel_pub_.publish(crazy_vel_cmd);
     // save last so3_cmd
