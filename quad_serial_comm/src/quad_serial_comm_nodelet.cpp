@@ -53,10 +53,10 @@ void QuadSerialComm::onInit(void)
 
   sd_.Open(device, baud_rate);
 
+  output_data_pub_ = n.advertise<quadrotor_msgs::Serial>("from_robot", 10);
+
   serial_sub_ = n.subscribe("to_robot", 10, &QuadSerialComm::serial_callback, this,
                             ros::TransportHints().tcpNoDelay());
-
-  output_data_pub_ = n.advertise<quadrotor_msgs::Serial>("from_robot", 10);
 
   sd_.SetReadCallback(boost::bind(&QuadSerialComm::serial_read_callback, this, _1, _2));
   sd_.Start();
