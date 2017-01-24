@@ -10,7 +10,16 @@ class FlatState
 {
  public:
   FlatState();
-   
+  FlatState(
+    const Eigen::Vector3f pos,
+    const Eigen::Vector3f vel,
+    const Eigen::Vector3f acc,
+    const Eigen::Vector3f jrk,
+    const Eigen::Vector3f snp,
+    const float yaw,
+    const float yaw_dot,
+    const float yaw_ddot);
+
   void set_from_cmd(const quadrotor_msgs::PositionCommand::ConstPtr &msg);
   void set_from_odom(const nav_msgs::Odometry::ConstPtr &msg);
   Eigen::Vector3f pos() const { return pos_; }

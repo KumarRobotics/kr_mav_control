@@ -28,11 +28,32 @@ FlatState::FlatState() :
 {
 }
 
+FlatState::FlatState(
+    const Eigen::Vector3f pos,
+    const Eigen::Vector3f vel,
+    const Eigen::Vector3f acc,
+    const Eigen::Vector3f jrk,
+    const Eigen::Vector3f snp,
+    const float yaw,
+    const float yaw_dot,
+    const float yaw_ddot) :
+  cmd_valid_(true)
+{
+  pos_ = pos;
+  vel_ = vel;
+  acc_ = acc;
+  jrk_ = jrk;
+  snp_ = snp;
+  yaw_ = yaw;
+  yaw_dot_ = yaw_dot;
+  yaw_ddot_ = yaw_ddot;
+}
+
 void FlatState::set_from_cmd(const quadrotor_msgs::PositionCommand::ConstPtr &msg)
 {
   if (msg == NULL)
   {
-    ROS_WARN("Null PositionCommand recieved. Not setting initial condition.");
+    ROS_WARN("Null PositionCommand recieved. Not setting flat state.");
     return;
   }
 
@@ -50,6 +71,7 @@ void FlatState::set_from_cmd(const quadrotor_msgs::PositionCommand::ConstPtr &ms
 
 void FlatState::set_from_odom(const nav_msgs::Odometry::ConstPtr &msg)
 {
+  // Only allow update from odom until the state has been populated by other means
   if(!cmd_valid_)
   {
     pos_ = Eigen::Vector3f(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
