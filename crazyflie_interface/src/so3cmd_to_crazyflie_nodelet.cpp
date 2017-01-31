@@ -121,8 +121,7 @@ void SO3CmdToCrazyflie::so3_cmd_callback(
   else if(e_yaw < -M_PI)
     e_yaw += 2*M_PI;
 
-  // TODO: Figure out why this needs a negative sign
-  float yaw_rate_des = ((- msg->kR[2] * e_yaw) + msg->angular_velocity.z) * (180 / M_PI);
+  float yaw_rate_des = ((- msg->kR[2] * e_yaw) - msg->angular_velocity.z) * (180 / M_PI);
 
 
   // If the crazyflie motors are timed out, we need to send a zero message in order to get them to start
