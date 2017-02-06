@@ -8,6 +8,8 @@
 #include <initial_conditions.h>
 #include <cmath>
 
+#define PI 3.14159265359
+
 class SmoothVelTracker : public trackers_manager::Tracker
 {
  public:
@@ -30,6 +32,7 @@ class SmoothVelTracker : public trackers_manager::Tracker
   float ramp_dist_, total_dist_;
   float ramp_time_, total_time_;
   float start_yaw_, goal_yaw_;
+  float yaw_dot_max_;
   bool active_;
   InitialConditions ICs_;
   ros::Time start_time_;
@@ -118,6 +121,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     cmd->acceleration.x = 0, cmd->acceleration.y = 0, cmd->acceleration.z = 0;
     cmd->jerk.x = 0, cmd->jerk.y = 0, cmd->jerk.z = 0;
     cmd->yaw = goal_yaw_;
+    cmd->yaw_dot = 0;
     goal_reached_ = true;
   }
   else if(t < ramp_time_)
@@ -139,7 +143,8 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     cmd->velocity.x = vel(0), cmd->velocity.y = vel(1), cmd->velocity.z = vel(2);
     cmd->acceleration.x = acc(0), cmd->acceleration.y = acc(1), cmd->acceleration.z = acc(2);
     cmd->jerk.x = jrk(0), cmd->jerk.y = jrk(1), cmd->jerk.z = jrk(2);
-    cmd->yaw = start_yaw_ + (goal_yaw_-start_yaw_)*t/total_time_;
+    cmd->yaw = start_yaw_ + yaw_dot_max_/(2*ramp_time_)*t*t;
+    cmd->yaw_dot = yaw_dot_max_/ramp_time_*t;
   }
   else if(t < total_time_ - ramp_time_)
   {
@@ -150,7 +155,8 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     cmd->velocity.x = vel(0), cmd->velocity.y = vel(1), cmd->velocity.z = vel(2);
     cmd->acceleration.x = 0, cmd->acceleration.y = 0, cmd->acceleration.z = 0;
     cmd->jerk.x = 0, cmd->jerk.y = 0, cmd->jerk.z = 0;
-    cmd->yaw = start_yaw_ + (goal_yaw_-start_yaw_)*t/total_time_;
+    cmd->yaw = start_yaw_ + yaw_dot_max_*(t-ramp_time_/2);
+    cmd->yaw_dot = yaw_dot_max_;
   }
   else
   {
@@ -181,7 +187,8 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     cmd->velocity.x = vel(0), cmd->velocity.y = vel(1), cmd->velocity.z = vel(2);
     cmd->acceleration.x = acc(0), cmd->acceleration.y = acc(1), cmd->acceleration.z = acc(2);
     cmd->jerk.x = jrk(0), cmd->jerk.y = jrk(1), cmd->jerk.z = jrk(2);
-    cmd->yaw = start_yaw_ + (goal_yaw_-start_yaw_)*t/total_time_;
+    cmd->yaw = goal_yaw_ - yaw_dot_max_/(2*ramp_time_)*(total_time_ - t)*(total_time_ - t);
+    cmd->yaw_dot = yaw_dot_max_ - yaw_dot_max_/ramp_time_*(t - total_time_ + ramp_time_);
   }
   ICs_.set_from_cmd(cmd);
   return cmd;
@@ -240,9 +247,10 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
       // Compute total time of trajectory
       total_time_ = (total_dist_ - 2*ramp_dist_)/target_speed_ + 2*ramp_time_;
 
-      // Set the target yaw
+      // Set the target yaw and max yaw dot
       start_yaw_ = ICs_.yaw();
-      goal_yaw_ = msg->yaw;
+      goal_yaw_ = fmod(msg->yaw,2*PI);
+      yaw_dot_max_ = (goal_yaw_ - start_yaw_)/(total_time_ - ramp_time_);
 
       // Set goal_set to true and goal_reached to false
       goal_set_ = true;
