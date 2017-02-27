@@ -16,7 +16,7 @@ find_package(mavros_msgs)
 if(NOT ${mavros_msgs_FOUND})
   message(WARNING "NOTE: mavros_msgs not found so not building mavros_interface")
 else()
-  include_directories(${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
+  include_directories(${catkin_INCLUDE_DIRS} ${mavros_msgs_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
 
   catkin_package(
     INCLUDE_DIRS
