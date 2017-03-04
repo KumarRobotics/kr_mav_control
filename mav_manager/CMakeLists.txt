@@ -21,9 +21,9 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   message_generation)
 
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
+include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
 
 add_service_files(
   DIRECTORY srv

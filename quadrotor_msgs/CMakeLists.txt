@@ -7,9 +7,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs nav_msgs cmake_modules)
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
+include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
 
 add_message_files(DIRECTORY msg
   FILES
