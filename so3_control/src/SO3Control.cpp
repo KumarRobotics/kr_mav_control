@@ -74,9 +74,15 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
 
     // Limit integral term
     if(pos_int_(i) > max_pos_int_)
+    {
       pos_int_(i) = max_pos_int_;
+      ROS_WARN_THROTTLE(1, "pos_int for dimension %d is saturated at %2.2f", i, max_pos_int_);
+    }
     else if(pos_int_(i) < -max_pos_int_)
+    {
       pos_int_(i) = -max_pos_int_;
+      ROS_WARN_THROTTLE(1, "pos_int for dimension %d is saturated at %2.2f", i, -max_pos_int_);
+    }
   }
   ROS_INFO_THROTTLE(2, "Integrated world disturbance compensation [N]: {x: %2.2f, y: %2.2f, z: %2.2f}", pos_int_(0), pos_int_(1), pos_int_(2));
 
@@ -89,9 +95,15 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
 
     // Limit integral term in the body
     if(pos_int_b_(i) > max_pos_int_b_)
+    {
       pos_int_b_(i) = max_pos_int_b_;
+      ROS_WARN_THROTTLE(1, "pos_int_b for dimension %d is saturated at %2.2f", i, max_pos_int_b_);
+    }
     else if(pos_int_b_(i) < -max_pos_int_b_)
+    {
       pos_int_b_(i) = -max_pos_int_b_;
+      ROS_WARN_THROTTLE(1, "pos_int_b for dimension %d is saturated at %2.2f", i, -max_pos_int_b_);
+    }
 
    }
    ROS_INFO_THROTTLE(2, "Integrated body disturbance compensation [N]: {x: %2.2f, y: %2.2f, z: %2.2f}", pos_int_b_(0), pos_int_b_(1), pos_int_b_(2));
