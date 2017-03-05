@@ -1,0 +1,12 @@
+<launch>
+  <arg name="pose" default="mavros/local_position/pose"/>
+  <arg name="setpoint_raw_attitude" default="mavros/setpoint_raw/attitude"/>
+
+  <node pkg="mavros_interface"
+    type="attitude_tuning_tool"
+    name="attitude_tuning_tool"
+    output="screen">
+    <remap from="~pose" to="$(arg pose)"/>
+    <remap from="~setpoint_raw/attitude" to="$(arg setpoint_raw_attitude)"/>
+  </node>
+</launch>
