@@ -206,7 +206,7 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
   
   controller_.setMaxTiltAngle(config.max_tilt_angle);
 
-  ROS_INFO("\nso3_control reconfigure Request:\n  ki:  {%2.2f, %2.2f, %2.2f}\n  kib: {%2.2f, %2.2f, %2.2f}\n  max_pos_int:   %2.2f\n  max_pos_int_b: %2.2f\n  max_tilt_angle: %2.2f",
+  ROS_INFO("\nso3_control reconfigure Request:\n  ki:  {%2.4f, %2.4f, %2.4f}\n  kib: {%2.4f, %2.4f, %2.4f}\n  max_pos_int:   %2.2f\n  max_pos_int_b: %2.2f\n  max_tilt_angle (rad): %2.2f",
       ki_[0], ki_[1], ki_[2],
       kib_[0], kib_[1], kib_[2],
       config.max_pos_int,
@@ -230,13 +230,6 @@ void SO3ControlNodelet::onInit(void)
   controller_.setGravity(g_);
 
   priv_nh.param("use_external_yaw", use_external_yaw_, true);
-
-  // Dynamic Reconfigure Setup
-  boost::recursive_mutex config_mutex_;
-  typedef so3_control::SO3Config Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
-  Config config;
 
   // Dynamic reconfigure struct
   Config config;
