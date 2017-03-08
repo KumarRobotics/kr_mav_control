@@ -6,21 +6,23 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs quadrotor_msgs std_msgs tf nodelet cmake_modules)
+find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs quadrotor_msgs std_msgs tf nodelet dynamic_reconfigure cmake_modules)
 find_package(Eigen3 REQUIRED)
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
 
+generate_dynamic_reconfigure_options(cfg/SO3.cfg)
+
 catkin_package(
   INCLUDE_DIRS
   LIBRARIES
-  CATKIN_DEPENDS roscpp nav_msgs quadrotor_msgs std_msgs tf nodelet
+  CATKIN_DEPENDS roscpp nav_msgs quadrotor_msgs std_msgs tf nodelet dynamic_reconfigure
   DEPENDS Eigen)
 
 add_library(SO3Control src/SO3Control.cpp)
 
 add_library(so3_control_nodelet src/so3_control_nodelet.cpp)
-add_dependencies(so3_control_nodelet ${catkin_EXPORTED_TARGETS})
+add_dependencies(so3_control_nodelet ${PROJECT_NAME}_gencfg ${catkin_EXPORTED_TARGETS})
 target_link_libraries(so3_control_nodelet SO3Control ${catkin_LIBRARIES})
 
 add_library(so3_trpy_control src/so3_trpy_control.cpp)
