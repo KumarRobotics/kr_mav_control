@@ -16,3 +16,5 @@ srv_gen
 
 CMakeCache.txt
 *.bag
+
+CATKIN_IGNORE
