@@ -8,6 +8,8 @@
 #include <Eigen/Geometry>
 #include <so3_control/SO3Control.h>
 #include <tf/transform_datatypes.h>
+#include <dynamic_reconfigure/server.h>
+#include <so3_control/SO3Config.h>
 
 class SO3ControlNodelet : public nodelet::Nodelet
 {
@@ -36,6 +38,7 @@ class SO3ControlNodelet : public nodelet::Nodelet
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void enable_motors_callback(const std_msgs::Bool::ConstPtr &msg);
   void corrections_callback(const quadrotor_msgs::Corrections::ConstPtr &msg);
+  void cfg_callback(so3_control::SO3Config &config, uint32_t level);
 
   SO3Control controller_;
   ros::Publisher so3_command_pub_;
@@ -165,6 +168,28 @@ void SO3ControlNodelet::corrections_callback(const quadrotor_msgs::Corrections::
   corrections_[2] = msg->angle_corrections[1];
 }
 
+void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t level)
+{
+  ki_[0]  = config.ki_x;
+  ki_[1]  = config.ki_y;
+  ki_[2]  = config.ki_z;
+  controller_.setMaxIntegral(config.max_pos_int);
+
+  kib_[0] = config.kib_x;
+  kib_[1] = config.kib_y;
+  kib_[2] = config.kib_z;
+  controller_.setMaxIntegralBody(config.max_pos_int_b);
+  
+  controller_.setMaxTiltAngle(config.max_tilt_angle);
+
+  ROS_INFO("\nso3_control reconfigure Request:\n  ki:  {%2.2f, %2.2f, %2.2f}\n  kib: {%2.2f, %2.2f, %2.2f}\n  max_pos_int:   %2.2f\n  max_pos_int_b: %2.2f\n  max_tilt_angle: %2.2f",
+      ki_[0], ki_[1], ki_[2],
+      kib_[0], kib_[1], kib_[2],
+      config.max_pos_int,
+      config.max_pos_int_b,
+      config.max_tilt_angle);
+}
+
 void SO3ControlNodelet::onInit(void)
 {
   ros::NodeHandle n(getPrivateNodeHandle());
@@ -181,17 +206,24 @@ void SO3ControlNodelet::onInit(void)
 
   n.param("use_external_yaw", use_external_yaw_, true);
 
+  // Dynamic Reconfigure Setup
+  boost::recursive_mutex config_mutex_;
+  typedef so3_control::SO3Config Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  Config config;
+
   double ki_x, ki_y, ki_z;
   n.param("gains/ki/x", ki_x, 0.0);
   n.param("gains/ki/y", ki_y, 0.0);
   n.param("gains/ki/z", ki_z, 0.0);
-  ki_[0] = ki_x, ki_[1] = ki_y, ki_[2] = ki_z;
+  config.ki_x = ki_x; config.ki_y = ki_y; config.ki_z = ki_z;
 
   double kib_x, kib_y, kib_z;
   n.param("gains/kib/x", kib_x, 0.0);
   n.param("gains/kib/y", kib_y, 0.0);
   n.param("gains/kib/z", kib_z, 0.0);
-  kib_[0] = kib_x, kib_[1] = kib_y, kib_[2] = kib_z;
+  config.kib_x = kib_x; config.kib_y = kib_y; config.kib_z = kib_z;
 
   double kR[3], kOm[3];
   n.param("gains/rot/x", kR[0], 1.5);
@@ -210,13 +242,27 @@ void SO3ControlNodelet::onInit(void)
   corrections_[0] = corrections[0], corrections_[1] = corrections[1], corrections_[2] = corrections[2];
 
   float max_pos_int, max_pos_int_b;
-  n.param("max_pos_int", max_pos_int, 0.5f);
-  n.param("mas_pos_int_b", max_pos_int_b, 0.5f);
-  controller_.setMaxIntegral(max_pos_int);
-  controller_.setMaxIntegralBody(max_pos_int_b);
+  n.param("max_pos_int", max_pos_int, 0.0f);
+  n.param("max_pos_int_b", max_pos_int_b, 0.0f);
+  config.max_pos_int = max_pos_int;
+  config.max_pos_int_b = max_pos_int_b;
+    
+  double max_tilt_angle;
+  n.param("max_tilt_angle", max_tilt_angle, M_PI);
+  config.max_tilt_angle = max_tilt_angle;
+  
+  // Initialize dynamic reconfigure
+  reconfigure_server_.reset(new ReconfigureServer(config_mutex_, priv_nh));
+  reconfigure_server_->updateConfig(config);
+  ReconfigureServer::CallbackType f = boost::bind(&SO3ControlNodelet::cfg_callback, this, _1, _2);
+  reconfigure_server_->setCallback(f);
 
-  odom_sub_ = n.subscribe("odom", 10, &SO3ControlNodelet::odom_callback, this, ros::TransportHints().tcpNoDelay());
-  position_cmd_sub_ = n.subscribe("position_cmd", 10, &SO3ControlNodelet::position_cmd_callback, this,
+  // Publisher
+  so3_command_pub_ = priv_nh.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
+
+  // Subscribers
+  odom_sub_ = priv_nh.subscribe("odom", 10, &SO3ControlNodelet::odom_callback, this, ros::TransportHints().tcpNoDelay());
+  position_cmd_sub_ = priv_nh.subscribe("position_cmd", 10, &SO3ControlNodelet::position_cmd_callback, this,
                                   ros::TransportHints().tcpNoDelay());
   enable_motors_sub_ = n.subscribe("motors", 2, &SO3ControlNodelet::enable_motors_callback, this,
                                    ros::TransportHints().tcpNoDelay());
