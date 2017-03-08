@@ -55,6 +55,12 @@ class SO3ControlNodelet : public nodelet::Nodelet
   float mass_;
   const float g_;
   Eigen::Quaternionf current_orientation_;
+
+  // Dynamic Reconfigure Setup
+  boost::recursive_mutex config_mutex_;
+  typedef so3_control::SO3Config Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 };
 
 
@@ -190,6 +196,28 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
       config.max_tilt_angle);
 }
 
+void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t level)
+{
+  ki_[0]  = config.ki_x;
+  ki_[1]  = config.ki_y;
+  ki_[2]  = config.ki_z;
+  controller_.setMaxIntegral(config.max_pos_int);
+
+  kib_[0] = config.kib_x;
+  kib_[1] = config.kib_y;
+  kib_[2] = config.kib_z;
+  controller_.setMaxIntegralBody(config.max_pos_int_b);
+  
+  controller_.setMaxTiltAngle(config.max_tilt_angle);
+
+  ROS_INFO("\nso3_control reconfigure Request:\n  ki:  {%2.2f, %2.2f, %2.2f}\n  kib: {%2.2f, %2.2f, %2.2f}\n  max_pos_int:   %2.2f\n  max_pos_int_b: %2.2f\n  max_tilt_angle: %2.2f",
+      ki_[0], ki_[1], ki_[2],
+      kib_[0], kib_[1], kib_[2],
+      config.max_pos_int,
+      config.max_pos_int_b,
+      config.max_tilt_angle);
+}
+
 void SO3ControlNodelet::onInit(void)
 {
   ros::NodeHandle n(getPrivateNodeHandle());
@@ -211,6 +239,9 @@ void SO3ControlNodelet::onInit(void)
   typedef so3_control::SO3Config Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  Config config;
+
+  // Dynamic reconfigure struct
   Config config;
 
   double ki_x, ki_y, ki_z;
