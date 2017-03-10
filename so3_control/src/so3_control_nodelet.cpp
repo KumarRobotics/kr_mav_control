@@ -1,3 +1,4 @@
+#include <limits>
 #include <ros/ros.h>
 #include <nodelet/nodelet.h>
 #include <nav_msgs/Odometry.h>
@@ -122,8 +123,20 @@ void SO3ControlNodelet::position_cmd_callback(const quadrotor_msgs::PositionComm
   des_vel_ = Eigen::Vector3f(cmd->velocity.x, cmd->velocity.y, cmd->velocity.z);
   des_acc_ = Eigen::Vector3f(cmd->acceleration.x, cmd->acceleration.y, cmd->acceleration.z);
   des_jrk_ = Eigen::Vector3f(cmd->jerk.x, cmd->jerk.y, cmd->jerk.z);
-  kx_ = Eigen::Vector3f(cmd->kx[0], cmd->kx[1], cmd->kx[2]);
-  kv_ = Eigen::Vector3f(cmd->kv[0], cmd->kv[1], cmd->kv[2]);
+
+  // If we want to set new gains
+  if (cmd->use_gains_flag == 2)
+  {
+    // TODO: Update config server with new config
+  }
+
+  // Use these gains temporarily
+  if (cmd->use_gains_flag == 1)
+  {
+    // TODO:
+    // kx_ = Eigen::Vector3f(cmd->kx[0], cmd->kx[1], cmd->kx[2]);
+    // kv_ = Eigen::Vector3f(cmd->kv[0], cmd->kv[1], cmd->kv[2]);
+  }
 
   des_yaw_ = cmd->yaw;
   des_yaw_dot_ = cmd->yaw_dot;
@@ -194,24 +207,77 @@ void SO3ControlNodelet::mass_callback(const std_msgs::Float32::ConstPtr &msg)
 
 void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t level)
 {
-  ki_[0]  = config.ki_x;
-  ki_[1]  = config.ki_y;
-  ki_[2]  = config.ki_z;
-  controller_.setMaxIntegral(config.max_pos_int);
+  if (level == 0)
+  {
+    NODELET_DEBUG_STREAM("Nothing changed. level: " << level);
+    return;
+  }
 
-  kib_[0] = config.kib_x;
-  kib_[1] = config.kib_y;
-  kib_[2] = config.kib_z;
-  controller_.setMaxIntegralBody(config.max_pos_int_b);
-  
-  controller_.setMaxTiltAngle(config.max_tilt_angle);
+  bool update_all = (level == std::numeric_limits<uint32_t>::max());
 
-  ROS_INFO("\nso3_control reconfigure Request:\n  ki:  {%2.4f, %2.4f, %2.4f}\n  kib: {%2.4f, %2.4f, %2.4f}\n  max_pos_int:   %2.2f\n  max_pos_int_b: %2.2f\n  max_tilt_angle (rad): %2.2f",
-      ki_[0], ki_[1], ki_[2],
-      kib_[0], kib_[1], kib_[2],
-      config.max_pos_int,
-      config.max_pos_int_b,
-      config.max_tilt_angle);
+  if (level == 1 || update_all)
+  {
+    kx_[0]  = config.kp_x;
+    kx_[1]  = config.kp_y;
+    kx_[2]  = config.kp_z;
+
+    kv_[0]  = config.kd_x;
+    kv_[1]  = config.kd_y;
+    kv_[2]  = config.kd_z;
+
+    ROS_INFO("Position Gains set to kp: {%2.3g, %2.3g, %2.3g}, kd: {%2.3g, %2.3g, %2.3g}",
+                                         kx_[0], kx_[1], kx_[2], kv_[0], kv_[1], kv_[2]);
+  }
+
+  if (level == 2 || update_all)
+  {
+    ki_[0]  = config.ki_x;
+    ki_[1]  = config.ki_y;
+    ki_[2]  = config.ki_z;
+
+    kib_[0] = config.kib_x;
+    kib_[1] = config.kib_y;
+    kib_[2] = config.kib_z;
+
+    ROS_INFO("Integral Gains set to ki: {%2.2g, %2.2g, %2.2g}, kib: {%2.2g, %2.2g, %2.2g}",
+                                        ki_[0], ki_[1], ki_[2], kib_[0], kib_[1], kib_[2]);
+  }
+
+  if (level == 3 || update_all)
+  {
+    kR_[0]  = config.rot_x;
+    kR_[1]  = config.rot_y;
+    kR_[2]  = config.rot_z;
+
+    kOm_[0]  = config.ang_x;
+    kOm_[1]  = config.ang_y;
+    kOm_[2]  = config.ang_z;
+
+    ROS_INFO("Attitude Gains set to kp: {%2.2g, %2.2g, %2.2g}, kd: {%2.2g, %2.2g, %2.2g}",
+                                       kR_[0], kR_[1], kR_[2], kOm_[0], kOm_[1], kOm_[2]);
+  }
+
+  if (level == 4 || update_all)
+  {
+    corrections_[0] = config.kf_correction;
+    corrections_[1] = config.roll_correction;
+    corrections_[2] = config.pitch_correction;
+    ROS_INFO("Corrections set to kf: %2.2g, roll: %2.2g, pitch: %2.2g",
+        corrections_[0], corrections_[1], corrections_[2]);
+  }
+
+  if (level == 5 || update_all)
+  {
+      controller_.setMaxIntegral(config.max_pos_int);
+      controller_.setMaxIntegralBody(config.max_pos_int_b);
+      controller_.setMaxTiltAngle(config.max_tilt_angle);
+
+      ROS_INFO("Maxes set to Integral: %2.2g, Integral Body: %2.2g, Tilt Angle (rad): %2.2g",
+          config.max_pos_int, config.max_pos_int_b, config.max_tilt_angle);
+  }
+
+  NODELET_WARN_STREAM_COND(level != std::numeric_limits<uint32_t>::max() && (level < 1 || level > 5),
+      "so3_control dynamic reconfigure called, but with unknown level: " << level);
 }
 
 void SO3ControlNodelet::onInit(void)
@@ -234,44 +300,58 @@ void SO3ControlNodelet::onInit(void)
   // Dynamic reconfigure struct
   Config config;
 
+  double kp_x, kp_y, kp_z;
+  priv_nh.param("gains/pos/x", kp_x,  7.4);
+  priv_nh.param("gains/pos/y", kp_y,  7.4);
+  priv_nh.param("gains/pos/z", kp_z, 10.4);
+  config.kp_x = kp_x; config.kp_y = kp_y; config.kp_z = kp_z;
+
+  double kd_x, kd_y, kd_z;
+  priv_nh.param("gains/vel/x", kd_x,  4.8);
+  priv_nh.param("gains/vel/y", kd_y,  4.8);
+  priv_nh.param("gains/vel/z", kd_z,  6.0);
+  config.kd_x = kd_x; config.kd_y = kd_y; config.kd_z = kd_z;
+
   double ki_x, ki_y, ki_z;
-  n.param("gains/ki/x", ki_x, 0.0);
-  n.param("gains/ki/y", ki_y, 0.0);
-  n.param("gains/ki/z", ki_z, 0.0);
+  priv_nh.param("gains/ki/x", ki_x, 0.0);
+  priv_nh.param("gains/ki/y", ki_y, 0.0);
+  priv_nh.param("gains/ki/z", ki_z, 0.0);
   config.ki_x = ki_x; config.ki_y = ki_y; config.ki_z = ki_z;
 
   double kib_x, kib_y, kib_z;
-  n.param("gains/kib/x", kib_x, 0.0);
-  n.param("gains/kib/y", kib_y, 0.0);
-  n.param("gains/kib/z", kib_z, 0.0);
+  priv_nh.param("gains/kib/x", kib_x, 0.0);
+  priv_nh.param("gains/kib/y", kib_y, 0.0);
+  priv_nh.param("gains/kib/z", kib_z, 0.0);
   config.kib_x = kib_x; config.kib_y = kib_y; config.kib_z = kib_z;
 
   double kR[3], kOm[3];
-  n.param("gains/rot/x", kR[0], 1.5);
-  n.param("gains/rot/y", kR[1], 1.5);
-  n.param("gains/rot/z", kR[2], 1.0);
-  n.param("gains/ang/x", kOm[0], 0.13);
-  n.param("gains/ang/y", kOm[1], 0.13);
-  n.param("gains/ang/z", kOm[2], 0.1);
-  kR_[0] = kR[0], kR_[1] = kR[1], kR_[2] = kR[2];
-  kOm_[0] = kOm[0], kOm_[1] = kOm[1], kOm_[2] = kOm[2];
+  priv_nh.param("gains/rot/x", kR[0], 1.5);
+  priv_nh.param("gains/rot/y", kR[1], 1.5);
+  priv_nh.param("gains/rot/z", kR[2], 1.0);
+  priv_nh.param("gains/ang/x", kOm[0], 0.13);
+  priv_nh.param("gains/ang/y", kOm[1], 0.13);
+  priv_nh.param("gains/ang/z", kOm[2], 0.1);
+  config.rot_x = kR[0];  config.rot_y = kR[1];  config.rot_z =  kR[2];
+  config.ang_x = kOm[0]; config.ang_y = kOm[1]; config.ang_z = kOm[2];
 
   double corrections[3];
-  n.param("corrections/kf", corrections[0], 0.0);
-  n.param("corrections/r", corrections[1], 0.0);
-  n.param("corrections/p", corrections[2], 0.0);
-  corrections_[0] = corrections[0], corrections_[1] = corrections[1], corrections_[2] = corrections[2];
+  priv_nh.param("corrections/kf", corrections[0], 0.0);
+  priv_nh.param("corrections/r",  corrections[1], 0.0);
+  priv_nh.param("corrections/p",  corrections[2], 0.0);
+  config.kf_correction    = corrections[0];
+  config.roll_correction  = corrections[1];
+  config.pitch_correction = corrections[2];
 
   float max_pos_int, max_pos_int_b;
-  n.param("max_pos_int", max_pos_int, 0.0f);
-  n.param("max_pos_int_b", max_pos_int_b, 0.0f);
+  priv_nh.param("max_pos_int", max_pos_int, 0.0f);
+  priv_nh.param("max_pos_int_b", max_pos_int_b, 0.0f);
   config.max_pos_int = max_pos_int;
   config.max_pos_int_b = max_pos_int_b;
-    
+
   double max_tilt_angle;
-  n.param("max_tilt_angle", max_tilt_angle, M_PI);
+  priv_nh.param("max_tilt_angle", max_tilt_angle, M_PI);
   config.max_tilt_angle = max_tilt_angle;
-  
+
   // Initialize dynamic reconfigure
   reconfigure_server_.reset(new ReconfigureServer(config_mutex_, priv_nh));
   reconfigure_server_->updateConfig(config);
