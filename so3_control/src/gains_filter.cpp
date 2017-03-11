@@ -88,22 +88,30 @@ GainsFilter::GainsFilter(ros::NodeHandle nh, double rate) : n_(nh), rate_(rate)
 {
   Gain g;
 
-  g.set_max_diff(1.5 / rate_);
+  double kp_max_rate;
+  n_.param<double>("kp_max_rate", kp_max_rate, 1.5);
+  g.set_max_diff(kp_max_rate / rate_);
   Gains["kp_x"] = g;
   Gains["kp_y"] = g;
   Gains["kp_z"] = g;
   
-  g.set_max_diff(1.5 / rate_);
+  double kd_max_rate;
+  n_.param<double>("kd_max_rate", kd_max_rate, 1.5);
+  g.set_max_diff(kd_max_rate / rate_);
   Gains["kd_x"] = g;
   Gains["kd_y"] = g;
   Gains["kd_z"] = g;
   
-  g.set_max_diff(0.001 / rate_);
+  double ki_max_rate;
+  n_.param<double>("ki_max_rate", ki_max_rate, 0.001);
+  g.set_max_diff(ki_max_rate / rate_);
   Gains["ki_x"] = g;
   Gains["ki_y"] = g;
   Gains["ki_z"] = g;
  
-  g.set_max_diff(0.001 / rate_);
+  double kib_max_rate;
+  n_.param<double>("kib_max_rate", kib_max_rate, 0.001);
+  g.set_max_diff(kib_max_rate / rate_);
   Gains["kib_x"] = g;
   Gains["kib_y"] = g;
   Gains["kib_z"] = g;
@@ -116,8 +124,6 @@ GainsFilter::GainsFilter(ros::NodeHandle nh, double rate) : n_(nh), rate_(rate)
   // client_.waitForExistence();
 }
 
-// bool GainsFilter::server_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
-// bool GainsFilter::server_cb()
 bool GainsFilter::server_cb(dynamic_reconfigure::ReconfigureRequest &req, dynamic_reconfigure::ReconfigureResponse &res)
 {
   // This works:
@@ -198,9 +204,11 @@ void GainsFilter::update()
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "gains_filter");
-  ros::NodeHandle nh;
+  ros::NodeHandle nh("~");
 
-  double rate = 5;
+  double rate;
+  nh.param<double>("update_rate", rate, 5);
+
   GainsFilter gf(nh, rate);
 
   ros::Rate r(rate); // Hz
