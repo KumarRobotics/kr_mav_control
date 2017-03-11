@@ -1,0 +1,16 @@
+<launch>
+
+  <arg name="model" default="quadrotor"/>
+
+  <group ns="$(arg model)">
+
+    <node pkg="so3_control"
+      type="gains_filter"
+      name="gains_filter"
+      output="screen">
+      <remap from="~so3_control/set_parameters" to="so3_control/set_parameters"/>
+    </node>
+
+  </group>
+
+</launch>
