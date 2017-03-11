@@ -204,9 +204,7 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
     return;
   }
 
-  bool update_all = (level == std::numeric_limits<uint32_t>::max());
-
-  if (level == 1 || update_all)
+  if (level & (1 << 0))
   {
     kx_[0]  = config.kp_x;
     kx_[1]  = config.kp_y;
@@ -220,7 +218,7 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
                                          kx_[0], kx_[1], kx_[2], kv_[0], kv_[1], kv_[2]);
   }
 
-  if (level == 2 || update_all)
+  if (level & (1 << 1))
   {
     ki_[0]  = config.ki_x;
     ki_[1]  = config.ki_y;
@@ -234,7 +232,7 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
                                         ki_[0], ki_[1], ki_[2], kib_[0], kib_[1], kib_[2]);
   }
 
-  if (level == 3 || update_all)
+  if (level & (1 << 2))
   {
     kR_[0]  = config.rot_x;
     kR_[1]  = config.rot_y;
@@ -248,7 +246,7 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
                                        kR_[0], kR_[1], kR_[2], kOm_[0], kOm_[1], kOm_[2]);
   }
 
-  if (level == 4 || update_all)
+  if (level & (1 << 3))
   {
     corrections_[0] = config.kf_correction;
     corrections_[1] = config.roll_correction;
@@ -257,7 +255,7 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
         corrections_[0], corrections_[1], corrections_[2]);
   }
 
-  if (level == 5 || update_all)
+  if (level & (1 << 4))
   {
       controller_.setMaxIntegral(config.max_pos_int);
       controller_.setMaxIntegralBody(config.max_pos_int_b);
