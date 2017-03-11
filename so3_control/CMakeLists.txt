@@ -6,6 +6,8 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
+
 find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs quadrotor_msgs std_msgs tf nodelet dynamic_reconfigure cmake_modules)
 find_package(Eigen3 REQUIRED)
 
@@ -29,10 +31,15 @@ add_library(so3_trpy_control src/so3_trpy_control.cpp)
 add_dependencies(so3_trpy_control ${catkin_EXPORTED_TARGETS})
 target_link_libraries(so3_trpy_control SO3Control ${catkin_LIBRARIES})
 
+add_executable(gains_filter src/gains_filter.cpp)
+add_dependencies(gains_filter ${catkin_EXPORTED_TARGETS})
+target_link_libraries(gains_filter ${catkin_LIBRARIES})
+
 install(TARGETS
     SO3Control
     so3_control_nodelet
     so3_trpy_control
+    gains_filter
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
