@@ -9,6 +9,11 @@
       name="gains_filter"
       output="screen">
       <remap from="~so3_control/set_parameters" to="so3_control/set_parameters"/>
+      <param name="update_rate" value="5"/>
+      <param name="kp_max_rate" value="1.5"/>
+      <param name="kd_max_rate" value="1.5"/>
+      <param name="ki_max_rate" value="0.001"/>
+      <param name="kib_max_rate" value="0.001"/>
     </node>
 
   </group>
