@@ -28,13 +28,8 @@ class Gain
 
     void set_max_diff(double max_diff) { max_diff_ = std::abs(max_diff); }
 
-    void set_latest(double latest)
-    {
-      latest_ = latest;
-      target_ = latest;
-      is_changing_ = false;
-    }
-
+    void set_latest(double latest) { latest_ = latest; }
+    
     void set_target(double target)
     {
       target_ = target;
@@ -142,7 +137,7 @@ bool GainsFilter::server_cb(dynamic_reconfigure::ReconfigureRequest &req, dynami
   ROS_INFO_STREAM("size: " << srv.response.config.doubles.size());
   */
 
-  // Get the latest values
+  // Update the latest values
   for (unsigned int i=0; i < srv_resp.config.doubles.size(); i++)
   {
     std::string name = srv_resp.config.doubles[i].name;
@@ -155,7 +150,7 @@ bool GainsFilter::server_cb(dynamic_reconfigure::ReconfigureRequest &req, dynami
       ROS_DEBUG_STREAM("Gain " << name << " is ignored");
   }
 
-  // Set the targets
+  // Update the targets
   for (unsigned int i=0; i < req.config.doubles.size(); i++)
   {
     std::string name = req.config.doubles[i].name;
