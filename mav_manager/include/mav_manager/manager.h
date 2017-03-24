@@ -104,7 +104,7 @@ class MAVManager
     bool estop();
 
   protected:
-    bool transition(const std::string &tracker_str);
+   // bool transition(const std::string &tracker_str);
 
   //private:
 
