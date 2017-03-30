@@ -12,6 +12,7 @@ find_package(Eigen 3 REQUIRED)
 
 include_directories(${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
 include_directories("$ENV{HOME}/dev/inc")
+include_directories("/usr/include/snav/")
 
 catkin_package(
   INCLUDE_DIRS
