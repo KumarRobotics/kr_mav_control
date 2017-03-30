@@ -51,7 +51,7 @@ class LineTrackerMinJerk : public trackers_manager::Tracker
 };
 
 LineTrackerMinJerk::LineTrackerMinJerk(void)
-    : pos_set_(false), goal_set_(false), goal_reached_(true), active_(false), 
+    : pos_set_(false), goal_set_(false), goal_reached_(true), active_(false),
       traj_start_(ros::Time::now()), traj_start_set_(false)
 {
 }
@@ -119,9 +119,9 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
 
   if(goal_set_)
   {
-    if(!traj_start_set_)  
+    if(!traj_start_set_)
       traj_start_ = ros::Time::now();
-    
+
     bool duration_set = false;
     traj_duration_ = 0.5f;
 
@@ -145,7 +145,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
     const float ramping_distance = distance_to_v_des + distance_v_des_to_stop;
 
     if(!duration_set) // If duration is not set by the goal callback
-    { 
+    {
       if(total_dist > ramping_distance)
       {
         float t = (v_des_ - vel_proj) / a_des_ // Ramp up
@@ -296,7 +296,7 @@ void LineTrackerMinJerk::goal_callback(
   goal_(1) = msg->y;
   goal_(2) = msg->z;
   goal_yaw_ = msg->yaw;
-  goal_duration_ = ros::Duration(0.5); // Clear the stored value of goal_duration_, will be replaced by heurisitic
+  goal_duration_ = ros::Duration(0); // Clear the stored value of goal_duration_, will be replaced by heurisitic
   traj_start_set_ = false;
 
   if (msg->relative)
@@ -315,13 +315,15 @@ void LineTrackerMinJerk::goal_callback(
     a_des_ = msg->a_des;
   else
     a_des_ = default_a_des_;
-  
+
   ROS_DEBUG("line_tracker_min_jerk using v_des = %2.2f m/s and a_des = %2.2f m/s^2", v_des_, a_des_);
 
   goal_set_ = true;
   goal_reached_ = false;
 }
 
+// TODO(Kartik): Maybe merge the two goal callbacks since by default t_start and
+// duration would be zero if not set
 void LineTrackerMinJerk::goal_callback_timed(
     const quadrotor_msgs::LineTrackerGoalTimed::ConstPtr &msg)
 {
@@ -340,19 +342,6 @@ void LineTrackerMinJerk::goal_callback_timed(
     goal_yaw_ += ICs_.yaw();
     ROS_INFO("line_tracker_min_jerk using relative command");
   }
-
-  // JT: Does this actually matter?
-  if(msg->v_des > 0.0)
-    v_des_ = msg->v_des;
-  else
-    v_des_ = default_v_des_;
-
-  if(msg->a_des > 0.0)
-    a_des_ = msg->a_des;
-  else
-    a_des_ = default_a_des_;
-    
-  ROS_DEBUG("line_tracker_min_jerk using v_des = %2.2f m/s and a_des = %2.2f m/s^2", v_des_, a_des_);
 
   goal_set_ = true;
   goal_reached_ = false;
