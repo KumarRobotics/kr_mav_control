@@ -1,0 +1,6 @@
+kp_yaw_rate_: 0.1
+c1_: -0.6709
+c2_: 0.1932
+c3_: 13.0652
+so3_cmd_timeout_: 0.25
+power_max_: 60000
