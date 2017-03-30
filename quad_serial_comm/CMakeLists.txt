@@ -6,6 +6,8 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+
 find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs asio_serial_device nodelet)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
