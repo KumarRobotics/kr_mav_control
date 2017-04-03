@@ -22,7 +22,7 @@ else()
     INCLUDE_DIRS include
     LIBRARIES
     CATKIN_DEPENDS roscpp nav_msgs geometry_msgs quadrotor_msgs mavros_msgs tf eigen_conversions nodelet
-    DEPENDS Eigen)
+    DEPENDS Eigen3)
 
   add_library(mavros_interface_nodelet src/mavros_interface_nodelet.cpp)
   add_dependencies(mavros_interface_nodelet ${catkin_EXPORTED_TARGETS})
