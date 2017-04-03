@@ -72,7 +72,7 @@ void SO3ControlNodelet::publishSO3Command(void)
 {
   if (!have_odom_)
   {
-    ROS_WARN("No odometry! Not publishing SO3Command.");
+    NODELET_WARN("No odometry! Not publishing SO3Command.");
     return;
   }
 
@@ -182,9 +182,9 @@ void SO3ControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 void SO3ControlNodelet::enable_motors_callback(const std_msgs::Bool::ConstPtr &msg)
 {
   if(msg->data)
-    ROS_INFO("Enabling motors");
+    NODELET_INFO("Enabling motors");
   else
-    ROS_INFO("Disabling motors");
+    NODELET_INFO("Disabling motors");
 
   enable_motors_ = msg->data;
   // Reset integral when toggling motor state
@@ -202,7 +202,7 @@ void SO3ControlNodelet::mass_callback(const std_msgs::Float32::ConstPtr &msg)
 {
   mass_ = msg->data;
   controller_.setMass(mass_);
-  ROS_INFO("so3_control now using mass: %2.3f kg", mass_);
+  NODELET_INFO("so3_control now using mass: %2.3f kg", mass_);
 }
 
 void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t level)
@@ -223,7 +223,7 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
     kv_[1]  = config.kd_y;
     kv_[2]  = config.kd_z;
 
-    ROS_INFO("Position Gains set to kp: {%2.3g, %2.3g, %2.3g}, kd: {%2.3g, %2.3g, %2.3g}",
+    NODELET_INFO("Position Gains set to kp: {%2.3g, %2.3g, %2.3g}, kd: {%2.3g, %2.3g, %2.3g}",
                                          kx_[0], kx_[1], kx_[2], kv_[0], kv_[1], kv_[2]);
   }
 
@@ -237,7 +237,7 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
     kib_[1] = config.kib_y;
     kib_[2] = config.kib_z;
 
-    ROS_INFO("Integral Gains set to ki: {%2.2g, %2.2g, %2.2g}, kib: {%2.2g, %2.2g, %2.2g}",
+    NODELET_INFO("Integral Gains set to ki: {%2.2g, %2.2g, %2.2g}, kib: {%2.2g, %2.2g, %2.2g}",
                                         ki_[0], ki_[1], ki_[2], kib_[0], kib_[1], kib_[2]);
   }
 
@@ -251,7 +251,7 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
     kOm_[1]  = config.ang_y;
     kOm_[2]  = config.ang_z;
 
-    ROS_INFO("Attitude Gains set to kp: {%2.2g, %2.2g, %2.2g}, kd: {%2.2g, %2.2g, %2.2g}",
+    NODELET_INFO("Attitude Gains set to kp: {%2.2g, %2.2g, %2.2g}, kd: {%2.2g, %2.2g, %2.2g}",
                                        kR_[0], kR_[1], kR_[2], kOm_[0], kOm_[1], kOm_[2]);
   }
 
@@ -260,7 +260,7 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
     corrections_[0] = config.kf_correction;
     corrections_[1] = config.roll_correction;
     corrections_[2] = config.pitch_correction;
-    ROS_INFO("Corrections set to kf: %2.2g, roll: %2.2g, pitch: %2.2g",
+    NODELET_INFO("Corrections set to kf: %2.2g, roll: %2.2g, pitch: %2.2g",
         corrections_[0], corrections_[1], corrections_[2]);
   }
 
@@ -270,7 +270,7 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
       controller_.setMaxIntegralBody(config.max_pos_int_b);
       controller_.setMaxTiltAngle(config.max_tilt_angle);
 
-      ROS_INFO("Maxes set to Integral: %2.2g, Integral Body: %2.2g, Tilt Angle (rad): %2.2g",
+      NODELET_INFO("Maxes set to Integral: %2.2g, Integral Body: %2.2g, Tilt Angle (rad): %2.2g",
           config.max_pos_int, config.max_pos_int_b, config.max_tilt_angle);
   }
 
