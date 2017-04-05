@@ -11,8 +11,6 @@
 #ifndef __ADC_H
 #define __ADC_H
 
-#include <stdint.h>
-
 #define ADC_INTERRUPT_FLAG	0	/* 1 is interrupt driven, 0 is polling */
 
 #define ADC_OFFSET	0x10
@@ -33,10 +31,10 @@
 extern void ADC0Handler( void ) __irq;
 extern void ADC1Handler( void ) __irq;
 extern unsigned int ADCInit( unsigned int ADC_Clk );
-extern unsigned int ADC0Read( uint8_t channelNum );
-extern unsigned int ADC1Read( uint8_t channelNum );
-extern void ADC0triggerSampling(uint8_t selectChannels); //activate continuous sampling on selected ADC channels
-extern void ADC0getSamplingResults(uint8_t selectChannels, unsigned int * channelValues);
+extern unsigned int ADC0Read( unsigned char channelNum );
+extern unsigned int ADC1Read( unsigned char channelNum );
+extern void ADC0triggerSampling(unsigned char selectChannels); //activate continuous sampling on selected ADC channels
+extern void ADC0getSamplingResults(unsigned char selectChannels, unsigned int * channelValues);
 
 
 extern volatile unsigned int ADC0Value[ADC_NUM], ADC1Value[ADC_NUM];

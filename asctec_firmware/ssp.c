@@ -35,25 +35,27 @@ DAMAGE.
 #include "LL_HL_comm.h"
 #include "sdk.h"
 
-uint8_t SPIWRData[128];
-uint8_t SPIRDData[128];
+char SPIWRData[128];
+char SPIRDData[128];
 int CurrentTxIndex;
 int CurrentRxIndex;
 unsigned int SPIWR_num_bytes;
 
 volatile unsigned int SSP_trans_cnt=0;
 
-uint8_t data_sent_to_LL=1;
+unsigned char data_sent_to_LL=1;
 
-uint8_t SSP_receiption_complete=1;
+unsigned char SSP_receiption_complete=1;
 
-uint8_t data_sent_to_HL=1;
+char data_sent_to_HL=1;
+
+inline void SSPReceive(unsigned char);
 
 void SSPHandler (void) __irq
 {
     int regValue;
-    uint16_t input_data;
-//    uint8_t timeout=0;
+    unsigned short input_data;
+//    unsigned char timeout=0;
 
     IENABLE;				/* handles nested interrupt */
 
@@ -73,6 +75,8 @@ void SSPHandler (void) __irq
 	while ( SSPSR & SSPSR_RNE )
 	{
 		input_data=SSPDR;
+	    //SSPReceive(input_data&0xFF);
+	    //SSPReceive(input_data>>8);
 
 		SSP_rx_handler_HL(input_data&0xFF);
 		SSP_rx_handler_HL(input_data>>8);
@@ -119,7 +123,7 @@ void LL_write_init(void)
 		SPIWRData[2]='>';
 }
 
-int LL_write(uint8_t *data, uint16_t cnt, uint8_t PD )	//write data to high-level processor
+int LL_write(unsigned char *data, unsigned short cnt, unsigned char PD )	//write data to high-level processor
 {
 	unsigned int i;
 

@@ -34,7 +34,7 @@ DAMAGE.
 #include "irq.h"
 
 
-void LED(uint8_t nr, uint8_t onoff) //set or reset LED 0..3
+void LED(unsigned char nr, unsigned char onoff) //set or reset LED 0..3
 {
   if (nr>=2)
   	return;

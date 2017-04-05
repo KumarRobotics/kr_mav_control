@@ -17,11 +17,11 @@
 // new code for _read_r provided by Alexey Shusharin - Thanks
 _ssize_t _read_r(struct _reent *r, int file, void *ptr, size_t len)
 {
-  uint8_t c;
+  char c;
   int  i;
-  uint8_t *p;
+  unsigned char *p;
 
-  p = (uint8_t*)ptr;
+  p = (unsigned char*)ptr;
 
   for (i = 0; i < len; i++)
   {
@@ -49,11 +49,11 @@ _ssize_t _read_r(
     void *ptr, 
     size_t len)
 {
-	uint8_t c;
+	char c;
 	int  i;
-	uint8_t *p;
+	unsigned char *p;
 	
-	p = (uint8_t*)ptr;
+	p = (unsigned char*)ptr;
 	
 	for (i = 0; i < len; i++) {
 		// c = uart0Getch();
@@ -76,9 +76,9 @@ _ssize_t _write_r (
     size_t len)
 {
 	int i;
-	const uint8_t *p;
+	const unsigned char *p;
 	
-	p = (const uint8_t*) ptr;
+	p = (const unsigned char*) ptr;
 	
 	for (i = 0; i < len; i++) {
 		if (*p == '\n' ) UARTWriteChar('\r');
@@ -135,11 +135,11 @@ label:  goto label; /* endless loop */
 /* "malloc clue function" */
 
 	/**** Locally used variables. ****/
-extern uint8_t _end[];              /*  end is set in the linker command 	*/
+extern char _end[];              /*  end is set in the linker command 	*/
 				/* file and is the end of statically 	*/
 				/* allocated data (thus start of heap).	*/
 
-static uint8_t *heap_ptr;		/* Points to current end of the heap.	*/
+static char *heap_ptr;		/* Points to current end of the heap.	*/
 
 /************************** _sbrk_r *************************************/
 /*  Support function.  Adjusts end of heap to provide more memory to	*/
@@ -157,7 +157,7 @@ void * _sbrk_r(
     struct _reent *_s_r, 
     ptrdiff_t nbytes)
 {
-	uint8_t  *base;		/*  errno should be set to  ENOMEM on error	*/
+	char  *base;		/*  errno should be set to  ENOMEM on error	*/
 
 	if (!heap_ptr) {	/*  Initialize if first time through.		*/
 		heap_ptr = _end;

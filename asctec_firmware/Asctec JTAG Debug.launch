@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="com.zylin.embeddedcdt.idleNative">
+<booleanAttribute key="com.zylin.embeddedcdt.debugger_app_console" value="false"/>
+<stringAttribute key="com.zylin.embeddedcdt.debugger_init_commands" value="target remote localhost:3333&#13;&#10;monitor sleep 500&#13;&#10;monitor poll&#13;&#10;monitor flash probe 0&#13;&#10;monitor flash erase 0 0 13&#13;&#10;monitor flash write 0 main.bin 0x0&#13;&#10;monitor reset run&#13;&#10;monitor sleep 500&#13;&#10;monitor soft_reset_halt&#13;&#10;monitor arm7_9 force_hw_bkpts enable&#13;&#10;symbol-file main.elf&#13;&#10;thbreak main&#13;&#10;continue"/>
+<stringAttribute key="org.eclipse.cdt.debug.mi.core.DEBUG_NAME" value="arm-elf-gdb.exe"/>
+<stringAttribute key="org.eclipse.cdt.debug.mi.core.GDB_INIT" value=""/>
+<booleanAttribute key="org.eclipse.cdt.debug.mi.core.breakpointsFullPath" value="false"/>
+<stringAttribute key="org.eclipse.cdt.debug.mi.core.commandFactory" value="org.eclipse.cdt.debug.mi.core.standardCommandFactory"/>
+<stringAttribute key="org.eclipse.cdt.debug.mi.core.protocol" value="mi"/>
+<booleanAttribute key="org.eclipse.cdt.debug.mi.core.verboseMode" value="false"/>
+<stringAttribute key="org.eclipse.cdt.launch.DEBUGGER_ID" value="com.zylin.embeddedcdt.EmbeddedCDebugger"/>
+<stringAttribute key="org.eclipse.cdt.launch.DEBUGGER_REGISTER_GROUPS" value=""/>
+<stringAttribute key="org.eclipse.cdt.launch.DEBUGGER_START_MODE" value="run"/>
+<booleanAttribute key="org.eclipse.cdt.launch.DEBUGGER_STOP_AT_MAIN" value="false"/>
+<booleanAttribute key="org.eclipse.cdt.launch.ENABLE_REGISTER_BOOKKEEPING" value="false"/>
+<booleanAttribute key="org.eclipse.cdt.launch.ENABLE_VARIABLE_BOOKKEEPING" value="false"/>
+<stringAttribute key="org.eclipse.cdt.launch.FORMAT" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&lt;contentList&gt;&lt;content id=&quot;null-SSPHandler-(format)&quot; val=&quot;1&quot;/&gt;&lt;content id=&quot;null-main-(format)&quot; val=&quot;1&quot;/&gt;&lt;/contentList&gt;"/>
+<stringAttribute key="org.eclipse.cdt.launch.GLOBAL_VARIABLES" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&#13;&#10;&lt;globalVariableList/&gt;&#13;&#10;"/>
+<stringAttribute key="org.eclipse.cdt.launch.MEMORY_BLOCKS" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&#13;&#10;&lt;memoryBlockExpressionList/&gt;&#13;&#10;"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROGRAM_NAME" value="main.elf"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROJECT_ATTR" value="AscTec_SDK_v3.0"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_ID_ATTR" value="org.eclipse.cdt.gnuarm.exe.target.win32.debug.tc.223374568"/>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/AscTec_SDK_v3.0"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="4"/>
+</listAttribute>
+<stringAttribute key="org.eclipse.debug.core.source_locator_id" value="org.eclipse.cdt.debug.core.sourceLocator"/>
+<stringAttribute key="org.eclipse.debug.core.source_locator_memento" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&#13;&#10;&lt;sourceLookupDirector&gt;&#13;&#10;&lt;sourceContainers duplicates=&quot;true&quot;&gt;&#13;&#10;&lt;container memento=&quot;&amp;lt;?xml version=&amp;quot;1.0&amp;quot; encoding=&amp;quot;UTF-8&amp;quot; standalone=&amp;quot;no&amp;quot;?&amp;gt;&amp;#13;&amp;#10;&amp;lt;default/&amp;gt;&amp;#13;&amp;#10;&quot; typeId=&quot;org.eclipse.debug.core.containerType.default&quot;/&gt;&#13;&#10;&lt;/sourceContainers&gt;&#13;&#10;&lt;/sourceLookupDirector&gt;&#13;&#10;"/>
+<listAttribute key="org.eclipse.debug.ui.favoriteGroups">
+<listEntry value="org.eclipse.debug.ui.launchGroup.debug"/>
+</listAttribute>
+</launchConfiguration>

@@ -29,83 +29,53 @@ DAMAGE.
 #ifndef SDK_
 #define SDK_
 
-#include <stdint.h>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
 void SDK_mainloop(void);
+extern void rt_OneStep (void); //Matlab-Simulink code main
+extern unsigned char xbee_send_flag;
 
-#define TYPE_SO3_CMD 's'
-struct SO3_CMD_INPUT
-{
-  // Scaling factors when decoding
-  int16_t force[3]; // /500 (range: +-65 N on each axis)
-  int8_t des_qx, des_qy, des_qz, des_qw; // /125
-  int16_t angvel_x, angvel_y, angvel_z; // /1000 (range: +-32 rad/s)
-  uint8_t kR[3]; // /50 (range: 0-5.1)
-  uint8_t kOm[3]; // /100 (range: 0-2.5)
-  int16_t cur_yaw; // /1e4
-  int16_t kf_correction; // /1e11 (range: +-3.2e-7)
-  int8_t angle_corrections[2]; // roll,pitch /2500 (range: +-0.05 rad)
-  uint8_t enable_motors:1;
-  uint8_t use_external_yaw:1;
-  uint8_t seq;
-};
-extern struct SO3_CMD_INPUT SO3_cmd_input_tmp;
-
-#define TYPE_PWM_CMD 'w'
-struct PWM_CMD_INPUT
-{
-  // Scaling factors when decoding
-  uint8_t pwm[2]; // pwm1,pwm2 *255
-};
-extern struct PWM_CMD_INPUT PWM_cmd_input_tmp;
-
-#define TYPE_STATUS_DATA 'c'
-struct STATUS_DATA
-{
-  uint16_t loop_rate;
-  uint16_t voltage;
-  uint8_t seq;
-};
-extern struct STATUS_DATA Status_Data;
-
-#define TYPE_OUTPUT_DATA 'd'
-struct OUTPUT_DATA
-{
-  uint16_t loop_rate;
-  uint16_t voltage;
-  int16_t roll, pitch, yaw;
-  int16_t ang_vel[3];
-  int16_t acc[3];
-  int16_t dheight;
-  int32_t height;
-  int16_t mag[3];
-  uint8_t radio[8];
-  uint8_t rpm[4];
-  uint8_t seq;
-};
-extern struct OUTPUT_DATA Output_Data;
 
 //--- general commands -----------------------------------------------------------------------------------------------------------------------------------------------
 struct WO_SDK_STRUCT {
 
-	uint8_t ctrl_mode;
+	unsigned char ctrl_mode;
 
-	uint8_t ctrl_enabled; //0x00: control commands are ignored by LL processor
+	unsigned char ctrl_enabled; //0x00: control commands are ignored by LL processor
 								//0x01: control commands are accepted by LL processor
 
-	uint8_t disable_motor_onoff_by_stick; // if true, "minimum thrust + full yaw" command will not start/stop motors
+	unsigned char disable_motor_onoff_by_stick; // if true, "minimum thrust + full yaw" command will not start/stop motors
 };
 extern struct WO_SDK_STRUCT WO_SDK;
 
 //--- read sensor data -----------------------------------------------------------------------------------------------------------------------------------------------
 struct RO_ALL_DATA {
 
+	//status information
+		short UAV_status;
+			/*
+			 * 0x01 ATTITUDE CONTROL
+			 * 0x02 HEIGHT CONTROL
+			 * 0x04 POSITION CONTROL
+			 * 0x10 COMPASS FAILURE
+			 * 0x20 SERIAL INTERFACE ENABLED
+			 * 0x40 SERIAL INTERFACE ACTIVE //is active when control commands are sent to the LL
+			 * 0x80 EMERGENCY MODE //when RC link is lost -> serial interface disabled
+			 * 0x100 CALIBRATION ERROR
+			 * 0x200 GYRO CALIBRATION ERROR
+			 * 0x400 ACC CALIBRATION ERROR
+			 * 0x4000 MAGNETIC FIELD STRENGTH ERROR
+			 * 0x8000 MAGNETIC INCLINATION ERROR
+			 *
+			 * example: 0x07 means GPS Mode activated (ATTITUDE-, HEIGHT- and POSITION CONTROL active)
+			 */
+		unsigned char flying; //is one when motors are started
+		short flight_time; // in s, starts when motors are running
+		short battery_voltage; //e.g. 11000 = 11.0V
+
+		short HL_cpu_load; // if <1 means your HL code is executed at 1kHz
+		short HL_up_time; // in ms
+
 	//remote control data
-		uint16_t channel[8];
+		unsigned short channel[8];
 		/*
 		 * channel[0]: pitch
 		 * channel[1]: roll
@@ -122,15 +92,15 @@ struct RO_ALL_DATA {
 	    int angle_roll;
 	    int angle_yaw;
 
-	//angular velocities, bias free, in 0.0154 deg/s (=> 64.8 = 1 deg/s)
+	//angular velocities, bias free, in 0.0154 °/s (=> 64.8 = 1 °/s)
 	    int angvel_pitch;
 	    int angvel_roll;
 	    int angvel_yaw;
 
 	//acc-sensor outputs, calibrated: -10000..+10000 = -1g..+1g, body frame coordinate system
-	    int16_t acc_x;
-	    int16_t acc_y;
-	    int16_t acc_z;
+	    short acc_x;
+	    short acc_y;
+	    short acc_z;
 
 	//magnetic field sensors output, offset free and scaled to +-2500 = +- earth field strength;
 	    int Hx;
@@ -140,6 +110,8 @@ struct RO_ALL_DATA {
 	//RPM measurements (0..200)
 	/*
 	 * Quadcopter (AscTec Hummingbird, AscTec Pelican)
+	 *
+	 * measurement equals a real rpm of motor_rpm*64
 	 *
 	 * motor[0]: front
 	 * motor[1]: rear
@@ -151,6 +123,8 @@ struct RO_ALL_DATA {
 	/*
 	 * Hexcopter (AscTec Firefly)
 	 *
+	 * measurement equals a real rpm of motor_rpm*64
+	 *
 	 * motor[0]: front-left
 	 * motor[1]: left
 	 * motor[2]: rear-left
@@ -159,7 +133,7 @@ struct RO_ALL_DATA {
 	 * motor[5]: front-right
 	 *
 	 */
-	    uint8_t motor_rpm[6];
+	    unsigned char motor_rpm[6];
 
 	//latitude/longitude in degrees * 10^7
 		int GPS_latitude;
@@ -187,9 +161,9 @@ struct RO_ALL_DATA {
 		int GPS_status;
 
 		unsigned int GPS_time_of_week;	//[ms] (1 week = 604,800 s)
-		uint16_t GPS_week;		// starts from beginning of year 1980
+		unsigned short GPS_week;		// starts from beginning of year 1980
 
-	//height in mm (after data fusion)
+	//relative height in mm (after data fusion). height is set to 0 when the motors are switched on.
 		int fusion_height;
 
 	//diff. height in mm/s (after data fusion)
@@ -199,8 +173,8 @@ struct RO_ALL_DATA {
 		int fusion_latitude; 	//Fused latitude in degrees * 10^7
 		int fusion_longitude;	//Fused longitude in degrees * 10^7
 
-		int16_t fusion_speed_x; 	//[mm/s]
-		int16_t fusion_speed_y;	//[mm/s]
+		short fusion_speed_x; 	//[mm/s]
+		short fusion_speed_y;	//[mm/s]
 
 }; //************************************************************
 extern struct RO_ALL_DATA RO_ALL_Data;
@@ -208,7 +182,7 @@ extern struct RO_ALL_DATA RO_ALL_Data;
 
 struct RO_RC_DATA {
 
-	uint16_t channel[8];
+	unsigned short channel[8];
 	/*
 	 * channel[0]: pitch
 	 * channel[1]: roll
@@ -227,16 +201,24 @@ extern struct RO_RC_DATA RO_RC_Data;
 //--- send commands -----------------------------------------------------------------------------------------------------------------------------------------------
 struct WO_DIRECT_INDIVIDUAL_MOTOR_CONTROL
 {
-	uint8_t motor[8];
+	unsigned char motor[8];
+	unsigned char motorReverseMask; //Only for AscTec Firefly. Bit 0..7 can switch the motor turning direction from normal (=0) to reverse (=1) in individual direct motor command mode. Default=0x00. Change the default with extreme caution!
 
 	/*
 	 * commands will be directly interpreted by each motor individually
 	 *
 	 * range: 0..200 = 0..100 %; 0 = motor off! Please check for command != 0 during flight, as a motor restart might take > 1s!
+	 * you will first have to switch on the motors via R/C or like it is shown in the example to turn motors on before the motors will
+	 * accept the direct individual motor commands!
 	 */
 
 	/*
-	 * Quadcopter (AscTec Hummingbird, AscTec Pelican)
+	 * Quadcopter (AscTec Hummingbird, AscTec Pelican -> both Hacker motors)
+	 *
+	 * motor commands equal a real commanded rpm of (25+(motor*175)/200)*43
+	 * please note that all fractions are removed during every calculation steps
+	 * e.g. motor = 100; means a turning speed of (25+ (100*175/200))*43=4816 rpm
+	 * Max. turning speed 8600 rpm
 	 *
 	 * motor[0]: front
 	 * motor[1]: rear
@@ -246,7 +228,12 @@ struct WO_DIRECT_INDIVIDUAL_MOTOR_CONTROL
 	 */
 
 	/*
-	 * Hexcopter (AscTec Firefly)
+	 * Hexcopter (AscTec Firefly -> Scorpion motors)
+	 *
+	 * motor commands equal a real commanded rpm of (25+(motor*175)/200)*50
+	 * please note that all fractions are removed during every calculation steps
+	 * e.g. motor = 100; means a turning speed of (25+ (100*175/200))*50=5600 rpm
+	 * Max. turning speed 10000 rpm
 	 *
 	 * motor[0]: front-left
 	 * motor[1]: left
@@ -262,10 +249,10 @@ extern struct WO_DIRECT_INDIVIDUAL_MOTOR_CONTROL WO_Direct_Individual_Motor_Cont
 
 struct WO_DIRECT_MOTOR_CONTROL //direct motor commands with standard output mapping
 {
-	uint8_t pitch;
-	uint8_t roll;
-	uint8_t yaw;
-	uint8_t thrust;
+	unsigned char pitch;
+	unsigned char roll;
+	unsigned char yaw;
+	unsigned char thrust;
 
 	/*
 	 * commands will be directly interpreted by the mixer
@@ -273,6 +260,10 @@ struct WO_DIRECT_MOTOR_CONTROL //direct motor commands with standard output mapp
 	 *
 	 * range (pitch, roll, yaw commands): 0..200 = - 100..+100 %
 	 * range of thrust command: 0..200 = 0..100 %
+	 *
+	 * you will first have to switch on the motors via R/C or like it is shown in the example to turn motors on
+	 * before the motors will accept the direct motor commands!
+	 *
 	 */
 
 };
@@ -283,11 +274,11 @@ extern struct WO_DIRECT_MOTOR_CONTROL WO_Direct_Motor_Control;
 
 struct WO_CTRL_INPUT {
 
-	int16_t pitch;	//pitch input: -2047..+2047 (0=neutral)
-	int16_t roll;		//roll input: -2047..+2047	(0=neutral)
-	int16_t yaw;		//(=R/C Stick input) -2047..+2047 (0=neutral)
-	int16_t thrust;	//collective: 0..4095 = 0..100%
-	int16_t ctrl;				/*control byte:
+	short pitch;	//pitch input: -2047..+2047 (0=neutral)
+	short roll;		//roll input: -2047..+2047	(0=neutral)
+	short yaw;		//(=R/C Stick input) -2047..+2047 (0=neutral)
+	short thrust;	//collective: 0..4095 = 0..100%
+	short ctrl;				/*control byte:
 							bit 0: pitch control enabled
 							bit 1: roll control enabled
 							bit 2: yaw control enabled
@@ -296,7 +287,7 @@ struct WO_CTRL_INPUT {
 							bit 5: GPS position control enabled
 							*/
 
-	//max. pitch/roll (+-2047) equals 51.2 deg angle if GPS position control is disabled
+	//max. pitch/roll (+-2047) equals 51.2° angle if GPS position control is disabled
 	//max. pitch/roll (+-2047) equals approx. 3 m/s if GPS position control is active (GPS signal needed!)
 
 };
@@ -305,32 +296,35 @@ extern struct WO_CTRL_INPUT WO_CTRL_Input;
 
 //waypoint commands
 
+//the UAV only accepts a waypoint command if your R/C is switched to GPS Mode and the control sticks of the R/C are both centered!
+//the safety pilot can get back the control by just moving the control sticks out of the center position even if the serial interface is still activated.
+
 struct WAYPOINT { //waypoint definition
 //always set to 1
   unsigned int wp_activated;
 
 //use WPPROP_* defines to set waypoint properties
-  uint8_t properties;
+  unsigned char properties;
 
 //max. speed to travel to waypoint in % (default 100)
-  uint8_t max_speed;
+  unsigned char max_speed;
 
 //time to stay at a waypoint (XYZ) in 1/100 s
-  uint16_t time;
+  unsigned short time;
 
 //position accuracy to consider a waypoint reached in mm (recommended: 3000 (= 3.0 m))
-  uint16_t pos_acc;
+  unsigned short pos_acc;
 
 //chksum = 0xAAAA + wp.yaw + wp.height + wp.time + wp.X + wp.Y + wp.max_speed + wp.pos_acc + wp.properties + wp.wp_number;
-  int16_t chksum;
+  short chksum;
 
- //relative waypoint coordinates in mm 	// longitude in abs coords e.g. 113647430 (= 11.3647430 deg; angle in degrees * 10^7)
+ //relative waypoint coordinates in mm 	// longitude in abs coords e.g. 113647430 (= 11.3647430°; angle in degrees * 10^7)
   int X;
- //relative waypoint coordinates in mm  	// latitude in abs coords e.g. 480950480 (= 48.0950480 deg; angle in degrees * 10^7)
+ //relative waypoint coordinates in mm  	// latitude in abs coords e.g. 480950480 (= 48.0950480°; angle in degrees * 10^7)
   int Y;
 
 //yaw angle
-  int yaw; // 1/1000 deg
+  int yaw; // 1/1000°
 
 //height over 0 reference in mm
   int height;
@@ -344,7 +338,7 @@ extern struct WAYPOINT wpToLL;
 #define WPPROP_YAWENABLED 			0x04	//set new yaw-angle at waypoint
 #define WPPROP_AUTOMATICGOTO		0x10 	//if set, vehicle will not wait for a goto command, but goto this waypoint directly
 
-extern uint8_t wpCtrlWpCmd; //choose actual waypoint command from WP_CMD_* defines
+extern unsigned char wpCtrlWpCmd; //choose actual waypoint command from WP_CMD_* defines
 #define WP_CMD_SINGLE_WP 	0x01 //fly to single waypoint
 #define WP_CMD_LAUNCH		0x02 //launch to 10m at current position
 #define WP_CMD_LAND			0x03 //land at current position
@@ -352,16 +346,26 @@ extern uint8_t wpCtrlWpCmd; //choose actual waypoint command from WP_CMD_* defin
 #define WP_CMD_SETHOME		0x05 //save current vehicle position as home position
 #define WP_CMD_ABORT		0x06 //abort navigation (stops current waypoint flying)
 
-extern uint8_t wpCtrlWpCmdUpdated; //send current waypoint command to LL
-extern uint8_t wpCtrlAckTrigger; //acknowledge from LL processor that waypoint was accepted
+extern unsigned char wpCtrlWpCmdUpdated; //send current waypoint command to LL
+extern unsigned char wpCtrlAckTrigger; //acknowledge from LL processor that waypoint was accepted
 
 //Waypoint navigation status
-extern uint16_t wpCtrlNavStatus; //check navigation status with WP_NAVSTAT_* defines
+extern unsigned short wpCtrlNavStatus; //check navigation status with WP_NAVSTAT_* defines
 #define WP_NAVSTAT_REACHED_POS 			0x01	//vehicle has entered a radius of WAYPOINT.pos_acc and time to stay is not necessarily over
 #define WP_NAVSTAT_REACHED_POS_TIME		0x02 	//vehicle is within a radius of WAYPOINT.pos_acc and time to stay is over
 #define WP_NAVSTAT_20M					0x04 	//vehicle within a 20m radius of the waypoint
 #define WP_NAVSTAT_PILOT_ABORT			0x08	//waypoint navigation aborted by safety pilot (any stick was moved)
 
-extern uint16_t wpCtrlDistToWp; //current distance to the current waypoint in dm (=10 cm)
+extern unsigned short wpCtrlDistToWp; //current distance to the current waypoint in dm (=10 cm)
+extern unsigned char triggerSaveMatlabParams; //trigger command to save matlab parameters to flash
+
+//waypoint example global variables for jeti display
+extern unsigned char wpExampleWpNr;
+extern unsigned char wpExampleActive;
+
+//emergency mode prototype and global variables
+extern void SDK_SetEmergencyMode(unsigned char mode);
+extern unsigned char emergencyMode;
+extern unsigned char emergencyModeUpdate;
 
 #endif /*SDK_*/

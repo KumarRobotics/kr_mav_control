@@ -1,7 +1,7 @@
 # Hey Emacs, this is a -*- makefile -*-
 #
-# WinARM template makefile
-# by Martin Thomas, Kaiserslautern, Germany
+# WinARM template makefile 
+# by Martin Thomas, Kaiserslautern, Germany 
 # <eversmith@heizung-thomas.de>
 #
 # based on the WinAVR makefile written by Eric B. Weddington, Jörg Wunsch, et al.
@@ -33,6 +33,10 @@
 #
 # modified 2011 by Ascending Technologies GmbH
 
+# Version defines 
+__VERSION_MAJOR = 3
+__VERSION_MINOR = 0
+
 //FLASH_TOOL = UVISION
 FLASH_TOOL = OPENOCD
 
@@ -62,37 +66,47 @@ TARGET = main
 
 # List C source files here. (C dependencies are automatically generated.)
 # use file-extension c for "c-only"-files
-##SRC = $(TARGET).c
+##SRC = $(TARGET).c 
 
 # List C source files here which must be compiled in ARM-Mode.
 # use file-extension c for "c-only"-files
 #SRCARM = $(TARGET).c
 SRCARM = LL_HL_comm.c
+SRCARM += mymath.c
 SRCARM += gpsmath.c
-SRCARM += buzzer.c
 SRCARM += sdk.c
-SRCARM += pelican_ptu.c
+SRCARM += sdk_telemetry.c
+SRCARM += buzzer.c
+SRCARM += lpc_aci_eeprom.c
+ifeq ($(MATLAB),1)
+SRCARM += $(wildcard ../custom_mdl/onboard_matlab_ert_rtw/*.c)
+endif
+SRCARM += asctecCommIntfOnboard.c
+SRCARM += buildInfoSetup.c
 
 #Sources with interrupt routines in them
 SRCARMINT = $(TARGET).c
 SRCARMINT += hardware.c
-SRCARMINT += LPC2k_ee.c
 SRCARMINT += system.c
 SRCARMINT += uart.c
 SRCARMINT += syscalls.c
 SRCARMINT += i2c.c
+SRCARMINT += i2c1.c
 SRCARMINT += Common_WinARM/src/irq.c
 SRCARMINT += adc.c
 SRCARMINT += ssp.c
+SRCARMINT += pelican_ptu.c
+SRCARMINT += jetiTelemetry.c
+SRCARMINT += LPC2k_ee.c
 
 # List C++ source files here.
 # use file-extension cpp for C++-files (use extension .cpp)
-CPPSRC =
+CPPSRC = 
 
 # List C++ source files here which must be compiled in ARM-Mode.
 # use file-extension cpp for C++-files (use extension .cpp)
 #CPPSRCARM = $(TARGET).cpp
-CPPSRCARM =
+CPPSRCARM = 
 
 # List Assembler source files here.
 # Make them always end in a capital .S.  Files ending in a lowercase .s
@@ -101,7 +115,7 @@ CPPSRCARM =
 # Even though the DOS/Win* filesystem matches both .s and .S the same,
 # it will preserve the spelling of the filenames, and gcc itself does
 # care about how the name is spelled on its command-line.
-ASRC =
+ASRC = 
 
 # List Assembler source files here which must be assembled in ARM-Mode..
 ASRCARM = Common_WinARM/src/Startup.S
@@ -110,18 +124,18 @@ ASRCARM += Common_WinARM/src/swi_handler.S
 
 ## Output format. (can be ihex or binary)
 ## (binary i.e. for openocd and SAM-BA, hex i.e. for lpc21isp and uVision)
-FORMAT = ihex
-#FORMAT = binary
+FORMATHEX = ihex
+FORMAT = binary
 
-# Optimization level, can be [0, 1, 2, 3, s].
+# Optimization level, can be [0, 1, 2, 3, s]. 
 # 0 = turn off optimization. s = optimize for size.
 # (Note: 3 is not always the best optimization level. See avr-libc FAQ.)
 OPT = 2
-OPTINT = 2
+OPTINT = 0
 #OPT = 0
 
 ## Using the Atmel AT91_lib produces warning with
-## the default warning-levels.
+## the default warning-levels. 
 ## yes - disable these warnings; no - keep default settings
 #AT91LIBNOWARN = yes
 AT91LIBNOWARN = no
@@ -139,7 +153,7 @@ EXTRAINCDIRS = Common_WinARM/inc
 # List any extra directories to look for library files here.
 #     Each directory must be seperated by a space.
 #EXTRA_LIBDIRS = ../arm7_efsl_0_2_4
-EXTRA_LIBDIRS =
+EXTRA_LIBDIRS = ./
 
 
 # Compiler flag to set the C Standard level.
@@ -147,7 +161,7 @@ EXTRA_LIBDIRS =
 # gnu89 - c89 plus GCC extensions
 # c99   - ISO C99 standard (not yet fully implemented)
 # gnu99 - c99 plus GCC extensions
-CSTANDARD = -std=c99
+CSTANDARD = -std=gnu99
 
 # Place -D or -U options for C here
 CDEFS =  -D$(RUN_MODE)
@@ -163,8 +177,30 @@ CDEFS += -D$(VECTOR_LOCATION)
 ADEFS += -D$(VECTOR_LOCATION)
 endif
 
-# CDEFS += -D__WinARM__
-# ADEFS += -D__WinARM__
+CDEFS += -D__WinARM__
+ADEFS += -D__WinARM__
+
+CDEFS += -D__VERSION_MAJOR=$(__VERSION_MAJOR)
+CDEFS += -D__VERSION_MINOR=$(__VERSION_MINOR)
+
+ifeq ($(MATLAB),1)
+ifeq ($(wildcard asctec_compile),)
+CDEFS += -D__BUILD_CONFIG=0x02
+else
+CDEFS += -D__BUILD_CONFIG=0x03
+endif
+else
+ifeq ($(wildcard asctec_compile),)
+CDEFS += -D__BUILD_CONFIG=0x00
+else
+CDEFS += -D__BUILD_CONFIG=0x01
+endif
+endif
+
+ifeq ($(MATLAB),1)
+CDEFS += -DMATLAB
+endif
+
 # Compiler flags.
 #  -g*:          generate debugging information
 #  -O*:          optimization level
@@ -177,37 +213,38 @@ endif
 CFLAGS = -g$(DEBUG)
 CFLAGS += $(CDEFS) $(CINCS)
 CFLAGS += -O$(OPT)
-CFLAGS += -Wall -Wcast-align -Wimplicit
+CFLAGS += -Wall -Wcast-align -Wimplicit 
 CFLAGS += -Wpointer-arith -Wswitch
-CFLAGS += -Wredundant-decls -Wreturn-type -Wshadow -Wunused
-CFLAGS += -Wa,-adhlns=$(subst $(suffix $<),.lst,$<)
+CFLAGS += -Wredundant-decls -Wreturn-type -Wshadow -Wunused -Wunknown-pragmas
+CFLAGS += -Wa,-adhlns=$(subst $(suffix $<),.lst,$<) 
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
+CFLAGS += -I ../onboard_matlab_ert_rtw
 
 # Flags for C and C++ (arm-elf-gcc/arm-elf-g++) files containing interrupt routines
 INTCFLAGS = -g$(DEBUG)
 INTCFLAGS += $(CDEFS) $(CINCS)
 INTCFLAGS += -O$(OPTINT)
-INTCFLAGS += -Wall -Wcast-align -Wimplicit
+INTCFLAGS += -Wall -Wcast-align -Wimplicit 
 INTCFLAGS += -Wpointer-arith -Wswitch
 INTCFLAGS += -Wredundant-decls -Wreturn-type -Wshadow -Wunused
-INTCFLAGS += -Wa,-adhlns=$(subst $(suffix $<),.lst,$<)
+INTCFLAGS += -Wa,-adhlns=$(subst $(suffix $<),.lst,$<) 
 INTCFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 
 # flags only for C
-CONLYFLAGS += -Wnested-externs
+CONLYFLAGS += -Wnested-externs 
 CONLYFLAGS += $(CSTANDARD)
 
 ifneq ($(AT91LIBNOWARN),yes)
 #AT91-lib warnings with:
 CFLAGS += -Wcast-qual
-CONLYFLAGS += -Wmissing-prototypes
+CONLYFLAGS += -Wmissing-prototypes 
 CONLYFLAGS += -Wstrict-prototypes
 CONLYFLAGS += -Wmissing-declarations
 endif
 
 # flags only for C++ (arm-elf-g++)
 # CPPFLAGS = -fno-rtti -fno-exceptions
-CPPFLAGS =
+CPPFLAGS = 
 
 # Assembler flags.
 #  -Wa,...:    tell GCC to pass this to the assembler.
@@ -220,7 +257,7 @@ ASFLAGS = $(ADEFS) -Wa,-adhlns=$(<:.S=.lst),-g$(DEBUG)
 
 # Extra libraries
 #    Each library-name must be seperated by a space.
-#    To add libxyz.a, libabc.a and libefsl.a:
+#    To add libxyz.a, libabc.a and libefsl.a: 
 #    EXTRA_LIBS = xyz abc efsl
 #EXTRA_LIBS = efsl
 EXTRA_LIBS =
@@ -238,7 +275,8 @@ MATH_LIB = -lm
 #    -Map:      create map file
 #    --cref:    add cross reference to  map file
 LDFLAGS = -nostartfiles -Wl,-Map=$(TARGET).map,--cref
-LDFLAGS += -lc -lgcc
+LDFLAGS += -lc
+LDFLAGS += -lc -lgcc -ldeclination -lublox
 LDFLAGS += $(NEWLIBLPC) $(MATH_LIB)
 LDFLAGS += $(CPLUSPLUS_LIB)
 LDFLAGS += $(patsubst %,-L%,$(EXTRA_LIBDIRS))
@@ -247,13 +285,13 @@ LDFLAGS += $(patsubst %,-l%,$(EXTRA_LIBS))
 # Set Linker-Script Depending On Selected Memory and Controller
 ifeq ($(RUN_MODE),RAM_RUN)
 LDFLAGS +=-TCommon_WinARM/$(SUBMDL)-RAM.ld
-else
+else 
 LDFLAGS +=-TCommon_WinARM/$(SUBMDL)-ROM.ld
 endif
 
 
 # ---------------------------------------------------------------------------
-# Flash-Programming support using lpc21isp by Martin Maurer
+# Flash-Programming support using lpc21isp by Martin Maurer 
 # only for Philips LPC and Analog ADuC ARMs
 #
 # Settings and variables:
@@ -278,12 +316,12 @@ LPC21ISP_CONTROL = -control
 
 # Define programs and commands.
 SHELL = sh
-CC = arm-none-eabi-gcc
-CPP = arm-none-eabi-g++
-OBJCOPY = arm-none-eabi-objcopy
-OBJDUMP = arm-none-eabi-objdump
-SIZE = arm-none-eabi-size
-NM = arm-none-eabi-nm
+CC = arm-elf-gcc
+CPP = arm-elf-g++
+OBJCOPY = arm-elf-objcopy
+OBJDUMP = arm-elf-objdump
+SIZE = arm-elf-size
+NM = arm-elf-nm
 REMOVE = rm -f
 COPY = cp
 
@@ -292,7 +330,7 @@ COPY = cp
 MSG_ERRORS_NONE = Errors: none
 MSG_BEGIN = "-------- begin (mode: $(RUN_MODE)) --------"
 MSG_END = --------  end  --------
-MSG_SIZE_BEFORE = Size before:
+MSG_SIZE_BEFORE = Size before: 
 MSG_SIZE_AFTER = Size after:
 MSG_FLASH = Creating load file for Flash:
 MSG_EXTENDED_LISTING = Creating Extended Listing:
@@ -310,12 +348,12 @@ MSG_FORMATERROR = Can not handle output-format
 MSG_LPC21_RESETREMINDER = You may have to bring the target in bootloader-mode now.
 
 # Define all object files.
-COBJ      = $(SRC:.c=.o)
+COBJ      = $(SRC:.c=.o) 
 AOBJ      = $(ASRC:.S=.o)
 COBJARM   = $(SRCARM:.c=.o)
 COBJARMINT =$(SRCARMINT:.c=.o)
 AOBJARM   = $(ASRCARM:.S=.o)
-CPPOBJ    = $(CPPSRC:.cpp=.o)
+CPPOBJ    = $(CPPSRC:.cpp=.o) 
 CPPOBJARM = $(CPPSRCARM:.cpp=.o)
 
 # Define all listing files.
@@ -341,24 +379,33 @@ ifeq ($(FORMAT),ihex)
 build: elf hex lss sym
 hex: $(TARGET).hex
 IMGEXT=hex
-else
+else 
 ifeq ($(FORMAT),binary)
-build: elf bin lss sym
+build: elf bin hex lss sym
 bin: $(TARGET).bin
+hex: $(TARGET).hex
+
 IMGEXT=bin
-else
+else 
 $(error "$(MSG_FORMATERROR) $(FORMAT)")
 endif
 endif
 
 elf: $(TARGET).elf
-lss: $(TARGET).lss
+lss: $(TARGET).lss 
 sym: $(TARGET).sym
 
 # Eye candy.
 begin:
 	@echo
 	@echo $(MSG_BEGIN)
+ifeq ($(MATLAB),1)
+	@echo Building Simuling Toolkit Configuration...
+ifeq  ($(wildcard ../custom_mdl/onboard_matlab_ert_rtw/*.c),)
+	$(error ERROR: NO SIMULINK TOOLKIT FILES FOUND! IS THE SIMULINK TOOLKIT INSTALLED CORRECTLY? DID YOU BUILD YOUR SIMULINK MODEL SUCESSFULLY?)
+endif
+endif
+
 
 finished:
 	@echo $(MSG_ERRORS_NONE)
@@ -379,13 +426,13 @@ sizeafter:
 
 
 # Display compiler version information.
-gccversion :
+gccversion : 
 	@$(CC) --version
 
 
 # Program the device.
 ifeq ($(FLASH_TOOL),UVISION)
-# Program the device with Keil's uVision (needs configured uVision-Workspace).
+# Program the device with Keil's uVision (needs configured uVision-Workspace). 
 program: $(TARGET).$(IMGEXT)
 	@echo
 	@echo "Programming with uVision"
@@ -415,8 +462,8 @@ endif
 %.hex: %.elf
 	@echo
 	@echo $(MSG_FLASH) $@
-	$(OBJCOPY) -O $(FORMAT) $< $@
-
+	$(OBJCOPY) -O $(FORMATHEX) $< $@
+	
 # Create final output file (.bin) from ELF output file.
 %.bin: %.elf
 	@echo
@@ -452,31 +499,31 @@ endif
 $(COBJ) : %.o : %.c
 	@echo
 	@echo $(MSG_COMPILING) $<
-	$(CC) -c $(THUMB) $(ALL_CFLAGS) $(CONLYFLAGS) $< -o $@
+	$(CC) -c $(THUMB) $(ALL_CFLAGS) $(CONLYFLAGS) $< -o $@ 
 
 # Compile: create object files from C source files. ARM-only
 $(COBJARM) : %.o : %.c
 	@echo
 	@echo $(MSG_COMPILING_ARM) $<
-	$(CC) -c $(ALL_CFLAGS) $(CONLYFLAGS) $< -o $@
-
+	$(CC) -c $(ALL_CFLAGS) $(CONLYFLAGS) $< -o $@ 
+	
 # Compile: create object files from C source files with interrupts. ARM-only
 $(COBJARMINT) : %.o : %.c
 	@echo
 	@echo $(MSG_COMPILING_ARM_INT) $<
-	$(CC) -c $(INT_CFLAGS) $(CONLYFLAGS) $< -o $@
+	$(CC) -c $(INT_CFLAGS) $(CONLYFLAGS) $< -o $@ 
 
 # Compile: create object files from C++ source files. ARM/Thumb
 $(CPPOBJ) : %.o : %.cpp
 	@echo
 	@echo $(MSG_COMPILINGCPP) $<
-	$(CPP) -c $(THUMB) $(ALL_CFLAGS) $(CPPFLAGS) $< -o $@
+	$(CPP) -c $(THUMB) $(ALL_CFLAGS) $(CPPFLAGS) $< -o $@ 
 
 # Compile: create object files from C++ source files. ARM-only
 $(CPPOBJARM) : %.o : %.cpp
 	@echo
 	@echo $(MSG_COMPILINGCPP_ARM) $<
-	$(CPP) -c $(ALL_CFLAGS) $(CPPFLAGS) $< -o $@
+	$(CPP) -c $(ALL_CFLAGS) $(CPPFLAGS) $< -o $@ 
 
 
 # Compile: create assembler files from C source files. ARM/Thumb
@@ -531,9 +578,9 @@ clean_list :
 	$(REMOVE) $(SRCARM:.c=.d)
 	$(REMOVE) $(SRCARMINT:.c=.s)
 	$(REMOVE) $(SRCARMINT:.c=.d)
-	$(REMOVE) $(CPPSRC:.cpp=.s)
+	$(REMOVE) $(CPPSRC:.cpp=.s) 
 	$(REMOVE) $(CPPSRC:.cpp=.d)
-	$(REMOVE) $(CPPSRCARM:.cpp=.s)
+	$(REMOVE) $(CPPSRCARM:.cpp=.s) 
 	$(REMOVE) $(CPPSRCARM:.cpp=.d)
 	$(REMOVE) .dep/*
 

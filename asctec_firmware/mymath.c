@@ -26,17 +26,25 @@ DAMAGE.
 
  */
 
-#include "gpsmath.h"
-#include "sdk.h"
+#include "mymath.h"
 
-struct GPS_DATA GPS_Data;
-struct GPS_DATA gps_data_temp;
-
-unsigned int gpsDataOkTrigger=0;
-
-void xy2latlon(double lat0, double lon0, double X, double Y, double *lat, double *lon)	//X: East, Y: North in m; lat0,lon0: Reference coordinates; lat,lon: current GPS measurement
+inline int fast_abs(int x)
 {
-        *lat=lat0+Y/MEAN_EARTH_DIAMETER*360./PI;
-        *lon=lon0+X/MEAN_EARTH_DIAMETER*360./PI/cos(lat0*UMR);
+
+	if(x>0) return x; else return (-x);
+
 }
+
+int fast_sqrt(int x)
+{
+	int l=0,r=0;
+	l=x;
+	while(fast_abs(l-r)>1){
+		r=x/l;
+		l=(l+r)/2;
+	}
+	return(l);
+}
+
+
 
