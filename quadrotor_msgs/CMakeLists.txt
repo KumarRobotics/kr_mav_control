@@ -17,6 +17,7 @@ add_message_files(DIRECTORY msg
   Corrections.msg
   FlatOutputs.msg
   LineTrackerGoal.msg
+  LineTrackerGoalTimed.msg
   OutputData.msg
   PositionCommand.msg
   PWMCommand.msg
@@ -33,7 +34,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES encode_msgs decode_msgs
   CATKIN_DEPENDS message_runtime geometry_msgs nav_msgs
-  DEPENDS eigen)
+  DEPENDS Eigen)
 
 add_library(encode_msgs src/encode_msgs.cpp)
 add_dependencies(encode_msgs ${${PROJECT_NAME}_EXPORTED_TARGETS})

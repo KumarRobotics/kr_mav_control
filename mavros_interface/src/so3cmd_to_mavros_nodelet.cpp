@@ -22,9 +22,10 @@ class SO3CmdToMavros : public nodelet::Nodelet
   bool odom_set_, imu_set_, so3_cmd_set_;
   Eigen::Quaterniond odom_q_, imu_q_;
   double kf_, lin_cof_a_, lin_int_b_;
+  int num_props_;
 
   ros::Publisher attitude_raw_pub_;
-  ros::Publisher odom_pose_pub_; // For sending PoseStamped to firmware.
+  ros::Publisher odom_pose_pub_; // For sending PoseStamped to firmware
 
   ros::Subscriber so3_cmd_sub_;
   ros::Subscriber odom_sub_;
@@ -103,13 +104,13 @@ void SO3CmdToMavros::so3_cmd_callback(
   const tf::Quaternion tf_imu_odom_yaw = imu_tf_yaw * odom_tf_yaw.inverse();
 
   // transform!
-  Eigen::Quaterniond q_des_transformed =
+  const Eigen::Quaterniond q_des_transformed =
       Eigen::Quaterniond(tf_imu_odom_yaw.w(), tf_imu_odom_yaw.x(),
                          tf_imu_odom_yaw.y(), tf_imu_odom_yaw.z()) *
       q_des;
 
   // check psi for stability
-  const Eigen::Matrix3d R_des(q_des_transformed);
+  const Eigen::Matrix3d R_des(q_des);
   const Eigen::Matrix3d R_cur(odom_q_);
 
   const float Psi =
@@ -119,22 +120,18 @@ void SO3CmdToMavros::so3_cmd_callback(
                       R_des(0, 2) * R_cur(0, 2) + R_des(1, 2) * R_cur(1, 2) +
                       R_des(2, 2) * R_cur(2, 2)));
 
-  double throttle = 0.0;
-  if(Psi < 1.0f) // Position control stability guaranteed only when Psi < 1
+  if(Psi > 1.0f) // Position control stability guaranteed only when Psi < 1
   {
-    throttle = f_des(0) * R_cur(0, 2) + f_des(1) * R_cur(1, 2) +
-               f_des(2) * R_cur(2, 2);
-  }
-  else
-  {
-    ROS_WARN_THROTTLE(1,"psi > 1.0, throttle set to 0.0 in mavros_interface.");
+    ROS_WARN_THROTTLE(1,"Psi > 1.0, orientation error is too large!");
   }
 
-  // Scale force to be proportional to rotor velocity (rad/s).
-  // Note: This ignores the number of propellers.
-  throttle = std::sqrt(throttle / kf_);
+  double throttle =
+      f_des(0) * R_cur(0, 2) + f_des(1) * R_cur(1, 2) + f_des(2) * R_cur(2, 2);
 
-  // Scaling from proportional rotor velocity (rad/s) to att_throttle for pixhawk
+  // Scale force to individual rotor velocities (rad/s).
+  throttle = std::sqrt(throttle / num_props_ / kf_);
+
+  // Scaling from rotor velocity (rad/s) to att_throttle for pixhawk
   throttle = lin_cof_a_ * throttle + lin_int_b_;
 
   // clamp from 0.0 to 1.0
@@ -169,19 +166,22 @@ void SO3CmdToMavros::onInit(void)
   ros::NodeHandle priv_nh(getPrivateNodeHandle());
 
   // get thrust scaling parameters
-  // Note that this is ignoring a constant based on the number of props, which
-  // is captured with the lin_cof_a variable later.
-  if(priv_nh.getParam("kf", kf_))
-    ROS_INFO("Using kf=%F so that prop speed = sqrt(f / kf) to scale force to speed.", kf_);
+  if(priv_nh.getParam("num_props", num_props_))
+    ROS_INFO("Got number of props: %d", num_props_);
   else
-    ROS_ERROR("Must set kf param for thrust scaling. Motor speed = sqrt(thrust / kf)");
+    ROS_ERROR("Must set num_props param");
 
-  ROS_ASSERT_MSG(kf_ > 0, "kf must be positive. kf = %d", kf_);
+  if(priv_nh.getParam("kf", kf_))
+    ROS_INFO("Using kf=%g so that prop speed = sqrt(f / num_props / kf) to scale force to speed.", kf_);
+  else
+    ROS_ERROR("Must set kf param for thrust scaling. Motor speed = sqrt(thrust / num_props / kf)");
+
+  ROS_ASSERT_MSG(kf_ > 0, "kf must be positive. kf = %g", kf_);
 
   // get thrust scaling parameters
   if(priv_nh.getParam("lin_cof_a", lin_cof_a_) &&
      priv_nh.getParam("lin_int_b", lin_int_b_))
-    ROS_INFO("Using %F*x + %F to scale prop speed to att_throttle.", lin_cof_a_,
+    ROS_INFO("Using %g*x + %g to scale prop speed to att_throttle.", lin_cof_a_,
              lin_int_b_);
   else
     ROS_ERROR("Must set coefficients for thrust scaling (scaling from rotor "

@@ -1,7 +1,7 @@
 <launch>
   <node pkg="mav_manager"
-    type="mav_manager_node"
-    name="mav_manager_node"
+    type="mav_services"
+    name="mav_services"
     clear_params="true"
     output="screen">
     <rosparam file="$(find mav_manager)/config/mav_manager_params.yaml" />

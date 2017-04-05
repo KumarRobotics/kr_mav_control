@@ -118,6 +118,14 @@ void Quadrotor::operator()(const Quadrotor::InternalState &x, Quadrotor::Interna
 
   x_dot = cur_state.v;
   v_dot = -Eigen::Vector3d(0,0,g_) + thrust*R.col(2)/mass_ + external_force_/mass_;
+  if(drag_coefficient_ != 0)
+  {
+    Eigen::Matrix3d P;
+    P << 1, 0, 0,
+         0, 1, 0,
+         0, 0, 0;
+    v_dot -= drag_coefficient_ / mass_ * R * P * R.transpose() * cur_state.v;
+  }
   R_dot = R*omega_hat;
   omega_dot = J_.inverse()*(moments - cur_state.omega.cross(J_*cur_state.omega) + external_moment_);
   motor_rpm_dot = (input_ - cur_state.motor_rpm)/motor_time_constant_;
@@ -177,6 +185,16 @@ double Quadrotor::getMass(void) const
 void Quadrotor::setMass(double mass)
 {
   mass_ = mass;
+}
+
+double Quadrotor::getDragCoefficient(void) const
+{
+  return drag_coefficient_;
+}
+
+void Quadrotor::setDragCoefficient(double drag_coefficient)
+{
+  drag_coefficient_ = drag_coefficient;
 }
 
 double Quadrotor::getGravity(void) const

@@ -1,0 +1,16 @@
+<launch>
+  <arg name="model" default="quadrotor"/>
+  <arg name="robot_type" default="hummingbird"/>
+
+  <node pkg="quadrotor_simulator"
+    type="quadrotor_simulator_so3"
+    name="quadrotor_simulator_so3"
+    output="screen">
+    <rosparam file="$(find quadrotor_simulator)/config/$(arg robot_type)_params.yaml"/>
+    <param name="rate/odom" value="100.0"/>
+    <remap from="~odom" to="odom"/>
+    <remap from="~imu" to="imu"/>
+    <remap from="~cmd" to="so3_cmd"/>
+    <param name="quadrotor_name" value="$(arg model)"/>
+  </node>
+</launch>

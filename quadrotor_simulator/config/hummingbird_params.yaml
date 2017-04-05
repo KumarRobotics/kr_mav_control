@@ -9,4 +9,4 @@ arm_length: 0.17
 motor_time_constant: 0.05
 min_rpm: 1500
 max_rpm: 7500
-
+drag_coefficient: 0.0
