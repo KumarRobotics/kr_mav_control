@@ -16,6 +16,7 @@
 #include <trackers_manager/Transition.h>
 #include <quadrotor_msgs/FlatOutputs.h>
 #include <quadrotor_msgs/LineTrackerGoal.h>
+#include <quadrotor_msgs/LineTrackerGoalTimed.h>
 
 // Strings
 static const std::string line_tracker_distance("std_trackers/LineTrackerDistance");
@@ -45,6 +46,7 @@ MAVManager::MAVManager()
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_distance/goal", 10);
   pub_goal_min_jerk_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_min_jerk/goal", 10);
+  pub_goal_min_jerk_timed_ = nh_.advertise<quadrotor_msgs::LineTrackerGoalTimed>("trackers_manager/line_tracker_min_jerk/goal_timed", 10);
   pub_goal_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/velocity_tracker/goal", 10);
   pub_goal_position_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/velocity_tracker/position_velocity_goal", 10);
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
@@ -239,11 +241,32 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
   goal.relative = relative;
 
   pub_goal_min_jerk_.publish(goal);
-  ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}%s",
+  ROS_INFO("Going to {%2.2f, %2.2f, %2.2f, %2.2f}%s",
       x, y, z, yaw, (relative ? " relative to the current position." : "."));
 
   return this->transition(line_tracker_min_jerk);
 }
+
+bool MAVManager::goToTimed(float x, float y, float z, float yaw, float v_des, float a_des, bool relative, ros::Duration duration, ros::Time t_start) {
+
+  quadrotor_msgs::LineTrackerGoalTimed goal;
+  goal.x   = x;
+  goal.y   = y;
+  goal.z   = z;
+  goal.yaw = yaw;
+  goal.duration = duration;
+  goal.t_start = t_start;
+  goal.v_des = v_des;
+  goal.a_des = a_des;
+  goal.relative = relative;
+
+  pub_goal_min_jerk_timed_.publish(goal);
+  ROS_INFO("Going to {%2.2f, %2.2f, %2.2f, %2.2f}%s with duration %2.2f",
+      x, y, z, yaw, (relative ? " relative to the current position." : ""), duration.toSec());
+
+  return this->transition(line_tracker_min_jerk);
+}
+
 bool MAVManager::goTo(Vec4 xyz_yaw, Vec2 v_and_a_des) {
   return this->goTo(xyz_yaw(0), xyz_yaw(1), xyz_yaw(2), xyz_yaw(3),
                     v_and_a_des(0), v_and_a_des(1));
@@ -384,9 +407,14 @@ bool MAVManager::set_motors(bool motors) {
   so3_cmd.orientation.w = 1.0;
   so3_cmd.aux.enable_motors = motors;
 
-  // Queue a few to make sure the signal gets through
+  // Queue a few to make sure the signal gets through.
+  // Also, the crazyflie interface throttles commands to 30 Hz, so this needs
+  // to have a sufficent duration.
   for (int i=0; i<10; i++)
+  {
     pub_so3_command_.publish(so3_cmd);
+    ros::Duration(1.0/100.0).sleep();
+  }
 
   motors_ = motors;
   status_ = motors_ ? IDLE : MOTORS_OFF;

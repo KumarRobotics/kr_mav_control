@@ -7,7 +7,7 @@ gains:
   ang: {x: 0.13, y: 0.13, z: 0.1}
 
 corrections:
-  kf: 0e-8
+  kf: 0.0e-08
   r:  0.0
   p:  0.0
 
