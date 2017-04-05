@@ -14,7 +14,7 @@ class SO3Control
   void setVelocity(const Eigen::Vector3f &velocity);
   void setMaxIntegral(const float max_integral);
   void setMaxIntegralBody(const float max_integral_b);
-  void setCurrentOrientation(const Eigen::Quaternionf curent_orientation);
+  void setCurrentOrientation(const Eigen::Quaternionf current_orientation);
   void resetIntegrals(void);
   void setMaxTiltAngle(const float max_tilt_angle);
 
