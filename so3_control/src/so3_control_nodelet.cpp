@@ -182,41 +182,30 @@ void SO3ControlNodelet::onInit(void)
   n.param("quadrotor_name", quadrotor_name, std::string("quadrotor"));
   frame_id_ = "/" + quadrotor_name;
 
-  double mass;
-  n.param("mass", mass, 0.5);
-  mass_ = mass;
+  n.param("mass", mass_, 0.5f);
   controller_.setMass(mass_);
   controller_.setGravity(g_);
 
   n.param("use_external_yaw", use_external_yaw_, true);
 
-  double ki_x, ki_y, ki_z;
-  n.param("gains/ki/x", ki_x, 0.0);
-  n.param("gains/ki/y", ki_y, 0.0);
-  n.param("gains/ki/z", ki_z, 0.0);
-  ki_[0] = ki_x, ki_[1] = ki_y, ki_[2] = ki_z;
+  n.param("gains/ki/x", ki_[0], 0.0f);
+  n.param("gains/ki/y", ki_[1], 0.0f);
+  n.param("gains/ki/z", ki_[2], 0.0f);
 
-  double kib_x, kib_y, kib_z;
-  n.param("gains/kib/x", kib_x, 0.0);
-  n.param("gains/kib/y", kib_y, 0.0);
-  n.param("gains/kib/z", kib_z, 0.0);
-  kib_[0] = kib_x, kib_[1] = kib_y, kib_[2] = kib_z;
+  n.param("gains/kib/x", kib_[0], 0.0f);
+  n.param("gains/kib/y", kib_[1], 0.0f);
+  n.param("gains/kib/z", kib_[2], 0.0f);
 
-  double kR[3], kOm[3];
-  n.param("gains/rot/x", kR[0], 1.5);
-  n.param("gains/rot/y", kR[1], 1.5);
-  n.param("gains/rot/z", kR[2], 1.0);
-  n.param("gains/ang/x", kOm[0], 0.13);
-  n.param("gains/ang/y", kOm[1], 0.13);
-  n.param("gains/ang/z", kOm[2], 0.1);
-  kR_[0] = kR[0], kR_[1] = kR[1], kR_[2] = kR[2];
-  kOm_[0] = kOm[0], kOm_[1] = kOm[1], kOm_[2] = kOm[2];
+  n.param("gains/rot/x", kR_[0], 1.5f);
+  n.param("gains/rot/y", kR_[1], 1.5f);
+  n.param("gains/rot/z", kR_[2], 1.0f);
+  n.param("gains/ang/x", kOm_[0], 0.13f);
+  n.param("gains/ang/y", kOm_[1], 0.13f);
+  n.param("gains/ang/z", kOm_[2], 0.1f);
 
-  double corrections[3];
-  n.param("corrections/kf", corrections[0], 0.0);
-  n.param("corrections/r", corrections[1], 0.0);
-  n.param("corrections/p", corrections[2], 0.0);
-  corrections_[0] = corrections[0], corrections_[1] = corrections[1], corrections_[2] = corrections[2];
+  n.param("corrections/kf", corrections_[0], 0.0f);
+  n.param("corrections/r", corrections_[1], 0.0f);
+  n.param("corrections/p", corrections_[2], 0.0f);
 
   float max_pos_int, max_pos_int_b;
   n.param("max_pos_int", max_pos_int, 0.5f);
@@ -224,8 +213,8 @@ void SO3ControlNodelet::onInit(void)
   controller_.setMaxIntegral(max_pos_int);
   controller_.setMaxIntegralBody(max_pos_int_b);
 
-  double max_tilt_angle;
-  n.param("max_tilt_angle", max_tilt_angle, M_PI);
+  float max_tilt_angle;
+  n.param("max_tilt_angle", max_tilt_angle, static_cast<float>(M_PI));
   controller_.setMaxTiltAngle(max_tilt_angle);
 
   so3_command_pub_ = n.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
