@@ -88,9 +88,9 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
     double param;
     if(!n.hasParam(param_name))
     {
-      ROS_WARN("Simulator sleeping to wait for %s.", param_name);
+      ROS_WARN("Simulator sleeping to wait for param %s", param_name.c_str());
       ros::Duration(0.5).sleep();
-    }  
+    }
     if(!n.getParam(param_name, param))
     {
       const std::string error_msg = param_name + " not set";
