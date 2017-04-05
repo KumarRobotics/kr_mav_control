@@ -176,10 +176,11 @@ void SO3ControlNodelet::corrections_callback(const quadrotor_msgs::Corrections::
 
 void SO3ControlNodelet::onInit(void)
 {
-  ros::NodeHandle n(getPrivateNodeHandle());
+  ros::NodeHandle n(getNodeHandle());
+  ros::NodeHandle priv_nh(getPrivateNodeHandle());
 
   std::string quadrotor_name;
-  n.param("quadrotor_name", quadrotor_name, std::string("quadrotor"));
+  priv_nh.param("quadrotor_name", quadrotor_name, std::string("quadrotor"));
   frame_id_ = "/" + quadrotor_name;
 
   double mass;
@@ -188,54 +189,54 @@ void SO3ControlNodelet::onInit(void)
   controller_.setMass(mass_);
   controller_.setGravity(g_);
 
-  n.param("use_external_yaw", use_external_yaw_, true);
+  priv_nh.param("use_external_yaw", use_external_yaw_, true);
 
   double ki_x, ki_y, ki_z;
-  n.param("gains/ki/x", ki_x, 0.0);
-  n.param("gains/ki/y", ki_y, 0.0);
-  n.param("gains/ki/z", ki_z, 0.0);
+  priv_nh.param("gains/ki/x", ki_x, 0.0);
+  priv_nh.param("gains/ki/y", ki_y, 0.0);
+  priv_nh.param("gains/ki/z", ki_z, 0.0);
   ki_[0] = ki_x, ki_[1] = ki_y, ki_[2] = ki_z;
 
   double kib_x, kib_y, kib_z;
-  n.param("gains/kib/x", kib_x, 0.0);
-  n.param("gains/kib/y", kib_y, 0.0);
-  n.param("gains/kib/z", kib_z, 0.0);
+  priv_nh.param("gains/kib/x", kib_x, 0.0);
+  priv_nh.param("gains/kib/y", kib_y, 0.0);
+  priv_nh.param("gains/kib/z", kib_z, 0.0);
   kib_[0] = kib_x, kib_[1] = kib_y, kib_[2] = kib_z;
 
   double kR[3], kOm[3];
-  n.param("gains/rot/x", kR[0], 1.5);
-  n.param("gains/rot/y", kR[1], 1.5);
-  n.param("gains/rot/z", kR[2], 1.0);
-  n.param("gains/ang/x", kOm[0], 0.13);
-  n.param("gains/ang/y", kOm[1], 0.13);
-  n.param("gains/ang/z", kOm[2], 0.1);
+  priv_nh.param("gains/rot/x", kR[0], 1.5);
+  priv_nh.param("gains/rot/y", kR[1], 1.5);
+  priv_nh.param("gains/rot/z", kR[2], 1.0);
+  priv_nh.param("gains/ang/x", kOm[0], 0.13);
+  priv_nh.param("gains/ang/y", kOm[1], 0.13);
+  priv_nh.param("gains/ang/z", kOm[2], 0.1);
   kR_[0] = kR[0], kR_[1] = kR[1], kR_[2] = kR[2];
   kOm_[0] = kOm[0], kOm_[1] = kOm[1], kOm_[2] = kOm[2];
 
   double corrections[3];
-  n.param("corrections/kf", corrections[0], 0.0);
-  n.param("corrections/r", corrections[1], 0.0);
-  n.param("corrections/p", corrections[2], 0.0);
+  priv_nh.param("corrections/kf", corrections[0], 0.0);
+  priv_nh.param("corrections/r",  corrections[1], 0.0);
+  priv_nh.param("corrections/p",  corrections[2], 0.0);
   corrections_[0] = corrections[0], corrections_[1] = corrections[1], corrections_[2] = corrections[2];
 
   float max_pos_int, max_pos_int_b;
-  n.param("max_pos_int", max_pos_int, 0.5f);
-  n.param("mas_pos_int_b", max_pos_int_b, 0.5f);
+  priv_nh.param("max_pos_int", max_pos_int, 0.5f);
+  priv_nh.param("mas_pos_int_b", max_pos_int_b, 0.5f);
   controller_.setMaxIntegral(max_pos_int);
   controller_.setMaxIntegralBody(max_pos_int_b);
 
   double max_tilt_angle;
-  n.param("max_tilt_angle", max_tilt_angle, M_PI);
+  priv_nh.param("max_tilt_angle", max_tilt_angle, M_PI);
   controller_.setMaxTiltAngle(max_tilt_angle);
 
-  so3_command_pub_ = n.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
+  so3_command_pub_ = priv_nh.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
 
-  odom_sub_ = n.subscribe("odom", 10, &SO3ControlNodelet::odom_callback, this, ros::TransportHints().tcpNoDelay());
-  position_cmd_sub_ = n.subscribe("position_cmd", 10, &SO3ControlNodelet::position_cmd_callback, this,
+  odom_sub_ = priv_nh.subscribe("odom", 10, &SO3ControlNodelet::odom_callback, this, ros::TransportHints().tcpNoDelay());
+  position_cmd_sub_ = priv_nh.subscribe("position_cmd", 10, &SO3ControlNodelet::position_cmd_callback, this,
                                   ros::TransportHints().tcpNoDelay());
-  enable_motors_sub_ = n.subscribe("motors", 2, &SO3ControlNodelet::enable_motors_callback, this,
+  enable_motors_sub_ = priv_nh.subscribe("motors", 2, &SO3ControlNodelet::enable_motors_callback, this,
                                    ros::TransportHints().tcpNoDelay());
-  corrections_sub_ = n.subscribe("corrections", 10, &SO3ControlNodelet::corrections_callback, this,
+  corrections_sub_ = priv_nh.subscribe("corrections", 10, &SO3ControlNodelet::corrections_callback, this,
                                  ros::TransportHints().tcpNoDelay());
 }
 
