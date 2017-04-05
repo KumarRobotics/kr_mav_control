@@ -30,16 +30,18 @@ DAMAGE.
 #ifndef __SSP_H__
 #define __SSP_H__
 
+#include <stdint.h>
+
 volatile unsigned int SSP_trans_cnt;
 
 /* SPI read and write buffer size */
 #define FIFOSIZE	8
-	
+
 /* SPI Status register */
 #define SSPSR_TFE	1 << 0
-#define SSPSR_TNF	1 << 1 
+#define SSPSR_TNF	1 << 1
 #define SSPSR_RNE	1 << 2
-#define SSPSR_RFF	1 << 3 
+#define SSPSR_RFF	1 << 3
 #define SSPSR_BSY	1 << 4
 
 /* SPI 1 CR0 register */
@@ -78,10 +80,10 @@ volatile unsigned int SSP_trans_cnt;
 #define SSPICR_RTIC	1 << 1
 
 extern void SSPHandler (void) __irq;
-int LL_write(unsigned char *, unsigned short, unsigned char);
+int LL_write(uint8_t *, uint16_t, uint8_t);
 void LL_write_init(void);
 
-extern unsigned char IMU_CalcData_updated;
+extern uint8_t IMU_CalcData_updated;
 
 #endif  /* __SSP_H__ */
 /*****************************************************************************

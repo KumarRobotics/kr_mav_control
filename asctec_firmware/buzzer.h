@@ -8,15 +8,14 @@
 #ifndef BUZZER_H_
 #define BUZZER_H_
 
-#define BUZZER_WARNING_INIT_BEEP	0x01
-#define BUZZER_WARNING_GPS_BEEP		0x02
+#include <stdint.h>
+
+//#define GPS_BEEP	  //warning if GPS has no lock
+#define ERROR_BEEP  //sensor calibration errors signaled by buzzer
+//#define MAG_BEEP    //beep for magnetometer errors
+#define INIT_BEEP 	//double beep during system initialization
 
 void buzzer_handler(unsigned int);
-void buzzer(unsigned char);
-
-extern unsigned short ALARM_battery_warning_voltage_high;
-extern unsigned short ALARM_battery_warning_voltage_low;
-
-extern unsigned char buzzer_warnings;
+void buzzer(uint8_t);
 
 #endif /* BUZZER_H_ */

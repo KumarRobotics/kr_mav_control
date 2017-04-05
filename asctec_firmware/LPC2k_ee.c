@@ -18,7 +18,7 @@
 #undef _EEPROM_
 #define IAP_LOCATION 			0x7ffffff1
 
-//const unsigned char eeprom[EE_SIZE] _at_ EE_ADDR_L;
+//const uint8_t eeprom[EE_SIZE] _at_ EE_ADDR_L;
 void ee_erase(unsigned int ,unsigned int[]);	//function erases EEPROM
 void ee_write(unsigned int ,unsigned int[]);	//function adds a record in EEPROM
 void ee_read (unsigned int ,unsigned int[]);	//function reads the latest valid record in EEPROM
@@ -147,7 +147,7 @@ void ee_erase(unsigned int command_ee,unsigned int result_ee[]){
 void ee_write(unsigned int command_ee,unsigned int result_ee[]){
 	int location;
 	unsigned int *source, *destination, i;
-	unsigned char ee_buffer[EE_BUFFER_SIZE];
+	uint8_t ee_buffer[EE_BUFFER_SIZE];
 	unsigned int command_iap[5], result_iap[3];
 	unsigned long int enabled_interrupts;
 
@@ -349,46 +349,26 @@ void ee_count(unsigned int command_ee,unsigned int result_ee[]){
 int ee_locate(void){
 	unsigned int addr_l, addr_m, addr_r, size, slice_limit;
 	addr_l = EE_ADDR_L;
-	if ((*((unsigned char *)addr_l))==0xFF) return(addr_l);
+	if ((*((uint8_t *)addr_l))==0xFF) return(addr_l);
 	addr_r = EE_ADDR_H+1;
-	if ((*((unsigned char *)(addr_r-EE_REC_SIZE)))==EE_REC_ID) return(-1);
+	if ((*((uint8_t *)(addr_r-EE_REC_SIZE)))==EE_REC_ID) return(-1);
 	size = addr_r - addr_l;
 	slice_limit = EE_REC_SIZE - 1;
 	while(size != EE_REC_SIZE){
 		addr_m = (addr_r+addr_l)/2;
 		if ((addr_m & slice_limit)!=0x00000000){
-			if ((*((unsigned char *)(addr_r - EE_REC_SIZE)))==0xFF) 
+			if ((*((uint8_t *)(addr_r - EE_REC_SIZE)))==0xFF)
 				addr_r = addr_r - EE_REC_SIZE;
 			else
 				addr_l = addr_l + EE_REC_SIZE;
 			addr_m = (addr_r+addr_l)/2;
 			size = size - EE_REC_SIZE;
 		}
-		if ((*((unsigned char *)addr_m))==0xFF)
+		if ((*((uint8_t *)addr_m))==0xFF)
 			addr_r = addr_m;
 		else
 			addr_l = addr_m;
 		size = size/2;
 	}
 	return(addr_r);
-}
-
-void enter_isp()
-{
-	unsigned int command_iap[5], result_iap[3];
-	unsigned long enabled_interrupts;
-
-	//this functions enters the ISP mode by software
-	//disable PLL
-
-	enabled_interrupts = VICIntEnable;  //disable all interrupts
-	VICIntEnClr        = enabled_interrupts;
-
-
-	PLLCON=0; //PLL disabled
-
-	command_iap[0]=57;
-	iap_entry=(IAP) IAP_LOCATION;
-	iap_entry(command_iap,result_iap);
-
 }

@@ -31,6 +31,7 @@ DAMAGE.
 #include "uart.h"
 #include "main.h"
 #include "hardware.h"
+#include "LPC2k_ee.h"
 #include "type.h"
 #include "irq.h"
 #include "i2c.h"
@@ -45,11 +46,7 @@ void init(void)
   pll_init();
   pll_feed();
   init_ports();
-#ifdef MATLAB
-  UART_Matlab_Initialize(57600);
-#else
-  UARTInitialize(57600);	//debug / command
-#endif
+  UARTInitialize(230400);	//debug / command
   UART1Initialize(57600);	//57600 Servo / GPS, 38400 "indoor GPS"
   init_spi();
   init_spi1();
@@ -221,7 +218,7 @@ void init_spi(void)
 
 void init_spi1(void)
 {
-	unsigned char i, Dummy;
+	uint8_t i, Dummy;
 
     /* Set DSS data to 8-bit, Frame format SPI, CPOL = 0, CPHA = 0, and SCR is 3 */
     SSPCR0 = 0x040F;
@@ -264,7 +261,7 @@ unsigned int processorClockFrequency(void)
 
 unsigned int peripheralClockFrequency(void)
 {
-  unsigned int divider;
+  unsigned int divider = 1;
   switch (VPBDIV & 3)
     {
       case 0:

@@ -1,5 +1,5 @@
 /******************************************************************************
- *   irq.h:  Interrupt related Header file for Philips LPC214x Family 
+ *   irq.h:  Interrupt related Header file for Philips LPC214x Family
  *   Microprocessors
  *
  *   Copyright(C) 2006, Philips Semiconductor
@@ -10,7 +10,7 @@
  *
  *   21. Apr. 2006 - modified for gnu/gcc by Martin Thomas
  ******************************************************************************/
-#ifndef __IRQ_H 
+#ifndef __IRQ_H
 #define __IRQ_H
 
 // #define __irq __attribute__ ((interrupt("IRQ")))
@@ -20,7 +20,7 @@
 
 
 /* if nested interrupt is used, NEST_INTERRUPT needs to be set to 1, otherwise 0 */
-// mthomas : macros disabled for now 
+// mthomas : macros disabled for now
 // nesting is the default in the current arm-elf-gcc/WinARM-port
 // see Startup.S function IRQ_Wrapper
 //#define NESTED_INTERRUPT	1
@@ -66,14 +66,14 @@
 /* Be aware that, from compiler to compiler, nested interrupt will have to
 be handled differently. More details can be found in Philips LPC2000
 family app-note AN10381 */
- 
+
 /* unlike Keil Compiler, don't save and restore registers into the stack
 in RVD as the compiler does that for you. See RVD ARM compiler Inline and
 embedded assemblers, "Rules for using __asm and asm keywords. */
 // static DWORD sysreg;		/* used as LR register */
 
 #if 0
-#if NESTED_INTERRUPT 
+#if NESTED_INTERRUPT
 #define IENABLE __asm { MRS LR, SPSR } \
 				__asm { STMFD SP!, {LR} } \
 				__asm { MSR CPSR_c, #SYS32Mode } \
@@ -92,8 +92,8 @@ embedded assemblers, "Rules for using __asm and asm keywords. */
 #endif
 #endif
 
-#if NESTED_INTERRUPT 
-#warning "Macros not tested successfully with arm-elf-gcc
+#if NESTED_INTERRUPT
+#warning "Macros not tested successfully with arm-elf-gcc"
 #define IENABLE asm volatile( \
  "MRS     LR, SPSR \n"  \
  "STMFD   SP!, {LR} \n" \

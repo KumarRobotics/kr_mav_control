@@ -35,6 +35,6 @@ DAMAGE.
 
 
 
-extern void LED(unsigned char, unsigned char);
+extern void LED(uint8_t, uint8_t);
 //extern void ledInit(void);
 

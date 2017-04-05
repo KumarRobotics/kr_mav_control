@@ -45,7 +45,7 @@ static void DefaultVICHandler (void) __irq
     condition. For debugging, use this endless loop to trace back. */
     /* For more details, see Philips appnote AN10414 */
     VICVectAddr = 0;		/* Acknowledge Interrupt */ 
-    // while ( 1 ); to find unknown interrupts while debugging
+    while ( 1 );
 }
 
 /* Initialize the interrupt controller */

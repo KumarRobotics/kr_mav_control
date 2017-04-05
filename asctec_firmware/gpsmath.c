@@ -27,7 +27,15 @@ DAMAGE.
  */
 
 #include "gpsmath.h"
-#include "sdk.h"
+#include <math.h>
+
+#define a	6378137.0								// earth semimajor axis in meters
+#define f 	0.0033528106647474807198455286185206	// reciprocal flattening
+#define e2 	2*f-f*f									// eccentricity squared
+#define MEAN_EARTH_RADIUS 	6378137.0
+#define MEAN_EARTH_DIAMETER	12756274.0
+#define UMR	0.017453292519943295769236907684886		//PI/180
+#define PI 3.1415926535897932384626433832795
 
 struct GPS_DATA GPS_Data;
 struct GPS_DATA gps_data_temp;

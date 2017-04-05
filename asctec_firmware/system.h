@@ -29,6 +29,8 @@ DAMAGE.
 #ifndef SYSTEM_H_
 #define SYSTEM_H_
 
+#include <stdint.h>
+
 extern unsigned int processorClockFrequency(void);
 extern unsigned int peripheralClockFrequency(void);
 extern void delay(int);
@@ -43,26 +45,26 @@ extern void init_pwm(void);
 extern void init_get_calibdata_from_flash(void);
 extern void write_calibdata_to_flash(void);
 extern void init_spi1(void);
-extern void SPI1Send(char *, unsigned int, unsigned char);
+extern void SPI1Send(char *, unsigned int, uint8_t);
 extern void PWM_Init( void );
 extern void SPI_get_data(unsigned int);
 
-extern unsigned char CAM_Commands_received;
+extern uint8_t CAM_Commands_received;
 
 struct HL_STATUS {
-      short battery_voltage_1;
-      short battery_voltage_2;
-      
-      short up_time; 
-      short flight_time;
-      
+      int16_t battery_voltage_1;
+      int16_t battery_voltage_2;
+
+      int16_t up_time;
+      int16_t flight_time;
+
       int latitude;
       int longitude;
-      
-      short status;
-      short cpu_load;
-      short yawenabled;
-      short chksum_error;
+
+      int16_t status;
+      int16_t cpu_load;
+      int16_t yawenabled;
+      int16_t chksum_error;
 };
 
 extern struct HL_STATUS HL_Status;
