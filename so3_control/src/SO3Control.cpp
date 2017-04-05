@@ -7,7 +7,7 @@ SO3Control::SO3Control()
     g_(9.81),
     max_pos_int_(0.5),
     max_pos_int_b_(0.5),
-    current_orientation_(Eigen::Quaternionf::Identity())
+    current_orientation_(Eigen::Quaternionf::Identity()),
     cos_max_tilt_angle_(-1.0)
 {
 }
