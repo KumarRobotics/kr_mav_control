@@ -1,5 +1,3 @@
-#include <ros/console.h>
-#include <tf/transform_datatypes.h>
 #include "so3_control/SO3Control.h"
 
 SO3Control::SO3Control()
@@ -78,7 +76,7 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
     else if(pos_int_(i) < -max_pos_int_)
       pos_int_(i) = -max_pos_int_;
   }
-  ROS_DEBUG_THROTTLE(2, "Integrated world disturbance compensation [N]: {x: %2.2f, y: %2.2f, z: %2.2f}", pos_int_(0), pos_int_(1), pos_int_(2));
+  //ROS_DEBUG_THROTTLE(2, "Integrated world disturbance compensation [N]: {x: %2.2f, y: %2.2f, z: %2.2f}", pos_int_(0), pos_int_(1), pos_int_(2));
 
   Eigen::Quaternionf q(current_orientation_);
   const Eigen::Vector3f e_pos_b = q.inverse() * e_pos;
@@ -94,9 +92,7 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
       pos_int_b_(i) = -max_pos_int_b_;
 
    }
-   ROS_DEBUG_THROTTLE(2, "Integrated body disturbance compensation [N]: {x: %2.2f, y: %2.2f, z: %2.2f}", pos_int_b_(0), pos_int_b_(1), pos_int_b_(2));
-
-  //std::cout << "pos_int: " << pos_int_.transpose() << std::endl;
+   //ROS_DEBUG_THROTTLE(2, "Integrated body disturbance compensation [N]: {x: %2.2f, y: %2.2f, z: %2.2f}", pos_int_b_(0), pos_int_b_(1), pos_int_b_(2));
 
   const Eigen::Vector3f acc_grav = g_ * Eigen::Vector3f::UnitZ();
   const Eigen::Vector3f acc_control = kx.asDiagonal() * e_pos + kv.asDiagonal() * e_vel + pos_int_ + des_acc;
