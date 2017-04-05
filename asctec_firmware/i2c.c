@@ -29,15 +29,15 @@ DWORD I2CWriteLength;
 DWORD RdIndex = 0;
 DWORD WrIndex = 0;
 
-/* 
-From device to device, the I2C communication protocol may vary, 
-in the example below, the protocol uses repeated start to read data from or 
+/*
+From device to device, the I2C communication protocol may vary,
+in the example below, the protocol uses repeated start to read data from or
 write to the device:
-For master read: the sequence is: STA,Addr(W),offset,RE-STA,Addr(w),data...STO 
+For master read: the sequence is: STA,Addr(W),offset,RE-STA,Addr(w),data...STO
 for master write: the sequence is: STA,Addr(W),length,RE-STA,Addr(r),data...STO
-Thus, in state 8, the address is always WRITE. in state 10, the address could 
+Thus, in state 8, the address is always WRITE. in state 10, the address could
 be READ or WRITE depending on the I2CCmd.
-*/   
+*/
 
 /*****************************************************************************
 ** Function name:		I2C0MasterHandler
@@ -47,16 +47,16 @@ be READ or WRITE depending on the I2CCmd.
 **
 ** parameters:			None
 ** Returned value:		None
-** 
+**
 *****************************************************************************/
-void I2C0MasterHandler (void) __irq 
+void __irq I2C0MasterHandler (void)
 {
     BYTE StatValue;
 
     /* this handler deals with master read and master write only */
     StatValue = I20STAT;
-    
-    IENABLE;   
+
+    IENABLE;
     switch ( StatValue )
     {
 	case 0x08:			/* A Start condition is issued. */
@@ -64,7 +64,7 @@ void I2C0MasterHandler (void) __irq
 	I20CONCLR = (I2CONCLR_SIC | I2CONCLR_STAC);
 	I2CMasterState = I2C_STARTED;
 	break;
-	
+
 	case 0x10:			/* A repeated started is issued */
 	if (  I2CCmd == GET_DEVICE_ID || I2CCmd == GET_TEMPERATURE )
 	{
@@ -73,7 +73,7 @@ void I2C0MasterHandler (void) __irq
 	I20CONCLR = (I2CONCLR_SIC | I2CONCLR_STAC);
 	I2CMasterState = I2C_RESTARTED;
 	break;
-	
+
 	case 0x18:			/* Regardless, it's a ACK */
 	if ( I2CMasterState == I2C_STARTED )
 	{
@@ -83,15 +83,15 @@ void I2C0MasterHandler (void) __irq
 	}
 	I20CONCLR = I2CONCLR_SIC;
 	break;
-	
+
 	case 0x28:	/* Data byte has been transmitted, regardless ACK or NACK */
 	case 0x30:
 	if ( WrIndex != I2CWriteLength )
-	{   
+	{
 	    I20DAT = I2CMasterBuffer[1+WrIndex]; /* this should be the last one */
 	    WrIndex++;
 	    if ( WrIndex != I2CWriteLength )
-	    {   
+	    {
 		I2CMasterState = DATA_ACK;
 	    }
 	    else
@@ -118,17 +118,17 @@ void I2C0MasterHandler (void) __irq
 	}
 	I20CONCLR = I2CONCLR_SIC;
 	break;
-	
+
 	case 0x40:	/* Master Receive, SLA_R has been sent */
 	I20CONCLR = I2CONCLR_SIC;
 	break;
-	
+
 	case 0x50:	/* Data byte has been received, regardless following ACK or NACK */
 	case 0x58:
 	I2CMasterBuffer[3+RdIndex] = I20DAT;
 	RdIndex++;
 	if ( RdIndex != I2CReadLength )
-	{   
+	{
 	    I2CMasterState = DATA_ACK;
 	}
 	else
@@ -139,20 +139,20 @@ void I2C0MasterHandler (void) __irq
 	I20CONSET = I2CONSET_AA;	/* assert ACK after data is received */
 	I20CONCLR = I2CONCLR_SIC;
 	break;
-	
+
 	case 0x20:			/* regardless, it's a NACK */
 	case 0x48:
 	I20CONCLR = I2CONCLR_SIC;
 	I2CMasterState = DATA_NACK;
 	break;
-	
+
 	case 0x38:			/* Arbitration lost, in this example, we don't
 					deal with multiple master situation */
 	default:
-	I20CONCLR = I2CONCLR_SIC;	
+	I20CONCLR = I2CONCLR_SIC;
 	break;
     }
-    
+
     IDISABLE;
     VICVectAddr = 0;		/* Acknowledge Interrupt */
 
@@ -182,27 +182,27 @@ void I2C0_send_motordata(void)
 **
 ** Descriptions:		Create I2C start condition, a timeout
 **				value is set if the I2C never gets started,
-**				and timed out. It's a fatal error. 
+**				and timed out. It's a fatal error.
 **
 ** parameters:			None
 ** Returned value:		true or false, return false if timed out
-** 
+**
 *****************************************************************************/
 unsigned int I2CStart( void )
 {
     unsigned int timeout = 0;
     unsigned int returnValue = FALSE;
- 
+
     /*--- Issue a start condition ---*/
     I20CONSET = I2CONSET_STA;	/* Set Start flag */
-    
+
     /*--- Wait until START transmitted ---*/
     while( 1 )
     {
 	if ( I2CMasterState == I2C_STARTED )
 	{
 	    returnValue = TRUE;
-	    break;	
+	    break;
 	}
 	if ( timeout >= MAX_TIMEOUT )
 	{
@@ -222,13 +222,13 @@ unsigned int I2CStart( void )
 **
 ** parameters:			None
 ** Returned value:		true or never return
-** 
+**
 *****************************************************************************/
 unsigned int I2CStop( void )
 {
-    I20CONSET = I2CONSET_STO;      /* Set Stop flag */ 
-    I20CONCLR = I2CONCLR_SIC;  /* Clear SI flag */ 
-            
+    I20CONSET = I2CONSET_STO;      /* Set Stop flag */
+    I20CONCLR = I2CONCLR_SIC;  /* Clear SI flag */
+
     /*--- Wait for STOP detected ---*/
     while( I20CONSET & I2CONSET_STO );
     return TRUE;
@@ -242,15 +242,15 @@ unsigned int I2CStop( void )
 ** parameters:			I2c mode is either MASTER or SLAVE
 ** Returned value:		true or false, return false if the I2C
 **				interrupt handler was not installed correctly
-** 
+**
 *****************************************************************************/
-void I2CInit( unsigned int I2cMode ) 
+void I2CInit( unsigned int I2cMode )
 {
     IODIR0|= 0x0C;	/* set port 0.2 and port 0.3 to output, high */
     IOSET0 = 0x0C;
 
     /*--- Clear flags ---*/
-    I20CONCLR = I2CONCLR_AAC | I2CONCLR_SIC | I2CONCLR_STAC | I2CONCLR_I2ENC;    
+    I20CONCLR = I2CONCLR_AAC | I2CONCLR_SIC | I2CONCLR_STAC | I2CONCLR_I2ENC;
 
     /*--- Reset registers ---*/
     I20SCLL   = I2SCLL_SCLL;
@@ -266,15 +266,15 @@ void I2CInit( unsigned int I2cMode )
 **				Before this routine is called, the read
 **				length, write length, I2C master buffer,
 **				and I2C command fields need to be filled.
-**				see i2cmst.c for more details. 
+**				see i2cmst.c for more details.
 **
 ** parameters:			None
 ** Returned value:		true or false, return false only if the
 **				start condition can never be generated and
-**				timed out. 
-** 
+**				timed out.
+**
 *****************************************************************************/
-unsigned int I2CEngine( void ) 
+unsigned int I2CEngine( void )
 {
     I2CMasterState = I2C_IDLE;
     RdIndex = 0;
@@ -291,8 +291,8 @@ unsigned int I2CEngine( void )
 	    I2CStop();
 	    break;
 	}
-    }    
-    return ( TRUE );      
+    }
+    return ( TRUE );
 }
 
 /******************************************************************************

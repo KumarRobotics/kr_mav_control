@@ -77,7 +77,7 @@ volatile unsigned int GPS_timeout = 0;
 volatile unsigned int trigger_cnt = 0;
 volatile uint8_t SYSTEM_initialized = 0;
 
-void timer0ISR(void) __irq
+void __irq timer0ISR(void)
 {
   T0IR = 0x01;      //Clear the timer 0 interrupt
   IENABLE;

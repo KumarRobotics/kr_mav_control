@@ -13,10 +13,10 @@
 #ifndef __IRQ_H
 #define __IRQ_H
 
-// #define __irq __attribute__ ((interrupt("IRQ")))
-// #define __fiq __attribute__ ((interrupt("FIQ")))
-#define __irq
-#define __fiq
+#define __irq __attribute__ ((interrupt("IRQ"), used))
+#define __fiq __attribute__ ((interrupt("FIQ"), used))
+// #define __irq __attribute__((used))
+// #define __fiq __attribute__((used))
 
 
 /* if nested interrupt is used, NEST_INTERRUPT needs to be set to 1, otherwise 0 */

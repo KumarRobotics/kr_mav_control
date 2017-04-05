@@ -116,8 +116,8 @@ FORMAT = ihex
 # Optimization level, can be [0, 1, 2, 3, s].
 # 0 = turn off optimization. s = optimize for size.
 # (Note: 3 is not always the best optimization level. See avr-libc FAQ.)
-OPT = 2
-OPTINT = 2
+OPT = fast
+OPTINT = fast
 #OPT = 0
 
 ## Using the Atmel AT91_lib produces warning with
@@ -182,6 +182,7 @@ CFLAGS += -Wpointer-arith -Wswitch
 CFLAGS += -Wredundant-decls -Wreturn-type -Wshadow -Wunused
 CFLAGS += -Wa,-adhlns=$(subst $(suffix $<),.lst,$<)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
+CFLAGS += -flto
 
 # Flags for C and C++ (arm-elf-gcc/arm-elf-g++) files containing interrupt routines
 INTCFLAGS = -g$(DEBUG)
@@ -192,6 +193,7 @@ INTCFLAGS += -Wpointer-arith -Wswitch
 INTCFLAGS += -Wredundant-decls -Wreturn-type -Wshadow -Wunused
 INTCFLAGS += -Wa,-adhlns=$(subst $(suffix $<),.lst,$<)
 INTCFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
+INTCFLAGS += -flto
 
 # flags only for C
 CONLYFLAGS += -Wnested-externs
@@ -299,7 +301,7 @@ MSG_EXTENDED_LISTING = Creating Extended Listing:
 MSG_SYMBOL_TABLE = Creating Symbol Table:
 MSG_LINKING = Linking:
 MSG_COMPILING = Compiling C:
-MSG_COMPILING_ARM_INT = "Compiling C (ARM-only):"
+MSG_COMPILING_ARM = "Compiling C (ARM-only):"
 MSG_COMPILING_ARM_INT = "Compiling C (ARM-only) including Interrupts:"
 MSG_COMPILINGCPP = Compiling C++:
 MSG_COMPILINGCPP_ARM = "Compiling C++ (ARM-only):"
@@ -329,7 +331,7 @@ GENDEPFLAGS = -MD -MP -MF .dep/$(@F).d
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
 ALL_CFLAGS  = -mcpu=$(MCU) $(THUMB_IW) -I. $(CFLAGS) $(GENDEPFLAGS)
-INT_CFLAGS = -mcpu=$(MCU) $(THUMB_IW) -I. $(INTCFLAGS) $(GENDEPFLAGS)
+INT_CFLAGS  = -mcpu=$(MCU) $(THUMB_IW) -I. $(INTCFLAGS) $(GENDEPFLAGS)
 ALL_ASFLAGS = -mcpu=$(MCU) $(THUMB_IW) -I. -x assembler-with-cpp $(ASFLAGS)
 INT_ASFLAGS = -mcpu=$(MCU) $(THUMB_IW) -I. -x assembler-with-cpp $(ASFLAGS)
 

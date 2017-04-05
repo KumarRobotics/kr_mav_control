@@ -43,7 +43,7 @@ static const uint8_t startstring[]={0x55,0x55};
 uint8_t Ctrl_Input_updated = 0;
 uint8_t PWM_Input_updated = 0;
 
-void uart1ISR(void) __irq
+void __irq uart1ISR(void)
 {
   uint8_t t;
 
@@ -81,7 +81,7 @@ void uart1ISR(void) __irq
 }
 
 
-void uart0ISR(void) __irq
+void __irq uart0ISR(void)
 {
   uint8_t t;
   uint8_t UART_rxdata;
