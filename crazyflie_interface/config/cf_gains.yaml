@@ -1,0 +1,9 @@
+gains:
+  pos: {x: 8.000, y: 8.000, z: 13.000}
+  vel: {x: 5.000, y: 5.000, z: 5.000}
+  ki:  {x: 0.1, y: 0.1, z: 0.2}
+  kib: {x: 0.1, y: 0.1, z: 0.1}
+
+max_pos_int: 2.6
+max_pos_int_b: 2.6
+max_tilt_angle: 3.14

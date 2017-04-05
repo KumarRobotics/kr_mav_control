@@ -21,6 +21,7 @@ class SO3ControlNodelet : public nodelet::Nodelet
       current_orientation_(Eigen::Quaternionf::Identity()),
       enable_motors_(false),
       use_external_yaw_(false),
+      have_odom_(false),
       g_(9.81)
   {
     controller_.resetIntegrals();
@@ -47,7 +48,7 @@ class SO3ControlNodelet : public nodelet::Nodelet
   Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, kx_, kv_, ki_, kib_;
   float des_yaw_, des_yaw_dot_;
   float current_yaw_;
-  bool enable_motors_, use_external_yaw_;
+  bool enable_motors_, use_external_yaw_, have_odom_;
   float kR_[3], kOm_[3], corrections_[3];
   float mass_;
   const float g_;
@@ -57,6 +58,12 @@ class SO3ControlNodelet : public nodelet::Nodelet
 
 void SO3ControlNodelet::publishSO3Command(void)
 {
+  if (!have_odom_)
+  {
+    ROS_WARN("No odometry! Not publishing SO3Command.");
+    return;
+  }
+
   Eigen::Vector3f ki = Eigen::Vector3f::Zero();
   Eigen::Vector3f kib = Eigen::Vector3f::Zero();
   if(enable_motors_)
@@ -117,6 +124,8 @@ void SO3ControlNodelet::position_cmd_callback(const quadrotor_msgs::PositionComm
 
 void SO3ControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
+  have_odom_ = true;
+
   const Eigen::Vector3f position(odom->pose.pose.position.x,
                                  odom->pose.pose.position.y,
                                  odom->pose.pose.position.z);
@@ -215,6 +224,12 @@ void SO3ControlNodelet::onInit(void)
   controller_.setMaxIntegral(max_pos_int);
   controller_.setMaxIntegralBody(max_pos_int_b);
 
+  double max_tilt_angle;
+  n.param("max_tilt_angle", max_tilt_angle, M_PI);
+  controller_.setMaxTiltAngle(max_tilt_angle);
+
+  so3_command_pub_ = n.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
+
   odom_sub_ = n.subscribe("odom", 10, &SO3ControlNodelet::odom_callback, this, ros::TransportHints().tcpNoDelay());
   position_cmd_sub_ = n.subscribe("position_cmd", 10, &SO3ControlNodelet::position_cmd_callback, this,
                                   ros::TransportHints().tcpNoDelay());
@@ -222,8 +237,6 @@ void SO3ControlNodelet::onInit(void)
                                    ros::TransportHints().tcpNoDelay());
   corrections_sub_ = n.subscribe("corrections", 10, &SO3ControlNodelet::corrections_callback, this,
                                  ros::TransportHints().tcpNoDelay());
-
-  so3_command_pub_ = n.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
 }
 
 #include <pluginlib/class_list_macros.h>
