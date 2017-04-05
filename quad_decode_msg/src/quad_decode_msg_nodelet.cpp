@@ -51,12 +51,12 @@ void QuadDecodeMsg::onInit(void)
 {
   ros::NodeHandle priv_nh(getPrivateNodeHandle());
 
-  serial_sub_ = priv_nh.subscribe("serial", 10, &QuadDecodeMsg::serial_callback, this,
-                                  ros::TransportHints().tcpNoDelay());
-
   output_data_pub_ = priv_nh.advertise<quadrotor_msgs::OutputData>("output_data", 10);
   imu_output_pub_ = priv_nh.advertise<sensor_msgs::Imu>("imu", 10);
   status_pub_ = priv_nh.advertise<quadrotor_msgs::StatusData>("status", 10);
+
+  serial_sub_ = priv_nh.subscribe("serial", 10, &QuadDecodeMsg::serial_callback, this,
+                                  ros::TransportHints().tcpNoDelay());
 }
 
 #include <pluginlib/class_list_macros.h>

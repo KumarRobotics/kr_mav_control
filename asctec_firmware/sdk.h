@@ -84,7 +84,7 @@ struct OUTPUT_DATA
   int32_t height;
   int16_t mag[3];
   uint8_t radio[8];
-  //uint8_t rpm[4];
+  uint8_t rpm[4];
   uint8_t seq;
 };
 extern struct OUTPUT_DATA Output_Data;

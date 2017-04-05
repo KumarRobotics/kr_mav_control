@@ -47,8 +47,28 @@ bool decodeOutputData(const std::vector<uint8_t> &data,
   {
     output.radio_channel[i] = output_data.radio[i];
   }
-  //for(int i = 0; i < 4; i++)
-  //  output.motor_rpm[i] = output_data.rpm[i];
+
+  // Asctec firmware uses the following rotor numbering convention:
+  //   *1*    Front
+  // 3     4
+  //    2
+  //
+  // But we want:
+  //   *1*    Front
+  // 2     4
+  //    3
+  const int motors_map[] = {0, 2, 1, 3};
+  for(int i = 0; i < 4; i++)
+  {
+    // The following conversion is from
+    // http://wiki.asctec.de/display/AR/List+of+all+predefined+variables%2C+commands+and+parameters
+    //
+    // motorRPM = 1075+m*37.625
+    //
+    // Note: If m == 0, the motors are not spinning.
+    int m = output_data.rpm[motors_map[i]];
+    output.motor_rpm[i] = (m == 0 ? 0 : 1075) + m * 37.625;
+  }
 
   output.seq = output_data.seq;
 

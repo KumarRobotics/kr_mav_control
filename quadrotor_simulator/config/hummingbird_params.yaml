@@ -1,0 +1,12 @@
+gravity: 9.81
+mass: 0.5
+Ixx: 2.64e-3
+Iyy: 2.64e-3
+Izz: 4.96e-3
+thrust_coefficient: 5.55e-8
+prop_radius: 0.099
+arm_length: 0.17
+motor_time_constant: 0.05
+min_rpm: 1500
+max_rpm: 7500
+drag_coefficient: 0.0

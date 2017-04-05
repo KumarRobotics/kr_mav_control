@@ -14,6 +14,7 @@ class SO3Control
   void setVelocity(const Eigen::Vector3f &velocity);
   void setMaxIntegral(const float max_integral);
   void resetIntegrals(void);
+  void setMaxTiltAngle(const float max_tilt_angle);
 
   void calculateControl(const Eigen::Vector3f &des_pos,
                         const Eigen::Vector3f &des_vel,
@@ -38,6 +39,7 @@ class SO3Control
   Eigen::Vector3f pos_;
   Eigen::Vector3f vel_;
   float max_pos_int_;
+  float cos_max_tilt_angle_;
 
   // Outputs of the controller
   Eigen::Vector3f force_;
