@@ -1,0 +1,44 @@
+<launch>
+
+  <arg name="baud_rate" default="57600"/>
+  <arg name="comms_standalone" default="0"/>
+  <arg name="zigbee" default="0"/>
+
+  <node pkg="nodelet"
+    type="nodelet"
+    name="standalone_nodelet"
+    args="manager"
+    output="screen"
+    if="$(arg comms_standalone)"/>
+  
+  <!-- For serial communication -->
+  <node pkg="nodelet"
+    type="nodelet"
+    name="quad_serial_comm"
+    args="load quad_serial_comm/QuadSerialComm standalone_nodelet"
+    output="screen"
+    if="$(arg zigbee)">
+    <param name="device" value="/dev/ttyUSB0"/>
+    <param name="baud_rate" value="$(arg baud_rate)"/>
+    <remap from="~to_robot" to="to_robot"/>
+    <remap from="~from_robot" to="from_robot"/>
+  </node>
+
+  <node pkg="nodelet"
+    type="nodelet"
+    name="quad_encode_msg"
+    args="load quad_encode_msg/QuadEncodeMsg standalone_nodelet"
+    output="screen">
+    <remap from="~so3_cmd" to="so3_cmd"/>
+    <remap from="~serial_msg" to="to_robot"/>
+  </node>
+
+  <node pkg="nodelet"
+    type="nodelet"
+    name="quad_decode_msg"
+    args="load quad_decode_msg/QuadDecodeMsg standalone_nodelet"
+    output="screen">
+    <remap from="~serial" to="from_robot"/>
+  </node>
+
+</launch>

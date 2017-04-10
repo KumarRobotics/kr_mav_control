@@ -1,0 +1,92 @@
+<launch>
+
+  <arg name="model" default="QuadrotorDopey"/>
+  <arg name="home_path" default=""/>
+  <arg name="sim" default="1"/>
+  <arg name="mass" default="0.5"/>
+  <arg name="zigbee" default="1"/>
+
+  <!-- vicon node --> 
+  <include file="$(find mocap_vicon)/launch/vicon.launch" unless="$(arg sim)">
+  <!--  <arg name="model" value="$(arg model)" />
+    <arg name="vicon_fps" value="100"/> -->
+  </include>
+
+  <group ns="$(arg model)">
+
+    <param name="mass" value="$(arg mass)"/>
+
+    <!-- simulation things --> 
+    <node pkg="quadrotor_simulator"
+      type="quadrotor_simulator_so3"
+      name="quadrotor_simulator_so3"
+      output="screen"
+      if="$(arg sim)">
+      <rosparam file="$(find quadrotor_simulator)/config/hummingbird_params.yaml"/>
+      <param name="rate/odom" value="100.0"/>
+      <remap from="~odom" to="odom"/>
+      <remap from="~imu" to="imu"/>
+      <remap from="~cmd" to="so3_cmd"/>
+      <param name="quadrotor_name" value="$(arg model)"/>
+    </node>
+
+    <node pkg="mesh_visualization"
+      type="mesh_visualization"
+      name="mesh_visualization"
+      output="screen"
+      if="$(arg sim)">
+      <param name="mesh_resource" value="package://mesh_visualization/mesh/hummingbird.mesh"/>
+      <remap from="~input" to="odom"/>
+    </node>
+
+    <!-- controller things --> 
+    <node pkg="nodelet"
+      type="nodelet"
+      name="standalone_nodelet"
+      args="manager"
+      output="screen"/>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="trackers_manager"
+      args="load trackers_manager/TrackersManager standalone_nodelet"
+      output="screen">
+      <rosparam file="$(find traj_tracker)/config/trackers.yaml"/>
+      <rosparam file="$(find payload_exp)/config/$(arg model)_gains.yaml"/>
+      <remap from="~odom" to="odom"/>
+      <remap from="~cmd" to="position_cmd"/>
+    </node>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      args="load so3_control/SO3ControlNodelet standalone_nodelet"
+      name="so3_control"
+      required="true"
+      output="screen">
+      <rosparam file="$(find payload_exp)/config/$(arg model)_gains.yaml"/>
+      <param name="mass" value="$(arg mass)"/>
+      <remap from="~odom" to="odom"/>
+      <remap from="~position_cmd" to="position_cmd"/>
+      <remap from="~so3_cmd" to="so3_cmd"/>
+      <remap from="~motors" to="motors"/>
+    </node>
+
+    <!-- communication --> 
+    <include file="$(find multirobot_coordination)/launch/robot_comms.launch" unless="$(arg sim)">
+      <arg name="zigbee" value="$(arg zigbee)"/>
+      <arg name="baud_rate" value="57600"/>
+    </include>
+
+    <!-- manager --> 
+    <node pkg="mav_manager"
+      type="mav_manager_node"
+      name="mav_manager_node"
+      clear_params="true"
+      output="screen">
+      <rosparam file="$(find payload_exp)/config/mav_manager.yaml"/>
+    </node>
+
+
+  </group>
+
+</launch>
