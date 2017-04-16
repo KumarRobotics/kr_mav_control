@@ -239,7 +239,7 @@ void QuadrotorSimulatorBase<T, U>::quadToImuMsg(const Quadrotor &quad,
   Eigen::Vector3d acc;
   if(state.x(2) < 1e-4)
   {
-    acc = state.R * (external_force / m + Eigen::Vector3d(0, 0, g));
+    acc = state.R.transpose() * (external_force / m + Eigen::Vector3d(0, 0, g));
   }
   else
   {
