@@ -45,7 +45,7 @@ class SO3TRPYControlNodelet : public nodelet::Nodelet
   bool odom_set_, position_cmd_updated_, position_cmd_init_;
   std::string frame_id_;
 
-  Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, kx_, kv_, ki_;
+  Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, kx_, kv_, ki_, ki_b_;
   float des_yaw_, des_yaw_dot_, yaw_int_;
   bool enable_motors_, use_external_yaw_;
   float kR_[3], kOm_[3], corrections_[3];
@@ -66,12 +66,14 @@ void SO3TRPYControlNodelet::publishCommand(void)
 
   float ki_yaw = 0;
   Eigen::Vector3f ki = Eigen::Vector3f::Zero();
+  Eigen::Vector3f ki_b = Eigen::Vector3f::Zero();
   if(enable_motors_)
   {
     ki_yaw = ki_yaw_;
     ki = ki_;
+    ki_b = ki_b_;
   }
-  controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki);
+  controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki, ki_b);
 
   const Eigen::Vector3f &force = controller_.getComputedForce();
   const Eigen::Quaternionf &q_des = controller_.getComputedOrientation();
@@ -173,6 +175,7 @@ void SO3TRPYControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr &od
 
   controller_.setPosition(position);
   controller_.setVelocity(velocity);
+  controller_.setCurrentOrientation(current_orientation_);
 
   if(position_cmd_init_)
   {
