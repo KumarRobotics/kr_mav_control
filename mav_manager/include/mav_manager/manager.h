@@ -103,8 +103,7 @@ class MAVManager
     bool eland();
     bool estop();
 
-  protected:
-   bool transition(const std::string &tracker_str);
+    bool transition(const std::string &tracker_str);
 
   private:
 
