@@ -217,7 +217,7 @@ bool MAVManager::land() {
   quadrotor_msgs::LineTrackerGoal goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
-  goal.z = home_(2) - 0.18f;
+  goal.z = home_(2) - 0.1f;
   pub_goal_line_tracker_distance_.publish(goal);
 
   return this->transition(line_tracker_distance);

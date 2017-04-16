@@ -95,9 +95,6 @@ class MAVManager
     float* magnetic_field() {return magnetic_field_;}
     std::array<uint8_t,8> radio() {return radio_;}
 
-    // Try this
-    bool transition(const std::string &tracker_str);
-
     // Safety
     bool hover();
     bool ehover();
@@ -107,9 +104,9 @@ class MAVManager
     bool estop();
 
   protected:
-   // bool transition(const std::string &tracker_str);
+   bool transition(const std::string &tracker_str);
 
-  //private:
+  private:
 
     ros::NodeHandle nh_;
     ros::NodeHandle priv_nh_;
