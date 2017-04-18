@@ -1,0 +1,19 @@
+<package format="2">
+  <name>pose_visualization</name>
+  <version>1.0.0</version>
+  <description>pose_visualization</description>
+
+  <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
+
+  <license>BSD</license>
+
+  <author>Kartik Mohta</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>quadrotor_msgs</depend>
+  <depend>topic_tools</depend>
+</package>
