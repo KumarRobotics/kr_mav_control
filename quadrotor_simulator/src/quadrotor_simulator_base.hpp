@@ -21,7 +21,7 @@ class QuadrotorSimulatorBase
       const geometry_msgs::Vector3Stamped::ConstPtr &f_ext);
   void extern_moment_callback(
       const geometry_msgs::Vector3Stamped::ConstPtr &m_ext);
-
+//TEST
  protected:
   typedef struct _ControlInput
   {
