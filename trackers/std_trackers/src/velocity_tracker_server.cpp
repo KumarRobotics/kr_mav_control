@@ -15,15 +15,11 @@ public:
   void Deactivate(void);
 
   const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
-// const quadrotor_msgs::TrackerStatus::Ptr status();
 
 private:
   void goal_callback();
 
   void preempt_callback();
-
-  /*  void velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPtr &msg);
-    void position_velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPtr &msg);*/
 
   typedef actionlib::SimpleActionServer<std_trackers::VelocityTrackerAction> ServerType;
 
@@ -61,12 +57,6 @@ void VelocityTrackerAction::Initialize(const ros::NodeHandle &nh)
   nh.param("gains/vel/z", kv_[2], 4.0);
 
   ros::NodeHandle priv_nh(nh, "velocity_tracker");
-
-/*  sub_vel_cmd_ = priv_nh.subscribe("goal", 10, &VelocityTrackerAction::velocity_cmd_cb, this,
-                                   ros::TransportHints().tcpNoDelay());
-
-  sub_position_vel_cmd_ = priv_nh.subscribe("position_velocity_goal", 10, &VelocityTrackerAction::position_velocity_cmd_cb,
-                          this, ros::TransportHints().tcpNoDelay());*/
 
   position_cmd_.kv[0] = kv_[0], position_cmd_.kv[1] = kv_[1], position_cmd_.kv[2] = kv_[2];
 
@@ -236,36 +226,6 @@ void VelocityTrackerAction::preempt_callback() {
   
   use_position_gains_ = true;
 }
-
-/*void VelocityTrackerAction::velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPtr &msg)
-{
-  position_cmd_.velocity.x = msg->x;
-  position_cmd_.velocity.y = msg->y;
-  position_cmd_.velocity.z = msg->z;
-  position_cmd_.yaw_dot = msg->yaw;
-
-  use_position_gains_ = false;
-}
-
-void VelocityTrackerAction::position_velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPtr &msg)
-{
-  position_cmd_.velocity.x = msg->x;
-  position_cmd_.velocity.y = msg->y;
-  position_cmd_.velocity.z = msg->z;
-  position_cmd_.yaw_dot = msg->yaw;
-
-  use_position_gains_ = true;
-}*/
-
-/*const quadrotor_msgs::TrackerStatus::Ptr VelocityTrackerAction::status()
-{
-  if(!active_)
-    return quadrotor_msgs::TrackerStatus::Ptr();
-
-  quadrotor_msgs::TrackerStatus::Ptr msg(new quadrotor_msgs::TrackerStatus);
-  msg->status = quadrotor_msgs::TrackerStatus::SUCCEEDED;
-  return msg;
-}*/
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(VelocityTrackerAction, trackers_manager::Tracker)

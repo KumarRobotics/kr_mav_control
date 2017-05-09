@@ -31,10 +31,6 @@ private:
 
   void preempt_callback();
 
-  //void goal_timed_callback();
-
-  //void preempt_timed_callback();
-
   void gen_trajectory(const Eigen::Vector3f &xi, const Eigen::Vector3f &xf,
                       const Eigen::Vector3f &vi, const Eigen::Vector3f &vf,
                       const Eigen::Vector3f &ai, const Eigen::Vector3f &af,
@@ -44,14 +40,10 @@ private:
 
   typedef actionlib::SimpleActionServer<std_trackers::LineTrackerAction> ServerType;
 
-  //typedef actionlib::SimpleActionServer<std_trackers::LineTrackerTimedAction> ServerTimedType;
-
   // Action server that takes a goal.
   // Must be a pointer, because plugin does not support a constructor
   // with inputs, but an action server must be initialized with a Nodehandle.
   std::shared_ptr<ServerType> tracker_server_;
-
-// std::shared_ptr<ServerTimedType> tracker_timed_server_;
 
   Eigen::Vector3f current_pos_;
 
@@ -104,16 +96,11 @@ void LineTrackerMinJerkAction::Initialize(const ros::NodeHandle &nh) {
   tracker_server_->registerPreemptCallback(boost::bind(&LineTrackerMinJerkAction::preempt_callback, this));
 
   tracker_server_->start();
-
-  /*  tracker_timed_server_ = std::shared_ptr<ServerTimedType>(new ServerTimedType(priv_nh, "LineTrackerTimedAction", false));
-    tracker_timed_server_->registerGoalCallback(boost::bind(&LineTrackerMinJerkAction::goal_timed_callback, this));
-    tracker_timed_server_->registerPreemptCallback(boost::bind(&LineTrackerMinJerkAction::preempt_timed_callback, this));
-    tracker_timed_server_->start();*/
 }
 
 bool LineTrackerMinJerkAction::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
-    std::cout << " activating\n";
+
   // Only allow activation if a goal has been set
   if (goal_set_ && pos_set_) {
     if (!tracker_server_->isActive()) { // check timed
@@ -135,10 +122,6 @@ void LineTrackerMinJerkAction::Deactivate(void) {
     tracker_server_->setAborted();
   }
 
-  /*  if (tracker_timed_server_->isActive()) {
-      ROS_WARN("LineTrackerMinJerkAction::Deactivate: deactivated tracker while still tracking the goal.");
-      tracker_timed_server_->setAborted();
-    }*/
   ICs_.reset();
   goal_set_ = false;
   active_ = false;
@@ -310,7 +293,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerkAction::update
     result.y = goal_(1);
     result.z = goal_(2);
     result.yaw = goal_yaw_;
-    std::cout << " sending succeeded\n";
+   
     tracker_server_->setSucceeded(result);
 
     current_traj_length_ = 0.0;
@@ -471,23 +454,6 @@ void LineTrackerMinJerkAction::preempt_callback() {
   goal_set_ = false;
   goal_reached_ = true;
 }
-/*
-void LineTrackerMinJerkAction::preempt_timed_callback() {
-  if (tracker_server_->isActive()) {
-    ROS_INFO("LineTrackerMinJerkAction going to goal (%f, %f, %f) aborted.", goal_pos_(0), goal_pos_(1), goal_pos_(2));
-    tracker_timed_server_->setAborted();
-  }
-  else {
-    ROS_INFO("LineTrackerMinJerkAction going to goal (%f, %f, %f) preempted.", goal_pos_(0), goal_pos_(1), goal_pos_(2));
-    tracker_timed_server_->setPreempted();
-  }
-
-  // TODO: How much overshoot will this cause at high velocities?
-  goal_pos_ = current_pos_;
-
-  goal_set_ = false;
-  goal_reached_ = true;
-}*/
 
 void LineTrackerMinJerkAction::gen_trajectory(
   const Eigen::Vector3f &xi, const Eigen::Vector3f &xf,
@@ -535,20 +501,6 @@ void LineTrackerMinJerkAction::gen_trajectory(
     yaw_coeffs[i] = x_yaw(i);
   }
 }
-
-/*const quadrotor_msgs::TrackerStatus::Ptr LineTrackerMinJerkAction::status()
-{
-  if (!active_)
-    return quadrotor_msgs::TrackerStatus::Ptr();
-
-  quadrotor_msgs::TrackerStatus::Ptr msg(new quadrotor_msgs::TrackerStatus);
-
-  msg->status = goal_reached_ ?
-                static_cast<uint8_t>(quadrotor_msgs::TrackerStatus::SUCCEEDED) :
-                static_cast<uint8_t>(quadrotor_msgs::TrackerStatus::ACTIVE);
-
-  return msg;
-}*/
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(LineTrackerMinJerkAction, trackers_manager::Tracker);

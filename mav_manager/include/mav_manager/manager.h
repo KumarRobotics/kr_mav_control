@@ -130,7 +130,6 @@ class MAVManager
     void heartbeat();
 
     std::string active_tracker_;
-   // uint8_t tracker_status_;
 
     Status status_;
 
@@ -160,11 +159,6 @@ class MAVManager
 
     // Publishers
     ros::Publisher
-/*      pub_goal_min_jerk_,
-      pub_goal_min_jerk_timed_,
-      pub_goal_line_tracker_distance_,
-      pub_goal_velocity_,
-      pub_goal_position_velocity_,*/
       pub_motors_,
       pub_estop_,
       pub_goal_yaw_,
@@ -179,7 +173,6 @@ class MAVManager
       imu_sub_,
       output_data_sub_,
       heartbeat_sub_;
-    //  tracker_status_sub_;
 
     // Services
     ros::ServiceClient srv_transition_;

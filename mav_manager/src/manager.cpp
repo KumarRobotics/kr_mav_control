@@ -15,9 +15,6 @@
 
 // quadrotor_control
 #include <trackers_manager/Transition.h>
-//#include <quadrotor_msgs/FlatOutputs.h>
-//#include <quadrotor_msgs/LineTrackerGoal.h>
-//#include <quadrotor_msgs/LineTrackerGoalTimed.h>
 #include <std_trackers/LineTrackerAction.h>
 #include <std_trackers/VelocityTrackerAction.h>
 
@@ -49,23 +46,17 @@ MAVManager::MAVManager()
     line_tracker_min_jerk_client_(nh_, "trackers_manager/line_tracker_min_jerk/LineTrackerAction", true),
     velocity_tracker_client_(nh_, "trackers_manager/velocity_tracker/VelocityTrackerAction", true) {
 
-  /*  // Publishers
-    pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_distance/goal", 10);
-    pub_goal_min_jerk_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_min_jerk/goal", 10);
-    pub_goal_min_jerk_timed_ = nh_.advertise<quadrotor_msgs::LineTrackerGoalTimed>("trackers_manager/line_tracker_min_jerk/goal_timed", 10);
-    pub_goal_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/velocity_tracker/goal", 10);
-    pub_goal_position_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/velocity_tracker/position_velocity_goal", 10);
-  */
   // Action servers.
-  if (!line_tracker_distance_client_.waitForServer(ros::Duration(1.0))) {
+  const double server_wait_time = 3.0;
+  if (!line_tracker_distance_client_.waitForServer(ros::Duration(server_wait_time))) {
     ROS_ERROR("LineTrackerDistanceAction server not found.");
   }
 
-  if (!line_tracker_min_jerk_client_.waitForServer(ros::Duration(1.0))) {
+  if (!line_tracker_min_jerk_client_.waitForServer(ros::Duration(server_wait_time))) {
     ROS_ERROR("LineTrackerMinJerkAction server not found.");
   }
 
-  if (!velocity_tracker_client_.waitForServer(ros::Duration(1.0))) {
+  if (!velocity_tracker_client_.waitForServer(ros::Duration(server_wait_time))) {
     ROS_ERROR("VelocityTrackerAction server not found.");
   }
 
@@ -79,7 +70,6 @@ MAVManager::MAVManager()
   // Subscribers
   odom_sub_ = nh_.subscribe("odom", 10, &MAVManager::odometry_cb, this, ros::TransportHints().tcpNoDelay());
   heartbeat_sub_ = nh_.subscribe("/heartbeat", 10, &MAVManager::heartbeat_cb, this, ros::TransportHints().tcpNoDelay());
-  //tracker_status_sub_ = nh_.subscribe("trackers_manager/status", 10, &MAVManager::tracker_status_cb, this, ros::TransportHints().tcpNoDelay());
 
   // Services
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
@@ -127,7 +117,7 @@ void MAVManager::tracker_done_callback(const actionlib::SimpleClientGoalState& s
 }
 
 void MAVManager::velocity_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::VelocityTrackerResultConstPtr& result) {
-  ROS_INFO("Goal (%2.2f, %2.2f, %2.2f, %2.2f) finished with state %s after %2.2f s. and %2.2f m.", result->x, result->y, result->z, result->yaw, state.toString().c_str(), result->duration, result->length);
+  ROS_INFO("Velocity tracking at (%2.2f, %2.2f, %2.2f, %2.2f)m/s completed with state %s after %2.2f s. and %2.2f m.", result->x, result->y, result->z, result->yaw, state.toString().c_str(), result->duration, result->length);
 }
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg) {
@@ -180,10 +170,6 @@ bool MAVManager::takeoff() {
   }
 
   ROS_INFO("Initiating launch sequence...");
-  /*  quadrotor_msgs::LineTrackerGoal goal;
-    goal.z = takeoff_height_;
-    goal.relative = true;
-    pub_goal_line_tracker_distance_.publish(goal);*/
 
   std_trackers::LineTrackerGoal goal;
   goal.z = takeoff_height_;
@@ -250,21 +236,12 @@ bool MAVManager::land() {
     return false;
   }
 
-  /*  ROS_INFO("Initiating landing sequence...");
-    quadrotor_msgs::LineTrackerGoal goal;
-    goal.x = pos_(0);
-    goal.y = pos_(1);
-    goal.z = home_(2) - 0.18f;
-    pub_goal_line_tracker_distance_.publish(goal); */
-
   std_trackers::LineTrackerGoal goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
-  goal.z = home_(2) - 0.18f;
-  line_tracker_distance_client_.sendGoal(goal,
-                                         boost::bind(&MAVManager::tracker_done_callback, this, _1, _2),
-                                         ClientType::SimpleActiveCallback(),
-                                         ClientType::SimpleFeedbackCallback());
+  goal.z = home_(2);
+  std::cout << " landing at " << goal.x << " " << goal.y << " " << goal.z << "\n";
+  line_tracker_distance_client_.sendGoal(goal,boost::bind(&MAVManager::tracker_done_callback, this, _1, _2), ClientType::SimpleActiveCallback(), ClientType::SimpleFeedbackCallback());
 
 
   return this->transition(line_tracker_distance);
@@ -278,19 +255,6 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
     return false;
   }
 
-  /*  quadrotor_msgs::LineTrackerGoal goal;
-    goal.x   = x;
-    goal.y   = y;
-    goal.z   = z;
-    goal.yaw = yaw;
-    goal.v_des = v_des;
-    goal.a_des = a_des;
-    goal.relative = relative;
-
-    pub_goal_min_jerk_.publish(goal);
-    ROS_INFO("Going to {%2.2f, %2.2f, %2.2f, %2.2f}%s",
-             x, y, z, yaw, (relative ? " relative to the current position." : "."));*/
-
   std_trackers::LineTrackerGoal goal;
   goal.x = x;
   goal.y = y;
@@ -298,11 +262,8 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
   goal.yaw = yaw;
   goal.v_des = v_des;
   goal.a_des = a_des;
-  goal.relative = true;
-  line_tracker_min_jerk_client_.sendGoal(goal,
-                                         boost::bind(&MAVManager::tracker_done_callback, this, _1, _2),
-                                         ClientType::SimpleActiveCallback(),
-                                         ClientType::SimpleFeedbackCallback());
+  goal.relative = relative;
+  line_tracker_min_jerk_client_.sendGoal(goal, boost::bind(&MAVManager::tracker_done_callback, this, _1, _2), ClientType::SimpleActiveCallback(), ClientType::SimpleFeedbackCallback());
 
 
   return this->transition(line_tracker_min_jerk);
@@ -352,17 +313,6 @@ bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw, boo
     ROS_WARN("The robot must be flying with motors on before setting a desired velocity.");
     return false;
   }
-
-/*  quadrotor_msgs::FlatOutputs goal;
-  goal.x = x;
-  goal.y = y;
-  goal.z = z;
-  goal.yaw = yaw;
-
-  if (use_position_feedback)
-    pub_goal_position_velocity_.publish(goal);
-  else
-    pub_goal_velocity_.publish(goal);*/
 
   std_trackers::VelocityTrackerGoal goal;
   goal.x = x;
@@ -518,11 +468,6 @@ void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg)
 
   this->heartbeat();
 }
-
-/*void MAVManager::tracker_status_cb(const quadrotor_msgs::TrackerStatus::ConstPtr &msg) {
-  active_tracker_ = msg->tracker.c_str();
-  tracker_status_ = msg->status;
-}*/
 
 void MAVManager::heartbeat_cb(const std_msgs::Empty::ConstPtr &msg) {
   this->heartbeat();
@@ -714,16 +659,10 @@ bool MAVManager::ehover() {
     return false;
   }
 
-  /*  quadrotor_msgs::LineTrackerGoal goal;
-    goal.x = pos_(0);
-    goal.y = pos_(1);
-    goal.z = pos_(2);
-    pub_goal_line_tracker_distance_.publish(goal);*/
-
   std_trackers::LineTrackerGoal goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
-  goal.z = home_(2) - 0.18f;
+  goal.z = home_(2);
   line_tracker_distance_client_.sendGoal(goal,
                                          boost::bind(&MAVManager::tracker_done_callback, this, _1, _2),
                                          ClientType::SimpleActiveCallback(),
