@@ -18,8 +18,9 @@ class Tracker
   virtual void Deactivate(void) = 0;
 
   virtual const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg) = 0;
-  virtual const quadrotor_msgs::TrackerStatus::Ptr status() = 0;
-};
-}
+  //virtual const quadrotor_msgs::TrackerStatus::Ptr status() = 0;
+}; // class Tracker
+
+} // namespace trackers_manager
 
 #endif

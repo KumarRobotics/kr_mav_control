@@ -15,17 +15,13 @@ add_message_files(DIRECTORY msg
   FILES
   AuxCommand.msg
   Corrections.msg
-  FlatOutputs.msg
-  LineTrackerGoal.msg
-  LineTrackerGoalTimed.msg
   OutputData.msg
   PositionCommand.msg
   PWMCommand.msg
   Serial.msg
   SO3Command.msg
   StatusData.msg
-  TRPYCommand.msg
-  TrackerStatus.msg)
+  TRPYCommand.msg)
 
 generate_messages(
   DEPENDENCIES geometry_msgs std_msgs)

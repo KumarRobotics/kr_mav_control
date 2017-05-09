@@ -11,12 +11,15 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Empty.h>
+#include <actionlib/client/simple_action_client.h>
 
 // quadrotor_control
 #include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/SO3Command.h>
 #include <quadrotor_msgs/TrackerStatus.h>
 #include <quadrotor_msgs/OutputData.h>
+#include <std_trackers/LineTrackerAction.h>
+#include <std_trackers/VelocityTrackerAction.h>
 
 class MAVManager
 {
@@ -48,7 +51,7 @@ class MAVManager
     std::string active_tracker() { return active_tracker_; }
     bool need_imu() { return need_imu_; }
     bool need_odom() { return need_odom_; }
-    uint8_t tracker_status() { return tracker_status_; }
+  //  uint8_t tracker_status() { return tracker_status_; }
     Status status() { return status_; }
 
     // Mutators
@@ -70,8 +73,8 @@ class MAVManager
     bool goTo(Vec3 xyz, float yaw, Vec2 v_and_a_des = Vec2::Zero());
     bool goTo(Vec3 xyz, Vec2 v_and_a_des = Vec2::Zero());  // Uses Current yaw
 
-    bool goToTimed(float x, float y, float z, float yaw, float v_des = 0.0f, float a_des = 0.0f,
-        bool relative = false, ros::Duration duration = ros::Duration(0), ros::Time start_time = ros::Time::now());
+   /* bool goToTimed(float x, float y, float z, float yaw, float v_des = 0.0f, float a_des = 0.0f,
+        bool relative = false, ros::Duration duration = ros::Duration(0), ros::Time start_time = ros::Time::now());*/
 
     bool setDesVelInWorldFrame(float x, float y, float z, float yaw, bool use_position_feedback = false);
     bool setDesVelInBodyFrame(float x, float y, float z, float yaw, bool use_position_feedback = false);
@@ -110,19 +113,24 @@ class MAVManager
    // bool transition(const std::string &tracker_str);
 
   //private:
+    typedef actionlib::SimpleActionClient<std_trackers::LineTrackerAction> ClientType;
+    typedef actionlib::SimpleActionClient<std_trackers::VelocityTrackerAction> VelocityClientType;
 
     ros::NodeHandle nh_;
     ros::NodeHandle priv_nh_;
+
+    void tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::LineTrackerResultConstPtr& result);
+    void velocity_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::VelocityTrackerResultConstPtr& result);
 
     void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
     void output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg);
     void heartbeat_cb(const std_msgs::Empty::ConstPtr &msg);
-    void tracker_status_cb(const quadrotor_msgs::TrackerStatus::ConstPtr &msg);
+   // void tracker_status_cb(const quadrotor_msgs::TrackerStatus::ConstPtr &msg);
     void heartbeat();
 
     std::string active_tracker_;
-    uint8_t tracker_status_;
+   // uint8_t tracker_status_;
 
     Status status_;
 
@@ -145,13 +153,18 @@ class MAVManager
     float voltage_, pressure_height_, pressure_dheight_, magnetic_field_[3];
     std::array<uint8_t, 8> radio_;
 
+    // Actionlibs
+    ClientType line_tracker_distance_client_;
+    ClientType line_tracker_min_jerk_client_;
+    VelocityClientType velocity_tracker_client_;
+
     // Publishers
     ros::Publisher
-      pub_goal_min_jerk_,
+/*      pub_goal_min_jerk_,
       pub_goal_min_jerk_timed_,
       pub_goal_line_tracker_distance_,
       pub_goal_velocity_,
-      pub_goal_position_velocity_,
+      pub_goal_position_velocity_,*/
       pub_motors_,
       pub_estop_,
       pub_goal_yaw_,
@@ -165,8 +178,8 @@ class MAVManager
       odom_sub_,
       imu_sub_,
       output_data_sub_,
-      heartbeat_sub_,
-      tracker_status_sub_;
+      heartbeat_sub_;
+    //  tracker_status_sub_;
 
     // Services
     ros::ServiceClient srv_transition_;

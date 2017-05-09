@@ -1,5 +1,5 @@
-<library path="lib/libline_tracker_min_jerk">
-  <class name="std_trackers/LineTrackerMinJerk" type="LineTrackerMinJerk" base_class_type="trackers_manager::Tracker">
+<library path="lib/libline_tracker_min_jerk_action">
+  <class name="std_trackers/LineTrackerMinJerkAction" type="LineTrackerMinJerkAction" base_class_type="trackers_manager::Tracker">
     <description>
       This is a controller which follows a line from the current position to a given goal position using min jerk trajectory.
     </description>
@@ -12,8 +12,8 @@
     </description>
   </class>
 </library>
-<library path="lib/libline_tracker_distance">
-  <class name="std_trackers/LineTrackerDistance" type="LineTrackerDistance" base_class_type="trackers_manager::Tracker">
+<library path="lib/libline_tracker_distance_action">
+  <class name="std_trackers/LineTrackerDistanceAction" type="LineTrackerDistanceAction" base_class_type="trackers_manager::Tracker">
     <description>
       This is a controller which follows a line from the current position to a given goal position using a trapezoidal trajectory with distance along the trajectory as the parameter instead of time.
     </description>
@@ -35,8 +35,8 @@
   </class>
 </library>
 
-<library path="lib/libvelocity_tracker">
-  <class name="std_trackers/VelocityTracker" type="VelocityTracker" base_class_type="trackers_manager::Tracker">
+<library path="lib/libvelocity_tracker_action">
+  <class name="std_trackers/VelocityTrackerAction" type="VelocityTrackerAction" base_class_type="trackers_manager::Tracker">
     <description>
       This controller commands a desired velocity for the robot.
     </description>

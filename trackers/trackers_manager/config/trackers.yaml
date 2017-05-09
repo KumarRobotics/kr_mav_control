@@ -1,8 +1,7 @@
 trackers:
-  - std_trackers/LineTrackerMinJerk
-  - std_trackers/LineTrackerDistance
+  - std_trackers/LineTrackerMinJerkAction
+  - std_trackers/LineTrackerDistanceAction
 #  - std_trackers/LineTrackerTrapezoid
 #  - std_trackers/LineTrackerYaw
-  - std_trackers/VelocityTracker
+  - std_trackers/VelocityTrackerAction
   - std_trackers/NullTracker
-  - traj_tracker/TrajTrackerSampled
