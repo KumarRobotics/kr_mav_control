@@ -8,6 +8,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <Eigen/Geometry>
 #include <geometry_msgs/Vector3Stamped.h>
+#include <quadrotor_msgs/OutputData.h>
 
 namespace QuadrotorSimulator
 {
@@ -54,6 +55,7 @@ class QuadrotorSimulatorBase
 
   ros::Publisher pub_odom_;
   ros::Publisher pub_imu_;
+  ros::Publisher pub_output_data_;
   ros::Subscriber sub_cmd_;
   ros::Subscriber sub_extern_force_;
   ros::Subscriber sub_extern_moment_;
@@ -68,6 +70,8 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
 {
   pub_odom_ = n.advertise<nav_msgs::Odometry>("odom", 100);
   pub_imu_ = n.advertise<sensor_msgs::Imu>("imu", 100);
+  pub_output_data_ =
+      n.advertise<quadrotor_msgs::OutputData>("output_data", 100);
   sub_cmd_ = n.subscribe<T>("cmd", 100, &QuadrotorSimulatorBase::cmd_callback,
                             this, ros::TransportHints().tcpNoDelay());
   sub_extern_force_ = n.subscribe<geometry_msgs::Vector3Stamped>(
@@ -136,17 +140,18 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
 template <typename T, typename U>
 void QuadrotorSimulatorBase<T, U>::run(void)
 {
-  // initialize command
-  typename T::Ptr empty_cmd = boost::make_shared<T>();
-  cmd_callback(empty_cmd);
+  // Call once with empty command to initialize values
+  cmd_callback(boost::make_shared<T>());
 
   QuadrotorSimulatorBase::ControlInput control;
 
   nav_msgs::Odometry odom_msg;
   sensor_msgs::Imu imu_msg;
-  odom_msg.header.frame_id = "/simulator";
-  odom_msg.child_frame_id = "/" + quad_name_;
-  imu_msg.header.frame_id = "/" + quad_name_;
+  quadrotor_msgs::OutputData output_data_msg;
+  odom_msg.header.frame_id = "simulator";
+  odom_msg.child_frame_id = quad_name_;
+  imu_msg.header.frame_id = quad_name_;
+  output_data_msg.header.frame_id = quad_name_;
 
   const double simulation_dt = 1 / simulation_rate_;
   ros::Rate r(simulation_rate_);
@@ -169,13 +174,26 @@ void QuadrotorSimulatorBase<T, U>::run(void)
     {
       next_odom_pub_time += odom_pub_duration;
       const Quadrotor::State &state = quad_.getState();
+
       stateToOdomMsg(state, odom_msg);
-      quadToImuMsg(quad_, imu_msg);
       odom_msg.header.stamp = tnow;
-      imu_msg.header.stamp = tnow;
       pub_odom_.publish(odom_msg);
-      pub_imu_.publish(imu_msg);
       tfBroadcast(odom_msg);
+
+      quadToImuMsg(quad_, imu_msg);
+      imu_msg.header.stamp = tnow;
+      pub_imu_.publish(imu_msg);
+
+      // Also publish an OutputData msg
+      output_data_msg.header.stamp = tnow;
+      output_data_msg.orientation = imu_msg.orientation;
+      output_data_msg.angular_velocity = imu_msg.angular_velocity;
+      output_data_msg.linear_acceleration = imu_msg.linear_acceleration;
+      output_data_msg.motor_rpm[0] = state.motor_rpm(0);
+      output_data_msg.motor_rpm[1] = state.motor_rpm(1);
+      output_data_msg.motor_rpm[2] = state.motor_rpm(2);
+      output_data_msg.motor_rpm[3] = state.motor_rpm(3);
+      pub_output_data_.publish(output_data_msg);
     }
 
     r.sleep();
