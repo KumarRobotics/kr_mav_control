@@ -21,6 +21,7 @@ class QuadrotorSimulatorSO3
 {
  public:
   QuadrotorSimulatorSO3(ros::NodeHandle &nh) : QuadrotorSimulatorBase(nh) {}
+
  private:
   virtual void cmd_callback(const quadrotor_msgs::SO3Command::ConstPtr &cmd);
   virtual ControlInput getControl(const Quadrotor &quad,

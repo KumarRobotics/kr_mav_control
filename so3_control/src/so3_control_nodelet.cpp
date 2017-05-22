@@ -278,9 +278,7 @@ void SO3ControlNodelet::onInit(void)
   priv_nh.param("quadrotor_name", quadrotor_name, std::string("quadrotor"));
   frame_id_ = "/" + quadrotor_name;
 
-  double mass;
-  n.param("mass", mass, 0.5);
-  mass_ = mass;
+  n.param("mass", mass_, 0.5f);
   controller_.setMass(mass_);
   controller_.setGravity(g_);
 
