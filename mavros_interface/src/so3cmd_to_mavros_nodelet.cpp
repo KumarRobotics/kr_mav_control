@@ -120,16 +120,13 @@ void SO3CmdToMavros::so3_cmd_callback(
                       R_des(0, 2) * R_cur(0, 2) + R_des(1, 2) * R_cur(1, 2) +
                       R_des(2, 2) * R_cur(2, 2)));
 
-  double throttle = 0.0;
-  if(Psi < 1.0f) // Position control stability guaranteed only when Psi < 1
+  if(Psi > 1.0f) // Position control stability guaranteed only when Psi < 1
   {
-    throttle = f_des(0) * R_cur(0, 2) + f_des(1) * R_cur(1, 2) +
-               f_des(2) * R_cur(2, 2);
+    ROS_WARN_THROTTLE(1,"Psi > 1.0, orientation error is too large!");
   }
-  else
-  {
-    ROS_WARN_THROTTLE(1,"psi > 1.0, throttle set to 0.0 in mavros_interface.");
-  }
+
+  double throttle =
+      f_des(0) * R_cur(0, 2) + f_des(1) * R_cur(1, 2) + f_des(2) * R_cur(2, 2);
 
   // Scale force to individual rotor velocities (rad/s).
   throttle = std::sqrt(throttle / num_props_ / kf_);
