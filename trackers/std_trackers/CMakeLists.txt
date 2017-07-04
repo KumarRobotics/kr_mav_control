@@ -48,7 +48,7 @@ target_link_libraries(velocity_tracker ${catkin_LIBRARIES})
 
 add_library(smooth_vel_tracker src/smooth_vel_tracker.cpp)
 add_dependencies(smooth_vel_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(smooth_vel_tracker ${catkin_LIBRARIES})
+target_link_libraries(smooth_vel_tracker initial_conditions ${catkin_LIBRARIES})
 
 install(TARGETS
     initial_conditions
