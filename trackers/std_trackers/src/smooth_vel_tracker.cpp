@@ -1,14 +1,10 @@
-#include <iostream>
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
 #include <quadrotor_msgs/LineTrackerGoal.h>
 #include <quadrotor_msgs/TrackerStatus.h>
-#include <Eigen/Geometry>
-#include <tf/transform_datatypes.h>
+#include <Eigen/Core>
 #include <initial_conditions.h>
-#include <cmath>
 
-#define PI 3.14159265359
 
 class SmoothVelTracker : public trackers_manager::Tracker
 {
@@ -28,7 +24,7 @@ class SmoothVelTracker : public trackers_manager::Tracker
 
   ros::Subscriber sub_goal_;
   bool goal_set_, goal_reached_;
-  float target_speed_; 
+  float target_speed_;
   float ramp_dist_, total_dist_;
   float ramp_time_, total_time_;
   float start_yaw_, goal_yaw_;
@@ -126,7 +122,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
   }
   else if(t < ramp_time_)
   {
-    float dist = ramp_time_*(vel_coeffs_(0)/2*ts2 + vel_coeffs_(1)/3*ts3 + vel_coeffs_(2)/4*ts4 
+    float dist = ramp_time_*(vel_coeffs_(0)/2*ts2 + vel_coeffs_(1)/3*ts3 + vel_coeffs_(2)/4*ts4
                            + vel_coeffs_(3)/5*ts5 + vel_coeffs_(4)/6*ts6 + vel_coeffs_(5)/7*ts7
                            + vel_coeffs_(6)/8*ts8);
     float speed = vel_coeffs_(0)*ts + vel_coeffs_(1)*ts2 + vel_coeffs_(2)*ts3 + vel_coeffs_(3)*ts4
@@ -150,7 +146,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
   {
     float dist = ramp_dist_ + target_speed_*(t - ramp_time_);
     pos = start_pos_ + dist*dir_;
-    vel = target_speed_*dir_; 
+    vel = target_speed_*dir_;
     cmd->position.x = pos(0), cmd->position.y = pos(1), cmd->position.z = pos(2);
     cmd->velocity.x = vel(0), cmd->velocity.y = vel(1), cmd->velocity.z = vel(2);
     cmd->acceleration.x = 0, cmd->acceleration.y = 0, cmd->acceleration.z = 0;
@@ -162,14 +158,14 @@ const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
   {
     float te = total_time_ - elapsed_time.toSec(); // time from end
     float tes = te/ramp_time_; // scaled time from end
-    float tes2 = tes*tes; 
-    float tes3 = tes2*tes; 
+    float tes2 = tes*tes;
+    float tes3 = tes2*tes;
     float tes4 = tes3*tes;
     float tes5 = tes4*tes;
     float tes6 = tes5*tes;
     float tes7 = tes6*tes;
     float tes8 = tes7*tes;
-    float dist_from_end = ramp_time_*(vel_coeffs_(0)/2*tes2 + vel_coeffs_(1)/3*tes3 + vel_coeffs_(2)/4*tes4 
+    float dist_from_end = ramp_time_*(vel_coeffs_(0)/2*tes2 + vel_coeffs_(1)/3*tes3 + vel_coeffs_(2)/4*tes4
                            + vel_coeffs_(3)/5*tes5 + vel_coeffs_(4)/6*tes6 + vel_coeffs_(5)/7*tes7
                            + vel_coeffs_(6)/8*tes8);
     float dist = total_dist_ - dist_from_end;
@@ -212,7 +208,7 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
     Eigen::Vector3f goal_pos;
     goal_pos(0) = msg->x, goal_pos(1) = msg->y, goal_pos(2) = msg->z;
     if(msg->relative)
-      goal_pos += start_pos; 
+      goal_pos += start_pos;
 
     // Find distance and direction to goal
     const float total_dist = (goal_pos - start_pos).norm();
@@ -220,12 +216,12 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
 
     // Compute the coefficients
     Eigen::Matrix<float,7,7> Ainv;
-    Ainv <<  0, 1, 0, 0, 0, 0, 0, 
+    Ainv <<  0, 1, 0, 0, 0, 0, 0,
              0, 0, 0, 0.5, 0, 0, 0,
              0, 0, 0, 0, 0, 1.0/6.0, 0,
              35, -20, -15, -5, 2.5, -2.0/3.0, -1.0/6.0,
-             -84, 45, 39, 10, -7, 1, 0.5, 
-             70, -36, -34, -7.5, 6.5, -2.0/3.0, -0.5, 
+             -84, 45, 39, 10, -7, 1, 0.5,
+             70, -36, -34, -7.5, 6.5, -2.0/3.0, -0.5,
              -20, 10, 10, 2, -2, 1.0/6.0, 1.0/6.0;
 
     Eigen::Matrix<float,7,1> b;
@@ -249,7 +245,7 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
 
       // Set the target yaw and max yaw dot
       start_yaw_ = ICs_.yaw();
-      goal_yaw_ = fmod(msg->yaw,2*PI);
+      goal_yaw_ = std::fmod(msg->yaw,2*M_PI);
       yaw_dot_max_ = (goal_yaw_ - start_yaw_)/(total_time_ - ramp_time_);
 
       // Set goal_set to true and goal_reached to false
