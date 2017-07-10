@@ -14,7 +14,8 @@ Please initialize the submodules by running the following in the repository dire
     $ git submodule init
     $ git submodule update
 
+![Block Diagram](doc/quad_control_block_diag.png "Block Diagram")
 
-[README for running simple sim](docs/QuadSim.md)
+[README for running simple sim](doc/QuadSim.md)
 
-[README for running gazebo sim](docs/QuadGazebo.md)
+[README for running gazebo sim](doc/QuadGazebo.md)
