@@ -13,3 +13,8 @@ Please initialize the submodules by running the following in the repository dire
 
     $ git submodule init
     $ git submodule update
+
+
+[README for running simple sim](docs/QuadSim.md)
+
+[README for running gazebo sim](docs/QuadGazebo.md)
