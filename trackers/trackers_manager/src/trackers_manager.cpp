@@ -99,7 +99,6 @@ bool TrackersManager::transition_callback(trackers_manager::Transition::Request 
     NODELET_INFO_STREAM("Tracker " << req.tracker << " already active");
     return true;
   }
-
   if(!it->second->Activate(cmd_)) {
     NODELET_WARN_STREAM("Failed to activate tracker " << req.tracker << ", cannot transition");
     return false;

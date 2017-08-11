@@ -315,15 +315,15 @@ bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw, boo
   }
 
   std_trackers::VelocityTrackerGoal goal;
-  goal.x = x;
-  goal.y = y;
-  goal.z = z;
-  goal.yaw = yaw;
+  goal.vx = x;
+  goal.vy = y;
+  goal.vz = z;
+  goal.vyaw = yaw;
   goal.use_position_gains = use_position_feedback;
   velocity_tracker_client_.sendGoal(goal, boost::bind(&MAVManager::velocity_tracker_done_callback, this, _1, _2), VelocityClientType::SimpleActiveCallback(), VelocityClientType::SimpleFeedbackCallback());
 
   ROS_INFO("Desired World velocity: (%1.4f, %1.4f, %1.4f, %1.4f)",
-           goal.x, goal.y, goal.z, goal.yaw);
+           goal.vx, goal.vy, goal.vz, goal.vyaw);
 
   // Since this could be called quite often,
   // only try to transition if it is not the active tracker.

@@ -18,7 +18,7 @@ add_action_files(DIRECTORY action
   LineTracker.action
   VelocityTracker.action
   WaypointTracker.action)
-generate_messages(DEPENDENCIES actionlib_msgs quadrotor_msgs std_msgs)
+generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs)
 
 catkin_package(
   INCLUDE_DIRS include
