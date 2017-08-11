@@ -105,10 +105,10 @@ void VelocityTrackerAction::Deactivate(void)
     std_trackers::VelocityTrackerResult result;
     result.duration = current_traj_duration_;
     result.length = current_traj_length_;
-    result.x = pos_[0];
-    result.y = pos_[1];
-    result.z = pos_[2];
-    result.yaw = cur_yaw_;
+    result.vx = pos_[0];
+    result.vy = pos_[1];
+    result.vz = pos_[2];
+    result.vyaw = cur_yaw_;
     tracker_server_->setSucceeded(result);
 
   }
@@ -194,16 +194,16 @@ void VelocityTrackerAction::goal_callback() {
   // If preempt has been requested, then set this goal to preempted
   // and make no changes to the tracker state.
   if (tracker_server_->isPreemptRequested()) {
-    ROS_INFO("VelocityTrackerAction going to goal (%2.2f, %2.2f, %2.2f, %2.2f) preempted.", msg->x, msg->y, msg->z, msg->yaw);
+    ROS_INFO("VelocityTrackerAction going to goal (%2.2f, %2.2f, %2.2f, %2.2f) preempted.", msg->vx, msg->vy, msg->vz, msg->vyaw);
     tracker_server_->setPreempted();
     return;
   }
 
   // Otherwise, populate the current goal with information from the msg.
-  position_cmd_.velocity.x = msg->x;
-  position_cmd_.velocity.y = msg->y;
-  position_cmd_.velocity.z = msg->z;
-  position_cmd_.yaw_dot = msg->yaw;
+  position_cmd_.velocity.x = msg->vx;
+  position_cmd_.velocity.y = msg->vy;
+  position_cmd_.velocity.z = msg->vz;
+  position_cmd_.yaw_dot = msg->vyaw;
 
   use_position_gains_ = msg->use_position_gains;
 }

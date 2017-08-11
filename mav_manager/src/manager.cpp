@@ -117,7 +117,7 @@ void MAVManager::tracker_done_callback(const actionlib::SimpleClientGoalState& s
 }
 
 void MAVManager::velocity_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::VelocityTrackerResultConstPtr& result) {
-  ROS_INFO("Velocity tracking at (%2.2f, %2.2f, %2.2f, %2.2f)m/s completed with state %s after %2.2f s. and %2.2f m.", result->x, result->y, result->z, result->yaw, state.toString().c_str(), result->duration, result->length);
+  ROS_INFO("Velocity tracking at (%2.2f, %2.2f, %2.2f, %2.2f)m/s completed with state %s after %2.2f s. and %2.2f m.", result->vx, result->vy, result->vz, result->vyaw, state.toString().c_str(), result->duration, result->length);
 }
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg) {

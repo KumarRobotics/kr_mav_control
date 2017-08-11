@@ -16,7 +16,8 @@ include_directories(include ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 add_action_files(DIRECTORY action 
   FILES 
   LineTracker.action
-  VelocityTracker.action)
+  VelocityTracker.action
+  WaypointTracker.action)
 generate_messages(DEPENDENCIES actionlib_msgs quadrotor_msgs std_msgs)
 
 catkin_package(
@@ -52,6 +53,10 @@ add_library(velocity_tracker_action src/velocity_tracker_server.cpp)
 add_dependencies(velocity_tracker_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(velocity_tracker_action ${catkin_LIBRARIES})
 
+#add_library(waypoint_tracker_action src/waypoint_tracker_server.cpp)
+#add_dependencies(waypoint_tracker_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#target_link_libraries(waypoint_tracker_action ${catkin_LIBRARIES})
+
 install(TARGETS
     initial_conditions
     line_tracker_min_jerk_action
@@ -60,6 +65,7 @@ install(TARGETS
 #    line_tracker_yaw
     null_tracker
     velocity_tracker_action
+   # waypoint_tracker_action
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

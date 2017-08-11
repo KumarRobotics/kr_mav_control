@@ -16,7 +16,6 @@
 // quadrotor_control
 #include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/SO3Command.h>
-#include <quadrotor_msgs/TrackerStatus.h>
 #include <quadrotor_msgs/OutputData.h>
 #include <std_trackers/LineTrackerAction.h>
 #include <std_trackers/VelocityTrackerAction.h>
@@ -51,7 +50,6 @@ class MAVManager
     std::string active_tracker() { return active_tracker_; }
     bool need_imu() { return need_imu_; }
     bool need_odom() { return need_odom_; }
-  //  uint8_t tracker_status() { return tracker_status_; }
     Status status() { return status_; }
 
     // Mutators
@@ -126,7 +124,6 @@ class MAVManager
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
     void output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg);
     void heartbeat_cb(const std_msgs::Empty::ConstPtr &msg);
-   // void tracker_status_cb(const quadrotor_msgs::TrackerStatus::ConstPtr &msg);
     void heartbeat();
 
     std::string active_tracker_;
