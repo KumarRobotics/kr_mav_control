@@ -17,12 +17,14 @@
 #include <trackers_manager/Transition.h>
 #include <std_trackers/LineTrackerAction.h>
 #include <std_trackers/VelocityTrackerAction.h>
+#include <std_trackers/CircleTrackerAction.h>
 
 // Strings
 static const std::string line_tracker_distance("std_trackers/LineTrackerDistanceAction");
 static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerkAction");
 static const std::string velocity_tracker_str("std_trackers/VelocityTrackerAction");
 static const std::string null_tracker_str("std_trackers/NullTracker");
+static const std::string circle_tracker_str("std_trackers/CircleTrackerAction");
 
 MAVManager::MAVManager()
   : nh_(""),
@@ -44,7 +46,8 @@ MAVManager::MAVManager()
     use_attitude_safety_catch_(true),
     line_tracker_distance_client_(nh_, "trackers_manager/line_tracker_distance/LineTrackerAction", true),
     line_tracker_min_jerk_client_(nh_, "trackers_manager/line_tracker_min_jerk/LineTrackerAction", true),
-    velocity_tracker_client_(nh_, "trackers_manager/velocity_tracker/VelocityTrackerAction", true) {
+    velocity_tracker_client_(nh_, "trackers_manager/velocity_tracker/VelocityTrackerAction", true),
+    circle_tracker_client_(nh_, "trackers_manager/circle_tracker/CircleTrackerAction", true) {
 
   // Action servers.
   const double server_wait_time = 3.0;
@@ -58,6 +61,11 @@ MAVManager::MAVManager()
 
   if (!velocity_tracker_client_.waitForServer(ros::Duration(server_wait_time))) {
     ROS_ERROR("VelocityTrackerAction server not found.");
+  }
+
+  // Optional trackers.
+  if (!circle_tracker_client_.waitForServer(ros::Duration(server_wait_time))) {
+    ROS_WARN("CircleTrackerAction server not found.");
   }
 
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
@@ -118,6 +126,10 @@ void MAVManager::tracker_done_callback(const actionlib::SimpleClientGoalState& s
 
 void MAVManager::velocity_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::VelocityTrackerResultConstPtr& result) {
   ROS_INFO("Velocity tracking at (%2.2f, %2.2f, %2.2f, %2.2f)m/s completed with state %s after %2.2f s. and %2.2f m.", result->vx, result->vy, result->vz, result->vyaw, state.toString().c_str(), result->duration, result->length);
+}
+
+void MAVManager::circle_tracker_done_callback(const actionlib::SimpleClientGoalState &state, const std_trackers::CircleTrackerResultConstPtr &result) {
+  ROS_INFO("Circle tracking completed after %2.2f secionds.", result->duration);
 }
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg) {
@@ -241,7 +253,7 @@ bool MAVManager::land() {
   goal.y = pos_(1);
   goal.z = home_(2);
   std::cout << " landing at " << goal.x << " " << goal.y << " " << goal.z << "\n";
-  line_tracker_distance_client_.sendGoal(goal,boost::bind(&MAVManager::tracker_done_callback, this, _1, _2), ClientType::SimpleActiveCallback(), ClientType::SimpleFeedbackCallback());
+  line_tracker_distance_client_.sendGoal(goal, boost::bind(&MAVManager::tracker_done_callback, this, _1, _2), ClientType::SimpleActiveCallback(), ClientType::SimpleFeedbackCallback());
 
 
   return this->transition(line_tracker_distance);
@@ -303,6 +315,24 @@ bool MAVManager::goTo(Vec3 xyz, Vec2 v_and_a_des) {
 }
 bool MAVManager::goToYaw(float yaw) {
   return this->goTo(pos_(0), pos_(1), pos_(2), yaw);
+}
+
+bool MAVManager::circle(float Ax, float Ay, float T, float duration) {
+  if (!this->motors() || status_ != FLYING)
+  {
+    ROS_WARN("The robot must be flying before using the circle method.");
+    return false;
+  }
+
+  std_trackers::CircleTrackerGoal goal;
+  goal.Ax = Ax;
+  goal.Ay = Ay;
+  goal.T = T;
+  goal.duration = duration;
+
+  circle_tracker_client_.sendGoal(goal, boost::bind(&MAVManager::circle_tracker_done_callback, this, _1, _2), CircleClientType::SimpleActiveCallback(), CircleClientType::SimpleFeedbackCallback());
+
+  return this->transition(circle_tracker_str);
 }
 
 // World Velocity commands
@@ -678,7 +708,7 @@ bool MAVManager::transition(const std::string &tracker_str) {
 
   if (srv_transition_.call(transition_cmd)) {
     active_tracker_ = tracker_str;
-  //  tracker_status_ = quadrotor_msgs::TrackerStatus::ACTIVE;
+    //  tracker_status_ = quadrotor_msgs::TrackerStatus::ACTIVE;
     ROS_INFO("Current tracker: %s", tracker_str.c_str());
     return true;
   }

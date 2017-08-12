@@ -43,10 +43,10 @@
   </class>
 </library>
 
-<library path="lib/libwaypoint_tracker_action">
-  <class name="traj_quadrotor/WaypointTrackerAction" type="WaypointTrackerAction" base_class_type="trackers_manager::Tracker">
+<library path="lib/libcircle_tracker_action">
+  <class name="std_trackers/CircleTrackerAction" type="CircleTrackerAction" base_class_type="trackers_manager::Tracker">
     <description>
-      This is a controller which interpolates a smooth 4th order polynomial between a set of given waypoints.
+      This controller commands a the robot to fly in a circle of a given size and period. 
     </description>
   </class>
 </library>

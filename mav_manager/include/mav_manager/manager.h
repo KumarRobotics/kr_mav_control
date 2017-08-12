@@ -19,6 +19,7 @@
 #include <quadrotor_msgs/OutputData.h>
 #include <std_trackers/LineTrackerAction.h>
 #include <std_trackers/VelocityTrackerAction.h>
+#include <std_trackers/CircleTrackerAction.h>
 
 class MAVManager
 {
@@ -80,6 +81,8 @@ class MAVManager
     // Yaw control
     bool goToYaw(float);
 
+    bool circle(float Ax, float Ay, float T, float duration);
+
     // Waypoints
     void clearWaypoints();
     void addWaypoint();
@@ -108,17 +111,16 @@ class MAVManager
     bool estop();
 
   protected:
-   // bool transition(const std::string &tracker_str);
-
-  //private:
     typedef actionlib::SimpleActionClient<std_trackers::LineTrackerAction> ClientType;
     typedef actionlib::SimpleActionClient<std_trackers::VelocityTrackerAction> VelocityClientType;
+    typedef actionlib::SimpleActionClient<std_trackers::CircleTrackerAction> CircleClientType;
 
     ros::NodeHandle nh_;
     ros::NodeHandle priv_nh_;
 
     void tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::LineTrackerResultConstPtr& result);
     void velocity_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::VelocityTrackerResultConstPtr& result);
+    void circle_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::CircleTrackerResultConstPtr &result);
 
     void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
@@ -153,6 +155,7 @@ class MAVManager
     ClientType line_tracker_distance_client_;
     ClientType line_tracker_min_jerk_client_;
     VelocityClientType velocity_tracker_client_;
+    CircleClientType circle_tracker_client_;
 
     // Publishers
     ros::Publisher

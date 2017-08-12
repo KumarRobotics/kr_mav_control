@@ -30,6 +30,7 @@ add_service_files(
   FILES
     Vec4.srv
     GoalTimed.srv
+    Circle.srv
 )
 generate_messages()
 

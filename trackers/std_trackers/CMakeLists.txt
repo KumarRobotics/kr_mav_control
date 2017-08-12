@@ -9,22 +9,23 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 
 find_package(catkin REQUIRED COMPONENTS genmsg actionlib_msgs actionlib cmake_modules geometry_msgs tf trackers_manager)
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED)
 
-include_directories(include ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+include_directories(include ${Boost_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 add_action_files(DIRECTORY action 
   FILES 
   LineTracker.action
   VelocityTracker.action
-  WaypointTracker.action)
+  CircleTracker.action)
 generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs)
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES
   CATKIN_DEPENDS geometry_msgs tf trackers_manager
-  DEPENDS Eigen)
+  DEPENDS Eigen3 boost)
 
 add_library(initial_conditions src/initial_conditions.cpp)
 target_link_libraries(initial_conditions ${catkin_LIBRARIES})
@@ -53,9 +54,9 @@ add_library(velocity_tracker_action src/velocity_tracker_server.cpp)
 add_dependencies(velocity_tracker_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(velocity_tracker_action ${catkin_LIBRARIES})
 
-#add_library(waypoint_tracker_action src/waypoint_tracker_server.cpp)
-#add_dependencies(waypoint_tracker_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-#target_link_libraries(waypoint_tracker_action ${catkin_LIBRARIES})
+add_library(circle_tracker_action src/circle_tracker_server.cpp)
+add_dependencies(circle_tracker_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(circle_tracker_action ${catkin_LIBRARIES})
 
 install(TARGETS
     initial_conditions
@@ -65,7 +66,7 @@ install(TARGETS
 #    line_tracker_yaw
     null_tracker
     velocity_tracker_action
-   # waypoint_tracker_action
+    circle_tracker_action
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
