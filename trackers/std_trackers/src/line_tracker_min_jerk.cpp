@@ -120,7 +120,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
   if(goal_set_)
   {
     if(!traj_start_set_)
-      traj_start_ = ros::Time::now();
+      traj_start_ = t_now;
 
     bool duration_set = false;
     traj_duration_ = 0.5f;
@@ -237,11 +237,10 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
 
   Eigen::Vector3f x(ICs_.pos()), v(Eigen::Vector3f::Zero()),
       a(Eigen::Vector3f::Zero()), j(Eigen::Vector3f::Zero());
-  float yaw_des, yaw_dot_des;
+  float yaw_des(ICs_.yaw()), yaw_dot_des(0);
 
-  const float traj_time = (t_now - traj_start_).toSec() > 0.0f ? (t_now - traj_start_).toSec() : 0.0f;
+  const float traj_time = (t_now - traj_start_).toSec();
 
-  if((t_now - traj_start_).toSec() < 0.0)  ROS_INFO_THROTTLE(1, "Trajectory hasn't started yet");
   if(traj_time >= traj_duration_) // Reached goal
   {
     ROS_DEBUG_THROTTLE(1, "Reached goal");
@@ -253,7 +252,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
     yaw_dot_des = 0;
     goal_reached_ = true;
   }
-  else
+  else if(traj_time >= 0)
   {
     float t = traj_time / traj_duration_, t2 = t * t, t3 = t2 * t, t4 = t3 * t, t5 = t4 * t;
 
@@ -276,6 +275,8 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
     j = j / (traj_duration_ * traj_duration_ * traj_duration_);
     yaw_dot_des = yaw_dot_des / traj_duration_;
   }
+  else // (traj_time < 0) can happen with LineTrackerGoalTimed
+    ROS_INFO_THROTTLE(1, "Trajectory hasn't started yet");
 
   cmd->position.x = x(0), cmd->position.y = x(1), cmd->position.z = x(2);
   cmd->yaw = yaw_des;
