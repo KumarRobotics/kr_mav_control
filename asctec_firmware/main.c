@@ -1,6 +1,6 @@
 /*
 
-   AscTec AutoPilot HL SDK v2.0
+   AscTec AutoPilot HL SDK v3.0
 
    Copyright (c) 2011, Ascending Technologies GmbH
    All rights reserved.
@@ -25,6 +25,8 @@
  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  DAMAGE.
+
+ ** Checked for Kumar Lab by Andrew Block 5/20/16 **
 
 */
 
@@ -151,6 +153,7 @@ int	main (void) {
 
 void mainloop(void) //mainloop is triggered at 1 kHz
 {
+// no gps or magnetometer attached so they do not need to be initialized
 #if 0
   static uint8_t led_cnt=0, led_state=1;
 
@@ -272,8 +275,8 @@ void mainloop(void) //mainloop is triggered at 1 kHz
     unsigned int i;
     for(i = 0; i < 8; i++)
       Output_Data.radio[i] = RO_ALL_Data.channel[i]/16;
-    for(i = 0; i < 4; i++)
-      Output_Data.rpm[i] = RO_ALL_Data.motor_rpm[i];
+    //for(i = 0; i < 4; i++)
+    //  Output_Data.rpm[i] = RO_ALL_Data.motor_rpm[i];
 
     Output_Data.seq = seq;
 

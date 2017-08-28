@@ -32,6 +32,8 @@
 # - 19. Apr. 2006  - option FLASH_TOOL (default lpc21isp); variable IMGEXT (mth)
 #
 # modified 2011 by Ascending Technologies GmbH
+#
+# checked 2016 by Andrew Block for Kumar Lab
 
 //FLASH_TOOL = UVISION
 FLASH_TOOL = OPENOCD

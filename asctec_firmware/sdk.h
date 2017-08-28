@@ -24,6 +24,8 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 
+ ** Checked for Kumar Lab by Andrew Block 5/20/16 **
+
  */
 
 #ifndef SDK_
@@ -84,7 +86,7 @@ struct OUTPUT_DATA
   int32_t height;
   int16_t mag[3];
   uint8_t radio[8];
-  uint8_t rpm[4];
+  //uint8_t rpm[4];
   uint8_t seq;
 };
 extern struct OUTPUT_DATA Output_Data;

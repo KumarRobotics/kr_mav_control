@@ -1,6 +1,6 @@
 /*
 
-AscTec AutoPilot HL SDK v2.0
+AscTec AutoPilot HL SDK v3.0
 
 Copyright (c) 2011, Ascending Technologies GmbH
 All rights reserved.
@@ -26,6 +26,10 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 
+ ** Modified by Justin Thomas and Andrew Block 2015/2016 **
+
+ ** Checked for Kumar Lab by Andrew Block 5/20/16 **
+
  */
 
 #include <string.h>
@@ -35,6 +39,8 @@ DAMAGE.
 #include "uart.h"
 #include "LL_HL_comm.h"
 #include "pelican_ptu.h"
+#include "buzzer.h"
+#include "hardware.h"
 
 #define HUMMINGBIRD
 //#define PELICAN
@@ -50,8 +56,8 @@ static const float DEGSEC2RADSECCONV = 0.0154*M_PI/180.0;
 #if defined(HUMMINGBIRD)
 static const float LENGTH = 0.171;
 //static const float KTHRUST = 8.0e-8; // Black props
-static const float KTHRUST = 6e-8; // Gray props
-//static const float KTHRUST = 6.16e-8; // AR Drone props
+//static const float KTHRUST = 6e-8; // Gray props
+static const float KTHRUST = 6.16e-8; // AR Drone props
 static const float PROP_RADIUS = 0.099;
 
 static const float I[3][3] = { {2.64e-03, 0, 0},
@@ -67,9 +73,9 @@ static const float I[3][3] = { {1.0e-2, 0, 0},
                                {0, 0, 2.0e-2} };
 #endif
 
-// http://wiki.asctec.de/display/AR/List+of+all+predefined+variables%2C+commands+and+parameters
-static const float RPMSCALE = 0.026578073; // 1/37.625
-static const int MIN_RPM = 1075;
+// RPMSCALE = 1/38.7
+static const float RPMSCALE = 0.025839793;
+static const int MIN_RPM = 1200;
 
 struct WO_SDK_STRUCT WO_SDK;
 struct WO_CTRL_INPUT WO_CTRL_Input;
@@ -83,6 +89,8 @@ struct OUTPUT_DATA Output_Data;
 struct STATUS_DATA Status_Data;
 
 static float normalize(float angle);
+static uint8_t motors_on_flag;
+
 
 /* SDK_mainloop(void) is triggered @ 1kHz.
  *
@@ -296,9 +304,9 @@ void SDK_mainloop(void)
   const uint8_t motors_on = (RO_ALL_Data.motor_rpm[0] > 0 ||
                              RO_ALL_Data.motor_rpm[1] > 0 ||
                              RO_ALL_Data.motor_rpm[2] > 0 ||
-                             RO_ALL_Data.motor_rpm[3] > 0);
+                             RO_ALL_Data.motor_rpm[3] > 0); //checks whether motors are spinning
   static unsigned int counter = 0;
-  if(motors_des != motors_on)
+  if(motors_des != motors_on) // gives down left throttle stick input when turning motors on/off
   {
     WO_SDK.ctrl_mode = 0x02; // 0x02: attitude and throttle control: commands
     // are input for standard attitude controller
@@ -313,7 +321,7 @@ void SDK_mainloop(void)
   {
     if(counter < 50) // Delay between turning motors on and sending command
       counter++;
-    else
+    else // mode for taking motor speed inputs from the computer
     {
       WO_SDK.ctrl_mode = 0x00; // direct individual motor control
       WO_SDK.ctrl_enabled = 1; // enable control by HL processor
@@ -333,10 +341,10 @@ void SDK_mainloop(void)
   WO_SDK.ctrl_enabled = 1; // enable control by HL processor
   WO_SDK.disable_motor_onoff_by_stick = 0; // allow RC control
 
-  WO_Direct_Individual_Motor_Control.motor[0] = (RO_ALL_Data.channel[6]/4000)*100 + 50;
+  WO_Direct_Individual_Motor_Control.motor[0] = 0;//(RO_ALL_Data.channel[6]/4000)*100 + 50;
   WO_Direct_Individual_Motor_Control.motor[1] = 0;//RO_ALL_Data.channel[2]/21;
   WO_Direct_Individual_Motor_Control.motor[2] = 0;//RO_ALL_Data.channel[2]/21;
-  WO_Direct_Individual_Motor_Control.motor[3] = 0;//RO_ALL_Data.channel[2]/21;
+  WO_Direct_Individual_Motor_Control.motor[3] = 0;//[2]/21;
   WO_Direct_Individual_Motor_Control.motor[4] = 0;
   WO_Direct_Individual_Motor_Control.motor[5] = 0;
 #endif
