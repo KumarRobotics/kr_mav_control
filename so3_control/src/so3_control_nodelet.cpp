@@ -18,11 +18,11 @@ class SO3ControlNodelet : public nodelet::Nodelet
       des_yaw_(0),
       des_yaw_dot_(0),
       current_yaw_(0),
-      current_orientation_(Eigen::Quaternionf::Identity()),
       enable_motors_(false),
       use_external_yaw_(false),
       have_odom_(false),
-      g_(9.81)
+      g_(9.81),
+      current_orientation_(Eigen::Quaternionf::Identity())
   {
     controller_.resetIntegrals();
   }

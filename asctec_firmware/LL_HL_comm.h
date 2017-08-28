@@ -115,7 +115,7 @@ struct LL_ATTITUDE_DATA
 
 	uint16_t temp_gyro;
 //-----------------------------PAGE1
-	uint8_t motor_data[16];	//speed 0..7, PWM 0..7
+	uint8_t motor_data[16];	//PWM 0..7, speed 8..15
 
 	int16_t speed_x_best_estimate;
 	int16_t speed_y_best_estimate;
