@@ -4,6 +4,8 @@ SO3Control::SO3Control()
   : mass_(0.5),
     g_(9.81),
     max_pos_int_(0.5),
+    max_pos_int_b_(0.5),
+    current_orientation_(Eigen::Quaternionf::Identity()),
     cos_max_tilt_angle_(-1.0)
 {
 }
@@ -33,6 +35,16 @@ void SO3Control::setMaxIntegral(const float max_integral)
   max_pos_int_ = max_integral;
 }
 
+void SO3Control::setMaxIntegralBody(const float max_integral_b)
+{
+  max_pos_int_b_ = max_integral_b;
+}
+
+void SO3Control::setCurrentOrientation(const Eigen::Quaternionf q)
+{
+  current_orientation_ = q;
+}
+
 void SO3Control::setMaxTiltAngle(const float max_tilt_angle)
 {
   if(max_tilt_angle > 0 && max_tilt_angle <= M_PI)
@@ -47,7 +59,8 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
                                   const float des_yaw_dot,
                                   const Eigen::Vector3f &kx,
                                   const Eigen::Vector3f &kv,
-                                  const Eigen::Vector3f &ki)
+                                  const Eigen::Vector3f &ki,
+                                  const Eigen::Vector3f &ki_b)
 {
   const Eigen::Vector3f e_pos = des_pos - pos_;
   const Eigen::Vector3f e_vel = des_vel - vel_;
@@ -63,8 +76,23 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
     else if(pos_int_(i) < -max_pos_int_)
       pos_int_(i) = -max_pos_int_;
   }
+  //ROS_DEBUG_THROTTLE(2, "Integrated world disturbance compensation [N]: {x: %2.2f, y: %2.2f, z: %2.2f}", pos_int_(0), pos_int_(1), pos_int_(2));
 
-  //std::cout << "pos_int: " << pos_int_.transpose() << std::endl;
+  Eigen::Quaternionf q(current_orientation_);
+  const Eigen::Vector3f e_pos_b = q.inverse() * e_pos;
+  for(int i = 0; i < 3; i++)
+  {
+    if(kx(i) != 0)
+      pos_int_b_(i) += ki_b(i) * e_pos_b(i);
+
+    // Limit integral term in the body
+    if(pos_int_b_(i) > max_pos_int_b_)
+      pos_int_b_(i) = max_pos_int_b_;
+    else if(pos_int_b_(i) < -max_pos_int_b_)
+      pos_int_b_(i) = -max_pos_int_b_;
+
+   }
+   //ROS_DEBUG_THROTTLE(2, "Integrated body disturbance compensation [N]: {x: %2.2f, y: %2.2f, z: %2.2f}", pos_int_b_(0), pos_int_b_(1), pos_int_b_(2));
 
   const Eigen::Vector3f acc_grav = g_ * Eigen::Vector3f::UnitZ();
   const Eigen::Vector3f acc_control = kx.asDiagonal() * e_pos + kv.asDiagonal() * e_vel + pos_int_ + des_acc;
@@ -131,4 +159,5 @@ const Eigen::Vector3f &SO3Control::getComputedAngularVelocity(void)
 void SO3Control::resetIntegrals(void)
 {
   pos_int_ = Eigen::Vector3f::Zero();
+  pos_int_b_ = Eigen::Vector3f::Zero();
 }

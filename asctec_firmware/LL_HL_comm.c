@@ -113,7 +113,7 @@ void SSP_data_distribution_HL(void)
 		RO_ALL_Data.fusion_speed_y=LL_1khz_attitude_data.speed_y_best_estimate;
 		for(i=0;i<6;i++)
 		{
-			RO_ALL_Data.motor_rpm[i]=LL_1khz_attitude_data.motor_data[i];
+			RO_ALL_Data.motor_rpm[i]=LL_1khz_attitude_data.motor_data[i+8];
 		}
 	}
 	else if(current_page==2)

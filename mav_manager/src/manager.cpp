@@ -633,7 +633,7 @@ bool MAVManager::hover() {
   }
 
   ROS_DEBUG("Hovering in place...");
-  return this->goTo(pos_(0), pos_(1), pos_(2), pos_(3));
+  return this->goTo(pos_(0), pos_(1), pos_(2), yaw_);
 }
 
 bool MAVManager::ehover() {
