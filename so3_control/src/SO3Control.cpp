@@ -40,9 +40,9 @@ void SO3Control::setMaxIntegralBody(const float max_integral_b)
   max_pos_int_b_ = max_integral_b;
 }
 
-void SO3Control::setCurrentOrientation(const Eigen::Quaternionf q)
+void SO3Control::setCurrentOrientation(const Eigen::Quaternionf &current_orientation)
 {
-  current_orientation_ = q;
+  current_orientation_ = current_orientation;
 }
 
 void SO3Control::setMaxTiltAngle(const float max_tilt_angle)
