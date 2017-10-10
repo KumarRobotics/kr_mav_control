@@ -96,30 +96,32 @@ void SO3TRPYControlNodelet::publishCommand(void)
     thrust = force(0)*R_cur(0,2) + force(1)*R_cur(1,2) + force(2)*R_cur(2,2);
 
   float e_yaw = yaw_des - yaw_cur;
-  if(e_yaw > M_PI)
-    e_yaw -= 2*M_PI;
-  else if(e_yaw < -M_PI)
-    e_yaw += 2*M_PI;
+
+  const float PI = static_cast<float>(M_PI);
+  if(e_yaw > PI)
+    e_yaw -= 2*PI;
+  else if(e_yaw < -PI)
+    e_yaw += 2*PI;
 
   // Yaw integral
   yaw_int_ += ki_yaw*e_yaw;
-  if(yaw_int_ > M_PI)
-    yaw_int_ = M_PI;
-  else if(yaw_int_ < -M_PI)
-    yaw_int_ = -M_PI;
+  if(yaw_int_ > PI)
+    yaw_int_ = PI;
+  else if(yaw_int_ < -PI)
+    yaw_int_ = -PI;
 
   float yaw_cmd = yaw_des + yaw_int_;
-  if(yaw_cmd > M_PI)
-    yaw_cmd -= 2*M_PI;
-  else if(yaw_cmd < -M_PI)
-    yaw_cmd += 2*M_PI;
+  if(yaw_cmd > PI)
+    yaw_cmd -= 2*PI;
+  else if(yaw_cmd < -PI)
+    yaw_cmd += 2*PI;
 
   quadrotor_msgs::TRPYCommand::Ptr trpy_command(new quadrotor_msgs::TRPYCommand);
   trpy_command->header.stamp = ros::Time::now();
   trpy_command->header.frame_id = frame_id_;
   if(enable_motors_)
   {
-    trpy_command->thrust = CLAMP(thrust, 0.01*9.81, 10*9.81);
+    trpy_command->thrust = CLAMP(thrust, 0.01f*9.81f, 10.0f*9.81f);
     trpy_command->roll = roll_des;
     trpy_command->pitch = pitch_des;
     trpy_command->yaw = yaw_cmd;

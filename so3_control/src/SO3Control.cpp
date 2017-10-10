@@ -47,7 +47,7 @@ void SO3Control::setCurrentOrientation(const Eigen::Quaternionf &current_orienta
 
 void SO3Control::setMaxTiltAngle(const float max_tilt_angle)
 {
-  if(max_tilt_angle > 0 && max_tilt_angle <= M_PI)
+  if(max_tilt_angle > 0.0f && max_tilt_angle <= static_cast<float>(M_PI))
     cos_max_tilt_angle_ = std::cos(max_tilt_angle);
 }
 
@@ -116,7 +116,7 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
   Eigen::Vector3f b1c, b2c, b3c;
   const Eigen::Vector3f b2d(-std::sin(des_yaw), std::cos(des_yaw), 0);
 
-  if(force_.norm() > 1e-6)
+  if(force_.norm() > 1e-6f)
     b3c.noalias() = force_.normalized();
   else
     b3c.noalias() = Eigen::Vector3f::UnitZ();
