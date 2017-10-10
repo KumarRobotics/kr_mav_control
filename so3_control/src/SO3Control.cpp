@@ -141,22 +141,22 @@ void SO3Control::calculateControl(const Eigen::Vector3f &des_pos,
   angular_velocity_ = Eigen::Vector3f(omega_hat(2,1), omega_hat(0,2), omega_hat(1,0));
 }
 
-const Eigen::Vector3f &SO3Control::getComputedForce(void)
+const Eigen::Vector3f &SO3Control::getComputedForce()
 {
   return force_;
 }
 
-const Eigen::Quaternionf &SO3Control::getComputedOrientation(void)
+const Eigen::Quaternionf &SO3Control::getComputedOrientation()
 {
   return orientation_;
 }
 
-const Eigen::Vector3f &SO3Control::getComputedAngularVelocity(void)
+const Eigen::Vector3f &SO3Control::getComputedAngularVelocity()
 {
   return angular_velocity_;
 }
 
-void SO3Control::resetIntegrals(void)
+void SO3Control::resetIntegrals()
 {
   pos_int_ = Eigen::Vector3f::Zero();
   pos_int_b_ = Eigen::Vector3f::Zero();

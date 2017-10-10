@@ -27,12 +27,12 @@ class SO3TRPYControlNodelet : public nodelet::Nodelet
     controller_.resetIntegrals();
   }
 
-  void onInit(void);
+  void onInit();
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW; // Need this since we have SO3Control which needs aligned pointer
 
  private:
-  void publishCommand(void);
+  void publishCommand();
   void position_cmd_callback(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void enable_motors_callback(const std_msgs::Bool::ConstPtr &msg);
@@ -56,7 +56,7 @@ class SO3TRPYControlNodelet : public nodelet::Nodelet
 };
 
 
-void SO3TRPYControlNodelet::publishCommand(void)
+void SO3TRPYControlNodelet::publishCommand()
 {
   if(!odom_set_)
   {
@@ -213,7 +213,7 @@ void SO3TRPYControlNodelet::corrections_callback(const quadrotor_msgs::Correctio
   corrections_[2] = msg->angle_corrections[1];
 }
 
-void SO3TRPYControlNodelet::onInit(void)
+void SO3TRPYControlNodelet::onInit()
 {
   ros::NodeHandle n(getPrivateNodeHandle());
 
