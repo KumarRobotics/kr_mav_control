@@ -18,6 +18,8 @@
 #include <quadrotor_msgs/TrackerStatus.h>
 #include <quadrotor_msgs/OutputData.h>
 
+namespace mav_manager
+{
 class MAVManager
 {
   public:
@@ -79,10 +81,7 @@ class MAVManager
     // Yaw control
     bool goToYaw(float);
 
-    // Waypoints
-    void clearWaypoints();
-    void addWaypoint();
-
+    // Direct low-level control
     bool setPositionCommand(const quadrotor_msgs::PositionCommand &cmd);
     bool setSO3Command(const quadrotor_msgs::SO3Command &cmd);
     bool useNullTracker();
@@ -92,7 +91,7 @@ class MAVManager
     float voltage() {return voltage_;}
     float pressure_height() {return pressure_height_;}
     float pressure_dheight() {return pressure_dheight_;}
-    float* magnetic_field() {return magnetic_field_;}
+    std::array<float, 3> magnetic_field() {return magnetic_field_;}
     std::array<uint8_t,8> radio() {return radio_;}
 
     // Safety
@@ -126,7 +125,6 @@ class MAVManager
 
     Vec3 pos_, vel_;
     float mass_;
-    const float kGravity_;
     Quat odom_q_, imu_q_;
     float yaw_, yaw_dot_;
     float takeoff_height_;
@@ -134,11 +132,12 @@ class MAVManager
     float odom_timeout_;
 
     Vec3 home_, goal_;
-    float goal_yaw_, home_yaw_;
+    float home_yaw_;
 
     bool need_imu_, need_output_data_, need_odom_, use_attitude_safety_catch_;
-    bool home_set_, serial_, motors_;
-    float voltage_, pressure_height_, pressure_dheight_, magnetic_field_[3];
+    bool home_set_, motors_;
+    float voltage_, pressure_height_, pressure_dheight_;
+    std::array<float, 3> magnetic_field_;
     std::array<uint8_t, 8> radio_;
 
     // Publishers
@@ -168,4 +167,5 @@ class MAVManager
     ros::ServiceClient srv_transition_;
 };
 
+} // namespace mav_manager
 #endif /* MANAGER_H */

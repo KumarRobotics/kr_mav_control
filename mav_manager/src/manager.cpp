@@ -18,6 +18,8 @@
 #include <quadrotor_msgs/LineTrackerGoal.h>
 #include <quadrotor_msgs/LineTrackerGoalTimed.h>
 
+namespace mav_manager
+{
 // Strings
 static const std::string line_tracker_distance("std_trackers/LineTrackerDistance");
 static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerk");
@@ -34,7 +36,6 @@ MAVManager::MAVManager()
       last_output_data_t_(0.0),
       last_heartbeat_t_(0.0),
       mass_(-1.0),
-      kGravity_(9.81),
       odom_q_(1.0, 0.0, 0.0, 0.0),
       imu_q_(1.0, 0.0 ,0.0 ,0.0),
       max_attitude_angle_(45.0 / 180.0 * M_PI),
@@ -679,3 +680,4 @@ bool MAVManager::have_recent_imu() {
 bool MAVManager::have_recent_output_data() {
   return (ros::Time::now() - last_output_data_t_).toSec() < 0.1;
 }
+} // namespace mav_manager

@@ -7,6 +7,8 @@
 #include <mav_manager/Vec4.h>
 #include <mav_manager/GoalTimed.h>
 
+namespace mav_manager
+{
 class MAVManagerServices
 {
   public:
@@ -146,5 +148,5 @@ class MAVManagerServices
 
     std::string last_cb_;
 };
-
+} // namespace mav_manager
 #endif /* MAV_MANAGER_SERVICES_H */
