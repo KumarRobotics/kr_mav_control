@@ -1,7 +1,7 @@
 <launch>
   <arg name="start_nodelet_manager" default="true"/>
-  <arg name="nodelet_manager_name" default="nodelet_manager"/>
-  <arg name="mass"/>
+  <arg name="nodelet_manager_name" default="nodelet_manager_control"/>
+  <arg name="mass" default="0.5"/>
 
   <node pkg="nodelet"
     type="nodelet"
@@ -14,7 +14,6 @@
     type="nodelet"
     name="trackers_manager"
     args="load trackers_manager/TrackersManager $(arg nodelet_manager_name)"
-    clear_params="true"
     output="screen">
     <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
     <rosparam file="$(find trackers_manager)/config/tracker_params.yaml"/>
@@ -28,7 +27,6 @@
     args="load so3_control/SO3ControlNodelet $(arg nodelet_manager_name)"
     name="so3_control"
     required="true"
-    clear_params="true"
     output="screen">
     <rosparam file="$(find so3_control)/config/gains.yaml"/>
     <param name="mass" value="$(arg mass)"/>

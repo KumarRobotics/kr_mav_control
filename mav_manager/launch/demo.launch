@@ -1,5 +1,4 @@
 <launch>
-
   <arg name="model" default="quadrotor"/>
   <arg name="sim" default="1"/>
   <arg name="vicon" default="1"/>
@@ -7,9 +6,10 @@
   <arg name="slow_baud_rate" default="true"/>
   <arg name="mass" default="0.5"/>
 
-  <!-- Launch vicon odometry node -->
+  <!-- Vicon odometry -->
   <group if="$(arg vicon)">
     <include file="$(find vicon)/launch/vicon.launch" unless="$(arg sim)"/>
+
     <include file="$(find vicon_odom)/launch/vicon_odom.launch" unless="$(arg sim)">
       <arg name="model" value="$(arg model)" />
       <arg name="vicon_fps" value="$(arg vicon_fps)"/>
@@ -17,21 +17,33 @@
   </group>
 
   <group ns="$(arg model)">
-
     <param name="mass" value="$(arg mass)"/>
 
-    <include file="$(find quadrotor_simulator)/launch/sim.launch" if="$(arg sim)"/>
+    <!-- Simulator -->
+    <include file="$(find quadrotor_simulator)/launch/sim.launch" if="$(arg sim)">
+      <arg name="name" value="$(arg model)"/>
+      <arg name="type" value="hummingbird"/>
+      <arg name="mass" value="$(arg mass)"/>
+      <arg name="color/r" value="0.0"/>
+      <arg name="color/g" value="0.0"/>
+      <arg name="color/b" value="1.0"/>
+      <arg name="color/a" value="0.7"/>
+    </include>
 
-    <include file="$(find mav_manager)/launch/control.launch">
+    <!-- Control stuff -->
+    <include file="$(find quadrotor_simulator)/launch/control.launch">
+      <arg name="nodelet_manager_name" value="nodelet_manager"/>
       <arg name="mass" value="$(arg mass)"/>
     </include>
 
+    <!-- Serial communication for real robot -->
     <include file="$(find mav_manager)/launch/asctec_comms.launch" unless="$(arg sim)">
+      <arg name="device" value="/dev/ttyUSB0"/>
       <arg name="slow_baud_rate" value="$(arg slow_baud_rate)"/>
-      <arg name="remote" value="false"/>
+      <arg name="nodelet_manager_name" value="nodelet_manager"/>
     </include>
 
+    <!-- MAV Manager -->
     <include file="$(find mav_manager)/launch/manager.launch"/>
-
   </group>
 </launch>
