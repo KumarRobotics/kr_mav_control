@@ -1,0 +1,35 @@
+<launch>
+  <arg name="name" default="quadrotor"/>
+  <arg name="type" default="hummingbird"/>
+  <arg name="mass" default="0.5"/>
+  <arg name="color/r" default="0.0"/>
+  <arg name="color/g" default="0.0"/>
+  <arg name="color/b" default="1.0"/>
+  <arg name="color/a" default="0.7"/>
+
+  <node pkg="quadrotor_simulator"
+    type="quadrotor_simulator_so3"
+    name="quadrotor_simulator_so3"
+    output="screen">
+    <rosparam file="$(find quadrotor_simulator)/config/$(arg type)_params.yaml"/>
+    <param name="quadrotor_name" value="$(arg name)"/>
+    <param name="rate/odom" value="100.0"/>
+    <param name="mass" value="$(arg mass)"/>
+    <remap from="~odom" to="odom"/>
+    <remap from="~imu" to="imu"/>
+    <remap from="~cmd" to="so3_cmd"/>
+    <param name="quadrotor_name" value="$(arg name)"/>
+  </node>
+
+  <node pkg="mesh_visualization"
+    type="mesh_visualization"
+    name="mesh_visualization"
+    output="screen">
+    <param name="mesh_resource" value="package://mesh_visualization/mesh/hummingbird.mesh"/>
+    <param name="color/r" value="$(arg color/r)"/>
+    <param name="color/g" value="$(arg color/g)"/>
+    <param name="color/b" value="$(arg color/b)"/>
+    <param name="color/a" value="$(arg color/a)"/>
+    <remap from="~input" to="odom"/>
+  </node>
+</launch>
