@@ -5,7 +5,10 @@
 #include <std_srvs/SetBool.h>
 #include <std_srvs/Trigger.h>
 #include <mav_manager/Vec4.h>
+#include <mav_manager/GoalTimed.h>
 
+namespace mav_manager
+{
 class MAVManagerServices
 {
   public:
@@ -45,9 +48,17 @@ class MAVManagerServices
         last_cb_ = "goTo";
       return true;
     }
+    bool goToTimed_cb(mav_manager::GoalTimed::Request &req, mav_manager::GoalTimed::Response &res)
+    {
+      res.success = mav->goToTimed(req.goal[0], req.goal[1], req.goal[2], req.goal[3], 0.0f, 0.0f, false, req.duration, req.t_start);
+      res.message = "Going To Timed...";
+      if (res.success)
+        last_cb_ = "goToTimed";
+      return res.success;
+    }
     bool goToRelative_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
     {
-      res.success = mav->goTo(req.goal[0], req.goal[1], req.goal[2], req.goal[3], 0.0, 0.0, true);
+      res.success = mav->goTo(req.goal[0], req.goal[1], req.goal[2], req.goal[3], 0.0f, 0.0f, true);
       res.message = "Going To Relative Position...";
       if (res.success)
         last_cb_ = "goToRelative";
@@ -117,6 +128,7 @@ class MAVManagerServices
       srvs_.push_back(nh_.advertiseService("takeoff", &MAVManagerServices::takeoff_cb, this));
       srvs_.push_back(nh_.advertiseService("goHome", &MAVManagerServices::goHome_cb, this));
       srvs_.push_back(nh_.advertiseService("goTo", &MAVManagerServices::goTo_cb, this));
+      srvs_.push_back(nh_.advertiseService("goToTimed", &MAVManagerServices::goToTimed_cb, this));
       srvs_.push_back(nh_.advertiseService("goToRelative", &MAVManagerServices::goToRelative_cb, this));
       srvs_.push_back(nh_.advertiseService("setDesVelInWorldFrame", &MAVManagerServices::setDesVelInWorldFrame_cb, this));
       srvs_.push_back(nh_.advertiseService("setDesVelInBodyFrame", &MAVManagerServices::setDesVelInBodyFrame_cb, this));
@@ -136,5 +148,5 @@ class MAVManagerServices
 
     std::string last_cb_;
 };
-
+} // namespace mav_manager
 #endif /* MAV_MANAGER_SERVICES_H */

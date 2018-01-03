@@ -1,0 +1,6 @@
+float32[4] goal
+duration duration
+time t_start
+---
+bool success
+string message

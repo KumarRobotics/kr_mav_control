@@ -18,6 +18,8 @@
 #include <quadrotor_msgs/TrackerStatus.h>
 #include <quadrotor_msgs/OutputData.h>
 
+namespace mav_manager
+{
 class MAVManager
 {
   public:
@@ -27,6 +29,14 @@ class MAVManager
     typedef Eigen::Vector3f    Vec3;
     typedef Eigen::Vector4f    Vec4;
     typedef Eigen::Quaternionf Quat;
+
+    enum Status {
+      INIT,
+      MOTORS_OFF,
+      IDLE,
+      ELAND,
+      ESTOP,
+      FLYING};
 
     MAVManager();
 
@@ -41,6 +51,7 @@ class MAVManager
     bool need_imu() { return need_imu_; }
     bool need_odom() { return need_odom_; }
     uint8_t tracker_status() { return tracker_status_; }
+    Status status() { return status_; }
 
     // Mutators
     bool set_mass(float m);
@@ -61,16 +72,16 @@ class MAVManager
     bool goTo(Vec3 xyz, float yaw, Vec2 v_and_a_des = Vec2::Zero());
     bool goTo(Vec3 xyz, Vec2 v_and_a_des = Vec2::Zero());  // Uses Current yaw
 
+    bool goToTimed(float x, float y, float z, float yaw, float v_des = 0.0f, float a_des = 0.0f,
+        bool relative = false, ros::Duration duration = ros::Duration(0), ros::Time start_time = ros::Time::now());
+
     bool setDesVelInWorldFrame(float x, float y, float z, float yaw, bool use_position_feedback = false);
     bool setDesVelInBodyFrame(float x, float y, float z, float yaw, bool use_position_feedback = false);
 
     // Yaw control
     bool goToYaw(float);
 
-    // Waypoints
-    void clearWaypoints();
-    void addWaypoint();
-
+    // Direct low-level control
     bool setPositionCommand(const quadrotor_msgs::PositionCommand &cmd);
     bool setSO3Command(const quadrotor_msgs::SO3Command &cmd);
     bool useNullTracker();
@@ -80,7 +91,7 @@ class MAVManager
     float voltage() {return voltage_;}
     float pressure_height() {return pressure_height_;}
     float pressure_dheight() {return pressure_dheight_;}
-    float* magnetic_field() {return magnetic_field_;}
+    std::array<float, 3> magnetic_field() {return magnetic_field_;}
     std::array<uint8_t,8> radio() {return radio_;}
 
     // Safety
@@ -108,11 +119,12 @@ class MAVManager
     std::string active_tracker_;
     uint8_t tracker_status_;
 
+    Status status_;
+
     ros::Time last_odom_t_, last_imu_t_, last_output_data_t_, last_heartbeat_t_;
 
     Vec3 pos_, vel_;
     float mass_;
-    const float kGravity_;
     Quat odom_q_, imu_q_;
     float yaw_, yaw_dot_;
     float takeoff_height_;
@@ -120,16 +132,18 @@ class MAVManager
     float odom_timeout_;
 
     Vec3 home_, goal_;
-    float goal_yaw_, home_yaw_;
+    float home_yaw_;
 
     bool need_imu_, need_output_data_, need_odom_, use_attitude_safety_catch_;
-    bool home_set_, serial_, motors_;
-    float voltage_, pressure_height_, pressure_dheight_, magnetic_field_[3];
+    bool home_set_, motors_;
+    float voltage_, pressure_height_, pressure_dheight_;
+    std::array<float, 3> magnetic_field_;
     std::array<uint8_t, 8> radio_;
 
     // Publishers
     ros::Publisher
       pub_goal_min_jerk_,
+      pub_goal_min_jerk_timed_,
       pub_goal_line_tracker_distance_,
       pub_goal_velocity_,
       pub_goal_position_velocity_,
@@ -138,6 +152,7 @@ class MAVManager
       pub_goal_yaw_,
       pub_so3_command_,
       pub_position_command_,
+      pub_status_,
       pub_pwm_command_;
 
     // Subscribers
@@ -152,4 +167,5 @@ class MAVManager
     ros::ServiceClient srv_transition_;
 };
 
+} // namespace mav_manager
 #endif /* MANAGER_H */

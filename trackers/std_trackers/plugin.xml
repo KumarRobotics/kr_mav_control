@@ -1,28 +1,28 @@
 <library path="lib/libline_tracker_min_jerk">
   <class name="std_trackers/LineTrackerMinJerk" type="LineTrackerMinJerk" base_class_type="trackers_manager::Tracker">
     <description>
-      This is a controller which follows a line from the current position to a given goal position using min jerk trajectory.
+      This is a tracker which follows a line from the current position to a given goal position using min jerk trajectory.
     </description>
   </class>
 </library>
 <library path="lib/libline_tracker_trapezoid">
   <class name="std_trackers/LineTrackerTrapezoid" type="LineTrackerTrapezoid" base_class_type="trackers_manager::Tracker">
     <description>
-      This is a controller which follows a line from the current position to a given goal position using a trapezoidal trajectory.
+      This is a tracker which follows a line from the current position to a given goal position using a trapezoidal trajectory.
     </description>
   </class>
 </library>
 <library path="lib/libline_tracker_distance">
   <class name="std_trackers/LineTrackerDistance" type="LineTrackerDistance" base_class_type="trackers_manager::Tracker">
     <description>
-      This is a controller which follows a line from the current position to a given goal position using a trapezoidal trajectory with distance along the trajectory as the parameter instead of time.
+      This is a tracker which follows a line from the current position to a given goal position using a trapezoidal trajectory with distance along the trajectory as the parameter instead of time.
     </description>
   </class>
 </library>
 <library path="lib/libline_tracker_yaw">
   <class name="std_trackers/LineTrackerYaw" type="LineTrackerYaw" base_class_type="trackers_manager::Tracker">
     <description>
-      This is a controller which follows a trapezoidal trajectory to a desired yaw.
+      This is a tracker which follows a trapezoidal trajectory to a desired yaw.
     </description>
   </class>
 </library>
@@ -30,7 +30,7 @@
 <library path="lib/libnull_tracker">
   <class name="std_trackers/NullTracker" type="NullTracker" base_class_type="trackers_manager::Tracker">
     <description>
-      This controller literally does nothing.
+      This tracker literally does nothing.
     </description>
   </class>
 </library>
@@ -38,7 +38,15 @@
 <library path="lib/libvelocity_tracker">
   <class name="std_trackers/VelocityTracker" type="VelocityTracker" base_class_type="trackers_manager::Tracker">
     <description>
-      This controller commands a desired velocity for the robot.
+      This tracker commands a desired velocity for the robot.
+    </description>
+  </class>
+</library>
+
+<library path="lib/libsmooth_vel_tracker">
+  <class name="std_trackers/SmoothVelTracker" type="SmoothVelTracker" base_class_type="trackers_manager::Tracker">
+    <description>
+      This tracker goes from point A to point B trying to maintain constant velocity with a smooth ramp up.
     </description>
   </class>
 </library>
