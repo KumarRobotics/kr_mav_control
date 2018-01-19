@@ -1,12 +1,14 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 2.8.12)
 project(quadrotor_msgs)
+
+add_compile_options(-std=c++11)
 
 # set default build type
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs nav_msgs cmake_modules)
+find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs nav_msgs cmake_modules rosconsole)
 find_package(Eigen REQUIRED)
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
