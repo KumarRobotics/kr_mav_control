@@ -15,6 +15,7 @@
 // quadrotor_control
 #include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/SO3Command.h>
+#include <quadrotor_msgs/TRPYCommand.h>
 #include <quadrotor_msgs/TrackerStatus.h>
 #include <quadrotor_msgs/OutputData.h>
 
@@ -84,6 +85,7 @@ class MAVManager
     // Direct low-level control
     bool setPositionCommand(const quadrotor_msgs::PositionCommand &cmd);
     bool setSO3Command(const quadrotor_msgs::SO3Command &cmd);
+    bool setTRPYCommand(const quadrotor_msgs::TRPYCommand &cmd);
     bool useNullTracker();
 
     // Monitoring
@@ -151,6 +153,7 @@ class MAVManager
       pub_estop_,
       pub_goal_yaw_,
       pub_so3_command_,
+      pub_trpy_command_,
       pub_position_command_,
       pub_status_,
       pub_pwm_command_;
