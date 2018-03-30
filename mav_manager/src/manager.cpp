@@ -53,6 +53,7 @@ MAVManager::MAVManager()
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
   pub_so3_command_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
+  pub_trpy_command_ = nh_.advertise<quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
   pub_position_command_ = nh_.advertise<quadrotor_msgs::PositionCommand>("position_cmd", 10);
   pub_status_ = priv_nh_.advertise<std_msgs::UInt8>("status", 10);
   // pwm_command_pub_ = nh_ ...
@@ -369,6 +370,27 @@ bool MAVManager::setSO3Command(const quadrotor_msgs::SO3Command &msg) {
   return flag;
 }
 
+bool MAVManager::setTRPYCommand(const quadrotor_msgs::TRPYCommand &msg) {
+
+  // Note: To enable motors, the motors method must be used
+  if (!this->motors())
+  {
+    ROS_WARN("Refusing to publish an SO3Command until motors have been enabled using the motors method.");
+    return false;
+  }
+
+  // Since this could be called quite often,
+  // only try to transition if it is not the active tracker.
+  bool flag(true);
+  if (active_tracker_.compare(null_tracker_str) != 0)
+    flag = this->transition(null_tracker_str);
+
+  if (flag)
+    pub_trpy_command_.publish(msg);
+
+  return flag;
+}
+
 bool MAVManager::useNullTracker() {
 
   if (active_tracker_.compare(null_tracker_str) != 0)
@@ -408,12 +430,17 @@ bool MAVManager::set_motors(bool motors) {
   so3_cmd.orientation.w = 1.0;
   so3_cmd.aux.enable_motors = motors;
 
+  quadrotor_msgs::TRPYCommand trpy_cmd;
+  trpy_cmd.thrust = FLT_MIN;
+  trpy_cmd.aux.enable_motors = motors;
+
   // Queue a few to make sure the signal gets through.
   // Also, the crazyflie interface throttles commands to 30 Hz, so this needs
   // to have a sufficent duration.
   for (int i=0; i<10; i++)
   {
     pub_so3_command_.publish(so3_cmd);
+    pub_trpy_command_.publish(trpy_cmd);
     ros::Duration(1.0/100.0).sleep();
   }
 
