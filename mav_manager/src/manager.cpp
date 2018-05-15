@@ -26,8 +26,8 @@ static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerk"
 static const std::string velocity_tracker_str("std_trackers/VelocityTracker");
 static const std::string null_tracker_str("std_trackers/NullTracker");
 
-MAVManager::MAVManager()
-    : nh_(""),
+MAVManager::MAVManager(std::string ns)
+    : nh_(ns),
       priv_nh_("~"),
       active_tracker_(""),
       status_(INIT),
@@ -40,7 +40,7 @@ MAVManager::MAVManager()
       imu_q_(1.0, 0.0 ,0.0 ,0.0),
       max_attitude_angle_(45.0 / 180.0 * M_PI),
       need_imu_(false),
-      need_output_data_(true),
+      need_output_data_(false),
       need_odom_(true),
       use_attitude_safety_catch_(true) {
 
@@ -84,10 +84,8 @@ MAVManager::MAVManager()
   if (!priv_nh_.getParam("use_attitude_safety_catch", use_attitude_safety_catch_))
     ROS_WARN("Couldn't find use_attitude_safety_catch param");
 
-  double max_attitude_angle;
-  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle))
+  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle_))
     ROS_WARN("Couldn't find max_attitude_angle param");
-  max_attitude_angle_ = max_attitude_angle;
 
   double m;
   if (!nh_.getParam("mass", m))
@@ -426,6 +424,7 @@ bool MAVManager::set_motors(bool motors) {
 
   // Publish a couple so3_commands to ensure motors are or are not spinning
   quadrotor_msgs::SO3Command so3_cmd;
+  so3_cmd.header.stamp = ros::Time::now();
   so3_cmd.force.z = FLT_MIN;
   so3_cmd.orientation.w = 1.0;
   so3_cmd.aux.enable_motors = motors;

@@ -39,7 +39,7 @@ class MAVManager
       ESTOP,
       FLYING};
 
-    MAVManager();
+    MAVManager(std::string ns = "");
 
     // Accessors
     Vec3 pos() { return pos_; }
@@ -105,6 +105,8 @@ class MAVManager
     bool estop();
 
     bool transition(const std::string &tracker_str);
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
   private:
 
