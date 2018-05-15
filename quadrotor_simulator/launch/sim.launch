@@ -2,6 +2,8 @@
   <arg name="name" default="quadrotor"/>
   <arg name="type" default="hummingbird"/>
   <arg name="mass" default="0.5"/>
+  <arg name="world_frame_id" default="simulator"/>
+  <arg name="rate/odom" default="100"/>
   <arg name="color/r" default="0.0"/>
   <arg name="color/g" default="0.0"/>
   <arg name="color/b" default="1.0"/>
@@ -12,13 +14,13 @@
     name="quadrotor_simulator_so3"
     output="screen">
     <rosparam file="$(find quadrotor_simulator)/config/$(arg type)_params.yaml"/>
+    <param name="world_frame_id" value="$(arg world_frame_id)"/>
     <param name="quadrotor_name" value="$(arg name)"/>
-    <param name="rate/odom" value="100.0"/>
+    <param name="rate/odom" value="$(arg rate/odom)"/>
     <param name="mass" value="$(arg mass)"/>
     <remap from="~odom" to="odom"/>
     <remap from="~imu" to="imu"/>
     <remap from="~cmd" to="so3_cmd"/>
-    <param name="quadrotor_name" value="$(arg name)"/>
   </node>
 
   <node pkg="mesh_visualization"

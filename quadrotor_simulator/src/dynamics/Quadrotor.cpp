@@ -108,6 +108,19 @@ void Quadrotor::operator()(const Quadrotor::InternalState &x, Quadrotor::Interna
   omega_hat(1,0) = cur_state.omega(2);
   omega_hat(0,1) = -cur_state.omega(2);
 
+  if(motor_time_constant_ == 0)
+  {
+    motor_rpm_dot = Eigen::Array4d::Zero();
+    // NOTE(Kartik): Directly modifying internal_state here
+    internal_state_[18] = input_(0);
+    internal_state_[19] = input_(1);
+    internal_state_[20] = input_(2);
+    internal_state_[21] = input_(3);
+    cur_state.motor_rpm = input_;
+  }
+  else
+    motor_rpm_dot = (input_ - cur_state.motor_rpm)/motor_time_constant_;
+
   motor_rpm_sq = cur_state.motor_rpm.square();
 
   double thrust = kf_*motor_rpm_sq.sum();
@@ -128,7 +141,6 @@ void Quadrotor::operator()(const Quadrotor::InternalState &x, Quadrotor::Interna
   }
   R_dot = R*omega_hat;
   omega_dot = J_.inverse()*(moments - cur_state.omega.cross(J_*cur_state.omega) + external_moment_);
-  motor_rpm_dot = (input_ - cur_state.motor_rpm)/motor_time_constant_;
 
   for(int i = 0; i < 3; i++)
   {
@@ -285,7 +297,7 @@ double Quadrotor::getMotorTimeConstant() const
 }
 void Quadrotor::setMotorTimeConstant(double k)
 {
-  if(k <= 0)
+  if(k < 0)
   {
     std::cerr << "Motor time constant <= 0, not setting" << std::endl;
     return;
