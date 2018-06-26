@@ -685,7 +685,7 @@ bool MAVManager::transition(const std::string &tracker_str) {
   trackers_manager::Transition transition_cmd;
   transition_cmd.request.tracker = tracker_str;
 
-  if (srv_transition_.call(transition_cmd)) {
+  if (srv_transition_.call(transition_cmd) && transition_cmd.response.success) {
     active_tracker_ = tracker_str;
     tracker_status_ = quadrotor_msgs::TrackerStatus::ACTIVE;
     ROS_INFO("Current tracker: %s", tracker_str.c_str());
