@@ -27,12 +27,12 @@ class SO3TRPYControlNodelet : public nodelet::Nodelet
     controller_.resetIntegrals();
   }
 
-  void onInit(void);
+  void onInit();
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW; // Need this since we have SO3Control which needs aligned pointer
 
  private:
-  void publishCommand(void);
+  void publishCommand();
   void position_cmd_callback(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void enable_motors_callback(const std_msgs::Bool::ConstPtr &msg);
@@ -45,7 +45,7 @@ class SO3TRPYControlNodelet : public nodelet::Nodelet
   bool odom_set_, position_cmd_updated_, position_cmd_init_;
   std::string frame_id_;
 
-  Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, kx_, kv_, ki_;
+  Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, kx_, kv_, ki_, ki_b_;
   float des_yaw_, des_yaw_dot_, yaw_int_;
   bool enable_motors_, use_external_yaw_;
   float kR_[3], kOm_[3], corrections_[3];
@@ -56,7 +56,7 @@ class SO3TRPYControlNodelet : public nodelet::Nodelet
 };
 
 
-void SO3TRPYControlNodelet::publishCommand(void)
+void SO3TRPYControlNodelet::publishCommand()
 {
   if(!odom_set_)
   {
@@ -66,12 +66,14 @@ void SO3TRPYControlNodelet::publishCommand(void)
 
   float ki_yaw = 0;
   Eigen::Vector3f ki = Eigen::Vector3f::Zero();
+  Eigen::Vector3f ki_b = Eigen::Vector3f::Zero();
   if(enable_motors_)
   {
     ki_yaw = ki_yaw_;
     ki = ki_;
+    ki_b = ki_b_;
   }
-  controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki);
+  controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki, ki_b);
 
   const Eigen::Vector3f &force = controller_.getComputedForce();
   const Eigen::Quaternionf &q_des = controller_.getComputedOrientation();
@@ -94,30 +96,32 @@ void SO3TRPYControlNodelet::publishCommand(void)
     thrust = force(0)*R_cur(0,2) + force(1)*R_cur(1,2) + force(2)*R_cur(2,2);
 
   float e_yaw = yaw_des - yaw_cur;
-  if(e_yaw > M_PI)
-    e_yaw -= 2*M_PI;
-  else if(e_yaw < -M_PI)
-    e_yaw += 2*M_PI;
+
+  const float PI = static_cast<float>(M_PI);
+  if(e_yaw > PI)
+    e_yaw -= 2*PI;
+  else if(e_yaw < -PI)
+    e_yaw += 2*PI;
 
   // Yaw integral
   yaw_int_ += ki_yaw*e_yaw;
-  if(yaw_int_ > M_PI)
-    yaw_int_ = M_PI;
-  else if(yaw_int_ < -M_PI)
-    yaw_int_ = -M_PI;
+  if(yaw_int_ > PI)
+    yaw_int_ = PI;
+  else if(yaw_int_ < -PI)
+    yaw_int_ = -PI;
 
   float yaw_cmd = yaw_des + yaw_int_;
-  if(yaw_cmd > M_PI)
-    yaw_cmd -= 2*M_PI;
-  else if(yaw_cmd < -M_PI)
-    yaw_cmd += 2*M_PI;
+  if(yaw_cmd > PI)
+    yaw_cmd -= 2*PI;
+  else if(yaw_cmd < -PI)
+    yaw_cmd += 2*PI;
 
   quadrotor_msgs::TRPYCommand::Ptr trpy_command(new quadrotor_msgs::TRPYCommand);
   trpy_command->header.stamp = ros::Time::now();
   trpy_command->header.frame_id = frame_id_;
   if(enable_motors_)
   {
-    trpy_command->thrust = CLAMP(thrust, 0.01*9.81, 10*9.81);
+    trpy_command->thrust = CLAMP(thrust, 0.01f*9.81f, 10.0f*9.81f);
     trpy_command->roll = roll_des;
     trpy_command->pitch = pitch_des;
     trpy_command->yaw = yaw_cmd;
@@ -173,6 +177,7 @@ void SO3TRPYControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr &od
 
   controller_.setPosition(position);
   controller_.setVelocity(velocity);
+  controller_.setCurrentOrientation(current_orientation_);
 
   if(position_cmd_init_)
   {
@@ -208,7 +213,7 @@ void SO3TRPYControlNodelet::corrections_callback(const quadrotor_msgs::Correctio
   corrections_[2] = msg->angle_corrections[1];
 }
 
-void SO3TRPYControlNodelet::onInit(void)
+void SO3TRPYControlNodelet::onInit()
 {
   ros::NodeHandle n(getPrivateNodeHandle());
 

@@ -16,15 +16,18 @@
 #include <trackers_manager/Transition.h>
 #include <quadrotor_msgs/FlatOutputs.h>
 #include <quadrotor_msgs/LineTrackerGoal.h>
+#include <quadrotor_msgs/LineTrackerGoalTimed.h>
 
+namespace mav_manager
+{
 // Strings
 static const std::string line_tracker_distance("std_trackers/LineTrackerDistance");
 static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerk");
 static const std::string velocity_tracker_str("std_trackers/VelocityTracker");
 static const std::string null_tracker_str("std_trackers/NullTracker");
 
-MAVManager::MAVManager()
-    : nh_(""),
+MAVManager::MAVManager(std::string ns)
+    : nh_(ns),
       priv_nh_("~"),
       active_tracker_(""),
       status_(INIT),
@@ -33,23 +36,24 @@ MAVManager::MAVManager()
       last_output_data_t_(0.0),
       last_heartbeat_t_(0.0),
       mass_(-1.0),
-      kGravity_(9.81),
       odom_q_(1.0, 0.0, 0.0, 0.0),
       imu_q_(1.0, 0.0 ,0.0 ,0.0),
       max_attitude_angle_(45.0 / 180.0 * M_PI),
       need_imu_(false),
-      need_output_data_(true),
+      need_output_data_(false),
       need_odom_(true),
       use_attitude_safety_catch_(true) {
 
   // Publishers
   pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_distance/goal", 10);
   pub_goal_min_jerk_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_min_jerk/goal", 10);
+  pub_goal_min_jerk_timed_ = nh_.advertise<quadrotor_msgs::LineTrackerGoalTimed>("trackers_manager/line_tracker_min_jerk/goal_timed", 10);
   pub_goal_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/velocity_tracker/goal", 10);
   pub_goal_position_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/velocity_tracker/position_velocity_goal", 10);
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
   pub_so3_command_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
+  pub_trpy_command_ = nh_.advertise<quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
   pub_position_command_ = nh_.advertise<quadrotor_msgs::PositionCommand>("position_cmd", 10);
   pub_status_ = priv_nh_.advertise<std_msgs::UInt8>("status", 10);
   // pwm_command_pub_ = nh_ ...
@@ -80,10 +84,8 @@ MAVManager::MAVManager()
   if (!priv_nh_.getParam("use_attitude_safety_catch", use_attitude_safety_catch_))
     ROS_WARN("Couldn't find use_attitude_safety_catch param");
 
-  double max_attitude_angle;
-  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle))
+  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle_))
     ROS_WARN("Couldn't find max_attitude_angle param");
-  max_attitude_angle_ = max_attitude_angle;
 
   double m;
   if (!nh_.getParam("mass", m))
@@ -239,11 +241,32 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
   goal.relative = relative;
 
   pub_goal_min_jerk_.publish(goal);
-  ROS_INFO("Attempting to go to {%2.2f, %2.2f, %2.2f, %2.2f}%s",
+  ROS_INFO("Going to {%2.2f, %2.2f, %2.2f, %2.2f}%s",
       x, y, z, yaw, (relative ? " relative to the current position." : "."));
 
   return this->transition(line_tracker_min_jerk);
 }
+
+bool MAVManager::goToTimed(float x, float y, float z, float yaw, float v_des, float a_des, bool relative, ros::Duration duration, ros::Time t_start) {
+
+  quadrotor_msgs::LineTrackerGoalTimed goal;
+  goal.x   = x;
+  goal.y   = y;
+  goal.z   = z;
+  goal.yaw = yaw;
+  goal.duration = duration;
+  goal.t_start = t_start;
+  goal.v_des = v_des;
+  goal.a_des = a_des;
+  goal.relative = relative;
+
+  pub_goal_min_jerk_timed_.publish(goal);
+  ROS_INFO("Going to {%2.2f, %2.2f, %2.2f, %2.2f}%s with duration %2.2f",
+      x, y, z, yaw, (relative ? " relative to the current position." : ""), duration.toSec());
+
+  return this->transition(line_tracker_min_jerk);
+}
+
 bool MAVManager::goTo(Vec4 xyz_yaw, Vec2 v_and_a_des) {
   return this->goTo(xyz_yaw(0), xyz_yaw(1), xyz_yaw(2), xyz_yaw(3),
                     v_and_a_des(0), v_and_a_des(1));
@@ -345,6 +368,27 @@ bool MAVManager::setSO3Command(const quadrotor_msgs::SO3Command &msg) {
   return flag;
 }
 
+bool MAVManager::setTRPYCommand(const quadrotor_msgs::TRPYCommand &msg) {
+
+  // Note: To enable motors, the motors method must be used
+  if (!this->motors())
+  {
+    ROS_WARN("Refusing to publish an SO3Command until motors have been enabled using the motors method.");
+    return false;
+  }
+
+  // Since this could be called quite often,
+  // only try to transition if it is not the active tracker.
+  bool flag(true);
+  if (active_tracker_.compare(null_tracker_str) != 0)
+    flag = this->transition(null_tracker_str);
+
+  if (flag)
+    pub_trpy_command_.publish(msg);
+
+  return flag;
+}
+
 bool MAVManager::useNullTracker() {
 
   if (active_tracker_.compare(null_tracker_str) != 0)
@@ -380,13 +424,24 @@ bool MAVManager::set_motors(bool motors) {
 
   // Publish a couple so3_commands to ensure motors are or are not spinning
   quadrotor_msgs::SO3Command so3_cmd;
+  so3_cmd.header.stamp = ros::Time::now();
   so3_cmd.force.z = FLT_MIN;
   so3_cmd.orientation.w = 1.0;
   so3_cmd.aux.enable_motors = motors;
 
-  // Queue a few to make sure the signal gets through
+  quadrotor_msgs::TRPYCommand trpy_cmd;
+  trpy_cmd.thrust = FLT_MIN;
+  trpy_cmd.aux.enable_motors = motors;
+
+  // Queue a few to make sure the signal gets through.
+  // Also, the crazyflie interface throttles commands to 30 Hz, so this needs
+  // to have a sufficent duration.
   for (int i=0; i<10; i++)
+  {
     pub_so3_command_.publish(so3_cmd);
+    pub_trpy_command_.publish(trpy_cmd);
+    ros::Duration(1.0/100.0).sleep();
+  }
 
   motors_ = motors;
   status_ = motors_ ? IDLE : MOTORS_OFF;
@@ -605,7 +660,7 @@ bool MAVManager::hover() {
   }
 
   ROS_DEBUG("Hovering in place...");
-  return this->goTo(pos_(0), pos_(1), pos_(2), pos_(3));
+  return this->goTo(pos_(0), pos_(1), pos_(2), yaw_);
 }
 
 bool MAVManager::ehover() {
@@ -651,3 +706,4 @@ bool MAVManager::have_recent_imu() {
 bool MAVManager::have_recent_output_data() {
   return (ros::Time::now() - last_output_data_t_).toSec() < 0.1;
 }
+} // namespace mav_manager

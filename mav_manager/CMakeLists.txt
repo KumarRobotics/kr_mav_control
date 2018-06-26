@@ -29,6 +29,7 @@ add_service_files(
   DIRECTORY srv
   FILES
     Vec4.srv
+    GoalTimed.srv
 )
 generate_messages()
 
@@ -51,16 +52,12 @@ add_library(mav_manager src/manager.cpp)
 add_dependencies(mav_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(mav_manager ${catkin_LIBRARIES})
 
-add_executable(mav_manager_node src/sample.cpp)
-target_link_libraries(mav_manager_node mav_manager ${catkin_LIBRARIES})
-
-add_executable(mav_manager_sub src/sample_sub.cpp)
-target_link_libraries(mav_manager_sub mav_manager ${catkin_LIBRARIES})
+add_executable(mav_services src/sample.cpp)
+target_link_libraries(mav_services mav_manager ${catkin_LIBRARIES})
 
 install(TARGETS
     mav_manager
-    mav_manager_node
-    mav_manager_sub
+    mav_services
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

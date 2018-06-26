@@ -51,6 +51,7 @@ static const float DEGSEC2RADSECCONV = 0.0154*M_PI/180.0;
 static const float LENGTH = 0.171;
 //static const float KTHRUST = 8.0e-8; // Black props
 static const float KTHRUST = 6e-8; // Gray props
+//static const float KTHRUST = 6.16e-8; // AR Drone props
 static const float PROP_RADIUS = 0.099;
 
 static const float I[3][3] = { {2.64e-03, 0, 0},
@@ -344,7 +345,7 @@ void SDK_mainloop(void)
   {
     // The lower limit of servo_val is 6000 and the upper limit is 12000
     // for a valid pwm signal (i.e. 1ms to 2ms pulse width)
-    int servo_val = PWM_cmd_input.pwm[0] * 6000 / 255 + 6000;
+    int servo_val = PWM_cmd_input.pwm[0] * 6000u / 255u + 6000u;
     PTU_update(servo_val);
   }
 }

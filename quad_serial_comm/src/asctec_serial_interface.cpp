@@ -53,7 +53,7 @@ void encode_serial_msg(const quadrotor_msgs::Serial &msg,
 }
 
 void process_serial_data(
-    const uint8_t *data, const uint8_t count,
+    const uint8_t *data, const size_t count,
     boost::function<void(quadrotor_msgs::Serial &)> callback)
 {
   static quadrotor_msgs::Serial serial_msg;
