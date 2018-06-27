@@ -57,9 +57,9 @@ add_library(circle_tracker_action src/circle_tracker_server.cpp)
 add_dependencies(circle_tracker_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(circle_tracker_action ${catkin_LIBRARIES})
 
-add_library(smooth_vel_tracker src/smooth_vel_tracker.cpp)
-add_dependencies(smooth_vel_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(smooth_vel_tracker initial_conditions ${catkin_LIBRARIES})
+#add_library(smooth_vel_tracker src/smooth_vel_tracker.cpp)
+#add_dependencies(smooth_vel_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#target_link_libraries(smooth_vel_tracker initial_conditions ${catkin_LIBRARIES})
 
 install(TARGETS
     initial_conditions
