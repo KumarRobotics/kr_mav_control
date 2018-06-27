@@ -5,6 +5,8 @@
     </description>
   </class>
 </library>
+
+<!--
 <library path="lib/libline_tracker_trapezoid">
   <class name="std_trackers/LineTrackerTrapezoid" type="LineTrackerTrapezoid" base_class_type="trackers_manager::Tracker">
     <description>
@@ -12,6 +14,8 @@
     </description>
   </class>
 </library>
+-->
+
 <library path="lib/libline_tracker_distance_action">
   <class name="std_trackers/LineTrackerDistanceAction" type="LineTrackerDistanceAction" base_class_type="trackers_manager::Tracker">
     <description>
@@ -19,6 +23,8 @@
     </description>
   </class>
 </library>
+
+<!--
 <library path="lib/libline_tracker_yaw">
   <class name="std_trackers/LineTrackerYaw" type="LineTrackerYaw" base_class_type="trackers_manager::Tracker">
     <description>
@@ -26,6 +32,7 @@
     </description>
   </class>
 </library>
+-->
 
 <library path="lib/libnull_tracker">
   <class name="std_trackers/NullTracker" type="NullTracker" base_class_type="trackers_manager::Tracker">
@@ -43,6 +50,7 @@
   </class>
 </library>
 
+<!--
 <library path="lib/libsmooth_vel_tracker">
   <class name="std_trackers/SmoothVelTracker" type="SmoothVelTracker" base_class_type="trackers_manager::Tracker">
     <description>
@@ -50,11 +58,12 @@
     </description>
   </class>
 </library>
+-->
 
 <library path="lib/libcircle_tracker_action">
   <class name="std_trackers/CircleTrackerAction" type="CircleTrackerAction" base_class_type="trackers_manager::Tracker">
     <description>
-      This controller commands a the robot to fly in a circle of a given size and period. 
+      This tracker commands the robot to fly in a circle of a given size and period.
     </description>
   </class>
 </library>
