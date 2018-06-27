@@ -3,17 +3,15 @@
 // topic. The format of this is as follows:
 //  linear.y = roll     [-30 to 30 degrees]         (may be negative)
 //  linear.x = pitch    [-30 to 30 degrees]         (may be negative)
-//  linear.z = thrust   [0 to 60,000]               (motors stiction around 2000) 
+//  linear.z = thrust   [0 to 60,000]               (motors stiction around 2000)
 //  angular.z = yawrate [-200 to 200 degrees/second] (note this is not yaw!)
 
+#include <ros/ros.h>
+#include <nodelet/nodelet.h>
 #include <Eigen/Geometry>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
-#include <nodelet/nodelet.h>
 #include <quadrotor_msgs/SO3Command.h>
-#include <ros/ros.h>
-#include <std_msgs/Float64.h>
-#include <tf/transform_datatypes.h>
 
 // TODO: Remove CLAMP as macro
 #define CLAMP(x,min,max) ((x) < (min)) ? (min) : ((x) > (max)) ? (max) : (x)
@@ -92,7 +90,7 @@ void SO3CmdToCrazyflie::so3_cmd_callback(
   double thrust_f = f_des(0)*R_cur(0,2) + f_des(1)*R_cur(1,2) + f_des(2)*R_cur(2,2); // Force in Newtons
   //ROS_INFO("thrust_f is %2.5f newtons", thrust_f);
   thrust_f = std::max(thrust_f, 0.0);
-  
+
   thrust_f = thrust_f*1000/9.81; // Force in grams
   //ROS_INFO("thrust_f is %2.5f grams", thrust_f);
 
@@ -113,7 +111,7 @@ void SO3CmdToCrazyflie::so3_cmd_callback(
     ROS_INFO("Motors disabled");
     crazy_cmd_vel_pub_.publish(crazy_vel_cmd);
     return;
-  } 
+  }
 
   float e_yaw = yaw_des - yaw_cur;
   if(e_yaw > M_PI)
@@ -168,7 +166,7 @@ void SO3CmdToCrazyflie::onInit(void)
 
   // get thrust scaling parameters
   if(priv_nh.getParam("c1_", c1_) &&
-     priv_nh.getParam("c2_", c2_) && 
+     priv_nh.getParam("c2_", c2_) &&
      priv_nh.getParam("c3_", c3_))
     ROS_INFO("Using %2.2f, %2.2f, %2.2f for thrust mapping", c1_, c2_, c3_);
   else

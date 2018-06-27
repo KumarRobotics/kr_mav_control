@@ -19,6 +19,8 @@
 #include <std_trackers/VelocityTrackerAction.h>
 #include <std_trackers/CircleTrackerAction.h>
 
+namespace mav_manager
+{
 // Strings
 static const std::string line_tracker_distance("std_trackers/LineTrackerDistanceAction");
 static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerkAction");
@@ -26,8 +28,8 @@ static const std::string velocity_tracker_str("std_trackers/VelocityTrackerActio
 static const std::string null_tracker_str("std_trackers/NullTracker");
 static const std::string circle_tracker_str("std_trackers/CircleTrackerAction");
 
-MAVManager::MAVManager()
-  : nh_(""),
+MAVManager::MAVManager(std::string ns)
+    : nh_(ns),
     priv_nh_("~"),
     active_tracker_(""),
     status_(INIT),
@@ -36,7 +38,6 @@ MAVManager::MAVManager()
     last_output_data_t_(0.0),
     last_heartbeat_t_(0.0),
     mass_(-1.0),
-    kGravity_(9.81),
     odom_q_(1.0, 0.0, 0.0, 0.0),
     imu_q_(1.0, 0.0 , 0.0 , 0.0),
     max_attitude_angle_(45.0 / 180.0 * M_PI),
@@ -47,8 +48,8 @@ MAVManager::MAVManager()
     line_tracker_distance_client_(nh_, "trackers_manager/line_tracker_distance/LineTrackerAction", true),
     line_tracker_min_jerk_client_(nh_, "trackers_manager/line_tracker_min_jerk/LineTrackerAction", true),
     velocity_tracker_client_(nh_, "trackers_manager/velocity_tracker/VelocityTrackerAction", true),
-    circle_tracker_client_(nh_, "trackers_manager/circle_tracker/CircleTrackerAction", true) {
-
+    circle_tracker_client_(nh_, "trackers_manager/circle_tracker/CircleTrackerAction", true)
+{
   // Action servers.
   const double server_wait_time = 3.0;
   if (!line_tracker_distance_client_.waitForServer(ros::Duration(server_wait_time))) {
@@ -71,6 +72,7 @@ MAVManager::MAVManager()
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
   pub_so3_command_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
+  pub_trpy_command_ = nh_.advertise<quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
   pub_position_command_ = nh_.advertise<quadrotor_msgs::PositionCommand>("position_cmd", 10);
   pub_status_ = priv_nh_.advertise<std_msgs::UInt8>("status", 10);
   // pwm_command_pub_ = nh_ ...
@@ -100,10 +102,8 @@ MAVManager::MAVManager()
   if (!priv_nh_.getParam("use_attitude_safety_catch", use_attitude_safety_catch_))
     ROS_WARN("Couldn't find use_attitude_safety_catch param");
 
-  double max_attitude_angle;
-  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle))
+  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle_))
     ROS_WARN("Couldn't find max_attitude_angle param");
-  max_attitude_angle_ = max_attitude_angle;
 
   double m;
   if (!nh_.getParam("mass", m))
@@ -418,6 +418,27 @@ bool MAVManager::setSO3Command(const quadrotor_msgs::SO3Command &msg) {
   return flag;
 }
 
+bool MAVManager::setTRPYCommand(const quadrotor_msgs::TRPYCommand &msg) {
+
+  // Note: To enable motors, the motors method must be used
+  if (!this->motors())
+  {
+    ROS_WARN("Refusing to publish an SO3Command until motors have been enabled using the motors method.");
+    return false;
+  }
+
+  // Since this could be called quite often,
+  // only try to transition if it is not the active tracker.
+  bool flag(true);
+  if (active_tracker_.compare(null_tracker_str) != 0)
+    flag = this->transition(null_tracker_str);
+
+  if (flag)
+    pub_trpy_command_.publish(msg);
+
+  return flag;
+}
+
 bool MAVManager::useNullTracker() {
 
   if (active_tracker_.compare(null_tracker_str) != 0)
@@ -453,9 +474,14 @@ bool MAVManager::set_motors(bool motors) {
 
   // Publish a couple so3_commands to ensure motors are or are not spinning
   quadrotor_msgs::SO3Command so3_cmd;
+  so3_cmd.header.stamp = ros::Time::now();
   so3_cmd.force.z = FLT_MIN;
   so3_cmd.orientation.w = 1.0;
   so3_cmd.aux.enable_motors = motors;
+
+  quadrotor_msgs::TRPYCommand trpy_cmd;
+  trpy_cmd.thrust = FLT_MIN;
+  trpy_cmd.aux.enable_motors = motors;
 
   // Queue a few to make sure the signal gets through.
   // Also, the crazyflie interface throttles commands to 30 Hz, so this needs
@@ -463,6 +489,7 @@ bool MAVManager::set_motors(bool motors) {
   for (int i = 0; i < 10; i++)
   {
     pub_so3_command_.publish(so3_cmd);
+    pub_trpy_command_.publish(trpy_cmd);
     ros::Duration(1.0 / 100.0).sleep();
   }
 
@@ -678,7 +705,7 @@ bool MAVManager::hover() {
   }
 
   ROS_DEBUG("Hovering in place...");
-  return this->goTo(pos_(0), pos_(1), pos_(2), pos_(3));
+  return this->goTo(pos_(0), pos_(1), pos_(2), yaw_);
 }
 
 bool MAVManager::ehover() {
@@ -706,7 +733,7 @@ bool MAVManager::transition(const std::string &tracker_str) {
   trackers_manager::Transition transition_cmd;
   transition_cmd.request.tracker = tracker_str;
 
-  if (srv_transition_.call(transition_cmd)) {
+  if (srv_transition_.call(transition_cmd) && transition_cmd.response.success) {
     active_tracker_ = tracker_str;
     //  tracker_status_ = quadrotor_msgs::TrackerStatus::ACTIVE;
     ROS_INFO("Current tracker: %s", tracker_str.c_str());
@@ -727,3 +754,4 @@ bool MAVManager::have_recent_imu() {
 bool MAVManager::have_recent_output_data() {
   return (ros::Time::now() - last_output_data_t_).toSec() < 0.1;
 }
+} // namespace mav_manager

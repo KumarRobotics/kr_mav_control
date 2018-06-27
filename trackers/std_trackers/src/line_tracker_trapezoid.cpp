@@ -216,8 +216,9 @@ const quadrotor_msgs::TrackerStatus::Ptr LineTrackerTrapezoid::status()
 
   quadrotor_msgs::TrackerStatus::Ptr msg(new quadrotor_msgs::TrackerStatus);
 
-  msg->status = goal_reached_ ? (uint8_t)
-    quadrotor_msgs::TrackerStatus::SUCCEEDED : quadrotor_msgs::TrackerStatus::ACTIVE;
+  msg->status = goal_reached_ ?
+          static_cast<uint8_t>(quadrotor_msgs::TrackerStatus::SUCCEEDED) :
+          static_cast<uint8_t>(quadrotor_msgs::TrackerStatus::ACTIVE);
 
   return msg;
 }

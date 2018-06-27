@@ -8,6 +8,8 @@
 #include <mav_manager/GoalTimed.h>
 #include <mav_manager/Circle.h>
 
+namespace mav_manager
+{
 class MAVManagerServices
 {
 public:
@@ -156,5 +158,5 @@ protected:
 
   std::string last_cb_;
 };
-
+} // namespace mav_manager
 #endif /* MAV_MANAGER_SERVICES_H */

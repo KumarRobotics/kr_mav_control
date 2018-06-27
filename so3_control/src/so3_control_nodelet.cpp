@@ -18,21 +18,21 @@ class SO3ControlNodelet : public nodelet::Nodelet
       des_yaw_(0),
       des_yaw_dot_(0),
       current_yaw_(0),
-      current_orientation_(Eigen::Quaternionf::Identity()),
       enable_motors_(false),
       use_external_yaw_(false),
       have_odom_(false),
-      g_(9.81)
+      g_(9.81),
+      current_orientation_(Eigen::Quaternionf::Identity())
   {
     controller_.resetIntegrals();
   }
 
-  void onInit(void);
+  void onInit();
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW; // Need this since we have SO3Control which needs aligned pointer
 
  private:
-  void publishSO3Command(void);
+  void publishSO3Command();
   void position_cmd_callback(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void enable_motors_callback(const std_msgs::Bool::ConstPtr &msg);
@@ -56,7 +56,7 @@ class SO3ControlNodelet : public nodelet::Nodelet
 };
 
 
-void SO3ControlNodelet::publishSO3Command(void)
+void SO3ControlNodelet::publishSO3Command()
 {
   if (!have_odom_)
   {
@@ -174,7 +174,7 @@ void SO3ControlNodelet::corrections_callback(const quadrotor_msgs::Corrections::
   corrections_[2] = msg->angle_corrections[1];
 }
 
-void SO3ControlNodelet::onInit(void)
+void SO3ControlNodelet::onInit()
 {
   ros::NodeHandle n(getPrivateNodeHandle());
 

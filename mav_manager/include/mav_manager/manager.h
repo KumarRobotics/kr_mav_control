@@ -16,11 +16,15 @@
 // quadrotor_control
 #include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/SO3Command.h>
+#include <quadrotor_msgs/TRPYCommand.h>
+#include <quadrotor_msgs/TrackerStatus.h>
 #include <quadrotor_msgs/OutputData.h>
 #include <std_trackers/LineTrackerAction.h>
 #include <std_trackers/VelocityTrackerAction.h>
 #include <std_trackers/CircleTrackerAction.h>
 
+namespace mav_manager
+{
 class MAVManager
 {
   public:
@@ -39,7 +43,7 @@ class MAVManager
       ESTOP,
       FLYING};
 
-    MAVManager();
+    MAVManager(std::string ns = "");
 
     // Accessors
     Vec3 pos() { return pos_; }
@@ -83,12 +87,10 @@ class MAVManager
 
     bool circle(float Ax, float Ay, float T, float duration);
 
-    // Waypoints
-    void clearWaypoints();
-    void addWaypoint();
-
+    // Direct low-level control
     bool setPositionCommand(const quadrotor_msgs::PositionCommand &cmd);
     bool setSO3Command(const quadrotor_msgs::SO3Command &cmd);
+    bool setTRPYCommand(const quadrotor_msgs::TRPYCommand &cmd);
     bool useNullTracker();
 
     // Monitoring
@@ -96,11 +98,8 @@ class MAVManager
     float voltage() {return voltage_;}
     float pressure_height() {return pressure_height_;}
     float pressure_dheight() {return pressure_dheight_;}
-    float* magnetic_field() {return magnetic_field_;}
+    std::array<float, 3> magnetic_field() {return magnetic_field_;}
     std::array<uint8_t,8> radio() {return radio_;}
-
-    // Try this
-    bool transition(const std::string &tracker_str);
 
     // Safety
     bool hover();
@@ -110,7 +109,11 @@ class MAVManager
     bool eland();
     bool estop();
 
-  protected:
+    bool transition(const std::string &tracker_str);
+
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+  private:
     typedef actionlib::SimpleActionClient<std_trackers::LineTrackerAction> ClientType;
     typedef actionlib::SimpleActionClient<std_trackers::VelocityTrackerAction> VelocityClientType;
     typedef actionlib::SimpleActionClient<std_trackers::CircleTrackerAction> CircleClientType;
@@ -136,7 +139,6 @@ class MAVManager
 
     Vec3 pos_, vel_;
     float mass_;
-    const float kGravity_;
     Quat odom_q_, imu_q_;
     float yaw_, yaw_dot_;
     float takeoff_height_;
@@ -144,11 +146,12 @@ class MAVManager
     float odom_timeout_;
 
     Vec3 home_, goal_;
-    float goal_yaw_, home_yaw_;
+    float home_yaw_;
 
     bool need_imu_, need_output_data_, need_odom_, use_attitude_safety_catch_;
-    bool home_set_, serial_, motors_;
-    float voltage_, pressure_height_, pressure_dheight_, magnetic_field_[3];
+    bool home_set_, motors_;
+    float voltage_, pressure_height_, pressure_dheight_;
+    std::array<float, 3> magnetic_field_;
     std::array<uint8_t, 8> radio_;
 
     // Actionlibs
@@ -163,6 +166,7 @@ class MAVManager
       pub_estop_,
       pub_goal_yaw_,
       pub_so3_command_,
+      pub_trpy_command_,
       pub_position_command_,
       pub_status_,
       pub_pwm_command_;
@@ -178,4 +182,5 @@ class MAVManager
     ros::ServiceClient srv_transition_;
 };
 
+} // namespace mav_manager
 #endif /* MANAGER_H */

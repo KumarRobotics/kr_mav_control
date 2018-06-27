@@ -91,17 +91,27 @@ void TrackersManager::odom_callback(const nav_msgs::Odometry::ConstPtr &msg) {
 
 bool TrackersManager::transition_callback(trackers_manager::Transition::Request &req, trackers_manager::Transition::Response &res) {
   const std::map<std::string, trackers_manager::Tracker*>::iterator it = tracker_map_.find(req.tracker);
-  if(it == tracker_map_.end()) {
-    NODELET_WARN_STREAM("Cannot find tracker " << req.tracker << ", cannot transition");
-    return false;
-  }
-  if(active_tracker_ == it->second) {
-    NODELET_INFO_STREAM("Tracker " << req.tracker << " already active");
+  if(it == tracker_map_.end())
+  {
+    res.success = false;
+    res.message = std::string("Cannot find tracker ") + req.tracker + std::string(", cannot transition");
+    NODELET_WARN_STREAM(res.message);
     return true;
   }
-  if(!it->second->Activate(cmd_)) {
-    NODELET_WARN_STREAM("Failed to activate tracker " << req.tracker << ", cannot transition");
-    return false;
+  if(active_tracker_ == it->second)
+  {
+    res.success = true;
+    res.message = std::string("Tracker ") + req.tracker + std::string(" already active");
+    NODELET_INFO_STREAM(res.message);
+    return true;
+  }
+
+  if(!it->second->Activate(cmd_))
+  {
+    res.success = false;
+    res.message = std::string("Failed to activate tracker ") + req.tracker + std::string(", cannot transition");
+    NODELET_WARN_STREAM(res.message);
+    return true;
   }
 
   if(active_tracker_ != NULL) {
@@ -109,6 +119,8 @@ bool TrackersManager::transition_callback(trackers_manager::Transition::Request 
   }
 
   active_tracker_ = it->second;
+  res.success = true;
+  res.message = std::string("Successfully activated tracker ") + req.tracker;
   return true;
 }
 
