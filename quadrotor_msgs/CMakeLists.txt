@@ -23,7 +23,8 @@ add_message_files(DIRECTORY msg
   Serial.msg
   SO3Command.msg
   StatusData.msg
-  TRPYCommand.msg)
+  TRPYCommand.msg
+  TrackerStatus.msg)
 
 generate_messages(
   DEPENDENCIES geometry_msgs std_msgs)
