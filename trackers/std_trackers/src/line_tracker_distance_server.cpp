@@ -130,7 +130,7 @@ const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerDistanceAction::updat
   pos_set_ = true;
   ICs_.set_from_odom(msg);
 
-  static ros::Time t_prev;
+  static ros::Time t_prev = msg->header.stamp;
   const double dT = (msg->header.stamp - t_prev).toSec();
   t_prev = msg->header.stamp;
 
