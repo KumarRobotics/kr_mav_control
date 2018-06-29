@@ -6,16 +6,16 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs quadrotor_msgs std_msgs nodelet tf cmake_modules)
-find_package(Eigen REQUIRED)
+find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs quadrotor_msgs std_msgs nodelet tf)
+find_package(Eigen3 REQUIRED)
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
+include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
 catkin_package(
   INCLUDE_DIRS
   LIBRARIES
   CATKIN_DEPENDS roscpp nav_msgs quadrotor_msgs std_msgs nodelet tf
-  DEPENDS Eigen)
+  DEPENDS EIGEN3)
 
 add_library(PIDControl src/PIDControl.cpp)
 

@@ -10,7 +10,6 @@
   <author>Kartik Mohta</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <buildtool_depend>cmake_modules</buildtool_depend>
 
   <depend>roscpp</depend>
   <depend>quadrotor_msgs</depend>
