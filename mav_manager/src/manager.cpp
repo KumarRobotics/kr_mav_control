@@ -15,9 +15,6 @@
 
 // quadrotor_control
 #include <trackers_manager/Transition.h>
-#include <std_trackers/LineTrackerAction.h>
-#include <std_trackers/VelocityTrackerAction.h>
-#include <std_trackers/CircleTrackerAction.h>
 
 namespace mav_manager
 {
@@ -80,6 +77,7 @@ MAVManager::MAVManager(std::string ns)
   // Subscribers
   odom_sub_ = nh_.subscribe("odom", 10, &MAVManager::odometry_cb, this, ros::TransportHints().tcpNoDelay());
   heartbeat_sub_ = nh_.subscribe("/heartbeat", 10, &MAVManager::heartbeat_cb, this, ros::TransportHints().tcpNoDelay());
+  tracker_status_sub_ = nh_.subscribe("trackers_manager/status", 10, &MAVManager::tracker_status_cb, this, ros::TransportHints().tcpNoDelay());
 
   // Services
   srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
@@ -526,6 +524,10 @@ void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg)
   this->heartbeat();
 }
 
+void MAVManager::tracker_status_cb(const trackers_manager::TrackerStatus::ConstPtr &msg) {
+  active_tracker_ = msg->tracker;
+}
+
 void MAVManager::heartbeat_cb(const std_msgs::Empty::ConstPtr &msg) {
   this->heartbeat();
 }
@@ -735,7 +737,6 @@ bool MAVManager::transition(const std::string &tracker_str) {
 
   if (srv_transition_.call(transition_cmd) && transition_cmd.response.success) {
     active_tracker_ = tracker_str;
-    //  tracker_status_ = quadrotor_msgs::TrackerStatus::ACTIVE;
     ROS_INFO("Current tracker: %s", tracker_str.c_str());
     return true;
   }

@@ -4,6 +4,7 @@
 #include <pluginlib/class_loader.h>
 #include <trackers_manager/Tracker.h>
 #include <trackers_manager/Transition.h>
+#include <trackers_manager/TrackerStatus.h>
 
 class TrackersManager : public nodelet::Nodelet {
  public:
@@ -18,7 +19,7 @@ class TrackersManager : public nodelet::Nodelet {
                            trackers_manager::Transition::Response &res);
 
   ros::Subscriber sub_odom_;
-  ros::Publisher pub_cmd_;
+  ros::Publisher pub_cmd_, pub_status_;
   ros::ServiceServer srv_tracker_;
   pluginlib::ClassLoader<trackers_manager::Tracker> *tracker_loader_;
   trackers_manager::Tracker *active_tracker_;
@@ -69,6 +70,7 @@ void TrackersManager::onInit(void) {
   }
 
   pub_cmd_ = priv_nh.advertise<quadrotor_msgs::PositionCommand>("cmd", 10);
+  pub_status_ = priv_nh.advertise<trackers_manager::TrackerStatus>("status", 10);
 
   sub_odom_ = priv_nh.subscribe("odom", 10, &TrackersManager::odom_callback, this, ros::TransportHints().tcpNoDelay());
 
@@ -82,6 +84,12 @@ void TrackersManager::odom_callback(const nav_msgs::Odometry::ConstPtr &msg) {
       cmd_ = it->second->update(msg);
       if(cmd_ != NULL)
         pub_cmd_.publish(cmd_);
+
+      trackers_manager::TrackerStatus::Ptr status_msg(new trackers_manager::TrackerStatus);
+      status_msg->header.stamp = msg->header.stamp;
+      status_msg->tracker = it->first;
+      status_msg->status = it->second->status();
+      pub_status_.publish(status_msg);
     }
     else {
       it->second->update(msg);

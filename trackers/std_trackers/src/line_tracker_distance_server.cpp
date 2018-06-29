@@ -7,6 +7,7 @@
 
 #include <initial_conditions.h>
 #include <trackers_manager/Tracker.h>
+#include <trackers_manager/TrackerStatus.h>
 #include <std_trackers/LineTrackerAction.h>
 #include <quadrotor_msgs/PositionCommand.h>
 
@@ -19,7 +20,9 @@ public:
   bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+  quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+
+  uint8_t status() const;
 
 private:
   void goal_callback();
@@ -118,7 +121,7 @@ void LineTrackerDistanceAction::Deactivate(void)
   active_ = false;
 }
 
-const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerDistanceAction::update(const nav_msgs::Odometry::ConstPtr &msg)
+quadrotor_msgs::PositionCommand::ConstPtr LineTrackerDistanceAction::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   // Record distance between last position and current.
   const float dx = Eigen::Vector3f((pos_(0) - msg->pose.pose.position.x), (pos_(1) - msg->pose.pose.position.y), (pos_(2) - msg->pose.pose.position.z)).norm();
@@ -311,6 +314,13 @@ void LineTrackerDistanceAction::preempt_callback() {
 
   goal_set_ = false;
   goal_reached_ = true;
+}
+
+uint8_t LineTrackerDistanceAction::status() const
+{
+  return tracker_server_->isActive() ?
+             static_cast<uint8_t>(trackers_manager::TrackerStatus::ACTIVE) :
+             static_cast<uint8_t>(trackers_manager::TrackerStatus::SUCCEEDED);
 }
 
 #include <pluginlib/class_list_macros.h>

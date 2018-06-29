@@ -1,6 +1,7 @@
 #include <cmath>
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
+#include <trackers_manager/TrackerStatus.h>
 #include <tf/transform_datatypes.h>
 #include <actionlib/server/simple_action_server.h>
 #include <std_trackers/VelocityTrackerAction.h>
@@ -14,7 +15,9 @@ public:
   bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+  quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+
+  uint8_t status() const;
 
 private:
   void goal_callback();
@@ -118,7 +121,7 @@ void VelocityTrackerAction::Deactivate(void)
   last_t_ = 0;
 }
 
-const quadrotor_msgs::PositionCommand::ConstPtr VelocityTrackerAction::update(const nav_msgs::Odometry::ConstPtr &msg)
+quadrotor_msgs::PositionCommand::ConstPtr VelocityTrackerAction::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   // Record distance between last position and current.
   const float dx = std::sqrt(std::pow(pos_[0] - msg->pose.pose.position.x, 2) +  std::pow(pos_[1] - msg->pose.pose.position.y, 2) + std::pow(pos_[2] - msg->pose.pose.position.z, 2));
@@ -223,8 +226,15 @@ void VelocityTrackerAction::preempt_callback() {
   position_cmd_.velocity.y = 0.0;
   position_cmd_.velocity.z = 0.0;
   position_cmd_.yaw_dot = 0.0;
-  
+
   use_position_gains_ = true;
+}
+
+uint8_t VelocityTrackerAction::status() const
+{
+  return tracker_server_->isActive() ?
+             static_cast<uint8_t>(trackers_manager::TrackerStatus::ACTIVE) :
+             static_cast<uint8_t>(trackers_manager::TrackerStatus::SUCCEEDED);
 }
 
 #include <pluginlib/class_list_macros.h>

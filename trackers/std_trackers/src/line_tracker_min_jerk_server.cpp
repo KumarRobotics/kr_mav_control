@@ -10,6 +10,7 @@
 
 #include <initial_conditions.h>
 #include <trackers_manager/Tracker.h>
+#include <trackers_manager/TrackerStatus.h>
 #include <std_trackers/LineTrackerAction.h>
 //#include <std_trackers/LineTrackerTimedAction.h>
 #include <quadrotor_msgs/PositionCommand.h>
@@ -23,8 +24,10 @@ public:
   bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  const quadrotor_msgs::PositionCommand::ConstPtr update(
+  quadrotor_msgs::PositionCommand::ConstPtr update(
     const nav_msgs::Odometry::ConstPtr &msg);
+
+  uint8_t status() const;
 
 private:
   void goal_callback();
@@ -127,8 +130,8 @@ void LineTrackerMinJerkAction::Deactivate(void) {
   active_ = false;
 }
 
-const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerkAction::update(
-  const nav_msgs::Odometry::ConstPtr &msg) {
+quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerkAction::update(
+    const nav_msgs::Odometry::ConstPtr &msg) {
 
   // Record distance between last position and current.
   const float dx = Eigen::Vector3f((current_pos_(0) - msg->pose.pose.position.x), (current_pos_(1) - msg->pose.pose.position.y), (current_pos_(2) - msg->pose.pose.position.z)).norm();
@@ -501,6 +504,13 @@ void LineTrackerMinJerkAction::gen_trajectory(
   {
     yaw_coeffs[i] = x_yaw(i);
   }
+}
+
+uint8_t LineTrackerMinJerkAction::status() const
+{
+  return tracker_server_->isActive() ?
+             static_cast<uint8_t>(trackers_manager::TrackerStatus::ACTIVE) :
+             static_cast<uint8_t>(trackers_manager::TrackerStatus::SUCCEEDED);
 }
 
 #include <pluginlib/class_list_macros.h>

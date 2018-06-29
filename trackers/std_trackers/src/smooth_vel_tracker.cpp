@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
+#include <trackers_manager/TrackerStatus.h>
 #include <quadrotor_msgs/LineTrackerGoal.h>
-#include <quadrotor_msgs/TrackerStatus.h>
 #include <Eigen/Core>
 #include <initial_conditions.h>
 
@@ -15,9 +15,9 @@ class SmoothVelTracker : public trackers_manager::Tracker
   bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  const quadrotor_msgs::PositionCommand::ConstPtr update(
+  quadrotor_msgs::PositionCommand::ConstPtr update(
       const nav_msgs::Odometry::ConstPtr &msg);
-  const quadrotor_msgs::TrackerStatus::Ptr status();
+  uint8_t status() const;
 
  private:
   void goal_callback(const quadrotor_msgs::LineTrackerGoal::ConstPtr &msg);
@@ -72,7 +72,7 @@ void SmoothVelTracker::Deactivate(void)
   active_ = false;
 }
 
-const quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
+quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     const nav_msgs::Odometry::ConstPtr &msg)
 {
   if(!active_)
@@ -264,18 +264,11 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
 }
 
 
-const quadrotor_msgs::TrackerStatus::Ptr SmoothVelTracker::status()
+uint8_t SmoothVelTracker::status() const
 {
-  if(!active_)
-    return quadrotor_msgs::TrackerStatus::Ptr();
-
-  quadrotor_msgs::TrackerStatus::Ptr msg(new quadrotor_msgs::TrackerStatus);
-
-  msg->status = goal_reached_ ?
-          static_cast<uint8_t>(quadrotor_msgs::TrackerStatus::SUCCEEDED) :
-          static_cast<uint8_t>(quadrotor_msgs::TrackerStatus::ACTIVE);
-
-  return msg;
+  return goal_reached_ ?
+          static_cast<uint8_t>(trackers_manager::TrackerStatus::SUCCEEDED) :
+          static_cast<uint8_t>(trackers_manager::TrackerStatus::ACTIVE);
 }
 
 #include <pluginlib/class_list_macros.h>

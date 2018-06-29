@@ -14,14 +14,14 @@
 #include <actionlib/client/simple_action_client.h>
 
 // quadrotor_control
+#include <quadrotor_msgs/OutputData.h>
 #include <quadrotor_msgs/PositionCommand.h>
 #include <quadrotor_msgs/SO3Command.h>
 #include <quadrotor_msgs/TRPYCommand.h>
-#include <quadrotor_msgs/TrackerStatus.h>
-#include <quadrotor_msgs/OutputData.h>
+#include <std_trackers/CircleTrackerAction.h>
 #include <std_trackers/LineTrackerAction.h>
 #include <std_trackers/VelocityTrackerAction.h>
-#include <std_trackers/CircleTrackerAction.h>
+#include <trackers_manager/TrackerStatus.h>
 
 namespace mav_manager
 {
@@ -129,6 +129,7 @@ class MAVManager
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
     void output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg);
     void heartbeat_cb(const std_msgs::Empty::ConstPtr &msg);
+    void tracker_status_cb(const trackers_manager::TrackerStatus::ConstPtr &msg);
     void heartbeat();
 
     std::string active_tracker_;
@@ -176,7 +177,8 @@ class MAVManager
       odom_sub_,
       imu_sub_,
       output_data_sub_,
-      heartbeat_sub_;
+      heartbeat_sub_,
+      tracker_status_sub_;
 
     // Services
     ros::ServiceClient srv_transition_;
