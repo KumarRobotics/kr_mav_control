@@ -69,8 +69,8 @@ void LineTrackerDistanceAction::Initialize(const ros::NodeHandle &nh)
 
   ros::NodeHandle priv_nh(nh, "line_tracker_distance");
 
-  nh.param("default_v_des", default_v_des_, 0.5);
-  nh.param("default_a_des", default_a_des_, 0.5);
+  priv_nh.param("default_v_des", default_v_des_, 0.5);
+  priv_nh.param("default_a_des", default_a_des_, 0.5);
   priv_nh.param("epsilon", epsilon_, 0.1);
 
   v_des_ = default_v_des_;

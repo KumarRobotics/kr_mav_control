@@ -111,9 +111,10 @@ void CircleTrackerAction::Initialize(const ros::NodeHandle &nh) {
   nh.param("gains/vel/x", kv_[0], 2.2);
   nh.param("gains/vel/y", kv_[1], 2.2);
   nh.param("gains/vel/z", kv_[2], 4.0);
-  nh.param("alpha_des", alpha_des_, static_cast<float>(M_PI / 20.0));
 
   ros::NodeHandle priv_nh(nh, "circle_tracker");
+
+  priv_nh.param("alpha_des", alpha_des_, static_cast<float>(M_PI / 20.0));
 
   // Set up the action server.
   tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "CircleTrackerAction", false));

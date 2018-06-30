@@ -83,10 +83,10 @@ void LineTrackerMinJerkAction::Initialize(const ros::NodeHandle &nh) {
 
   ros::NodeHandle priv_nh(nh, "line_tracker_min_jerk");
 
-  nh.param("default_v_des", default_v_des_, 0.5);
-  nh.param("default_a_des", default_a_des_, 0.3);
-  nh.param("default_yaw_v_des", default_yaw_v_des_, 0.8);
-  nh.param("default_yaw_a_des", default_yaw_a_des_, 0.2);
+  priv_nh.param("default_v_des", default_v_des_, 0.5);
+  priv_nh.param("default_a_des", default_a_des_, 0.3);
+  priv_nh.param("default_yaw_v_des", default_yaw_v_des_, 0.8);
+  priv_nh.param("default_yaw_a_des", default_yaw_a_des_, 0.2);
 
   v_des_ = default_v_des_;
   a_des_ = default_a_des_;
