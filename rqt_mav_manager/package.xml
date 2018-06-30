@@ -1,0 +1,24 @@
+<package>
+  <name>rqt_mav_manager</name>
+  <version>0.1.0</version>
+  <description>Provides a GUI plugin for MAV Manager.</description>
+  <maintainer email="ablasdel@gmail.com">Dinesh Thakur</maintainer>
+  <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
+
+  <license>BSD</license>
+
+  <url type="repository">https://github.com/KumarRobotics/kr_ui</url>
+
+  <author>Dinesh Thakur</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>rospy</run_depend>
+  <run_depend>rqt_gui_py</run_depend>
+  <run_depend>mav_manager</run_depend>
+  <run_depend>std_srvs</run_depend>
+
+  <export>
+    <rqt_gui plugin="${prefix}/plugin.xml"/>
+  </export>
+</package>
