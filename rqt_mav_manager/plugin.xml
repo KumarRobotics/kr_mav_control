@@ -1,0 +1,17 @@
+<library path="src">
+  <class name="MavManagerUi" type="rqt_mav_manager.MavManagerUi" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A Python GUI plugin to control a quadrotor using the mav_manager interface.
+    </description>
+    <qtgui>
+      <group>
+        <label>Robot Tools</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to robot tools.</statustip>
+      </group>
+      <label>Quadrotor Control</label>
+      <icon type="theme">input-gaming</icon>
+      <statustip>A Python GUI plugin for controlling a quadrotor using the mav_manager.</statustip>
+    </qtgui>
+  </class>
+</library>
