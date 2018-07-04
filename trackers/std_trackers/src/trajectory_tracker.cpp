@@ -34,8 +34,8 @@ class TrajectoryTracker : public trackers_manager::Tracker
   typedef actionlib::SimpleActionServer<std_trackers::TrajectoryTrackerAction> ServerType;
 
   // Action server that takes a goal.
-  // Must be a pointer, because plugin does not support a constructor
-  // with inputs, but an action server must be initialized with a Nodehandle.
+  // Must be a pointer because plugin does not support a constructor with inputs, but an action server must be
+  // initialized with a Nodehandle.
   std::unique_ptr<ServerType> tracker_server_;
 
   std::unique_ptr<TrajectoryGenerator> traj_gen_;
@@ -57,13 +57,7 @@ class TrajectoryTracker : public trackers_manager::Tracker
   float current_traj_length_;
 };
 
-TrajectoryTracker::TrajectoryTracker(void)
-    : pos_set_(false),
-      goal_set_(false),
-      goal_reached_(true),
-      active_(false)
-{
-}
+TrajectoryTracker::TrajectoryTracker(void) : pos_set_(false), goal_set_(false), goal_reached_(true), active_(false) {}
 
 void TrajectoryTracker::Initialize(const ros::NodeHandle &nh)
 {
@@ -102,7 +96,7 @@ bool TrajectoryTracker::Activate(const quadrotor_msgs::PositionCommand::ConstPtr
   if(goal_set_ && pos_set_)
   {
     if(!tracker_server_->isActive())
-    { // check timed
+    {
       ROS_WARN("TrajectoryTracker::Activate: goal_set_ is true but action server has no active goal - not activating.");
       active_ = false;
       return false;
@@ -173,7 +167,7 @@ quadrotor_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_ms
     }
     else
     {
-      for(const auto &t :goal_.waypoint_times)
+      for(const auto &t : goal_.waypoint_times)
         waypoint_times.push_back(t);
     }
 
@@ -207,7 +201,7 @@ quadrotor_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_ms
 
   if(traj_time >= traj_total_time_) // Reached goal
   {
-    // Send a success message and reset the length and duration variables.
+    // Send a success message and reset the length variable
     std_trackers::TrajectoryTrackerResult result;
     result.total_time = traj_time;
     result.total_distance_travelled = current_traj_length_;
@@ -232,8 +226,6 @@ quadrotor_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_ms
     yaw_des = ICs_.yaw();
     yaw_dot_des = 0;
   }
-  else // (traj_time < 0) can happen with TrajectoryTrackerGoalTimed
-    ROS_INFO_THROTTLE(1, "Trajectory hasn't started yet");
 
   cmd->position.x = x(0), cmd->position.y = x(1), cmd->position.z = x(2);
   cmd->yaw = yaw_des;
@@ -256,21 +248,19 @@ quadrotor_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_ms
 
 void TrajectoryTracker::goal_callback()
 {
-  // If another goal is already active, cancel that goal
-  // and track this one instead.
+  // If another goal is already active, cancel that goal and track this one instead.
   if(tracker_server_->isActive())
   {
     ROS_INFO("TrajectoryTracker goal aborted");
     tracker_server_->setAborted();
   }
 
-  // Pointer to the goal recieved.
+  // Pointer to the recieved goal.
   const auto msg = tracker_server_->acceptNewGoal();
 
   current_traj_length_ = 0.0;
 
-  // If preempt has been requested, then set this goal to preempted
-  // and make no changes to the tracker state.
+  // If preempt has been requested, then set this goal to preempted and make no changes to the tracker state.
   if(tracker_server_->isPreemptRequested())
   {
     ROS_INFO("TrajectoryTracker preempted");
