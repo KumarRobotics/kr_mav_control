@@ -17,7 +17,8 @@ add_action_files(DIRECTORY action
   FILES
   LineTracker.action
   VelocityTracker.action
-  CircleTracker.action)
+  CircleTracker.action
+  TrajectoryTracker.action)
 generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs)
 
 catkin_package(
@@ -61,16 +62,21 @@ target_link_libraries(circle_tracker_action ${catkin_LIBRARIES})
 #add_dependencies(smooth_vel_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 #target_link_libraries(smooth_vel_tracker initial_conditions ${catkin_LIBRARIES})
 
+add_library(trajectory_tracker src/trajectory_tracker.cpp src/traj_gen.cpp)
+add_dependencies(trajectory_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(trajectory_tracker initial_conditions ${catkin_LIBRARIES})
+
 install(TARGETS
     initial_conditions
     line_tracker_min_jerk_action
-#    line_tracker_trapezoid
+    #line_tracker_trapezoid
     line_tracker_distance_action
-#    line_tracker_yaw
+    #line_tracker_yaw
     null_tracker
     velocity_tracker_action
     circle_tracker_action
-#    smooth_vel_tracker
+    #smooth_vel_tracker
+    trajectory_tracker
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

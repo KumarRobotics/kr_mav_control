@@ -28,7 +28,7 @@
 <library path="lib/libline_tracker_yaw">
   <class name="std_trackers/LineTrackerYaw" type="LineTrackerYaw" base_class_type="trackers_manager::Tracker">
     <description>
-      This is a tracker which follows a trapezoidal trajectory to a desired yaw.
+      This is a tracker which follows a trapezoidal trajectory to a desired position and yaw.
     </description>
   </class>
 </library>
@@ -64,6 +64,14 @@
   <class name="std_trackers/CircleTrackerAction" type="CircleTrackerAction" base_class_type="trackers_manager::Tracker">
     <description>
       This tracker commands the robot to fly in a circle of a given size and period.
+    </description>
+  </class>
+</library>
+
+<library path="lib/libtrajectory_tracker">
+  <class name="std_trackers/TrajectoryTracker" type="TrajectoryTracker" base_class_type="trackers_manager::Tracker">
+    <description>
+      This tracker commands the robot to follow a smooth trajectory passing through multiple waypoints.
     </description>
   </class>
 </library>
