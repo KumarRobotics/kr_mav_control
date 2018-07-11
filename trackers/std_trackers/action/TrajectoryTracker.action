@@ -1,0 +1,10 @@
+#goal definition
+geometry_msgs/Pose[] waypoints
+float64[] waypoint_times # If empty, waypoint times are computed
+---
+#result definition
+float64 total_time
+float64 total_distance_travelled
+---
+#feedback
+float64 remaining_time
