@@ -279,9 +279,9 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
   return this->transition(line_tracker_min_jerk);
 }
 
-/*bool MAVManager::goToTimed(float x, float y, float z, float yaw, float v_des, float a_des, bool relative, ros::Duration duration, ros::Time t_start) {
+bool MAVManager::goToTimed(float x, float y, float z, float yaw, float v_des, float a_des, bool relative, ros::Duration duration, ros::Time t_start) {
 
-  quadrotor_msgs::LineTrackerGoalTimed goal;
+  std_trackers::LineTrackerGoal goal;
   goal.x   = x;
   goal.y   = y;
   goal.z   = z;
@@ -292,13 +292,14 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
   goal.a_des = a_des;
   goal.relative = relative;
 
-  pub_goal_min_jerk_timed_.publish(goal);
-  ROS_INFO("Going to {%2.2f, %2.2f, %2.2f, %2.2f}%s with duration %2.2f",
-      x, y, z, yaw, (relative ? " relative to the current position." : ""), duration.toSec());
+  line_tracker_min_jerk_client_.sendGoal(goal, boost::bind(&MAVManager::tracker_done_callback, this, _1, _2),
+                                         ClientType::SimpleActiveCallback(), ClientType::SimpleFeedbackCallback());
+  ROS_INFO("Going to {%2.2f, %2.2f, %2.2f, %2.2f}%s with duration %2.2f", x, y, z, yaw,
+           (relative ? " relative to the current position." : ""), duration.toSec());
 
   return this->transition(line_tracker_min_jerk);
 }
-*/
+
 bool MAVManager::goTo(Vec4 xyz_yaw, Vec2 v_and_a_des) {
   return this->goTo(xyz_yaw(0), xyz_yaw(1), xyz_yaw(2), xyz_yaw(3),
                     v_and_a_des(0), v_and_a_des(1));

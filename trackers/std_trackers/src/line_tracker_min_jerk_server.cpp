@@ -59,7 +59,7 @@ private:
   Eigen::Vector3f goal_;
   ros::Time traj_start_;
   float traj_duration_;
- ros::Duration goal_duration_;
+  ros::Duration goal_duration_;
   Eigen::Vector3f coeffs_[6];
   float goal_yaw_, yaw_coeffs_[4];
   bool traj_start_set_;
@@ -380,8 +380,13 @@ void LineTrackerMinJerkAction::goal_callback() {
   goal_(1) = msg->y;
   goal_(2) = msg->z;
   goal_yaw_ = msg->yaw;
-  goal_duration_ = ros::Duration(0); // Clear the stored value of goal_duration_, will be replaced by heurisitic
-  traj_start_set_ = false;
+  goal_duration_ = msg->duration;
+  if(msg->t_start != ros::Time(0)) {
+    traj_start_ = msg->t_start;
+    traj_start_set_ = true;
+  }
+  else
+    traj_start_set_ = false;
 
   if (msg->relative) {
     goal_ += ICs_.pos();
@@ -398,50 +403,6 @@ void LineTrackerMinJerkAction::goal_callback() {
   goal_reached_ = false;
 }
 
-/*// TODO(Kartik): Maybe merge the two goal callbacks since by default t_start and
-// duration would be zero if not set
-void LineTrackerMinJerkAction::goal_timed_callback_() {
-  // If another goal is already active, cancel that goal
-  // and track this one instead.
-  if (tracker_timed_server_->isActive()) {
-    ROS_INFO("LineTrackerMinJerkAction goal (%f, %f, %f) aborted.", goal_pos_(0), goal_pos_(1), goal_pos_(2));
-    tracker_timed_server_->setAborted();
-  }
-
-  // Pointer to the goal recieved.
-  const auto msg = tracker_timed_server_->acceptNewGoal();
-
-  current_traj_duration_ = 0.0;
-  current_traj_length_ = 0.0;
-
-  // If preempt has been requested, then set this goal to preempted
-  // and make no changes to the tracker state.
-  if (tracker_timed_server_->isPreemptRequested()) {
-    ROS_INFO("LineTrackerMinJerkAction going to goal (%f, %f, %f, %f) preempted.", msg->x, msg->y, msg->z, msg->yaw);
-    tracker_timed_server_->setPreempted();
-    return;
-  }
-
-  goal_(0) = msg->x;
-  goal_(1) = msg->y;
-  goal_(2) = msg->z;
-  goal_yaw_ = msg->yaw;
-  goal_duration_ = msg->duration;
-  traj_start_ = msg->t_start;
-  traj_start_set_ = true;
-  ROS_DEBUG("Starting trajectory in %2.2f seconds.", (traj_start_ - ros::Time::now()).toSec());
-
-  if (msg->relative)
-  {
-    goal_ += ICs_.pos();
-    goal_yaw_ += ICs_.yaw();
-    ROS_INFO("line_tracker_min_jerk using relative command");
-  }
-
-  goal_set_ = true;
-  goal_reached_ = false;
-}
-*/
 void LineTrackerMinJerkAction::preempt_callback() {
   if (tracker_server_->isActive()) {
     ROS_INFO("LineTrackerMinJerkAction going to goal (%f, %f, %f) aborted.", goal_(0), goal_(1), goal_(2));
