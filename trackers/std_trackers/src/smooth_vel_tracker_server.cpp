@@ -1,15 +1,20 @@
+#include <memory>
+
+#include <Eigen/Core>
 #include <ros/ros.h>
+#include <actionlib/server/simple_action_server.h>
+
+#include <std_trackers/LineTrackerAction.h>
 #include <trackers_manager/Tracker.h>
 #include <trackers_manager/TrackerStatus.h>
-#include <quadrotor_msgs/LineTrackerGoal.h>
-#include <Eigen/Core>
-#include <initial_conditions.h>
+
+#include "initial_conditions.h"
 
 
-class SmoothVelTracker : public trackers_manager::Tracker
+class SmoothVelTrackerAction : public trackers_manager::Tracker
 {
  public:
-  SmoothVelTracker(void);
+  SmoothVelTrackerAction(void);
 
   void Initialize(const ros::NodeHandle &nh);
   bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
@@ -20,9 +25,17 @@ class SmoothVelTracker : public trackers_manager::Tracker
   uint8_t status() const;
 
  private:
-  void goal_callback(const quadrotor_msgs::LineTrackerGoal::ConstPtr &msg);
+  void goal_callback();
+  void preempt_callback();
 
-  ros::Subscriber sub_goal_;
+  using ServerType =
+      actionlib::SimpleActionServer<std_trackers::LineTrackerAction>;
+
+  // Action server that takes a goal.
+  // Must be a pointer, because plugin does not support a constructor
+  // with inputs, but an action server must be initialized with a Nodehandle.
+  std::unique_ptr<ServerType> tracker_server_;
+
   bool goal_set_, goal_reached_;
   float target_speed_;
   float ramp_dist_, total_dist_;
@@ -33,16 +46,18 @@ class SmoothVelTracker : public trackers_manager::Tracker
   InitialConditions ICs_;
   ros::Time start_time_;
   Eigen::Vector3f start_pos_, dir_;
-  Eigen::Matrix<float,7,1> vel_coeffs_;
+  Eigen::Matrix<float, 7, 1> vel_coeffs_;
   float kx_[3], kv_[3];
+  float current_traj_length_;
+  Eigen::Vector3f prev_pos_;
 };
 
-SmoothVelTracker::SmoothVelTracker(void)
+SmoothVelTrackerAction::SmoothVelTrackerAction(void)
     : goal_set_(false), goal_reached_(true), active_(false)
 {
 }
 
-void SmoothVelTracker::Initialize(const ros::NodeHandle &nh)
+void SmoothVelTrackerAction::Initialize(const ros::NodeHandle &nh)
 {
   nh.param("gains/pos/x", kx_[0], 2.5f);
   nh.param("gains/pos/y", kx_[1], 2.5f);
@@ -53,11 +68,18 @@ void SmoothVelTracker::Initialize(const ros::NodeHandle &nh)
 
   ros::NodeHandle priv_nh(nh, "smooth_vel_tracker");
 
-  sub_goal_ = priv_nh.subscribe("goal", 10, &SmoothVelTracker::goal_callback,
-                                this, ros::TransportHints().tcpNoDelay());
+  // Set up the action server.
+  tracker_server_ = std::unique_ptr<ServerType>(
+      new ServerType(priv_nh, "SmoothVelTrackerAction", false));
+  tracker_server_->registerGoalCallback(
+      boost::bind(&SmoothVelTrackerAction::goal_callback, this));
+  tracker_server_->registerPreemptCallback(
+      boost::bind(&SmoothVelTrackerAction::preempt_callback, this));
+
+  tracker_server_->start();
 }
 
-bool SmoothVelTracker::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
+bool SmoothVelTrackerAction::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
   if(goal_set_)
@@ -65,14 +87,21 @@ bool SmoothVelTracker::Activate(const quadrotor_msgs::PositionCommand::ConstPtr 
   return active_;
 }
 
-void SmoothVelTracker::Deactivate(void)
+void SmoothVelTrackerAction::Deactivate(void)
 {
+  if(tracker_server_->isActive())
+  {
+    ROS_WARN("SmoothVelTrackerAction::Deactivate: deactivated tracker while "
+             "still tracking the goal.");
+    tracker_server_->setAborted();
+  }
+
   ICs_.reset();
   goal_set_ = false;
   active_ = false;
 }
 
-quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
+quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTrackerAction::update(
     const nav_msgs::Odometry::ConstPtr &msg)
 {
   if(!active_)
@@ -81,31 +110,41 @@ quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     return quadrotor_msgs::PositionCommand::Ptr();
   }
 
+  // Record distance between last position and current.
+  const Eigen::Vector3f current_pos(msg->pose.pose.position.x,
+                                     msg->pose.pose.position.y,
+                                     msg->pose.pose.position.z);
+
+  current_traj_length_ += (current_pos- prev_pos_).norm();
+
+  prev_pos_ = current_pos;
+
+  const ros::Time t_now = ros::Time::now();
+
   if(goal_set_)
   {
-    start_time_ = ros::Time::now();
+    start_time_ = t_now;
     goal_set_ = false;
   }
 
   // Set gains
   quadrotor_msgs::PositionCommand::Ptr cmd(new quadrotor_msgs::PositionCommand);
-  cmd->header.stamp = ros::Time::now();
+  cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
   cmd->kx[0] = kx_[0], cmd->kx[1] = kx_[1], cmd->kx[2] = kx_[2];
   cmd->kv[0] = kv_[0], cmd->kv[1] = kv_[1], cmd->kv[2] = kv_[2];
 
   // Get elapsed time
-  ros::Time current_time = ros::Time::now();
-  ros::Duration elapsed_time = current_time - start_time_;
-  float t = elapsed_time.toSec();
-  float ts = t / ramp_time_; //scaled time
-  float ts2 = ts*ts;
-  float ts3 = ts2*ts;
-  float ts4 = ts3*ts;
-  float ts5 = ts4*ts;
-  float ts6 = ts5*ts;
-  float ts7 = ts6*ts;
-  float ts8 = ts7*ts;
+  const ros::Duration elapsed_time = t_now - start_time_;
+  const float t = elapsed_time.toSec();
+  const float ts = t / ramp_time_; //scaled time
+  const float ts2 = ts*ts;
+  const float ts3 = ts2*ts;
+  const float ts4 = ts3*ts;
+  const float ts5 = ts4*ts;
+  const float ts6 = ts5*ts;
+  const float ts7 = ts6*ts;
+  const float ts8 = ts7*ts;
 
   // Test each case to generate trajectory
   Eigen::Vector3f pos, vel, acc, jrk;
@@ -119,6 +158,20 @@ quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     cmd->yaw = goal_yaw_;
     cmd->yaw_dot = 0;
     goal_reached_ = true;
+    if(tracker_server_->isActive())
+    {
+      // Send a success message and reset the length and duration variables.
+      std_trackers::LineTrackerResult result;
+      result.duration = total_time_;
+      result.length = current_traj_length_;
+      result.x = pos(0);
+      result.y = pos(1);
+      result.z = pos(2);
+      result.yaw = goal_yaw_;
+
+      tracker_server_->setSucceeded(result);
+      current_traj_length_ = 0.0;
+    }
   }
   else if(t < ramp_time_)
   {
@@ -156,24 +209,24 @@ quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
   }
   else
   {
-    float te = total_time_ - elapsed_time.toSec(); // time from end
-    float tes = te/ramp_time_; // scaled time from end
-    float tes2 = tes*tes;
-    float tes3 = tes2*tes;
-    float tes4 = tes3*tes;
-    float tes5 = tes4*tes;
-    float tes6 = tes5*tes;
-    float tes7 = tes6*tes;
-    float tes8 = tes7*tes;
-    float dist_from_end = ramp_time_*(vel_coeffs_(0)/2*tes2 + vel_coeffs_(1)/3*tes3 + vel_coeffs_(2)/4*tes4
+    const float te = total_time_ - elapsed_time.toSec(); // time from end
+    const float tes = te/ramp_time_; // scaled time from end
+    const float tes2 = tes*tes;
+    const float tes3 = tes2*tes;
+    const float tes4 = tes3*tes;
+    const float tes5 = tes4*tes;
+    const float tes6 = tes5*tes;
+    const float tes7 = tes6*tes;
+    const float tes8 = tes7*tes;
+    const float dist_from_end = ramp_time_*(vel_coeffs_(0)/2*tes2 + vel_coeffs_(1)/3*tes3 + vel_coeffs_(2)/4*tes4
                            + vel_coeffs_(3)/5*tes5 + vel_coeffs_(4)/6*tes6 + vel_coeffs_(5)/7*tes7
                            + vel_coeffs_(6)/8*tes8);
-    float dist = total_dist_ - dist_from_end;
-    float speed = vel_coeffs_(0)*tes + vel_coeffs_(1)*tes2 + vel_coeffs_(2)*tes3 + vel_coeffs_(3)*tes4
+    const float dist = total_dist_ - dist_from_end;
+    const float speed = vel_coeffs_(0)*tes + vel_coeffs_(1)*tes2 + vel_coeffs_(2)*tes3 + vel_coeffs_(3)*tes4
                 + vel_coeffs_(4)*tes5 + vel_coeffs_(5)*tes6 + vel_coeffs_(6)*tes7;
-    float accel = (vel_coeffs_(0) + 2*vel_coeffs_(1)*tes + 3*vel_coeffs_(2)*tes2 + 4*vel_coeffs_(3)*tes3
+    const float accel = (vel_coeffs_(0) + 2*vel_coeffs_(1)*tes + 3*vel_coeffs_(2)*tes2 + 4*vel_coeffs_(3)*tes3
                  + 5*vel_coeffs_(4)*tes4 + 6*vel_coeffs_(5)*tes5 + 7*vel_coeffs_(6)*tes6)/ramp_time_;
-    float jerk = (2*vel_coeffs_(1) + 6*vel_coeffs_(2)*tes + 12*vel_coeffs_(3)*tes2
+    const float jerk = (2*vel_coeffs_(1) + 6*vel_coeffs_(2)*tes + 12*vel_coeffs_(3)*tes2
           + 20*vel_coeffs_(4)*tes3 + 30*vel_coeffs_(5)*tes4 + 42*vel_coeffs_(6)*tes5)/(ramp_time_*ramp_time_);
     pos = start_pos_ + dist*dir_;
     vel = speed*dir_;
@@ -187,11 +240,44 @@ quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     cmd->yaw_dot = yaw_dot_max_ - yaw_dot_max_/ramp_time_*(t - total_time_ + ramp_time_);
   }
   ICs_.set_from_cmd(cmd);
+
+  if (!goal_reached_) {
+    std_trackers::LineTrackerFeedback feedback;
+    Eigen::Vector3f goal = start_pos_ + total_dist_*dir_;
+    feedback.distance_from_goal = (current_pos - goal).norm();
+    tracker_server_->publishFeedback(feedback);
+  }
+
   return cmd;
 }
 
-void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::ConstPtr &msg)
+void SmoothVelTrackerAction::preempt_callback()
 {
+  ROS_INFO("SmoothVelTrackerAction goal preempted.");
+  tracker_server_->setPreempted();
+
+  // TODO: How much overshoot will this cause at high velocities?
+  total_time_ = (ros::Time::now() - start_time_).toSec();
+  total_dist_ = (ICs_.pos() - start_pos_).norm();
+  dir_ = (ICs_.pos() - start_pos_).normalized();
+  goal_set_ = false;
+  goal_reached_ = true;
+}
+
+void SmoothVelTrackerAction::goal_callback()
+{
+  // Pointer to the goal recieved.
+  const auto msg = tracker_server_->acceptNewGoal();
+
+  // If preempt has been requested, then set this goal to preempted
+  // and make no changes to the tracker state.
+  if (tracker_server_->isPreemptRequested()) {
+    ROS_INFO("SmoothVelTrackerAction going to goal (%f, %f, %f, %f) preempted.", msg->x, msg->y, msg->z, msg->yaw);
+    tracker_server_->setPreempted();
+    return;
+  }
+
+  current_traj_length_ = 0.0;
 
   // Make sure user specifies desired velocity
   if(msg->v_des > 0 && msg->a_des > 0)
@@ -255,16 +341,18 @@ void SmoothVelTracker::goal_callback(const quadrotor_msgs::LineTrackerGoal::Cons
     else
     {
       ROS_ERROR("increase the ramp acceleration");
+      tracker_server_->setAborted();
     }
   }
   else
   {
     ROS_ERROR("v_des and a_des must be nonzero!");
+    tracker_server_->setAborted();
   }
 }
 
 
-uint8_t SmoothVelTracker::status() const
+uint8_t SmoothVelTrackerAction::status() const
 {
   return goal_reached_ ?
           static_cast<uint8_t>(trackers_manager::TrackerStatus::SUCCEEDED) :
@@ -272,4 +360,4 @@ uint8_t SmoothVelTracker::status() const
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(SmoothVelTracker, trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(SmoothVelTrackerAction, trackers_manager::Tracker);

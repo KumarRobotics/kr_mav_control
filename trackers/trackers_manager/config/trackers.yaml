@@ -7,4 +7,4 @@ trackers:
   - std_trackers/NullTracker
   - std_trackers/CircleTrackerAction
   - std_trackers/TrajectoryTracker
-#  - std_trackers/SmoothVelTracker
+  - std_trackers/SmoothVelTrackerAction

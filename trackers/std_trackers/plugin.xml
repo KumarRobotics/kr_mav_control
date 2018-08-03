@@ -50,15 +50,13 @@
   </class>
 </library>
 
-<!--
-<library path="lib/libsmooth_vel_tracker">
-  <class name="std_trackers/SmoothVelTracker" type="SmoothVelTracker" base_class_type="trackers_manager::Tracker">
+<library path="lib/libsmooth_vel_tracker_action">
+  <class name="std_trackers/SmoothVelTrackerAction" type="SmoothVelTrackerAction" base_class_type="trackers_manager::Tracker">
     <description>
       This tracker goes from point A to point B trying to maintain constant velocity with a smooth ramp up.
     </description>
   </class>
 </library>
--->
 
 <library path="lib/libcircle_tracker_action">
   <class name="std_trackers/CircleTrackerAction" type="CircleTrackerAction" base_class_type="trackers_manager::Tracker">
