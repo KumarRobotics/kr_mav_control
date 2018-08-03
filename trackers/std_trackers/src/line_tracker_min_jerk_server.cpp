@@ -1,8 +1,5 @@
-// TODO: add back LineTrackerGoalTimed?
-
 #include <memory>
-#include <iostream>
-#include <Eigen/Geometry>
+#include <Eigen/Core>
 
 #include <ros/ros.h>
 #include <tf/transform_datatypes.h>
@@ -12,7 +9,6 @@
 #include <trackers_manager/Tracker.h>
 #include <trackers_manager/TrackerStatus.h>
 #include <std_trackers/LineTrackerAction.h>
-//#include <std_trackers/LineTrackerTimedAction.h>
 #include <quadrotor_msgs/PositionCommand.h>
 
 
@@ -106,7 +102,7 @@ bool LineTrackerMinJerkAction::Activate(const quadrotor_msgs::PositionCommand::C
 
   // Only allow activation if a goal has been set
   if (goal_set_ && pos_set_) {
-    if (!tracker_server_->isActive()) { // check timed
+    if (!tracker_server_->isActive()) {
       ROS_WARN("LineTrackerMinJerkAction::Activate: goal_set_ is true but action server has no active goal - not activating.");
       active_ = false;
       return false;
@@ -332,7 +328,7 @@ quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerkAction::update(
     j = j / (traj_duration_ * traj_duration_ * traj_duration_);
     yaw_dot_des = yaw_dot_des / traj_duration_;
   }
-  else // (traj_time < 0) can happen with LineTrackerGoalTimed
+  else // (traj_time < 0) can happen when t_start is set
     ROS_INFO_THROTTLE(1, "Trajectory hasn't started yet");
 
   cmd->position.x = x(0), cmd->position.y = x(1), cmd->position.z = x(2);
