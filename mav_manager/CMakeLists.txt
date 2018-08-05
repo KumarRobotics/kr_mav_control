@@ -21,15 +21,16 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   message_generation)
 
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
+include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
 add_service_files(
   DIRECTORY srv
   FILES
     Vec4.srv
     GoalTimed.srv
+    Circle.srv
 )
 generate_messages()
 
@@ -46,7 +47,7 @@ catkin_package(
     std_trackers
     std_msgs
     message_runtime
-  DEPENDS Eigen)
+  DEPENDS EIGEN3)
 
 add_library(mav_manager src/manager.cpp)
 add_dependencies(mav_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
