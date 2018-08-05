@@ -75,7 +75,7 @@ install(TARGETS
     null_tracker
     velocity_tracker_action
     circle_tracker_action
-    #smooth_vel_tracker
+    smooth_vel_tracker_action
     trajectory_tracker
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
