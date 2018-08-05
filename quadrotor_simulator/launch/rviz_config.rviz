@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Robot1
+        - /Command1
       Splitter Ratio: 0.5
     Tree Height: 633
   - Class: rviz/Selection
@@ -27,6 +28,8 @@ Panels:
     Name: Time
     SyncMode: 0
     SyncSource: ""
+Preferences:
+  PromptSaveOnExit: true
 Visualization Manager:
   Class: ""
   Displays:
@@ -60,12 +63,28 @@ Visualization Manager:
       Marker Topic: /quadrotor/mesh_visualization/robot
       Name: Robot
       Namespaces:
-        mesh_visualization: true
+        /quadrotor/mesh_visualization: true
       Queue Size: 2
+      Value: true
+    - Alpha: 1
+      Axes Length: 0.5
+      Axes Radius: 0.05000000074505806
+      Class: rviz/Pose
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
+      Name: Command
+      Shaft Length: 1
+      Shaft Radius: 0.05000000074505806
+      Shape: Axes
+      Topic: /quadrotor/so3_control/cmd_viz
+      Unreliable: false
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
+    Default Light: true
     Fixed Frame: simulator
     Frame Rate: 30
   Name: root
@@ -116,4 +135,4 @@ Window Geometry:
     collapsed: true
   Width: 1280
   X: 0
-  Y: 27
+  Y: 0

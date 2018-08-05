@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <nodelet/nodelet.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <quadrotor_msgs/SO3Command.h>
 #include <quadrotor_msgs/PositionCommand.h>
@@ -39,7 +40,7 @@ class SO3ControlNodelet : public nodelet::Nodelet
   void corrections_callback(const quadrotor_msgs::Corrections::ConstPtr &msg);
 
   SO3Control controller_;
-  ros::Publisher so3_command_pub_;
+  ros::Publisher so3_command_pub_, command_viz_pub_;
   ros::Subscriber odom_sub_, position_cmd_sub_, enable_motors_sub_, corrections_sub_;
 
   bool position_cmd_updated_, position_cmd_init_;
@@ -78,7 +79,8 @@ void SO3ControlNodelet::publishSO3Command()
   const Eigen::Quaternionf &orientation = controller_.getComputedOrientation();
   const Eigen::Vector3f &ang_vel = controller_.getComputedAngularVelocity();
 
-  quadrotor_msgs::SO3Command::Ptr so3_command(new quadrotor_msgs::SO3Command);
+  quadrotor_msgs::SO3Command::Ptr so3_command =
+      boost::make_shared<quadrotor_msgs::SO3Command>();
   so3_command->header.stamp = ros::Time::now();
   so3_command->header.frame_id = frame_id_;
   so3_command->force.x = force(0);
@@ -103,6 +105,18 @@ void SO3ControlNodelet::publishSO3Command()
   so3_command->aux.enable_motors = enable_motors_;
   so3_command->aux.use_external_yaw = use_external_yaw_;
   so3_command_pub_.publish(so3_command);
+
+  geometry_msgs::PoseStamped::Ptr cmd_viz_msg =
+      boost::make_shared<geometry_msgs::PoseStamped>();
+  cmd_viz_msg->header = so3_command->header;
+  cmd_viz_msg->pose.position.x = des_pos_(0);
+  cmd_viz_msg->pose.position.y = des_pos_(1);
+  cmd_viz_msg->pose.position.z = des_pos_(2);
+  cmd_viz_msg->pose.orientation.x = orientation.x();
+  cmd_viz_msg->pose.orientation.y = orientation.y();
+  cmd_viz_msg->pose.orientation.z = orientation.z();
+  cmd_viz_msg->pose.orientation.w = orientation.w();
+  command_viz_pub_.publish(cmd_viz_msg);
 }
 
 void SO3ControlNodelet::position_cmd_callback(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
@@ -125,6 +139,8 @@ void SO3ControlNodelet::position_cmd_callback(const quadrotor_msgs::PositionComm
 void SO3ControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
   have_odom_ = true;
+
+  frame_id_ = odom->header.frame_id;
 
   const Eigen::Vector3f position(odom->pose.pose.position.x,
                                  odom->pose.pose.position.y,
@@ -180,7 +196,6 @@ void SO3ControlNodelet::onInit()
 
   std::string quadrotor_name;
   n.param("quadrotor_name", quadrotor_name, std::string("quadrotor"));
-  frame_id_ = "/" + quadrotor_name;
 
   n.param("mass", mass_, 0.5f);
   controller_.setMass(mass_);
@@ -218,6 +233,7 @@ void SO3ControlNodelet::onInit()
   controller_.setMaxTiltAngle(max_tilt_angle);
 
   so3_command_pub_ = n.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
+  command_viz_pub_ = n.advertise<geometry_msgs::PoseStamped>("cmd_viz", 10);
 
   odom_sub_ = n.subscribe("odom", 10, &SO3ControlNodelet::odom_callback, this, ros::TransportHints().tcpNoDelay());
   position_cmd_sub_ = n.subscribe("position_cmd", 10, &SO3ControlNodelet::position_cmd_callback, this,

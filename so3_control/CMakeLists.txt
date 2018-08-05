@@ -7,7 +7,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 
-find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs quadrotor_msgs std_msgs tf nodelet)
+find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs nav_msgs quadrotor_msgs std_msgs tf nodelet)
 find_package(Eigen3 REQUIRED)
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
