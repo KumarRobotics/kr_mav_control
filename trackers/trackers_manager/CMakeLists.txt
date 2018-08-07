@@ -14,7 +14,13 @@ add_service_files(DIRECTORY srv
   FILES
   Transition.srv
 )
-generate_messages()
+
+add_message_files(DIRECTORY msg
+  FILES
+  TrackerStatus.msg
+)
+
+generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(
   INCLUDE_DIRS include

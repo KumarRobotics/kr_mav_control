@@ -1,0 +1,15 @@
+#goal definition
+float64 Ax
+float64 Ay
+float64 T
+float64 duration
+---
+#result definition
+# time duration of the trajectory
+float64 duration 
+# approximate arc length of the trajectory (ie. sum of distances between position commands)
+float64 length 
+---
+#feedback
+# time in tracker
+float64 duration
