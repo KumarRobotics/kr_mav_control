@@ -1,8 +1,7 @@
-
-Launch 
+Launch
 ```
-roslaunch mav_manager demo.launch sim:=true vicon:=false
 roslaunch quadrotor_simulator rviz.launch
+roslaunch mav_manager demo.launch sim:=true vicon:=false
 ```
 
 Run a simple example script
@@ -10,10 +9,11 @@ Run a simple example script
 cd quadrotor_control/mav_manager/scripts
 ./sample.bash
 ```
-More advanced GUI is available at https://github.com/KumarRobotics/kr_ui. Clone and then compile the workspace again. 
 
-`rosrun rqt_quadrotor_safety rqt_quadrotor_safety`
-
-then try MotorsON -> TakeOff -> GoTo (set z other than 0)
+There is also a GUI that can be used to send simple commands to the robot through the `mav_manager`. Launch it by running
+```
+rosrun rqt_mav_manager rqt_mav_manager
+```
+then try Motors ON -> Take Off -> Go To (set z > 0)
 
 TODO - Waypoint Navigation
