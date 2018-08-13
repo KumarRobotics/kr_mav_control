@@ -21,6 +21,8 @@ class SO3CmdToCrazyflie : public nodelet::Nodelet
  public:
   void onInit(void);
 
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
  private:
   void so3_cmd_callback(const quadrotor_msgs::SO3Command::ConstPtr &msg);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
