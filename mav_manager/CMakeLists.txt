@@ -53,7 +53,7 @@ add_library(mav_manager src/manager.cpp)
 add_dependencies(mav_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(mav_manager ${catkin_LIBRARIES})
 
-add_executable(mav_services src/sample.cpp)
+add_executable(mav_services src/mav_services.cpp)
 target_link_libraries(mav_services mav_manager ${catkin_LIBRARIES})
 
 install(TARGETS
