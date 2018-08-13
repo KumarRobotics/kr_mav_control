@@ -204,7 +204,7 @@ class MavManagerUi(Plugin):
     self.robot_name = value
     self._widget.robot_name_line_edit.setText(value)
 
-    value = instance_settings.value('node_name', "mav_manager_node")
+    value = instance_settings.value('node_name', "mav_services")
     #value = rospy.get_param("~robot_name", value)
     self.node_name = value
     self._widget.node_name_line_edit.setText(value)
