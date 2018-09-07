@@ -722,7 +722,7 @@ bool MAVManager::ehover() {
   std_trackers::LineTrackerGoal goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
-  goal.z = home_(2);
+  goal.z = pos_(2);
   line_tracker_distance_client_.sendGoal(goal,
                                          boost::bind(&MAVManager::tracker_done_callback, this, _1, _2),
                                          ClientType::SimpleActiveCallback(),
