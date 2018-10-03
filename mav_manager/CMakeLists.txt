@@ -21,14 +21,16 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   message_generation)
 
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
+include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
 add_service_files(
   DIRECTORY srv
   FILES
     Vec4.srv
+    GoalTimed.srv
+    Circle.srv
 )
 generate_messages()
 
@@ -45,22 +47,18 @@ catkin_package(
     std_trackers
     std_msgs
     message_runtime
-  DEPENDS Eigen)
+  DEPENDS EIGEN3)
 
 add_library(mav_manager src/manager.cpp)
 add_dependencies(mav_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(mav_manager ${catkin_LIBRARIES})
 
-add_executable(mav_manager_node src/sample.cpp)
-target_link_libraries(mav_manager_node mav_manager ${catkin_LIBRARIES})
-
-add_executable(mav_manager_sub src/sample_sub.cpp)
-target_link_libraries(mav_manager_sub mav_manager ${catkin_LIBRARIES})
+add_executable(mav_services src/mav_services.cpp)
+target_link_libraries(mav_services mav_manager ${catkin_LIBRARIES})
 
 install(TARGETS
     mav_manager
-    mav_manager_node
-    mav_manager_sub
+    mav_services
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

@@ -4,7 +4,8 @@
   <description>mavros_interface</description>
   <maintainer email="anurag.makineni@gmail.com">Anurag Makineni</maintainer>
   <maintainer email="JustinThomas@jtwebs.net">Justin Thomas</maintainer>
-  
+  <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
+
   <license>BSD</license>
 
   <!-- Dependencies which this package needs to build itself. -->
@@ -17,7 +18,6 @@
   <depend>quadrotor_msgs</depend>
   <depend>mavros_msgs</depend>
   <depend>nodelet</depend>
-  <depend>cmake_modules</depend>
 
   <export>
     <nodelet plugin="${prefix}/nodelet_plugin.xml"/>

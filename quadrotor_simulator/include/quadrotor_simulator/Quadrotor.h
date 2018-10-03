@@ -22,43 +22,46 @@ class Quadrotor
 
   Quadrotor();
 
-  const Quadrotor::State &getState(void) const;
+  const Quadrotor::State &getState() const;
   void setState(const Quadrotor::State &state);
 
-  double getMass(void) const;
+  double getMass() const;
   void setMass(double mass);
 
-  double getGravity(void) const;
+  double getDragCoefficient() const;
+  void setDragCoefficient(double drag_coefficient);
+
+  double getGravity() const;
   void setGravity(double g);
 
-  const Eigen::Matrix3d &getInertia(void) const;
+  const Eigen::Matrix3d &getInertia() const;
   void setInertia(const Eigen::Matrix3d &inertia);
 
-  double getArmLength(void) const;
+  double getArmLength() const;
   void setArmLength(double d);
 
-  double getPropRadius(void) const;
+  double getPropRadius() const;
   void setPropRadius(double r);
 
-  double getPropellerThrustCoefficient(void) const;
+  double getPropellerThrustCoefficient() const;
   void setPropellerThrustCoefficient(double kf);
 
-  double getPropellerMomentCoefficient(void) const;
+  double getPropellerMomentCoefficient() const;
   void setPropellerMomentCoefficient(double km);
 
-  double getMotorTimeConstant(void) const;
+  double getMotorTimeConstant() const;
   void setMotorTimeConstant(double k);
 
-  const Eigen::Vector3d &getExternalForce(void) const;
+  const Eigen::Vector3d &getExternalForce() const;
   void setExternalForce(const Eigen::Vector3d &force);
 
-  const Eigen::Vector3d &getExternalMoment(void) const;
+  const Eigen::Vector3d &getExternalMoment() const;
   void setExternalMoment(const Eigen::Vector3d &moment);
 
-  double getMaxRPM(void) const;
+  double getMaxRPM() const;
   void setMaxRPM(double max_rpm);
 
-  double getMinRPM(void) const;
+  double getMinRPM() const;
   void setMinRPM(double min_rpm);
 
   // Inputs are desired RPM for the motors
@@ -77,7 +80,7 @@ class Quadrotor
   void operator()(const Quadrotor::InternalState &x, Quadrotor::InternalState &dxdt, const double /* t */);
 
  private:
-  void updateInternalState(void);
+  void updateInternalState();
 
   double g_; // gravity
   double mass_;
@@ -89,6 +92,7 @@ class Quadrotor
   double motor_time_constant_; // unit: sec
   double max_rpm_;
   double min_rpm_;
+  double drag_coefficient_;
   Quadrotor::State state_;
   Eigen::Array4d input_;
   Eigen::Vector3d external_force_;

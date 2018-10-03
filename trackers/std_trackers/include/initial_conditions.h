@@ -1,8 +1,7 @@
 #ifndef STD_TRACKERS_INITIAL_CONDITIONS_H
 #define STD_TRACKERS_INITIAL_CONDITIONS_H
 
-#include <ros/ros.h>
-#include <Eigen/Geometry>
+#include <Eigen/Core>
 #include <nav_msgs/Odometry.h>
 #include <quadrotor_msgs/PositionCommand.h>
 

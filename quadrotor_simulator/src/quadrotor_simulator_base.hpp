@@ -8,6 +8,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <Eigen/Geometry>
 #include <geometry_msgs/Vector3Stamped.h>
+#include <quadrotor_msgs/OutputData.h>
 
 namespace QuadrotorSimulator
 {
@@ -17,8 +18,10 @@ class QuadrotorSimulatorBase
  public:
   QuadrotorSimulatorBase(ros::NodeHandle &n);
   void run(void);
-  void extern_force_callback(const geometry_msgs::Vector3Stamped::ConstPtr &f_ext);
-  void extern_moment_callback(const geometry_msgs::Vector3Stamped::ConstPtr &m_ext);
+  void extern_force_callback(
+      const geometry_msgs::Vector3Stamped::ConstPtr &f_ext);
+  void extern_moment_callback(
+      const geometry_msgs::Vector3Stamped::ConstPtr &m_ext);
 
  protected:
   typedef struct _ControlInput
@@ -52,12 +55,14 @@ class QuadrotorSimulatorBase
 
   ros::Publisher pub_odom_;
   ros::Publisher pub_imu_;
+  ros::Publisher pub_output_data_;
   ros::Subscriber sub_cmd_;
   ros::Subscriber sub_extern_force_;
   ros::Subscriber sub_extern_moment_;
   double simulation_rate_;
   double odom_rate_;
   std::string quad_name_;
+  std::string world_frame_id_;
   tf2_ros::TransformBroadcaster tf_broadcaster_;
 };
 
@@ -66,60 +71,53 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
 {
   pub_odom_ = n.advertise<nav_msgs::Odometry>("odom", 100);
   pub_imu_ = n.advertise<sensor_msgs::Imu>("imu", 100);
+  pub_output_data_ =
+      n.advertise<quadrotor_msgs::OutputData>("output_data", 100);
   sub_cmd_ = n.subscribe<T>("cmd", 100, &QuadrotorSimulatorBase::cmd_callback,
                             this, ros::TransportHints().tcpNoDelay());
-  sub_extern_force_ = n.subscribe<geometry_msgs::Vector3Stamped>("extern_force",
-                            10, &QuadrotorSimulatorBase::extern_force_callback,
-                            this, ros::TransportHints().tcpNoDelay());
-  sub_extern_moment_ = n.subscribe<geometry_msgs::Vector3Stamped>("extern_moment",
-                            10, &QuadrotorSimulatorBase::extern_moment_callback,
-                            this, ros::TransportHints().tcpNoDelay());
+  sub_extern_force_ = n.subscribe<geometry_msgs::Vector3Stamped>(
+      "extern_force", 10, &QuadrotorSimulatorBase::extern_force_callback, this,
+      ros::TransportHints().tcpNoDelay());
+  sub_extern_moment_ = n.subscribe<geometry_msgs::Vector3Stamped>(
+      "extern_moment", 10, &QuadrotorSimulatorBase::extern_moment_callback,
+      this, ros::TransportHints().tcpNoDelay());
 
   n.param("rate/simulation", simulation_rate_, 1000.0);
   ROS_ASSERT(simulation_rate_ > 0);
 
   n.param("rate/odom", odom_rate_, 100.0);
 
+  n.param("world_frame_id", world_frame_id_, std::string("simulator"));
   n.param("quadrotor_name", quad_name_, std::string("quadrotor"));
 
-#define GET_PARAM(param)                       \
-  double param;                                \
-  if(!n.getParam(#param, param))               \
-  {                                            \
-    ROS_FATAL(#param " not set");              \
-    throw std::logic_error(#param " not set"); \
-  }
+  auto get_param = [&n](const std::string &param_name) {
+    double param;
+    if(!n.hasParam(param_name))
+    {
+      ROS_WARN("Simulator sleeping to wait for param %s", param_name.c_str());
+      ros::Duration(0.5).sleep();
+    }
+    if(!n.getParam(param_name, param))
+    {
+      const std::string error_msg = param_name + " not set";
+      ROS_FATAL_STREAM(error_msg);
+      throw std::logic_error(error_msg);
+    }
+    return param;
+  };
 
-  GET_PARAM(mass);
-  quad_.setMass(mass);
-
-  GET_PARAM(Ixx);
-  GET_PARAM(Iyy);
-  GET_PARAM(Izz);
-  quad_.setInertia(Eigen::Vector3d(Ixx, Iyy, Izz).asDiagonal());
-
-  GET_PARAM(gravity);
-  quad_.setGravity(gravity);
-
-  GET_PARAM(prop_radius);
-  quad_.setPropRadius(prop_radius);
-
-  GET_PARAM(thrust_coefficient);
-  quad_.setPropellerThrustCoefficient(thrust_coefficient);
-
-  GET_PARAM(arm_length);
-  quad_.setArmLength(arm_length);
-
-  GET_PARAM(motor_time_constant);
-  quad_.setMotorTimeConstant(motor_time_constant);
-
-  GET_PARAM(min_rpm);
-  quad_.setMinRPM(min_rpm);
-
-  GET_PARAM(max_rpm);
-  quad_.setMaxRPM(max_rpm);
-
-#undef GET_PARAM
+  quad_.setMass(get_param("mass"));
+  quad_.setInertia(
+      Eigen::Vector3d(get_param("Ixx"), get_param("Iyy"), get_param("Izz"))
+          .asDiagonal());
+  quad_.setGravity(get_param("gravity"));
+  quad_.setPropRadius(get_param("prop_radius"));
+  quad_.setPropellerThrustCoefficient(get_param("thrust_coefficient"));
+  quad_.setArmLength(get_param("arm_length"));
+  quad_.setMotorTimeConstant(get_param("motor_time_constant"));
+  quad_.setMinRPM(get_param("min_rpm"));
+  quad_.setMaxRPM(get_param("max_rpm"));
+  quad_.setDragCoefficient(get_param("drag_coefficient"));
 
   Eigen::Vector3d initial_pos;
   n.param("initial_position/x", initial_pos(0), 0.0);
@@ -144,17 +142,18 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
 template <typename T, typename U>
 void QuadrotorSimulatorBase<T, U>::run(void)
 {
-  // initialize command
-  typename T::Ptr empty_cmd = boost::make_shared<T>();
-  cmd_callback(empty_cmd);
+  // Call once with empty command to initialize values
+  cmd_callback(boost::make_shared<T>());
 
   QuadrotorSimulatorBase::ControlInput control;
 
   nav_msgs::Odometry odom_msg;
   sensor_msgs::Imu imu_msg;
-  odom_msg.header.frame_id = "/simulator";
-  odom_msg.child_frame_id = "/" + quad_name_;
-  imu_msg.header.frame_id = "/" + quad_name_;
+  quadrotor_msgs::OutputData output_data_msg;
+  odom_msg.header.frame_id = world_frame_id_;
+  odom_msg.child_frame_id = quad_name_;
+  imu_msg.header.frame_id = quad_name_;
+  output_data_msg.header.frame_id = quad_name_;
 
   const double simulation_dt = 1 / simulation_rate_;
   ros::Rate r(simulation_rate_);
@@ -177,13 +176,26 @@ void QuadrotorSimulatorBase<T, U>::run(void)
     {
       next_odom_pub_time += odom_pub_duration;
       const Quadrotor::State &state = quad_.getState();
+
       stateToOdomMsg(state, odom_msg);
-      quadToImuMsg(quad_, imu_msg);
       odom_msg.header.stamp = tnow;
-      imu_msg.header.stamp = tnow;
       pub_odom_.publish(odom_msg);
-      pub_imu_.publish(imu_msg);
       tfBroadcast(odom_msg);
+
+      quadToImuMsg(quad_, imu_msg);
+      imu_msg.header.stamp = tnow;
+      pub_imu_.publish(imu_msg);
+
+      // Also publish an OutputData msg
+      output_data_msg.header.stamp = tnow;
+      output_data_msg.orientation = imu_msg.orientation;
+      output_data_msg.angular_velocity = imu_msg.angular_velocity;
+      output_data_msg.linear_acceleration = imu_msg.linear_acceleration;
+      output_data_msg.motor_rpm[0] = state.motor_rpm(0);
+      output_data_msg.motor_rpm[1] = state.motor_rpm(1);
+      output_data_msg.motor_rpm[2] = state.motor_rpm(2);
+      output_data_msg.motor_rpm[3] = state.motor_rpm(3);
+      pub_output_data_.publish(output_data_msg);
     }
 
     r.sleep();
@@ -194,16 +206,16 @@ template <typename T, typename U>
 void QuadrotorSimulatorBase<T, U>::extern_force_callback(
     const geometry_msgs::Vector3Stamped::ConstPtr &f_ext)
 {
-  quad_.setExternalForce(Eigen::Vector3d(
-        f_ext->vector.x, f_ext->vector.y, f_ext->vector.z));
+  quad_.setExternalForce(
+      Eigen::Vector3d(f_ext->vector.x, f_ext->vector.y, f_ext->vector.z));
 }
 
 template <typename T, typename U>
 void QuadrotorSimulatorBase<T, U>::extern_moment_callback(
     const geometry_msgs::Vector3Stamped::ConstPtr &m_ext)
 {
-  quad_.setExternalMoment(Eigen::Vector3d(
-        m_ext->vector.x, m_ext->vector.y, m_ext->vector.z));
+  quad_.setExternalMoment(
+      Eigen::Vector3d(m_ext->vector.x, m_ext->vector.y, m_ext->vector.z));
 }
 
 template <typename T, typename U>
@@ -252,11 +264,22 @@ void QuadrotorSimulatorBase<T, U>::quadToImuMsg(const Quadrotor &quad,
   Eigen::Vector3d acc;
   if(state.x(2) < 1e-4)
   {
-    acc = state.R * (external_force / m + Eigen::Vector3d(0, 0, g));
+    acc = state.R.transpose() * (external_force / m + Eigen::Vector3d(0, 0, g));
   }
   else
   {
-    acc = thrust / m * Eigen::Vector3d(0, 0, 1) + state.R.transpose() * external_force / m;
+    acc = thrust / m * Eigen::Vector3d(0, 0, 1) +
+          state.R.transpose() * external_force / m;
+    if(quad.getDragCoefficient() != 0)
+    {
+      const double drag_coefficient = quad.getDragCoefficient();
+      const double mass = quad.getMass();
+      Eigen::Matrix3d P;
+      P << 1, 0, 0,
+           0, 1, 0,
+           0, 0, 0;
+      acc -= drag_coefficient / mass * P * state.R.transpose() * state.v;
+    }
   }
 
   imu.linear_acceleration.x = acc(0);

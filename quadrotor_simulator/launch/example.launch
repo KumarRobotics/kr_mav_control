@@ -1,0 +1,6 @@
+<launch>
+  <group ns="quadrotor">
+    <include file="$(find quadrotor_simulator)/launch/sim.launch"/>
+    <include file="$(find quadrotor_simulator)/launch/control.launch"/>
+  </group>
+</launch>

@@ -21,6 +21,7 @@ class QuadrotorSimulatorSO3
 {
  public:
   QuadrotorSimulatorSO3(ros::NodeHandle &nh) : QuadrotorSimulatorBase(nh) {}
+
  private:
   virtual void cmd_callback(const quadrotor_msgs::SO3Command::ConstPtr &cmd);
   virtual ControlInput getControl(const Quadrotor &quad,
@@ -65,7 +66,7 @@ QuadrotorSimulatorSO3::ControlInput QuadrotorSimulatorSO3::getControl(
   const float I[3][3] = {{J(0, 0), J(0, 1), J(0, 2)},
                          {J(1, 0), J(1, 1), J(1, 2)},
                          {J(2, 0), J(2, 1), J(2, 2)}};
-  const Quadrotor::State state = quad.getState();
+  const Quadrotor::State &state = quad.getState();
 
   float R11 = state.R(0, 0);
   float R12 = state.R(0, 1);
@@ -98,9 +99,10 @@ QuadrotorSimulatorSO3::ControlInput QuadrotorSimulatorSO3::getControl(
                               Rd12 * R12 + Rd22 * R22 + Rd32 * R32 +
                               Rd13 * R13 + Rd23 * R23 + Rd33 * R33));
 
-  float force = 0;
-  if(Psi < 1.0f) // Position control stability guaranteed only when Psi < 1
-    force = cmd.force[0] * R13 + cmd.force[1] * R23 + cmd.force[2] * R33;
+  if(Psi > 1.0f) // Position control stability guaranteed only when Psi < 1
+    ROS_WARN_THROTTLE(1, "Warning Psi = %f > 1", Psi);
+
+  float force = cmd.force[0] * R13 + cmd.force[1] * R23 + cmd.force[2] * R33;
 
   float eR1 = 0.5f * (R12 * Rd13 - R13 * Rd12 + R22 * Rd23 - R23 * Rd22 +
                       R32 * Rd33 - R33 * Rd32);

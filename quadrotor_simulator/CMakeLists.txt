@@ -6,16 +6,18 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs nav_msgs sensor_msgs tf2_ros cmake_modules)
-find_package(Eigen REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 
-include_directories(include ${EIGEN_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs nav_msgs sensor_msgs tf2_ros)
+find_package(Eigen3 REQUIRED)
+
+include_directories(include ${EIGEN3_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS
   LIBRARIES
   CATKIN_DEPENDS roscpp quadrotor_msgs nav_msgs sensor_msgs tf2_ros
-  DEPENDS Eigen)
+  DEPENDS EIGEN3)
 
 add_library(quadrotor_dynamics src/dynamics/Quadrotor.cpp)
 
@@ -38,3 +40,4 @@ install(TARGETS
 
 install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
+install(DIRECTORY config/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config)
