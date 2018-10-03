@@ -10,7 +10,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
-find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs nav_msgs nodelet cmake_modules)
+find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs nav_msgs nodelet cmake_modules tf_conversions)
 find_package(Eigen 3 REQUIRED)
 
 find_package(Snav)
@@ -26,7 +26,7 @@ else()
   catkin_package(
     INCLUDE_DIRS
     LIBRARIES
-    CATKIN_DEPENDS roscpp quadrotor_msgs nav_msgs nodelet
+    CATKIN_DEPENDS roscpp quadrotor_msgs nav_msgs nodelet tf_conversions
     DEPENDS Eigen)
 
   add_executable(pos_subscriber src/pos_subscriber.cpp)
