@@ -48,7 +48,7 @@ void SO3CmdToQualcomm::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 
   if(so3_cmd_set_ && ((ros::Time::now() - last_so3_cmd_time_).toSec() >= so3_cmd_timeout_))
   {
-    ROS_INFO("so3_cmd timeout. %f seconds since last command",
+    ROS_WARN("so3_cmd timeout. %f seconds since last command",
              (ros::Time::now() - last_so3_cmd_time_).toSec());
     const auto last_so3_cmd_ptr =
         boost::make_shared<quadrotor_msgs::SO3Command>(last_so3_cmd_);
@@ -68,7 +68,7 @@ void SO3CmdToQualcomm::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
   if(so3_cmd_set_ &&
      ((ros::Time::now() - last_so3_cmd_time_).toSec() >= so3_cmd_timeout_))
   {
-    ROS_INFO("so3_cmd timeout. %f seconds since last command",
+    ROS_WARN("so3_cmd timeout. %f seconds since last command",
              (ros::Time::now() - last_so3_cmd_time_).toSec());
     const auto last_so3_cmd_ptr =
         boost::make_shared<quadrotor_msgs::SO3Command>(last_so3_cmd_);
@@ -79,27 +79,31 @@ void SO3CmdToQualcomm::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
 
 void SO3CmdToQualcomm::motors_on()
 {
-  //call the update, 0-success
-  int res_update = sn_update_data();
-  if(res_update ==  -1)
-  {
-    ROS_ERROR("Likely failure in snav, ensure it is running");
-    return;
-  }
 
-  int ret = sn_spin_props();
-  if(ret == -1)
-    ROS_ERROR("Not able to send spinning command");
-  else
-    motor_status_ = 1;
-
-  if(snav_cached_data_struct_->general_status.props_state == SN_PROPS_STATE_SPINNING)
-    ROS_WARN("All the propellers are spinning");
-  else
+  int counter_motors = 0;
+  do
   {
-    ROS_ERROR("All the propellers are not spinning");
-    motor_status_ = 0;
+    //call the update 0 success
+    int res_update = sn_update_data();
+    if(res_update ==  -1)
+    {
+      ROS_ERROR("Likely failure in snav, ensure it is running");
+      return;
+    }
+
+    //send minimum thrust and identity attitude
+    sn_send_thrust_att_ang_vel_command (0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+
+    //run the props 0 success
+    int ret = sn_spin_props();
+    if(ret == -1)
+      ROS_ERROR("Not able to send spinning command");
+    else
+      motor_status_ = 1;
+
+    counter_motors++;
   }
+  while( (counter_motors < 10) && (snav_cached_data_struct_->general_status.props_state != SN_PROPS_STATE_SPINNING));
 
   /*
   int counter_motors = 0;
@@ -175,8 +179,6 @@ void SO3CmdToQualcomm::motors_off()
 	  ROS_ERROR("All the propellers are still spinnig");
     motor_status_ = 1;
   }
-	else
-	  ROS_WARN("All the propellers are now off");
 }
 
 void SO3CmdToQualcomm::so3_cmd_to_qc_interface(const quadrotor_msgs::SO3Command::ConstPtr &msg)
