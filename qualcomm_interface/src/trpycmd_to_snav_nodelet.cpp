@@ -23,7 +23,7 @@ class TRPYCmdToSnav : public nodelet::Nodelet
   void motors_off();
 
   //controller state
-  SnavCachedData *snav_cached_data_struct;
+  SnavCachedData *snav_cached_data_struct_;
 
   bool odom_set_, imu_set_, trpy_cmd_set_;
   Eigen::Quaterniond odom_q_, imu_q_;
@@ -50,7 +50,7 @@ void TRPYCmdToSnav::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
   if(trpy_cmd_set_ &&
      ((ros::Time::now() - last_trpy_cmd_time_).toSec() >= trpy_cmd_timeout_))
   {
-    ROS_INFO("trpy_cmd timeout. %f seconds since last command",
+    ROS_DEBUG("trpy_cmd timeout. %f seconds since last command",
              (ros::Time::now() - last_trpy_cmd_time_).toSec());
     const auto last_trpy_cmd_ptr =
         boost::make_shared<quadrotor_msgs::TRPYCommand>(last_trpy_cmd_);
@@ -70,7 +70,7 @@ void TRPYCmdToSnav::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
   if(trpy_cmd_set_ &&
      ((ros::Time::now() - last_trpy_cmd_time_).toSec() >= trpy_cmd_timeout_))
   {
-    ROS_INFO("trpy_cmd timeout. %f seconds since last command",
+    ROS_DEBUG("trpy_cmd timeout. %f seconds since last command",
              (ros::Time::now() - last_trpy_cmd_time_).toSec());
     const auto last_trpy_cmd_ptr =
         boost::make_shared<quadrotor_msgs::TRPYCommand>(last_trpy_cmd_);
@@ -81,26 +81,46 @@ void TRPYCmdToSnav::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
 
 void TRPYCmdToSnav::motors_on()
 {
-  int ret = sn_spin_props();
-  if(ret == -1)
-    ROS_ERROR("Not able to send spinning command");
-  else
-    motor_status_ = 1;
+  //call the update 0 success
+  int res_update = sn_update_data();
+  if(res_update ==  -1)
+  {
+    ROS_ERROR("Likely failure in snav, ensure it is running");
+    return;
+  }
 
-  if(snav_cached_data_struct->general_status.props_state == SN_PROPS_STATE_SPINNING)
-    ROS_INFO("All the propellers are spinnig");
-  else{
-    ROS_ERROR("All the propellers are not spinnig");
-    motor_status_ = 0;
+  switch(snav_cached_data_struct_->general_status.props_state)
+  {
+    case SN_PROPS_STATE_NOT_SPINNING: 
+    {
+      sn_send_thrust_att_ang_vel_command (0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+      int ret = sn_spin_props();
+      if(ret == -1)
+        ROS_ERROR("Not able to send spinning command");
+      break;
+    }
+    case SN_PROPS_STATE_STARTING:
+    {
+      ROS_WARN("Properllers are starting to spin");
+      break;
+    }    
+    case SN_PROPS_STATE_SPINNING:
+    {
+      ROS_INFO("Propellers are spinning");
+      motor_status_ = 1;
+      break;
+    }
+    default:
+      ROS_ERROR("SN_PROPS_STATE_UNKNOWN");
   }
 }
 
 void TRPYCmdToSnav::motors_off()
 {
-	do
+  do
   {
-		//call the update 0 success
-		int res_update = sn_update_data();
+    //call the update 0 success
+    int res_update = sn_update_data();
     if(res_update ==  -1)
     {
       ROS_ERROR("Likely failure in snav, ensure it is running");
@@ -118,17 +138,17 @@ void TRPYCmdToSnav::motors_off()
     {
       ROS_ERROR("Not able to send switch off propellers");
     }
-	}
-	while(snav_cached_data_struct->general_status.props_state == SN_PROPS_STATE_SPINNING);
+  }
+  while(snav_cached_data_struct_->general_status.props_state == SN_PROPS_STATE_SPINNING);
 
-	//check the propellers status
-	if(snav_cached_data_struct->general_status.props_state == SN_PROPS_STATE_SPINNING)
+  //check the propellers status
+  if(snav_cached_data_struct_->general_status.props_state == SN_PROPS_STATE_SPINNING)
   {
-	  ROS_ERROR("All the propellers are still spinnig");
+    ROS_ERROR("All the propellers are still spinnig");
     motor_status_ = 1;
   }
-	else
-	  ROS_INFO("All the propellers are now off");
+  else
+    ROS_INFO("All the propellers are now off");
 }
 
 void TRPYCmdToSnav::trpy_cmd_to_qc_interface(
@@ -171,9 +191,9 @@ void TRPYCmdToSnav::trpy_cmd_callback(
 
   //switch on motors
   if(msg->aux.enable_motors && !motor_status_)
-  	motors_on();
+    motors_on();
   else if(!msg->aux.enable_motors)
-  	motors_off();
+    motors_off();
 
   trpy_cmd_to_qc_interface(msg);
 
@@ -193,8 +213,8 @@ void TRPYCmdToSnav::onInit(void)
   imu_set_ = false;
   trpy_cmd_set_ = false;
   motor_status_ = 0;
-	snav_cached_data_struct = NULL;
-  if (sn_get_flight_data_ptr(sizeof(SnavCachedData), &snav_cached_data_struct) != 0)
+  snav_cached_data_struct_ = NULL;
+  if (sn_get_flight_data_ptr(sizeof(SnavCachedData), &snav_cached_data_struct_) != 0)
   {
     ROS_ERROR("\nFailed to get flight data pointer!\n");
     return;

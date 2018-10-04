@@ -18,10 +18,7 @@ if(NOT ${Snav_FOUND})
   message(WARNING "NOTE: snav not found so not building qualcomm_interface")
 else()
   include_directories(${Snav_INCLUDE_DIR})
-
   include_directories(${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
-  include_directories("$ENV{HOME}/dev/inc")
-  include_directories("/usr/include/snav/")
 
   catkin_package(
     INCLUDE_DIRS
@@ -30,18 +27,18 @@ else()
     DEPENDS Eigen)
 
   add_executable(pos_subscriber src/pos_subscriber.cpp)
-  target_link_libraries(pos_subscriber ${catkin_LIBRARIES} snav_arm)
+  target_link_libraries(pos_subscriber ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
   add_executable(vio_odom_publisher src/vio_odom_publisher.cpp)
-  target_link_libraries(vio_odom_publisher ${catkin_LIBRARIES} snav_arm)
+  target_link_libraries(vio_odom_publisher ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
   add_library(so3cmd_to_qualcomm_nodelet src/so3cmd_to_qualcomm_nodelet.cpp)
   add_dependencies(so3cmd_to_qualcomm_nodelet ${catkin_EXPORTED_TARGETS})
-  target_link_libraries(so3cmd_to_qualcomm_nodelet ${catkin_LIBRARIES} snav_arm)
+  target_link_libraries(so3cmd_to_qualcomm_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
   add_library(trpycmd_to_snav_nodelet src/trpycmd_to_snav_nodelet.cpp)
   add_dependencies(trpycmd_to_snav_nodelet ${catkin_EXPORTED_TARGETS})
-  target_link_libraries(trpycmd_to_snav_nodelet ${catkin_LIBRARIES} snav_arm)
+  target_link_libraries(trpycmd_to_snav_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
   install(TARGETS pos_subscriber vio_odom_publisher so3cmd_to_qualcomm_nodelet trpycmd_to_snav_nodelet
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

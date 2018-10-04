@@ -6,7 +6,7 @@
   </class>
 </library>
 <library path="lib/libtrpycmd_to_snav_nodelet">
-  <class name="snavquad_interface/TRPYCmdToSnav" type="TRPYCmdToSnav" base_class_type="nodelet::Nodelet">
+  <class name="qualcomm_interface/TRPYCmdToSnav" type="TRPYCmdToSnav" base_class_type="nodelet::Nodelet">
     <description>
       This take a trpy_command and publishes it to the robot using Qualcomm's Snav API
     </description>
