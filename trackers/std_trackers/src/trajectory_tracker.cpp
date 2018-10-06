@@ -154,7 +154,13 @@ quadrotor_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_ms
   if(goal_set_)
   {
     traj_start_ = t_now;
-    traj_gen_->setInitialConditions(ICs_.pos(), {ICs_.vel(), ICs_.acc(), ICs_.jrk()});
+
+    std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> ic(3);
+    ic.push_back(ICs_.vel());
+    ic.push_back(ICs_.acc());
+    ic.push_back(ICs_.jrk());
+
+    traj_gen_->setInitialConditions(ICs_.pos(), ic);
     for(const auto &p : goal_.waypoints)
     {
       traj_gen_->addWaypoint(Eigen::Vector3f(p.position.x, p.position.y, p.position.z));
