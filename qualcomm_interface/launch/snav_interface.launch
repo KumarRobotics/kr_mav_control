@@ -64,7 +64,7 @@
 
     <group unless="$(arg use_vicon)">
 
-      <node pkg="qualcomm_interface" type="pos_subscriber" name="pos_subscriber" output="screen"/>
+      <node pkg="qualcomm_interface" type="pos_cmd_subscriber" name="pos_cmd_subscriber" output="screen"/>
 
       <!-- Node that publishes snav pose as odom -->
       <node pkg="qualcomm_interface" type="vio_odom_publisher" name="vio_odom_publisher" output="screen"/>
