@@ -155,7 +155,7 @@ quadrotor_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_ms
   {
     traj_start_ = t_now;
 
-    std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> ic(3);
+    std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> ic;
     ic.push_back(ICs_.vel());
     ic.push_back(ICs_.acc());
     ic.push_back(ICs_.jrk());
@@ -173,6 +173,7 @@ quadrotor_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_ms
     }
     else
     {
+      waypoint_times.push_back(0); // Time for the current state
       for(const auto &t : goal_.waypoint_times)
         waypoint_times.push_back(t);
     }
