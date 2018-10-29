@@ -40,7 +40,11 @@ else()
   add_dependencies(trpycmd_to_snav_nodelet ${catkin_EXPORTED_TARGETS})
   target_link_libraries(trpycmd_to_snav_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
-  install(TARGETS pos_cmd_subscriber vio_odom_publisher so3cmd_to_qualcomm_nodelet trpycmd_to_snav_nodelet
+  add_library(poscmd_to_snav_nodelet src/poscmd_to_snav_nodelet.cpp)
+  add_dependencies(poscmd_to_snav_nodelet ${catkin_EXPORTED_TARGETS})
+  target_link_libraries(poscmd_to_snav_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
+
+  install(TARGETS pos_cmd_subscriber vio_odom_publisher so3cmd_to_qualcomm_nodelet trpycmd_to_snav_nodelet poscmd_to_snav_nodelet
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
