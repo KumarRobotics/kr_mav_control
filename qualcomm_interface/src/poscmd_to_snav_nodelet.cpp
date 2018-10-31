@@ -1,14 +1,10 @@
-#include <Eigen/Geometry>
 #include <nav_msgs/Odometry.h>
 #include <nodelet/nodelet.h>
 #include <quadrotor_msgs/PositionCommand.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
-#include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
-#include <tf/transform_datatypes.h>
 #include <snav/snapdragon_navigator.h>
-#include <quadrotor_msgs/SO3Command.h>
 
 class PosCmdToSnav : public nodelet::Nodelet
 {
@@ -23,19 +19,13 @@ class PosCmdToSnav : public nodelet::Nodelet
   void motors_on();
   void motors_off();
 
-  void so3_cmd_callback(const quadrotor_msgs::SO3Command::ConstPtr &msg);
-
-  void motors_on2();
-
   //controller state
   SnavCachedData *snav_cached_data_struct_;
 
-  bool odom_set_, imu_set_, pos_cmd_set_;
-  Eigen::Quaterniond odom_q_, imu_q_;
+  bool pos_cmd_set_;
 
   ros::Subscriber odom_sub_, imu_sub_, position_cmd_sub_, enable_motors_sub_;
 
-  ros::Subscriber so3_cmd_sub_;
   int motor_status_;
 
   double pos_cmd_timeout_;
@@ -45,12 +35,6 @@ class PosCmdToSnav : public nodelet::Nodelet
 
 void PosCmdToSnav::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
-  if(!odom_set_)
-    odom_set_ = true;
-
-  odom_q_ = Eigen::Quaterniond(odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
-    odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
-
   //Send min thrust as heartbeat
   if(motor_status_ && ((ros::Time::now() - last_pos_cmd_time_).toSec() >= pos_cmd_timeout_))
   {
@@ -60,12 +44,6 @@ void PosCmdToSnav::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 
 void PosCmdToSnav::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
 {
-  if(!imu_set_)
-    imu_set_ = true;
-
-  imu_q_ = Eigen::Quaterniond(pose->orientation.w, pose->orientation.x,
-                              pose->orientation.y, pose->orientation.z);
-
   if(pos_cmd_set_ &&
      ((ros::Time::now() - last_pos_cmd_time_).toSec() >= pos_cmd_timeout_))
   {
@@ -219,8 +197,6 @@ void PosCmdToSnav::onInit(void)
   // get param for pos command timeout duration
   priv_nh.param("pos_cmd_timeout", pos_cmd_timeout_, 0.25);
 
-  odom_set_ = false;
-  imu_set_ = false;
   pos_cmd_set_ = false;
   motor_status_ = 0;
   snav_cached_data_struct_ = NULL;
@@ -244,4 +220,4 @@ void PosCmdToSnav::onInit(void)
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(PosCmdToSnav, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(PosCmdToSnav, nodelet::Nodelet)
