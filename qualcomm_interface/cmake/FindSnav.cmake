@@ -1,8 +1,8 @@
 FIND_PATH(Snav_INCLUDE_DIR
   NAMES
-    snapdragon_navigator.h
+    snav/snapdragon_navigator.h
   PATHS
-    /usr/include/snav
+    /usr/include
   NO_DEFAULT_PATH
 )
 
