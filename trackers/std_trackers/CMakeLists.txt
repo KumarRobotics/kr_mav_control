@@ -66,6 +66,16 @@ add_library(trajectory_tracker src/trajectory_tracker.cpp src/traj_gen.cpp)
 add_dependencies(trajectory_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(trajectory_tracker initial_conditions ${catkin_LIBRARIES})
 
+add_library(LissajousGenerator src/LissajousGenerator.cpp)
+
+add_library(lissajous_tracker src/lissajous_tracker.cpp)
+add_dependencies(lissajous_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(lissajous_tracker LissajousGenerator ${catkin_LIBRARIES})
+
+add_library(lissajous_adder src/lissajous_adder.cpp)
+add_dependencies(lissajous_adder ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(lissajous_adder LissajousGenerator ${catkin_LIBRARIES})
+
 install(TARGETS
     initial_conditions
     line_tracker_min_jerk_action
@@ -77,6 +87,8 @@ install(TARGETS
     circle_tracker_action
     smooth_vel_tracker_action
     trajectory_tracker
+    lissajous_tracker
+    lissajous_adder
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

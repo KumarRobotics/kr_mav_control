@@ -1,0 +1,11 @@
+float64 x_amp
+float64 y_amp
+float64 z_amp
+float64 yaw_amp
+float64 x_num_periods
+float64 y_num_periods
+float64 z_num_periods
+float64 yaw_num_periods
+float64 period
+float64 num_cycles
+float64 ramp_time
