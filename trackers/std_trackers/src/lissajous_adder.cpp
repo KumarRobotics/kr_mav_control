@@ -1,4 +1,4 @@
-#include <std_trackers/LissajousGenerator.h>
+#include <lissajous_generator.h>
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
 #include <std_srvs/Trigger.h>

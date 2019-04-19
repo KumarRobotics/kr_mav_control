@@ -8,5 +8,4 @@ trackers:
   - std_trackers/CircleTrackerAction
   - std_trackers/TrajectoryTracker
   - std_trackers/SmoothVelTrackerAction
-  - std_trackers/LissajousTracker
-  - std_trackers/LissajousAdder
+  - std_trackers/LissajousTrackerAction

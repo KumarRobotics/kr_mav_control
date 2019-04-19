@@ -21,6 +21,7 @@
 #include <std_trackers/CircleTrackerAction.h>
 #include <std_trackers/LineTrackerAction.h>
 #include <std_trackers/VelocityTrackerAction.h>
+#include <std_trackers/LissajousTrackerAction.h>
 #include <trackers_manager/TrackerStatus.h>
 
 namespace mav_manager
@@ -117,6 +118,7 @@ class MAVManager
     typedef actionlib::SimpleActionClient<std_trackers::LineTrackerAction> ClientType;
     typedef actionlib::SimpleActionClient<std_trackers::VelocityTrackerAction> VelocityClientType;
     typedef actionlib::SimpleActionClient<std_trackers::CircleTrackerAction> CircleClientType;
+    typedef actionlib::SimpleActionClient<std_trackers::LissajousTrackerAction> LissajousClientType;
 
     ros::NodeHandle nh_;
     ros::NodeHandle priv_nh_;
@@ -124,6 +126,7 @@ class MAVManager
     void tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::LineTrackerResultConstPtr& result);
     void velocity_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::VelocityTrackerResultConstPtr& result);
     void circle_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::CircleTrackerResultConstPtr &result);
+    void lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::LissajousTrackerResultConstPtr &result);
 
     void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
@@ -160,6 +163,7 @@ class MAVManager
     ClientType line_tracker_min_jerk_client_;
     VelocityClientType velocity_tracker_client_;
     CircleClientType circle_tracker_client_;
+    LissajousClientType lissajous_tracker_client_;
 
     // Publishers
     ros::Publisher

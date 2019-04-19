@@ -1,7 +1,6 @@
-#include <std_trackers/LissajousGenerator.h>
+#include <lissajous_generator.h>
 #include <Eigen/Geometry>
 #include <cmath>
-#include <iostream>
 
 #define PI 3.14159265359
 
@@ -12,7 +11,7 @@ LissajousGenerator::LissajousGenerator()
   goal_set_ = false;
 }
 
-void LissajousGenerator::setParams(const quadrotor_msgs::LissajousTrackerGoal::ConstPtr &msg)
+void LissajousGenerator::setParams(const std_trackers::LissajousTrackerGoal::ConstPtr &msg)
 {
   if(!goal_set_)
   {
@@ -56,7 +55,7 @@ void LissajousGenerator::setParams(const quadrotor_msgs::LissajousTrackerGoal::C
   }
 }
 
-void LissajousGenerator::setParams(const quadrotor_msgs::LissajousAdderGoal::ConstPtr &msg, int num)
+void LissajousGenerator::setParams(const std_trackers::LissajousAdderGoal::ConstPtr &msg, int num)
 {
   if(!goal_set_)
   {
@@ -226,4 +225,9 @@ bool LissajousGenerator::status() const
   return goal_reached_ ?
           trackers_manager::TrackerStatus::SUCCEEDED :
           trackers_manager::TrackerStatus::ACTIVE;
+}
+
+float LissajousGenerator::timeRemaining(void)
+{
+  return total_time_ - (ros::Time::now() - start_time_).toSec();
 }

@@ -1,0 +1,27 @@
+#goal definition
+float64 x_amp
+float64 y_amp
+float64 z_amp
+float64 yaw_amp
+float64 x_num_periods
+float64 y_num_periods
+float64 z_num_periods
+float64 yaw_num_periods
+float64 period
+float64 num_cycles
+float64 ramp_time
+---
+#result definition
+# send back goal
+float64 x
+float64 y
+float64 z
+float64 yaw
+# time duration of the trajectory
+float64 duration
+# approximate arc length of the trajectory (ie. sum of distances between position commands)
+float64 length
+---
+#feedback
+# distance from the goal
+float64 time_to_completion

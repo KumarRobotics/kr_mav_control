@@ -24,6 +24,7 @@ static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerkA
 static const std::string velocity_tracker_str("std_trackers/VelocityTrackerAction");
 static const std::string null_tracker_str("std_trackers/NullTracker");
 static const std::string circle_tracker_str("std_trackers/CircleTrackerAction");
+static const std::string lissajous_tracker_str("std_trackers/LissajousTrackerAction");
 
 MAVManager::MAVManager(std::string ns)
     : nh_(ns),
@@ -45,7 +46,8 @@ MAVManager::MAVManager(std::string ns)
     line_tracker_distance_client_(nh_, "trackers_manager/line_tracker_distance/LineTrackerAction", true),
     line_tracker_min_jerk_client_(nh_, "trackers_manager/line_tracker_min_jerk/LineTrackerAction", true),
     velocity_tracker_client_(nh_, "trackers_manager/velocity_tracker/VelocityTrackerAction", true),
-    circle_tracker_client_(nh_, "trackers_manager/circle_tracker/CircleTrackerAction", true)
+    circle_tracker_client_(nh_, "trackers_manager/circle_tracker/CircleTrackerAction", true),
+    lissajous_tracker_client_(nh_, "trackers_manager/lissajous_tracker/LissajousTrackerAction", true)
 {
   // Action servers.
   const double server_wait_time = 3.0;
@@ -65,6 +67,11 @@ MAVManager::MAVManager(std::string ns)
   if (!circle_tracker_client_.waitForServer(ros::Duration(server_wait_time))) {
     ROS_WARN("CircleTrackerAction server not found.");
   }
+
+  if (!lissajous_tracker_client_.waitForServer(ros::Duration(server_wait_time))) {
+    ROS_ERROR("LissajousTrackerAction server not found.");
+  }
+
 
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
@@ -127,7 +134,11 @@ void MAVManager::velocity_tracker_done_callback(const actionlib::SimpleClientGoa
 }
 
 void MAVManager::circle_tracker_done_callback(const actionlib::SimpleClientGoalState &state, const std_trackers::CircleTrackerResultConstPtr &result) {
-  ROS_INFO("Circle tracking completed after %2.2f secionds.", result->duration);
+  ROS_INFO("Circle tracking completed after %2.2f seconds.", result->duration);
+}
+
+void MAVManager::lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState &state, const std_trackers::LissajousTrackerResultConstPtr &result) {
+  ROS_INFO("Lissajous tracking completed after %2.2f seconds, located at %2.2f x, %2.2f y, %2.2f z.", result->duration, result->x, result->y, result->z);
 }
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg) {

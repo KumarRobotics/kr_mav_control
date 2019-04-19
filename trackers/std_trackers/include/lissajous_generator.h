@@ -4,20 +4,22 @@
 #include <ros/ros.h>
 #include <quadrotor_msgs/PositionCommand.h>
 #include <trackers_manager/TrackerStatus.h>
-#include <quadrotor_msgs/LissajousTrackerGoal.h>
-#include <quadrotor_msgs/LissajousAdderGoal.h>
+#include <std_trackers/LissajousTrackerAction.h>
+#include <std_trackers/LissajousAdderAction.h>
+#include <actionlib/client/simple_action_client.h>
 
 class LissajousGenerator 
 {
   public:
     LissajousGenerator(void);
-    void setParams(const quadrotor_msgs::LissajousTrackerGoal::ConstPtr &msg);
-    void setParams(const quadrotor_msgs::LissajousAdderGoal::ConstPtr &msg, int num);
+    void setParams(const std_trackers::LissajousTrackerGoal::ConstPtr &msg);
+    void setParams(const std_trackers::LissajousAdderGoal::ConstPtr &msg, int num);
     const quadrotor_msgs::PositionCommand::Ptr getPositionCmd(void);
     bool activate(void);
     void deactivate(void);
     bool isActive(void);
-    bool status() const;
+    bool status(void) const;
+    float timeRemaining(void);
 
   private:
     double lissajous_period_, ramp_time_, total_time_, ramp_s_, total_s_, const_time_, period_;
