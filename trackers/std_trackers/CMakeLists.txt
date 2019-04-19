@@ -73,11 +73,7 @@ add_dependencies(lissajous_generator ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME
 
 add_library(lissajous_tracker_action src/lissajous_tracker_server.cpp)
 add_dependencies(lissajous_tracker_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(lissajous_tracker_action lissajous_generator ${catkin_LIBRARIES})
-
-#add_library(lissajous_adder src/lissajous_adder.cpp)
-#add_dependencies(lissajous_adder ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-#target_link_libraries(lissajous_adder LissajousGenerator ${catkin_LIBRARIES})
+target_link_libraries(lissajous_tracker_action lissajous_generator initial_conditions ${catkin_LIBRARIES})
 
 install(TARGETS
     initial_conditions
