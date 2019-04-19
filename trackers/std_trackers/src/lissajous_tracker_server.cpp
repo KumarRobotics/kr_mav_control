@@ -57,6 +57,7 @@ void LissajousTrackerAction::Initialize(const ros::NodeHandle &nh)
   tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LissajousTrackerAction", false));
   tracker_server_->registerGoalCallback(boost::bind(&LissajousTrackerAction::goal_callback, this));
   tracker_server_->registerPreemptCallback(boost::bind(&LissajousTrackerAction::preempt_callback, this));
+  tracker_server_->start();
 
   std::cout << "calling from tracker" << std::endl;
 }
