@@ -69,6 +69,7 @@ add_dependencies(trajectory_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}
 target_link_libraries(trajectory_tracker initial_conditions ${catkin_LIBRARIES})
 
 add_library(lissajous_generator src/lissajous_generator.cpp)
+add_dependencies(lissajous_generator ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_library(lissajous_tracker_action src/lissajous_tracker_server.cpp)
 add_dependencies(lissajous_tracker_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
