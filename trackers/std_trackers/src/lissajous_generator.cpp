@@ -229,5 +229,7 @@ bool LissajousGenerator::status() const
 
 float LissajousGenerator::timeRemaining(void)
 {
-  return total_time_ - (ros::Time::now() - start_time_).toSec();
+  ros::Time t_now = ros::Time::now();
+  float time_elapsed = (t_now - start_time_).toSec();
+  return total_time_ - time_elapsed;
 }
