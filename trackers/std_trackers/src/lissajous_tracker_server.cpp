@@ -146,13 +146,14 @@ void LissajousTrackerAction::goal_callback(void)
     tracker_server_->setAborted();
   }
 
-  if (tracker_server_->isPreemptRequested()) 
+  std_trackers::LissajousTrackerGoal::ConstPtr msg = tracker_server_->acceptNewGoal();
+
+  if (tracker_server_->isPreemptRequested())
   {
     tracker_server_->setPreempted();
     return;
   }
 
-  std_trackers::LissajousTrackerGoal::ConstPtr msg = tracker_server_->acceptNewGoal();
   generator_.setParams(msg);
 }
 
