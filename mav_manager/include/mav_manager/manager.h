@@ -88,6 +88,10 @@ class MAVManager
 
     bool circle(float Ax, float Ay, float T, float duration);
 
+    // Lissajous Control
+    bool lissajous(float x_amp, float y_amp, float z_amp, float yaw_amp, float x_num_periods, float y_num_periods, float z_num_periods, 
+                   float yaw_num_periods, float period, float num_cycles, float ramp_time);
+
     // Direct low-level control
     bool setPositionCommand(const quadrotor_msgs::PositionCommand &cmd);
     bool setSO3Command(const quadrotor_msgs::SO3Command &cmd);

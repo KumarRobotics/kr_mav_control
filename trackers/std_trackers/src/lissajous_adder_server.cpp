@@ -1,20 +1,19 @@
+#include <memory>
 #include <lissajous_generator.h>
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
 #include <std_srvs/Trigger.h>
-#include <quadrotor_msgs/TrackerStatus.h>
-#include <quadrotor_msgs/LissajousAdderGoal.h>
+#include <trackers_manager/TrackerStatus.h>
+#include <actionlib/server/simple_action_server.h>
+#include <std_trackers/LissajousAdderAction.h>
 #include <Eigen/Geometry>
 #include <initial_conditions.h>
 #include <cmath>
-#include <iostream>
 
-#define PI 3.14159265359
-
-class LissajousAdder : public trackers_manager::Tracker
+class LissajousAdderAction : public trackers_manager::Tracker
 {
   public:
-    LissajousAdder(void);
+    LissajousAdderAction(void);
 
     void Initialize(const ros::NodeHandle &nh);
     bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
@@ -26,20 +25,23 @@ class LissajousAdder : public trackers_manager::Tracker
     uint8_t status() const;
 
   private:
-    void goal_callback(const quadrotor_msgs::LissajousAdderGoal::ConstPtr &msg);
+    void goal_callback(void);
+    void preempt_callback(void);
 
-    ros::Subscriber sub_goal_;
+    typedef actionlib::SimpleActionServer<std_trackers::LissajousAdderAction> ServerType;
+    std::shared_ptr<ServerType> tracker_server_;
+
     ros::ServiceServer vel_control_srv_;
     double kx_[3], kv_[3];
     InitialConditions ICs_;
     LissajousGenerator generator_1_, generator_2_;
 };
 
-LissajousAdder::LissajousAdder(void) 
+LissajousAdderAction::LissajousAdderAction(void) 
 {
 }
 
-void LissajousAdder::Initialize(const ros::NodeHandle &nh)
+void LissajousAdderAction::Initialize(const ros::NodeHandle &nh)
 {
   nh.param("gains/pos/x", kx_[0], 2.5);
   nh.param("gains/pos/y", kx_[1], 2.5);
@@ -49,24 +51,37 @@ void LissajousAdder::Initialize(const ros::NodeHandle &nh)
   nh.param("gains/vel/z", kv_[2], 4.0);
 
   ros::NodeHandle priv_nh(nh, "lissajous_adder");
-  sub_goal_ = priv_nh.subscribe("goal", 10, &LissajousAdder::goal_callback,
-                                this, ros::TransportHints().tcpNoDelay());
-  vel_control_srv_ = priv_nh.advertiseService("vel_control", &LissajousAdder::velControlCallback, this);
+  vel_control_srv_ = priv_nh.advertiseService("vel_control", &LissajousAdderAction::velControlCallback, this);
+
+  tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LissajousAdderAction", false));
+  tracker_server_->registerGoalCallback(boost::bind(&LissajousAdderAction::goal_callback, this));
+  tracker_server_->registerPreemptCallback(boost::bind(&LissajousAdderAction::preempt_callback, this));
+  tracker_server_->start();
 }
 
-bool LissajousAdder::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
+bool LissajousAdderAction::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
+  if(!tracker_server_->isActive())
+  {
+    ROS_WARN("No goal set, not activating");
+    return false;
+  }
   return (generator_1_.activate() && generator_2_.activate());
 }
 
-void LissajousAdder::Deactivate(void)
+void LissajousAdderAction::Deactivate(void)
 {
+  if(tracker_server_->isActive())
+  {
+    ROS_WARN("Deactivated tracker prior to reaching goal");
+    tracker_server_->setAborted();
+  }
   ICs_.reset();
   generator_1_.deactivate();
   generator_2_.deactivate();
 }
 
-bool LissajousAdder::velControlCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+bool LissajousAdderAction::velControlCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
 {
   kx_[0] = 0;
   kx_[1] = 0;
@@ -75,7 +90,7 @@ bool LissajousAdder::velControlCallback(std_srvs::Trigger::Request &req, std_srv
   return true;
 }
 
-quadrotor_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs::Odometry::ConstPtr &msg)
+quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   if(!(generator_1_.isActive() & generator_2_.isActive()))
   {
@@ -85,8 +100,10 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs:
   // Set gains
   quadrotor_msgs::PositionCommand::Ptr cmd1 = generator_1_.getPositionCmd();
   quadrotor_msgs::PositionCommand::Ptr cmd2 = generator_2_.getPositionCmd();
-  if(cmd1 != NULL && cmd2 != NULL)
+  if(cmd1 == NULL && cmd2 == NULL)
   {
+    return cmd1;
+  }
     cmd1->header.stamp = ros::Time::now();
     cmd1->header.frame_id = msg->header.frame_id;
     cmd1->kx[0] = kx_[0], cmd1->kx[1] = kx_[1], cmd1->kx[2] = kx_[2];
@@ -105,17 +122,16 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs:
     cmd1->jerk.z += cmd2->jerk.z;
     cmd1->yaw += ICs_.yaw() + cmd2->yaw;
   }
-  return cmd1;
 }
 
-void LissajousAdder::goal_callback(const quadrotor_msgs::LissajousAdderGoal::ConstPtr &msg)
+void LissajousAdderAction::goal_callback(const quadrotor_msgs::LissajousAdderActionGoal::ConstPtr &msg)
 {
   generator_1_.setParams(msg,0);
   generator_2_.setParams(msg,1);
   ROS_WARN("lissajous adder successfully initialized");
 }
 
-uint8_t LissajousAdder::status() const
+uint8_t LissajousAdderAction::status() const
 {
   bool status_1 = generator_1_.status();
   bool status_2 = generator_2_.status();
@@ -123,4 +139,4 @@ uint8_t LissajousAdder::status() const
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(LissajousAdder, trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(LissajousAdderAction, trackers_manager::Tracker);

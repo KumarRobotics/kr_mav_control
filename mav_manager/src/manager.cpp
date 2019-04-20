@@ -138,7 +138,7 @@ void MAVManager::circle_tracker_done_callback(const actionlib::SimpleClientGoalS
 }
 
 void MAVManager::lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState &state, const std_trackers::LissajousTrackerResultConstPtr &result) {
-  ROS_INFO("Lissajous tracking completed after %2.2f seconds, located at %2.2f x, %2.2f y, %2.2f z.", result->duration, result->x, result->y, result->z);
+  ROS_INFO("Lissajous tracking completed. Duration: %2.2f seconds, distance: %2.2f m, now located at (%2.2f, %2.2f, %2.2f, %2.2f).", result->duration, result->length, result->x, result->y, result->z, result->yaw);
 }
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg) {
@@ -343,6 +343,33 @@ bool MAVManager::circle(float Ax, float Ay, float T, float duration) {
   circle_tracker_client_.sendGoal(goal, boost::bind(&MAVManager::circle_tracker_done_callback, this, _1, _2), CircleClientType::SimpleActiveCallback(), CircleClientType::SimpleFeedbackCallback());
 
   return this->transition(circle_tracker_str);
+}
+
+bool MAVManager::lissajous(float x_amp, float y_amp, float z_amp, float yaw_amp, float x_num_periods, float y_num_periods, float z_num_periods, 
+                           float yaw_num_periods, float period, float num_cycles, float ramp_time)
+{
+  if (!this->motors() || status_ != FLYING)
+  {
+    ROS_WARN("The robot must be flying to execute a Lissajous.");
+    return false;
+  }
+
+  std_trackers::LissajousTrackerGoal goal;
+  goal.x_amp = x_amp;
+  goal.y_amp = y_amp;
+  goal.z_amp = z_amp;
+  goal.yaw_amp = yaw_amp;
+  goal.x_num_periods = x_num_periods;
+  goal.y_num_periods = y_num_periods;
+  goal.z_num_periods = z_num_periods;
+  goal.yaw_num_periods = yaw_num_periods;
+  goal.period = period;
+  goal.num_cycles = num_cycles;
+  goal.ramp_time = ramp_time;
+
+  lissajous_tracker_client_.sendGoal(goal, boost::bind(&MAVManager::lissajous_tracker_done_callback, this, _1, _2), LissajousClientType::SimpleActiveCallback(), LissajousClientType::SimpleFeedbackCallback());
+
+  return this->transition(lissajous_tracker_str);
 }
 
 // World Velocity commands

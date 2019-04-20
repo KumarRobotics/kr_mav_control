@@ -1,6 +1,7 @@
 #include <lissajous_generator.h>
 #include <Eigen/Geometry>
 #include <cmath>
+#include <iostream>
 
 #define PI 3.14159265359
 
@@ -52,6 +53,7 @@ void LissajousGenerator::setParams(const std_trackers::LissajousTrackerGoal::Con
 
     // Set the start position and time
     goal_set_ = true;
+    goal_reached_ = false;
   }
 }
 
@@ -96,6 +98,7 @@ void LissajousGenerator::setParams(const std_trackers::LissajousAdderGoal::Const
 
     // Set the start position and time
     goal_set_ = true;
+    goal_reached_ = false;
   }
 }
 
@@ -108,6 +111,7 @@ const quadrotor_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(vo
 
   if(goal_set_)
   {
+    std::cout << "this is happening" << std::endl;
     start_time_ = ros::Time::now();
     goal_set_ = false;
   }
@@ -232,4 +236,10 @@ float LissajousGenerator::timeRemaining(void)
   ros::Time t_now = ros::Time::now();
   float time_elapsed = (t_now - start_time_).toSec();
   return total_time_ - time_elapsed;
+}
+
+float LissajousGenerator::timeElapsed(void)
+{
+  ros::Time t_now = ros::Time::now();
+  return (t_now - start_time_).toSec();
 }

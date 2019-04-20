@@ -75,6 +75,10 @@ add_library(lissajous_tracker_action src/lissajous_tracker_server.cpp)
 add_dependencies(lissajous_tracker_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(lissajous_tracker_action lissajous_generator initial_conditions ${catkin_LIBRARIES})
 
+#add_library(lissajous_adder_action src/lissajous_adder_server.cpp)
+#add_dependencies(lissajous_adder_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+#target_link_libraries(lissajous_adder_action lissajous_generator initial_conditions ${catkin_LIBRARIES})
+
 install(TARGETS
     initial_conditions
     line_tracker_min_jerk_action

@@ -7,6 +7,7 @@
 #include <mav_manager/Vec4.h>
 #include <mav_manager/GoalTimed.h>
 #include <mav_manager/Circle.h>
+#include <mav_manager/Lissajous.h>
 
 namespace mav_manager
 {
@@ -82,12 +83,21 @@ public:
       last_cb_ = "setDesVelInBodyFrame";
     return true;
   }
-  bool circle_cb(mav_manager::Circle::Request &req, mav_manager::Circle::Response &res) {
+  bool circle_cb(mav_manager::Circle::Request &req, mav_manager::Circle::Response &res) 
+  {
     res.success = mav->circle(req.Ax, req.Ay, req.T, req.duration);
     res.message = "Circling motion";
-    if (res.success) {
+    if (res.success)
       last_cb_ = "circle";
-    }
+    return true;
+  }
+  bool lissajous_cb(mav_manager::Lissajous::Request &req, mav_manager::Lissajous::Response &res) 
+  {
+    res.success = mav->lissajous(req.x_amp, req.y_amp, req.z_amp, req.yaw_amp, req.x_num_periods, req.y_num_periods, 
+                                 req.z_num_periods, req.yaw_num_periods, req.period, req.num_cycles, req.ramp_time);
+    res.message = "Lissajous motion";
+    if (res.success)
+      last_cb_ = "lissajous";
     return true;
   }
   bool hover_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
@@ -143,6 +153,7 @@ public:
     srvs_.push_back(nh_.advertiseService("setDesVelInWorldFrame", &MAVManagerServices::setDesVelInWorldFrame_cb, this));
     srvs_.push_back(nh_.advertiseService("setDesVelInBodyFrame", &MAVManagerServices::setDesVelInBodyFrame_cb, this));
     srvs_.push_back(nh_.advertiseService("circle", &MAVManagerServices::circle_cb, this));
+    srvs_.push_back(nh_.advertiseService("lissajous", &MAVManagerServices::lissajous_cb, this));
     srvs_.push_back(nh_.advertiseService("hover", &MAVManagerServices::hover_cb, this));
     srvs_.push_back(nh_.advertiseService("ehover", &MAVManagerServices::ehover_cb, this));
     srvs_.push_back(nh_.advertiseService("land", &MAVManagerServices::land_cb, this));

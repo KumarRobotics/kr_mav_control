@@ -20,6 +20,7 @@ class LissajousGenerator
     bool isActive(void);
     bool status(void) const;
     float timeRemaining(void);
+    float timeElapsed(void);
 
   private:
     double lissajous_period_, ramp_time_, total_time_, ramp_s_, total_s_, const_time_, period_;
