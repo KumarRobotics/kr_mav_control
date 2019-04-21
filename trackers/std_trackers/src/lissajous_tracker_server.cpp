@@ -39,10 +39,6 @@ class LissajousTrackerAction : public trackers_manager::Tracker
     Eigen::Vector3d position_last_;
 };
 
-LissajousTrackerAction::LissajousTrackerAction(void) 
-{
-}
-
 void LissajousTrackerAction::Initialize(const ros::NodeHandle &nh)
 {
   nh.param("gains/pos/x", kx_[0], 2.5);
@@ -135,7 +131,6 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousTrackerAction::update(const n
       result.z = msg->pose.pose.position.z;
       result.yaw = ICs_.yaw(); // TODO: Change this to the yaw from msg 
       result.duration = generator_.timeElapsed();
-      std::cout << "result.duration: " << result.duration << std::endl;
       result.length = distance_traveled_;
       tracker_server_->setSucceeded(result);
     }

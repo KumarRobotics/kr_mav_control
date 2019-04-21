@@ -3,8 +3,6 @@
 #include <cmath>
 #include <iostream>
 
-#define PI 3.14159265359
-
 LissajousGenerator::LissajousGenerator()
 {
   active_ = false;
@@ -181,20 +179,20 @@ const quadrotor_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(vo
     double T = period_;
     double T2 = T*T;
     double T3 = T2*T;
-    pos(0)  = x_amp_*(1-std::cos(2*PI*x_num_periods_*s/T));
-    pos(1)  = y_amp_*std::sin(2*PI*y_num_periods_*s/T);
-    pos(2)  = z_amp_*std::sin(2*PI*z_num_periods_*s/T);
-    vel(0)  = x_amp_*2*PI*x_num_periods_*std::sin(2*PI*x_num_periods_*s/T)*sdot/T;
-    vel(1)  = y_amp_*2*PI*y_num_periods_*std::cos(2*PI*y_num_periods_*s/T)*sdot/T;
-    vel(2)  = z_amp_*2*PI*z_num_periods_*std::cos(2*PI*z_num_periods_*s/T)*sdot/T;
-    acc(0)  = x_amp_*(4*PI*PI*x_num_periods_*x_num_periods_*std::cos(2*PI*x_num_periods_*s/T)*sdot*sdot/T2 + 2*PI*x_num_periods_*std::sin(2*PI*x_num_periods_*s/T)*sddot/T);
-    acc(1)  = y_amp_*(-4*PI*PI*y_num_periods_*y_num_periods_*std::sin(2*PI*y_num_periods_*s/T)*sdot*sdot/T2 + 2*PI*y_num_periods_*std::cos(2*PI*y_num_periods_*s/T)*sddot/T);
-    acc(2)  = z_amp_*(-4*PI*PI*z_num_periods_*z_num_periods_*std::sin(2*PI*z_num_periods_*s/T)*sdot*sdot/T2 + 2*PI*z_num_periods_*std::cos(2*PI*z_num_periods_*s/T)*sddot/T);
-    jrk(0)  = x_amp_*(-8*PI*PI*PI*x_num_periods_*x_num_periods_*x_num_periods_*std::sin(2*PI*x_num_periods_*s/T)*sdot*sdot*sdot/T3 + 4*PI*PI*x_num_periods_*x_num_periods_*std::cos(2*PI*x_num_periods_*s/T)*sdot*sddot/T2 + 2*PI*x_num_periods_*std::sin(2*PI*x_num_periods_*s/T)*sdddot/T);
-    jrk(1)  = y_amp_*(-8*PI*PI*PI*y_num_periods_*y_num_periods_*y_num_periods_*std::cos(2*PI*y_num_periods_*s/T)*sdot*sdot*sdot/T3 - 4*PI*PI*y_num_periods_*y_num_periods_*std::sin(2*PI*y_num_periods_*s/T)*sdot*sddot/T2 + 2*PI*y_num_periods_*std::cos(2*PI*y_num_periods_*s/T)*sdddot/T);
-    jrk(2)  = z_amp_*(-8*PI*PI*PI*z_num_periods_*z_num_periods_*z_num_periods_*std::cos(2*PI*z_num_periods_*s/T)*sdot*sdot*sdot/T3 - 4*PI*PI*z_num_periods_*z_num_periods_*std::sin(2*PI*z_num_periods_*s/T)*sdot*sddot/T2 + 2*PI*z_num_periods_*std::cos(2*PI*z_num_periods_*s/T)*sdddot/T);
-    yaw     = yaw_amp_*(1-std::cos(2*PI*yaw_num_periods_*s/T));
-    yaw_dot = yaw_amp_*2*PI*yaw_num_periods_*std::sin(2*PI*yaw_num_periods_*s/T)*sdot/T;
+    pos(0)  = x_amp_*(1-std::cos(2*M_PI*x_num_periods_*s/T));
+    pos(1)  = y_amp_*std::sin(2*M_PI*y_num_periods_*s/T);
+    pos(2)  = z_amp_*std::sin(2*M_PI*z_num_periods_*s/T);
+    vel(0)  = x_amp_*2*M_PI*x_num_periods_*std::sin(2*M_PI*x_num_periods_*s/T)*sdot/T;
+    vel(1)  = y_amp_*2*M_PI*y_num_periods_*std::cos(2*M_PI*y_num_periods_*s/T)*sdot/T;
+    vel(2)  = z_amp_*2*M_PI*z_num_periods_*std::cos(2*M_PI*z_num_periods_*s/T)*sdot/T;
+    acc(0)  = x_amp_*(4*M_PI*M_PI*x_num_periods_*x_num_periods_*std::cos(2*M_PI*x_num_periods_*s/T)*sdot*sdot/T2 + 2*M_PI*x_num_periods_*std::sin(2*M_PI*x_num_periods_*s/T)*sddot/T);
+    acc(1)  = y_amp_*(-4*M_PI*M_PI*y_num_periods_*y_num_periods_*std::sin(2*M_PI*y_num_periods_*s/T)*sdot*sdot/T2 + 2*M_PI*y_num_periods_*std::cos(2*M_PI*y_num_periods_*s/T)*sddot/T);
+    acc(2)  = z_amp_*(-4*M_PI*M_PI*z_num_periods_*z_num_periods_*std::sin(2*M_PI*z_num_periods_*s/T)*sdot*sdot/T2 + 2*M_PI*z_num_periods_*std::cos(2*M_PI*z_num_periods_*s/T)*sddot/T);
+    jrk(0)  = x_amp_*(-8*M_PI*M_PI*M_PI*x_num_periods_*x_num_periods_*x_num_periods_*std::sin(2*M_PI*x_num_periods_*s/T)*sdot*sdot*sdot/T3 + 4*M_PI*M_PI*x_num_periods_*x_num_periods_*std::cos(2*M_PI*x_num_periods_*s/T)*sdot*sddot/T2 + 2*M_PI*x_num_periods_*std::sin(2*M_PI*x_num_periods_*s/T)*sdddot/T);
+    jrk(1)  = y_amp_*(-8*M_PI*M_PI*M_PI*y_num_periods_*y_num_periods_*y_num_periods_*std::cos(2*M_PI*y_num_periods_*s/T)*sdot*sdot*sdot/T3 - 4*M_PI*M_PI*y_num_periods_*y_num_periods_*std::sin(2*M_PI*y_num_periods_*s/T)*sdot*sddot/T2 + 2*M_PI*y_num_periods_*std::cos(2*M_PI*y_num_periods_*s/T)*sdddot/T);
+    jrk(2)  = z_amp_*(-8*M_PI*M_PI*M_PI*z_num_periods_*z_num_periods_*z_num_periods_*std::cos(2*M_PI*z_num_periods_*s/T)*sdot*sdot*sdot/T3 - 4*M_PI*M_PI*z_num_periods_*z_num_periods_*std::sin(2*M_PI*z_num_periods_*s/T)*sdot*sddot/T2 + 2*M_PI*z_num_periods_*std::cos(2*M_PI*z_num_periods_*s/T)*sdddot/T);
+    yaw     = yaw_amp_*(1-std::cos(2*M_PI*yaw_num_periods_*s/T));
+    yaw_dot = yaw_amp_*2*M_PI*yaw_num_periods_*std::sin(2*M_PI*yaw_num_periods_*s/T)*sdot/T;
     cmd->position.x = pos(0), cmd->position.y = pos(1), cmd->position.z = pos(2);
     cmd->velocity.x = vel(0), cmd->velocity.y = vel(1), cmd->velocity.z = vel(2);
     cmd->acceleration.x = acc(0), cmd->acceleration.y = acc(1), cmd->acceleration.z = acc(2);
