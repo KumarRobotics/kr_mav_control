@@ -24,6 +24,8 @@ static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerkA
 static const std::string velocity_tracker_str("std_trackers/VelocityTrackerAction");
 static const std::string null_tracker_str("std_trackers/NullTracker");
 static const std::string circle_tracker_str("std_trackers/CircleTrackerAction");
+static const std::string lissajous_tracker_str("std_trackers/LissajousTrackerAction");
+static const std::string lissajous_adder_str("std_trackers/LissajousAdderAction");
 
 MAVManager::MAVManager(std::string ns)
     : nh_(ns),
@@ -45,7 +47,9 @@ MAVManager::MAVManager(std::string ns)
     line_tracker_distance_client_(nh_, "trackers_manager/line_tracker_distance/LineTrackerAction", true),
     line_tracker_min_jerk_client_(nh_, "trackers_manager/line_tracker_min_jerk/LineTrackerAction", true),
     velocity_tracker_client_(nh_, "trackers_manager/velocity_tracker/VelocityTrackerAction", true),
-    circle_tracker_client_(nh_, "trackers_manager/circle_tracker/CircleTrackerAction", true)
+    circle_tracker_client_(nh_, "trackers_manager/circle_tracker/CircleTrackerAction", true),
+    lissajous_tracker_client_(nh_, "trackers_manager/lissajous_tracker/LissajousTrackerAction", true),
+    lissajous_adder_client_(nh_, "trackers_manager/lissajous_adder/LissajousAdderAction", true)
 {
   // Action servers.
   const double server_wait_time = 3.0;
@@ -64,6 +68,14 @@ MAVManager::MAVManager(std::string ns)
   // Optional trackers.
   if (!circle_tracker_client_.waitForServer(ros::Duration(server_wait_time))) {
     ROS_WARN("CircleTrackerAction server not found.");
+  }
+
+  if (!lissajous_tracker_client_.waitForServer(ros::Duration(server_wait_time))) {
+    ROS_ERROR("LissajousTrackerAction server not found.");
+  }
+
+  if (!lissajous_adder_client_.waitForServer(ros::Duration(server_wait_time))) {
+    ROS_ERROR("LissajousAdderAction server not found.");
   }
 
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
@@ -127,7 +139,15 @@ void MAVManager::velocity_tracker_done_callback(const actionlib::SimpleClientGoa
 }
 
 void MAVManager::circle_tracker_done_callback(const actionlib::SimpleClientGoalState &state, const std_trackers::CircleTrackerResultConstPtr &result) {
-  ROS_INFO("Circle tracking completed after %2.2f secionds.", result->duration);
+  ROS_INFO("Circle tracking completed after %2.2f seconds.", result->duration);
+}
+
+void MAVManager::lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState &state, const std_trackers::LissajousTrackerResultConstPtr &result) {
+  ROS_INFO("Lissajous tracking completed. Duration: %2.2f seconds, distance: %2.2f m, now located at (%2.2f, %2.2f, %2.2f, %2.2f).", result->duration, result->length, result->x, result->y, result->z, result->yaw);
+}
+
+void MAVManager::lissajous_adder_done_callback(const actionlib::SimpleClientGoalState &state, const std_trackers::LissajousAdderResultConstPtr &result) {
+  ROS_INFO("Lissajous tracking completed. Duration: %2.2f seconds, distance: %2.2f m, now located at (%2.2f, %2.2f, %2.2f, %2.2f).", result->duration, result->length, result->x, result->y, result->z, result->yaw);
 }
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg) {
@@ -332,6 +352,71 @@ bool MAVManager::circle(float Ax, float Ay, float T, float duration) {
   circle_tracker_client_.sendGoal(goal, boost::bind(&MAVManager::circle_tracker_done_callback, this, _1, _2), CircleClientType::SimpleActiveCallback(), CircleClientType::SimpleFeedbackCallback());
 
   return this->transition(circle_tracker_str);
+}
+
+bool MAVManager::lissajous(float x_amp, float y_amp, float z_amp, float yaw_amp, float x_num_periods, float y_num_periods, float z_num_periods, 
+                           float yaw_num_periods, float period, float num_cycles, float ramp_time)
+{
+  if (!this->motors() || status_ != FLYING)
+  {
+    ROS_WARN("The robot must be flying to execute a Lissajous.");
+    return false;
+  }
+
+  std_trackers::LissajousTrackerGoal goal;
+  goal.x_amp = x_amp;
+  goal.y_amp = y_amp;
+  goal.z_amp = z_amp;
+  goal.yaw_amp = yaw_amp;
+  goal.x_num_periods = x_num_periods;
+  goal.y_num_periods = y_num_periods;
+  goal.z_num_periods = z_num_periods;
+  goal.yaw_num_periods = yaw_num_periods;
+  goal.period = period;
+  goal.num_cycles = num_cycles;
+  goal.ramp_time = ramp_time;
+
+  lissajous_tracker_client_.sendGoal(goal, boost::bind(&MAVManager::lissajous_tracker_done_callback, this, _1, _2), LissajousClientType::SimpleActiveCallback(), LissajousClientType::SimpleFeedbackCallback());
+
+  return this->transition(lissajous_tracker_str);
+}
+
+bool MAVManager::compound_lissajous(float x_amp[2], float y_amp[2], float z_amp[2], float yaw_amp[2], float x_num_periods[2], float y_num_periods[2], float z_num_periods[2], 
+                                    float yaw_num_periods[2], float period[2], float num_cycles[2], float ramp_time[2])
+{
+  if (!this->motors() || status_ != FLYING)
+  {
+    ROS_WARN("The robot must be flying to execute a Lissajous.");
+    return false;
+  }
+
+  std_trackers::LissajousAdderGoal goal;
+  goal.x_amp[0] = x_amp[0];
+  goal.x_amp[1] = x_amp[1];
+  goal.y_amp[0] = y_amp[0];
+  goal.y_amp[1] = y_amp[1];
+  goal.z_amp[0] = z_amp[0];
+  goal.z_amp[1] = z_amp[1];
+  goal.yaw_amp[0] = yaw_amp[0];
+  goal.yaw_amp[1] = yaw_amp[1];
+  goal.x_num_periods[0] = x_num_periods[0];
+  goal.x_num_periods[1] = x_num_periods[1];
+  goal.y_num_periods[0] = y_num_periods[0];
+  goal.y_num_periods[1] = y_num_periods[1];
+  goal.z_num_periods[0] = z_num_periods[0];
+  goal.z_num_periods[1] = z_num_periods[1];
+  goal.yaw_num_periods[0] = yaw_num_periods[0];
+  goal.yaw_num_periods[1] = yaw_num_periods[1];
+  goal.period[0] = period[0];
+  goal.period[1] = period[1];
+  goal.num_cycles[0] = num_cycles[0];
+  goal.num_cycles[1] = num_cycles[1];
+  goal.ramp_time[0] = ramp_time[0];
+  goal.ramp_time[1] = ramp_time[1];
+
+  lissajous_adder_client_.sendGoal(goal, boost::bind(&MAVManager::lissajous_adder_done_callback, this, _1, _2), CompoundLissajousClientType::SimpleActiveCallback(), CompoundLissajousClientType::SimpleFeedbackCallback());
+
+  return this->transition(lissajous_adder_str);
 }
 
 // World Velocity commands
