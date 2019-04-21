@@ -18,6 +18,7 @@ class LissajousGenerator
     bool activate(void);
     void deactivate(void);
     bool isActive(void);
+    bool goalIsSet(void);
     bool status(void) const;
     float timeRemaining(void);
     float timeElapsed(void);

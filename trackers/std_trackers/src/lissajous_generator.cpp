@@ -104,14 +104,8 @@ const quadrotor_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(vo
 {
   if(!active_)
   {
-    return quadrotor_msgs::PositionCommand::Ptr();
-  }
-
-  if(goal_set_)
-  {
-    std::cout << "this is happening" << std::endl;
     start_time_ = ros::Time::now();
-    goal_set_ = false;
+    return quadrotor_msgs::PositionCommand::Ptr();
   }
 
   // Set gains
@@ -142,6 +136,7 @@ const quadrotor_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(vo
     cmd->jerk.x = 0, cmd->jerk.y = 0, cmd->jerk.z = 0;
     cmd->yaw = yaw;
     cmd->yaw_dot = 0;
+    goal_set_ = false;
     goal_reached_ = true;
   }
   else
@@ -220,6 +215,11 @@ void LissajousGenerator::deactivate(void)
 bool LissajousGenerator::isActive(void)
 {
   return active_;
+}
+
+bool LissajousGenerator::goalIsSet(void)
+{
+  return goal_set_;
 }
 
 bool LissajousGenerator::status() const
