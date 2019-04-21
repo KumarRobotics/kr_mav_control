@@ -156,9 +156,9 @@ uint8_t LissajousAdderAction::status() const
 
 void LissajousAdderAction::goal_callback(void)
 {
-  if (tracker_server_->isActive()) 
+  if (generator_1_.goalIsSet() || generator_2_.goalIsSet()) 
   {
-    tracker_server_->setAborted();
+    return;
   }
 
   std_trackers::LissajousAdderGoal::ConstPtr msg = tracker_server_->acceptNewGoal();
@@ -184,8 +184,6 @@ void LissajousAdderAction::preempt_callback(void)
   {
     tracker_server_->setPreempted();
   }
-  generator_1_.deactivate(); 
-  generator_2_.deactivate(); 
 }
 
 #include <pluginlib/class_list_macros.h>
