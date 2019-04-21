@@ -13,8 +13,6 @@
 class LissajousTrackerAction : public trackers_manager::Tracker
 {
   public:
-    LissajousTrackerAction(void);
-
     void Initialize(const ros::NodeHandle &nh);
     bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
     void Deactivate(void);
