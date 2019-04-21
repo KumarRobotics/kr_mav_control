@@ -139,7 +139,6 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousTrackerAction::update(const n
       result.length = distance_traveled_;
       tracker_server_->setSucceeded(result);
     }
-
     return cmd;
   }
 }

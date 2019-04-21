@@ -32,6 +32,7 @@ add_service_files(
     GoalTimed.srv
     Circle.srv
     Lissajous.srv
+    CompoundLissajous.srv
 )
 generate_messages()
 

@@ -9,3 +9,4 @@ trackers:
   - std_trackers/TrajectoryTracker
   - std_trackers/SmoothVelTrackerAction
   - std_trackers/LissajousTrackerAction
+  - std_trackers/LissajousAdderAction

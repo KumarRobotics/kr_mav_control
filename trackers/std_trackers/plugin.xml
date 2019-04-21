@@ -81,3 +81,11 @@
     </description>
   </class>
 </library>
+
+<library path="lib/liblissajous_adder_action">
+  <class name="std_trackers/LissajousAdderAction" type="LissajousAdderAction" base_class_type="trackers_manager::Tracker">
+    <description>
+      Follows a sum of two Lissajous trajectories
+    </description>
+  </class>
+</library>

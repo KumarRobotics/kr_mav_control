@@ -22,6 +22,7 @@
 #include <std_trackers/LineTrackerAction.h>
 #include <std_trackers/VelocityTrackerAction.h>
 #include <std_trackers/LissajousTrackerAction.h>
+#include <std_trackers/LissajousAdderAction.h>
 #include <trackers_manager/TrackerStatus.h>
 
 namespace mav_manager
@@ -92,6 +93,10 @@ class MAVManager
     bool lissajous(float x_amp, float y_amp, float z_amp, float yaw_amp, float x_num_periods, float y_num_periods, float z_num_periods, 
                    float yaw_num_periods, float period, float num_cycles, float ramp_time);
 
+    // Compound Lissajous Control
+    bool compound_lissajous(float x_amp[2], float y_amp[2], float z_amp[2], float yaw_amp[2], float x_num_periods[2], float y_num_periods[2], float z_num_periods[2], 
+                            float yaw_num_periods[2], float period[2], float num_cycles[2], float ramp_time[2]);
+
     // Direct low-level control
     bool setPositionCommand(const quadrotor_msgs::PositionCommand &cmd);
     bool setSO3Command(const quadrotor_msgs::SO3Command &cmd);
@@ -123,6 +128,7 @@ class MAVManager
     typedef actionlib::SimpleActionClient<std_trackers::VelocityTrackerAction> VelocityClientType;
     typedef actionlib::SimpleActionClient<std_trackers::CircleTrackerAction> CircleClientType;
     typedef actionlib::SimpleActionClient<std_trackers::LissajousTrackerAction> LissajousClientType;
+    typedef actionlib::SimpleActionClient<std_trackers::LissajousAdderAction> CompoundLissajousClientType;
 
     ros::NodeHandle nh_;
     ros::NodeHandle priv_nh_;
@@ -131,6 +137,7 @@ class MAVManager
     void velocity_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::VelocityTrackerResultConstPtr& result);
     void circle_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::CircleTrackerResultConstPtr &result);
     void lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::LissajousTrackerResultConstPtr &result);
+    void lissajous_adder_done_callback(const actionlib::SimpleClientGoalState& state, const std_trackers::LissajousAdderResultConstPtr &result);
 
     void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
@@ -168,6 +175,7 @@ class MAVManager
     VelocityClientType velocity_tracker_client_;
     CircleClientType circle_tracker_client_;
     LissajousClientType lissajous_tracker_client_;
+    CompoundLissajousClientType lissajous_adder_client_;
 
     // Publishers
     ros::Publisher

@@ -1,14 +1,14 @@
-float64 x_amp
-float64 y_amp
-float64 z_amp
-float64 yaw_amp
-float64 x_num_periods
-float64 y_num_periods
-float64 z_num_periods
-float64 yaw_num_periods
-float64 period
-float64 num_cycles
-float64 ramp_time
+float32 x_amp
+float32 y_amp
+float32 z_amp
+float32 yaw_amp
+float32 x_num_periods
+float32 y_num_periods
+float32 z_num_periods
+float32 yaw_num_periods
+float32 period
+float32 num_cycles
+float32 ramp_time
 ---
 bool success
 string message
