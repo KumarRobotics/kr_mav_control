@@ -26,9 +26,6 @@ else()
     CATKIN_DEPENDS roscpp quadrotor_msgs nav_msgs nodelet tf_conversions
     DEPENDS Eigen)
 
-  add_executable(pos_cmd_subscriber src/pos_cmd_subscriber.cpp)
-  target_link_libraries(pos_cmd_subscriber ${catkin_LIBRARIES} ${Snav_LIBRARY})
-
   add_executable(vio_odom_publisher src/vio_odom_publisher.cpp)
   target_link_libraries(vio_odom_publisher ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
@@ -40,7 +37,11 @@ else()
   add_dependencies(trpycmd_to_snav_nodelet ${catkin_EXPORTED_TARGETS})
   target_link_libraries(trpycmd_to_snav_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
-  install(TARGETS pos_cmd_subscriber vio_odom_publisher so3cmd_to_qualcomm_nodelet trpycmd_to_snav_nodelet
+  add_library(poscmd_to_snav_nodelet src/poscmd_to_snav_nodelet.cpp)
+  add_dependencies(poscmd_to_snav_nodelet ${catkin_EXPORTED_TARGETS})
+  target_link_libraries(poscmd_to_snav_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
+
+  install(TARGETS vio_odom_publisher so3cmd_to_qualcomm_nodelet trpycmd_to_snav_nodelet poscmd_to_snav_nodelet
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
