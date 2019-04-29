@@ -1,0 +1,14 @@
+float32[2] x_amp
+float32[2] y_amp
+float32[2] z_amp
+float32[2] yaw_amp
+float32[2] x_num_periods
+float32[2] y_num_periods
+float32[2] z_num_periods
+float32[2] yaw_num_periods
+float32[2] period
+float32[2] num_cycles
+float32[2] ramp_time
+---
+bool success
+string message

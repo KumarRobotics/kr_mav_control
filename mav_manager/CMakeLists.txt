@@ -31,6 +31,8 @@ add_service_files(
     Vec4.srv
     GoalTimed.srv
     Circle.srv
+    Lissajous.srv
+    CompoundLissajous.srv
 )
 generate_messages()
 
