@@ -7,6 +7,8 @@
 #include <mav_manager/Vec4.h>
 #include <mav_manager/GoalTimed.h>
 #include <mav_manager/Circle.h>
+#include <mav_manager/Lissajous.h>
+#include <mav_manager/CompoundLissajous.h>
 
 namespace mav_manager
 {
@@ -82,12 +84,41 @@ public:
       last_cb_ = "setDesVelInBodyFrame";
     return true;
   }
-  bool circle_cb(mav_manager::Circle::Request &req, mav_manager::Circle::Response &res) {
+  bool circle_cb(mav_manager::Circle::Request &req, mav_manager::Circle::Response &res) 
+  {
     res.success = mav->circle(req.Ax, req.Ay, req.T, req.duration);
     res.message = "Circling motion";
-    if (res.success) {
+    if (res.success)
       last_cb_ = "circle";
-    }
+    return true;
+  }
+  bool lissajous_cb(mav_manager::Lissajous::Request &req, mav_manager::Lissajous::Response &res) 
+  {
+    res.success = mav->lissajous(req.x_amp, req.y_amp, req.z_amp, req.yaw_amp, req.x_num_periods, req.y_num_periods, 
+                                 req.z_num_periods, req.yaw_num_periods, req.period, req.num_cycles, req.ramp_time);
+    res.message = "Lissajous motion";
+    if (res.success)
+      last_cb_ = "lissajous";
+    return true;
+  }
+  bool compound_lissajous_cb(mav_manager::CompoundLissajous::Request &req, mav_manager::CompoundLissajous::Response &res) 
+  {
+    float x_amp[2] = {req.x_amp[0], req.x_amp[1]};
+    float y_amp[2] = {req.y_amp[0], req.y_amp[1]};
+    float z_amp[2] = {req.z_amp[0], req.z_amp[1]};
+    float yaw_amp[2] = {req.yaw_amp[0], req.yaw_amp[1]};
+    float x_num_periods[2] = {req.x_num_periods[0], req.x_num_periods[1]};
+    float y_num_periods[2] = {req.y_num_periods[0], req.y_num_periods[1]};
+    float z_num_periods[2] = {req.z_num_periods[0], req.z_num_periods[1]};
+    float yaw_num_periods[2] = {req.yaw_num_periods[0], req.yaw_num_periods[1]};
+    float period[2] = {req.period[0], req.period[1]};
+    float num_cycles[2] = {req.num_cycles[0], req.num_cycles[1]};
+    float ramp_time[2] = {req.ramp_time[0], req.ramp_time[1]};
+    res.success = mav->compound_lissajous(x_amp, y_amp, z_amp, yaw_amp, x_num_periods, y_num_periods, 
+                                          z_num_periods, yaw_num_periods, period, num_cycles, ramp_time);
+    res.message = "Compound Lissajous motion";
+    if (res.success)
+      last_cb_ = "compound_lissajous";
     return true;
   }
   bool hover_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
@@ -143,6 +174,8 @@ public:
     srvs_.push_back(nh_.advertiseService("setDesVelInWorldFrame", &MAVManagerServices::setDesVelInWorldFrame_cb, this));
     srvs_.push_back(nh_.advertiseService("setDesVelInBodyFrame", &MAVManagerServices::setDesVelInBodyFrame_cb, this));
     srvs_.push_back(nh_.advertiseService("circle", &MAVManagerServices::circle_cb, this));
+    srvs_.push_back(nh_.advertiseService("lissajous", &MAVManagerServices::lissajous_cb, this));
+    srvs_.push_back(nh_.advertiseService("compound_lissajous", &MAVManagerServices::compound_lissajous_cb, this));
     srvs_.push_back(nh_.advertiseService("hover", &MAVManagerServices::hover_cb, this));
     srvs_.push_back(nh_.advertiseService("ehover", &MAVManagerServices::ehover_cb, this));
     srvs_.push_back(nh_.advertiseService("land", &MAVManagerServices::land_cb, this));

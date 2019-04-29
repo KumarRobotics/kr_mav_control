@@ -18,7 +18,9 @@ add_action_files(DIRECTORY action
   LineTracker.action
   VelocityTracker.action
   CircleTracker.action
-  TrajectoryTracker.action)
+  TrajectoryTracker.action
+  LissajousTracker.action
+  LissajousAdder.action)
 generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs)
 
 catkin_package(
@@ -66,6 +68,18 @@ add_library(trajectory_tracker src/trajectory_tracker.cpp src/traj_gen.cpp)
 add_dependencies(trajectory_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(trajectory_tracker initial_conditions ${catkin_LIBRARIES})
 
+add_library(lissajous_generator src/lissajous_generator.cpp)
+add_dependencies(lissajous_generator ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(lissajous_generator ${catkin_LIBRARIES})
+
+add_library(lissajous_tracker_action src/lissajous_tracker_server.cpp)
+add_dependencies(lissajous_tracker_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(lissajous_tracker_action lissajous_generator initial_conditions ${catkin_LIBRARIES})
+
+add_library(lissajous_adder_action src/lissajous_adder_server.cpp)
+add_dependencies(lissajous_adder_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(lissajous_adder_action lissajous_generator initial_conditions ${catkin_LIBRARIES})
+
 install(TARGETS
     initial_conditions
     line_tracker_min_jerk_action
@@ -77,6 +91,8 @@ install(TARGETS
     circle_tracker_action
     smooth_vel_tracker_action
     trajectory_tracker
+    lissajous_tracker_action
+    lissajous_adder_action
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
