@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="rviz"
+    type="rviz"
+    name="rviz"
+    args="-d $(find quadrotor_simulator)/launch/wp_nav.rviz"/>
+</launch>
