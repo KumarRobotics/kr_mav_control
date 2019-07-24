@@ -14,6 +14,14 @@ git submodule update
 The following block diagram shows how the packages in the repo fit together.
 ![Block Diagram](doc/quad_control_block_diag.png)
 
+### Stacks include:
+  - `mav_manager`: A manager for the quadrotor_control stack
+  - `rqt_mav_manager`: GUI interface for common mav_manager functions
+  - `xyz_interface`: Translates `quadrotor_msgs/SO3Command` to corresponding `xyz` robots interface.
+  - `quadrotor_simulator`: Simple quadrotor dynamics simulator
+  - `quadrotor_msgs`: Common msgs used accross packages
+  - `so3_control`: The main controller
+  - `trackers`: Different trackers under `std_trackers`, and `trackers_manager`
 
 ### Example usage
 
