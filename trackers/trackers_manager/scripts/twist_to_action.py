@@ -19,7 +19,7 @@ class WpToAction(object):
     self.client.wait_for_server()
     rospy.loginfo("Connected!")
 
-    rospy.Subscriber(self.ns+"/cmd_vel", Twist, self.callback)
+    rospy.Subscriber("cmd_vel", Twist, self.callback)
 
   def callback(self, data):
 
