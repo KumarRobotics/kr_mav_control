@@ -14,7 +14,7 @@ class WpToAction(object):
   def __init__(self):
     self.ns = '/quadrotor'
 
-    self.client = actionlib.SimpleActionClient(self.ns+'/trackers_manager/trajectory_tracker/TrajectoryTracker', TrajectoryTrackerAction)
+    self.client = actionlib.SimpleActionClient('trackers_manager/trajectory_tracker/TrajectoryTracker', TrajectoryTrackerAction)
     rospy.loginfo("Waiting for server")
     self.client.wait_for_server()
     rospy.loginfo("Connected!")
@@ -31,9 +31,9 @@ class WpToAction(object):
 
     self.client.send_goal(goal)
 
-    rospy.wait_for_service(self.ns+'/trackers_manager/transition')
+    rospy.wait_for_service('trackers_manager/transition')
     try:
-      transition_tracker = rospy.ServiceProxy(self.ns+'/trackers_manager/transition', Transition)
+      transition_tracker = rospy.ServiceProxy('trackers_manager/transition', Transition)
       resp1 = transition_tracker('std_trackers/TrajectoryTracker')
       print resp1
     except rospy.ServiceException, e:

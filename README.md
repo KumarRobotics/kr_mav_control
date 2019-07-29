@@ -23,8 +23,10 @@ The following block diagram shows how the packages in the repo fit together.
   - `so3_control`: The main controller
   - `trackers`: Different trackers under `std_trackers`, and `trackers_manager`
 
-### Example usage
+### Example use cases
 
-[Running with the included simple simulator](doc/QuadSim.md)
+[Running single robot with the included simple simulator](doc/QuadSim.md)
+
+[Running multiple robots with the included simple simulator](doc/MultiSim.md)
 
 [Running with Gazebo](doc/QuadGazebo.md)

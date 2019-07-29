@@ -86,7 +86,7 @@ Visualization Manager:
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /quadrotor/mesh_visualization/robot
-      Name: Robot
+      Name: quadrotor
       Namespaces:
         /quadrotor/mesh_visualization: true
       Queue Size: 100

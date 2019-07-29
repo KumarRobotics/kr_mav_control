@@ -6,6 +6,14 @@
   <arg name="slow_baud_rate" default="true"/>
   <arg name="mass" default="0.5"/>
 
+  <arg name="initial_position/x" default="0.0"/>
+  <arg name="initial_position/y" default="0.0"/>
+  <arg name="initial_position/z" default="0.0"/>
+  <arg name="color/r" default="0.0"/>
+  <arg name="color/g" default="0.0"/>
+  <arg name="color/b" default="1.0"/>
+  <arg name="color/a" default="0.7"/>
+
   <!-- Vicon odometry -->
   <group if="$(arg vicon)">
     <include file="$(find vicon)/launch/vicon.launch" unless="$(arg sim)"/>
@@ -24,10 +32,13 @@
       <arg name="name" value="$(arg model)"/>
       <arg name="type" value="hummingbird"/>
       <arg name="mass" value="$(arg mass)"/>
-      <arg name="color/r" value="0.0"/>
-      <arg name="color/g" value="0.0"/>
-      <arg name="color/b" value="1.0"/>
-      <arg name="color/a" value="0.7"/>
+      <arg name="initial_position/x" value="$(arg initial_position/x)"/>
+      <arg name="initial_position/y" value="$(arg initial_position/y)"/>
+      <arg name="initial_position/z" value="$(arg initial_position/z)"/>
+      <arg name="color/r" value="$(arg color/r)"/>
+      <arg name="color/g" value="$(arg color/g)"/>
+      <arg name="color/b" value="$(arg color/b)"/>
+      <arg name="color/a" value="$(arg color/a)"/>
     </include>
 
     <!-- Control stuff -->
