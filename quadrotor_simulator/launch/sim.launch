@@ -42,7 +42,7 @@
     type="mesh_visualization"
     name="mesh_visualization"
     output="screen">
-    <param name="mesh_resource" value="package://mesh_visualization/mesh/hummingbird.mesh"/>
+    <param name="mesh_resource" value="package://mesh_visualization/mesh/hummingbird.mesh"/> <!-- TODO add meshes for crazyflie, dragonfly, etc -->
     <param name="color/r" value="$(arg color/r)"/>
     <param name="color/g" value="$(arg color/g)"/>
     <param name="color/b" value="$(arg color/b)"/>

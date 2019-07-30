@@ -1,5 +1,6 @@
 <launch>
   <arg name="model" default="quadrotor"/>
+  <arg name="type" default="hummingbird"/>
   <arg name="sim" default="1"/>
   <arg name="vicon" default="1"/>
   <arg name="vicon_fps" default="100"/>
@@ -30,7 +31,7 @@
     <!-- Simulator -->
     <include file="$(find quadrotor_simulator)/launch/sim.launch" if="$(arg sim)">
       <arg name="name" value="$(arg model)"/>
-      <arg name="type" value="hummingbird"/>
+      <arg name="type" value="$(arg type)"/>
       <arg name="mass" value="$(arg mass)"/>
       <arg name="initial_position/x" value="$(arg initial_position/x)"/>
       <arg name="initial_position/y" value="$(arg initial_position/y)"/>
