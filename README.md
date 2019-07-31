@@ -29,6 +29,6 @@ The following block diagram shows how the packages in the repo fit together.
 
 [Running multiple robots with the included simple simulator](doc/MultiSim.md)
 
-[Running with Gazebo](doc/QuadGazebo.md)
+[MATLAB interface with simple simulator](doc/MultiMatlab.md)
 
-### TODO add MATLAB interface
+[Running with Gazebo](doc/QuadGazebo.md)

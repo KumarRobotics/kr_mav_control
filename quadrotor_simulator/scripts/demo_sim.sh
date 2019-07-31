@@ -61,7 +61,7 @@ tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; export DISPLAY=:0; 
 tmux split-window -t $SESSION_NAME
 tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; export DISPLAY=:0; rqt --standalone ${RQT_GUI}" Enter
 tmux split-window -t $SESSION_NAME
-tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch multi_mav_manager multi_mav_manager.launch config_path:=$HOME/.ros/" Enter
+tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch multi_mav_manager multi_mav_manager.launch odom_topic:=odom config_path:=$HOME/.ros/" Enter
 tmux select-layout -t $SESSION_NAME tiled
 
 # Launch each mav in a new tmux window
