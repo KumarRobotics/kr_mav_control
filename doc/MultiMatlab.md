@@ -44,9 +44,10 @@ roscd quadrotor_simulator/scripts
 In MATLAB
 ```
 cd ~/ws_ros/src/quadrotor_control/matlab_interface
-example_interface(4)
+example_interface('localhost', 4)
 ```
  * This starts the motors, calls takeoff and moves all the 4 MAVs with random velocity.
+ * The first string is the hostname. Use `localhost` if the simulators are running on your own machine.
  * Copy and reuse the `example_interface.m` to develop/test your own awesome MATLAB based algorithms.
  * This is a minimal interface. More API specific to quadrotor_control can be added easily.
 

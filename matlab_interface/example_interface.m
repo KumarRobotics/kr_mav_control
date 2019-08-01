@@ -1,8 +1,22 @@
-function example_interface(n_agents)
-hostname = 'localhost';
-quad_obj = QuadControlRos(hostname,n_agents, 'dragonfly');
+function example_interface(hostname, n_agents)
+% pass hostname as 'localhost' for simulator running on same maching
+if nargin < 2
+  error('Need hostname and n_agents as argument')
+  exit;
+end
 
-agent_num = 1;
+if n_agents < 1
+  obj.n_agents = 1;
+else
+  obj.n_agents = n_agents;
+end
+
+if(~isstr(hostname))
+  disp('hostname has to be a string, setting to localhost')
+  hostname = 'localhost';
+end
+      
+quad_obj = QuadControlRos(hostname,n_agents, 'dragonfly');
 
 %Turn on motors and takeoff
 quad_obj.motors_on_takeoff()

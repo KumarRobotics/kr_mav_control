@@ -60,7 +60,7 @@ tmux rename-window -t $SESSION_NAME "Main"
 #tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; roscore" Enter
 #tmux split-window -t $SESSION_NAME
 #tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; export DISPLAY=:0; rosrun rviz rviz -d ${RVIZ_CONFIG_FILE}" Enter
-tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; roslaunch mrsl_quadrotor_launch gazebo.launch world:=empty" Enter
+tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; export DISPLAY=:0; roslaunch mrsl_quadrotor_launch gazebo.launch world:=empty" Enter
 tmux split-window -t $SESSION_NAME
 tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; export DISPLAY=:0; rqt --standalone ${RQT_GUI}" Enter
 tmux split-window -t $SESSION_NAME

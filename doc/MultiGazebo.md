@@ -5,7 +5,7 @@ Clone and build [kr_ui](https://github.com/KumarRobotics/kr_ui) and [multi_mav_m
 Helper bash scripts are added to launch multiple robots.
 ```
 roscd quadrotor_simulator/scripts
-./demo_gazebo.py 2
+./demo_gazebo.sh 2
 ```
  * This will launch 2 robots in gazebo. Do not run more if your machine cannot support.
  * Switch to the `Kill` tab in the `tmux` window and press `Enter` to close everything
