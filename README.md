@@ -9,11 +9,6 @@ git submodule init
 git submodule update
 ```
 
-### Block Diagram
-
-The following block diagram shows how the packages in the repo fit together.
-![Block Diagram](doc/quad_control_block_diag.png)
-
 ### Stacks include:
   - `mav_manager`: A manager for the quadrotor_control stack
   - `rqt_mav_manager`: GUI interface for common mav_manager functions
@@ -34,3 +29,11 @@ The following block diagram shows how the packages in the repo fit together.
 [Running with Gazebo](doc/QuadGazebo.md)
 
 [Running multiple robots with Gazebo](doc/MultiGazebo.md)
+
+### Block Diagram
+
+The following block diagram shows how the packages in the repo fit together.
+![Block Diagram](doc/quad_control_block_diag.png)
+
+Further detailed breakdown of the blocks can be found in
+the [PPT](doc/quadrotor_control_block_diagram.pptx)

@@ -1,4 +1,4 @@
-## Example with multiple simulated robots and MATLAB
+## Example with multiple simulated robots and MATLAB (Compatible with 2018b and later versions)
 
 MATLAB wrappers for `quadrotor_control` using the [Robotics Systems Toolbox](https://www.mathworks.com/help/robotics/index.html?s_tid=CRUX_lftnav) are available in `matlab_interface`.
 
@@ -10,7 +10,7 @@ roboticsAddons
 ```
  * Install
    * `Robotics System Toolbox Interface for ROS Custom Messages`
-   * `Robotics System Toolbox UAV Library`
+   * `Robotics System Toolbox UAV Library` (Only available for 2018b and later versions)
 
 Once installed follow the following instructions to generate custom messages used in `quadrotor_control`. More info on generating ROS custom messages is [here](https://www.mathworks.com/help/robotics/ref/rosgenmsg.html)
 
