@@ -4,7 +4,15 @@ MATLAB wrappers for `quadrotor_control` using the [Robotics Systems Toolbox](htt
 
 Make sure you have the toolbox installed. In addition, for the interface to work with `quadrotor_control`, ROS custom messages have to be generated.
 
-Install the Robotics System Toolbox Interface for ROS Custom Messages add-on using `roboticsAddons`. Run this function in the MATLAB console. Once installed follow the following instructions to generate custom messages used in `quadrotor_control`. More info on generating ROS custom messages is [here](https://www.mathworks.com/help/robotics/ref/rosgenmsg.html)
+In MATLAB console
+```
+roboticsAddons
+```
+ * Install
+   * `Robotics System Toolbox Interface for ROS Custom Messages`
+   * `Robotics System Toolbox UAV Library`
+
+Once installed follow the following instructions to generate custom messages used in `quadrotor_control`. More info on generating ROS custom messages is [here](https://www.mathworks.com/help/robotics/ref/rosgenmsg.html)
 
 ```
 cd ~/ws_ros/src/quadrotor_control
@@ -50,5 +58,6 @@ example_interface('localhost', 4)
  * The first string is the hostname. Use `localhost` if the simulators are running on your own machine.
  * Copy and reuse the `example_interface.m` to develop/test your own awesome MATLAB based algorithms.
  * This is a minimal interface. More API specific to quadrotor_control can be added easily.
+ * If due to some issue, MATLAB gets stuck in a loop, type `rosshutdown` at the console. This will shutdown all subscribers.
 
 Happy `MATLABing`

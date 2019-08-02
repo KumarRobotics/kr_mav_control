@@ -1,27 +1,39 @@
 function example_interface(hostname, n_agents)
+
 % pass hostname as 'localhost' for simulator running on same maching
 if nargin < 2
   error('Need hostname and n_agents as argument')
-  exit;
+  return;
+end
+
+if(~isnumeric(n_agents))
+  disp('n_agents has to be an integer')
+  return;
 end
 
 if n_agents < 1
-  obj.n_agents = 1;
-else
-  obj.n_agents = n_agents;
+  n_agents = 1;
 end
 
-if(~isstr(hostname))
+if(~ischar(hostname))
   disp('hostname has to be a string, setting to localhost')
   hostname = 'localhost';
 end
-      
-quad_obj = QuadControlRos(hostname,n_agents, 'dragonfly');
+
+%Prepare plotting
+fig1 = figure;
+ax1 = axes('XLim',[-10, 10], 'YLim', [-10, 10], 'ZLim', [-10,10], 'Parent', fig1);
+
+for n_ag = 1:n_agents
+    vis_handles.ax_handles(n_ag) = plotTransforms([rand(1), rand(1), rand(1)], [1,0,0,0], 'MeshFilePath','multirotor.stl', 'MeshColor', [rand(1) rand(1) rand(1)], 'FrameSize', 2, 'Parent', ax1);
+end
+
+quad_obj = QuadControlRos(hostname,n_agents, 'dragonfly', vis_handles);
 
 %Turn on motors and takeoff
 quad_obj.motors_on_takeoff()
 
-for i=1:20
+for i=1:30
 
   agent_num = randi([1, n_agents]);
   curr_odom = quad_obj.getOdom(agent_num);

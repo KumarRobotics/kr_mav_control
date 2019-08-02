@@ -1,16 +1,18 @@
 classdef QuadControlRos < handle
+  
   properties
     n_agents = []
     agent = []
     agent_ids = []
     agent_namespace = []
+    vis_handles = []
   end
 
   methods
-    function [obj] = QuadControlRos(hostname, n_agents, agent_namespace)
+    function [obj] = QuadControlRos(hostname, n_agents, agent_namespace, vis_handles)
       if nargin < 2
         error('Need hostname and n_agents as argument')
-        exit;
+        return;
       end
 
       if n_agents < 1
@@ -30,29 +32,30 @@ classdef QuadControlRos < handle
       else
         obj.agent_namespace = agent_namespace;
       end
-
+      
+      obj.vis_handles = vis_handles;
       obj.agent_ids = 1:n_agents; %TODO add ability to pass non sequential agent ids
       rosinit(hostname)
 
       pause(0.5)
-
+      disp('rosinit successful, setting up subscribers, publishers and service clients');
       obj.setup_subs();
-
+      disp('ready');
     end
 
     function setup_subs(obj)
 
       for n_ag = 1:obj.n_agents
         goto_topic = sprintf('/%s%d/mav_services/goTo',obj.agent_namespace, obj.agent_ids(n_ag));
-        obj.agent(n_ag).goto_srv = rossvcclient(goto_topic);
+        obj.agent(n_ag).goto_srv = rossvcclient(goto_topic, 'Timeout', 10);
 
         %TODO use multi_mav_manager interface? Will reduce number of
         %subscribers in MATLAB
         motors_topic = sprintf('/%s%d/mav_services/motors',obj.agent_namespace, obj.agent_ids(n_ag));
-        obj.agent(n_ag).motors_srv = rossvcclient(motors_topic);
+        obj.agent(n_ag).motors_srv = rossvcclient(motors_topic, 'Timeout', 10);
 
         takeoff_topic = sprintf('/%s%d/mav_services/takeoff',obj.agent_namespace, obj.agent_ids(n_ag));
-        obj.agent(n_ag).takeoff_srv = rossvcclient(takeoff_topic);
+        obj.agent(n_ag).takeoff_srv = rossvcclient(takeoff_topic, 'Timeout', 10);
 
         twist_topic = sprintf('/%s%d/cmd_vel',obj.agent_namespace, obj.agent_ids(n_ag));
         obj.agent(n_ag).twist_pub = rospublisher(twist_topic,'geometry_msgs/Twist');
@@ -139,6 +142,25 @@ classdef QuadControlRos < handle
       agent_id = str2num(topic(strfind(topic,'fly') + 3 : strfind(topic, '/odom')-1));
       agent_number = find(obj.agent_ids == agent_id);
       obj.agent(agent_number).odom = msg;
+  
+    
+      pt = msg.Pose.Pose.Position;
+      qt = msg.Pose.Pose.Orientation;
+      position = [pt.X, pt.Y, pt.Z];      
+      orientation = [qt.W, qt.X, qt.Y, qt.Z];
+      
+      %Take a look at
+      %'R2019a/toolbox/robotics/robotcore/+robotics/+core/+internal/+visualization/TransformPainter.m'
+      % move method in above file
+      
+      ax = obj.vis_handles.ax_handles(agent_number);
+      hBodyToInertial = findobj(ax, 'Type', 'hgtransform','Tag', robotics.core.internal.visualization.TransformPainter.GraphicsObjectTags.BodyToInertial);
+      %hBodyToInertial = get(get(get(ax, 'Children'),'Children'), 'Children');
+                      
+      tform = quat2tform(orientation);
+      tform(1:3,4) = position;
+      set(hBodyToInertial(agent_number), 'Matrix', tform);
+            
     end
 
   end

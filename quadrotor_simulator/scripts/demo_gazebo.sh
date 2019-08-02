@@ -67,6 +67,10 @@ tmux split-window -t $SESSION_NAME
 tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; roslaunch multi_mav_manager multi_mav_manager.launch odom_topic:=${ODOM_TOPIC} config_path:=$HOME/.ros/" Enter
 tmux select-layout -t $SESSION_NAME tiled
 
+# Add window to easily kill all processes
+tmux new-window -t $SESSION_NAME -n "Kill"
+tmux send-keys -t $SESSION_NAME "tmux kill-session -t ${SESSION_NAME}"
+
 # Launch each mav in a new tmux window
 for id in $(seq 1 $NUM_MAV)
 do
@@ -103,10 +107,6 @@ do
   tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; cd $(rospack find mav_manager)/scripts/; ./takeoff.sh ${MAV_NAME}"
   tmux select-layout -t $SESSION_NAME even-horizontal
 done
-
-# Add window to easily kill all processes
-tmux new-window -t $SESSION_NAME -n "Kill"
-tmux send-keys -t $SESSION_NAME "tmux kill-session -t ${SESSION_NAME}"
 
 tmux select-window -t $SESSION_NAME:0
 tmux -2 attach-session -t $SESSION_NAME
