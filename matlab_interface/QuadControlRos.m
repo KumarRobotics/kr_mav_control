@@ -64,7 +64,7 @@ classdef QuadControlRos < handle
       %Setup callbacks at the end
       for n_ag = 1:obj.n_agents
         odom_topic = sprintf('/%s%d/odom',obj.agent_namespace, obj.agent_ids(n_ag));
-        obj.agent(n_ag).odom_sub = rossubscriber(odom_topic, @obj.odom_sub_cb);
+        obj.agent(n_ag).odom_sub = rossubscriber(odom_topic, {@obj.odom_sub_cb, n_ag});
       end
 
       disp('Starting sub/pub');
@@ -136,13 +136,8 @@ classdef QuadControlRos < handle
       odom = obj.agent(agent_number).odom;
     end
 
-    function[] = odom_sub_cb(obj,src,msg)
-      %Get agent id/number from topic name
-      topic = src.TopicName;
-      agent_id = str2num(topic(strfind(topic,'fly') + 3 : strfind(topic, '/odom')-1));
-      agent_number = find(obj.agent_ids == agent_id);
+    function[] = odom_sub_cb(obj,src,msg, agent_number)
       obj.agent(agent_number).odom = msg;
-  
     
       pt = msg.Pose.Pose.Position;
       qt = msg.Pose.Pose.Orientation;
