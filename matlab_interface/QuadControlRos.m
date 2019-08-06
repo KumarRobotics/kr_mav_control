@@ -33,7 +33,11 @@ classdef QuadControlRos < handle
         obj.agent_namespace = agent_namespace;
       end
       
-      obj.vis_handles = vis_handles;
+      obj.vis_handles = [];
+      if  nargin == 4
+        obj.vis_handles = vis_handles;
+      end
+      
       obj.agent_ids = 1:n_agents; %TODO add ability to pass non sequential agent ids
       rosinit(hostname)
 
@@ -107,19 +111,6 @@ classdef QuadControlRos < handle
       response = call(obj.agent(agent_number).goto_srv, request);
     end
 
-    function[] = motors_on_takeoff(obj)
-      for n_ag = 1:obj.n_agents
-        obj.motors(n_ag, 1);
-        obj.takeoff(n_ag);
-      end
-    end
-
-    function[] = motors_off(obj)
-      for n_ag = 1:obj.n_agents
-        obj.motors(n_ag, 0);
-      end
-    end
-
     function[] = motors(obj, agent_number, motors)
       request = rosmessage(obj.agent(agent_number).motors_srv);
       request.Data = motors;
@@ -144,17 +135,21 @@ classdef QuadControlRos < handle
       position = [pt.X, pt.Y, pt.Z];      
       orientation = [qt.W, qt.X, qt.Y, qt.Z];
       
-      %Take a look at
-      %'R2019a/toolbox/robotics/robotcore/+robotics/+core/+internal/+visualization/TransformPainter.m'
-      % move method in above file
-      
-      ax = obj.vis_handles.ax_handles(agent_number);
-      hBodyToInertial = findobj(ax, 'Type', 'hgtransform','Tag', robotics.core.internal.visualization.TransformPainter.GraphicsObjectTags.BodyToInertial);
-      %hBodyToInertial = get(get(get(ax, 'Children'),'Children'), 'Children');
-                      
-      tform = quat2tform(orientation);
-      tform(1:3,4) = position;
-      set(hBodyToInertial(agent_number), 'Matrix', tform);
+      if ~isempty(obj.vis_handles)
+        %Take a look at
+        %'R2019a/toolbox/robotics/robotcore/+robotics/+core/+internal/+visualization/TransformPainter.m'
+        % move method in above file
+        
+        ax = obj.vis_handles.ax_handles(agent_number);
+        hBodyToInertial = findobj(ax, 'Type', 'hgtransform','Tag', robotics.core.internal.visualization.TransformPainter.GraphicsObjectTags.BodyToInertial);
+        %hBodyToInertial = get(get(get(ax, 'Children'),'Children'), 'Children');
+        
+        if ~isempty(hBodyToInertial)
+          tform = quat2tform(orientation);
+          tform(1:3,4) = position;
+          set(hBodyToInertial(agent_number), 'Matrix', tform);
+        end
+      end
             
     end
 

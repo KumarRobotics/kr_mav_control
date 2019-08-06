@@ -31,7 +31,11 @@ end
 quad_obj = QuadControlRos(hostname,n_agents, 'dragonfly', vis_handles);
 
 %Turn on motors and takeoff
-quad_obj.motors_on_takeoff()
+for n_ag = 1:n_agents
+  quad_obj.motors(n_ag, 1);
+  pause(0.1) %Might need longer pause on real platforms for motors to idle
+  quad_obj.takeoff(n_ag);
+end
 
 for i=1:30
 
