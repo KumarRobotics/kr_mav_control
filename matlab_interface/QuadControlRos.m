@@ -5,10 +5,10 @@ classdef QuadControlRos < handle
     agent_ids = []
     agent_namespace = []
   end
-  
+
    events
       NewOdom
-   end  
+   end
 
   methods
     function [obj] = QuadControlRos(hostname, n_agents, agent_namespace)
@@ -34,7 +34,7 @@ classdef QuadControlRos < handle
       else
         obj.agent_namespace = agent_namespace;
       end
-      
+
       obj.agent_ids = 1:n_agents; %TODO add ability to pass non sequential agent ids
       rosinit(hostname)
 
@@ -102,21 +102,20 @@ classdef QuadControlRos < handle
       send(obj.agent(agent_number).twist_pub,twistdata);
     end
 
-    function[] = send_wp(obj, agent_number, wp)
+    function[response] = send_wp(obj, agent_number, wp)
       request = rosmessage(obj.agent(agent_number).goto_srv);
       request.Goal = [wp(1), wp(2), wp(3), wp(4)];
       response = call(obj.agent(agent_number).goto_srv, request);
     end
 
-    function[] = motors(obj, agent_number, motors)
+    function[response] = motors(obj, agent_number, motors)
       request = rosmessage(obj.agent(agent_number).motors_srv);
       request.Data = motors;
       response = call(obj.agent(agent_number).motors_srv, request);
     end
 
-    function[] = takeoff(obj, agent_number)
+    function[response] = takeoff(obj, agent_number)
       request = rosmessage(obj.agent(agent_number).takeoff_srv);
-      %request.Goal = ;
       response = call(obj.agent(agent_number).takeoff_srv, request);
     end
 
@@ -124,18 +123,18 @@ classdef QuadControlRos < handle
       odom = obj.agent(agent_number).odom;
     end
 
-    function[] = odom_sub_cb(obj,src,msg, agent_number)
+    function[] = odom_sub_cb(obj, ~, msg, agent_number)
       obj.agent(agent_number).odom = msg;
-    
+
       pt = msg.Pose.Pose.Position;
       qt = msg.Pose.Pose.Orientation;
-      position = [pt.X, pt.Y, pt.Z];      
+      position = [pt.X, pt.Y, pt.Z];
       orientation = [qt.W, qt.X, qt.Y, qt.Z];
-      
+
       %Broadcast a new odometry event with corresponding data
       odom_event_data = NewOdomEventData(agent_number, position, orientation);
-      notify(obj,'NewOdom', odom_event_data);
-            
+      notify(obj, 'NewOdom', odom_event_data);
+
     end
 
   end
