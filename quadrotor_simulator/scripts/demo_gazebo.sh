@@ -41,7 +41,7 @@ ODOM_TOPIC=ground_truth/odom
 # Generate rviz config file for specific mav from default one
 RVIZ_CONFIG_FILE="$HOME/.ros/wp_nav.rviz"
 LAUNCH_PATH=$(rospack find quadrotor_simulator)
-cp $LAUNCH_PATH/launch/wp_nav.rviz ${RVIZ_CONFIG_FILE}
+cp $LAUNCH_PATH/launch/rviz_config.rviz ${RVIZ_CONFIG_FILE}
 sed -i "s/quadrotor/temp/g" ${RVIZ_CONFIG_FILE}
 
 # Generate multi_mav_manger yaml config file based on number of robots
