@@ -41,8 +41,8 @@ ODOM_TOPIC=ground_truth/odom
 # Generate rviz config file for specific mav from default one
 RVIZ_CONFIG_FILE="$HOME/.ros/wp_nav.rviz"
 LAUNCH_PATH=$(rospack find quadrotor_simulator)
-cp $LAUNCH_PATH/launch/wp_nav.rviz ~/.ros/wp_nav.rviz
-sed -i "s/quadrotor/temp/g" ~/.ros/wp_nav.rviz
+cp $LAUNCH_PATH/launch/wp_nav.rviz ${RVIZ_CONFIG_FILE}
+sed -i "s/quadrotor/temp/g" ${RVIZ_CONFIG_FILE}
 
 # Generate multi_mav_manger yaml config file based on number of robots
 cp $(rospack find multi_mav_manager)/config/dragonfly/multi_mav_manager_single.yaml ~/.ros/multi_mav_manager.yaml
@@ -77,8 +77,8 @@ do
 
   # Append rviz/Marker for cuurent mav id.
   MAV_NAME=${MAV_NAMESPACE}${id}
-  sed -i "108a\    - Class: rviz/Marker\n      Enabled: true\n      Marker Topic: /quadrotor/mesh_visualization/robot\n      Name: quadrotor\n      Namespaces:\n        /quadrotor/mesh_visualization: true\n      Queue Size: 100\n      Value: true" ~/.ros/wp_nav.rviz
-  sed -i "s/quadrotor/${MAV_NAME}/g" ~/.ros/wp_nav.rviz
+  sed -i "108a\    - Class: rviz/Marker\n      Enabled: true\n      Marker Topic: /quadrotor/mesh_visualization/robot\n      Name: quadrotor\n      Namespaces:\n        /quadrotor/mesh_visualization: true\n      Queue Size: 100\n      Value: true" ${RVIZ_CONFIG_FILE}
+  sed -i "s/quadrotor/${MAV_NAME}/g" ${RVIZ_CONFIG_FILE}
 
   tmux new-window -t $SESSION_NAME -n "r${id}"
 
