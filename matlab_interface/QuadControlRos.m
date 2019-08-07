@@ -1,15 +1,17 @@
 classdef QuadControlRos < handle
-  
-  properties
+  properties (SetAccess = private)
     n_agents = []
     agent = []
     agent_ids = []
     agent_namespace = []
-    vis_handles = []
   end
+  
+   events
+      NewOdom
+   end  
 
   methods
-    function [obj] = QuadControlRos(hostname, n_agents, agent_namespace, vis_handles)
+    function [obj] = QuadControlRos(hostname, n_agents, agent_namespace)
       if nargin < 2
         error('Need hostname and n_agents as argument')
         return;
@@ -31,11 +33,6 @@ classdef QuadControlRos < handle
         obj.agent_namespace = 'dragonfly';
       else
         obj.agent_namespace = agent_namespace;
-      end
-      
-      obj.vis_handles = [];
-      if  nargin == 4
-        obj.vis_handles = vis_handles;
       end
       
       obj.agent_ids = 1:n_agents; %TODO add ability to pass non sequential agent ids
@@ -135,21 +132,9 @@ classdef QuadControlRos < handle
       position = [pt.X, pt.Y, pt.Z];      
       orientation = [qt.W, qt.X, qt.Y, qt.Z];
       
-      if ~isempty(obj.vis_handles)
-        %Take a look at
-        %'R2019a/toolbox/robotics/robotcore/+robotics/+core/+internal/+visualization/TransformPainter.m'
-        % move method in above file
-        
-        ax = obj.vis_handles.ax_handles(agent_number);
-        hBodyToInertial = findobj(ax, 'Type', 'hgtransform','Tag', robotics.core.internal.visualization.TransformPainter.GraphicsObjectTags.BodyToInertial);
-        %hBodyToInertial = get(get(get(ax, 'Children'),'Children'), 'Children');
-        
-        if ~isempty(hBodyToInertial)
-          tform = quat2tform(orientation);
-          tform(1:3,4) = position;
-          set(hBodyToInertial(agent_number), 'Matrix', tform);
-        end
-      end
+      %Broadcast a new odometry event with corresponding data
+      odom_event_data = NewOdomEventData(agent_number, position, orientation);
+      notify(obj,'NewOdom', odom_event_data);
             
     end
 

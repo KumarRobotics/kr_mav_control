@@ -24,11 +24,15 @@ end
 fig1 = figure;
 ax1 = axes('XLim',[-10, 10], 'YLim', [-10, 10], 'ZLim', [-10,10], 'Parent', fig1);
 
+quad_obj = QuadControlRos(hostname,n_agents, 'dragonfly');
+
+%Create mesh visualization handles for each agent
 for n_ag = 1:n_agents
     vis_handles.ax_handles(n_ag) = plotTransforms([rand(1), rand(1), rand(1)], [1,0,0,0], 'MeshFilePath','multirotor.stl', 'MeshColor', [rand(1) rand(1) rand(1)], 'FrameSize', 2, 'Parent', ax1);
 end
 
-quad_obj = QuadControlRos(hostname,n_agents, 'dragonfly', vis_handles);
+%Add event listner to update Mesh pose on new odometry
+new_odom_listner_handle = addlistener(quad_obj,'NewOdom',@(quad_obj,evnt)odomEventcallbackMethod(quad_obj,evnt,vis_handles));
 
 %Turn on motors and takeoff
 for n_ag = 1:n_agents
@@ -62,4 +66,25 @@ for n=1:n_agents
 end
 
 clear quad_obj
+end
+
+function odomEventcallbackMethod(src,evnt, vis_handles)
+agent_number = evnt.agent_number;
+position = evnt.position;
+orientation = evnt.orientation;
+
+if ~isempty(vis_handles)
+  %Take a look at
+  %'R2019a/toolbox/robotics/robotcore/+robotics/+core/+internal/+visualization/TransformPainter.m'
+  % move method in above file
+  
+  ax = vis_handles.ax_handles(agent_number);
+  hBodyToInertial = findobj(ax, 'Type', 'hgtransform','Tag', robotics.core.internal.visualization.TransformPainter.GraphicsObjectTags.BodyToInertial);
+  
+  if ~isempty(hBodyToInertial)
+    tform = quat2tform(orientation);
+    tform(1:3,4) = position;
+    set(hBodyToInertial(agent_number), 'Matrix', tform);
+  end
+end
 end
