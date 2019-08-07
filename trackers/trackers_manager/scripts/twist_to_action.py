@@ -1,16 +1,14 @@
 #! /usr/bin/env python
-import math
-import copy
+from __future__ import print_function
 
 import rospy
 import actionlib
 
-from geometry_msgs.msg import PoseStamped, Pose, Twist
-from nav_msgs.msg import Path
+from geometry_msgs.msg import Twist
 from std_trackers.msg import VelocityTrackerAction, VelocityTrackerGoal
 from trackers_manager.srv import Transition
 
-class WpToAction(object):
+class TwistToAction(object):
   def __init__(self):
     self.ns = '/quadrotor'
 
@@ -24,12 +22,12 @@ class WpToAction(object):
   def callback(self, data):
 
     goal = VelocityTrackerGoal()
-    goal.vx = copy.deepcopy(data.linear.x);
-    goal.vy = copy.deepcopy(data.linear.y);
-    goal.vz = copy.deepcopy(data.linear.z);
-    goal.vyaw = copy.deepcopy(data.angular.z);
+    goal.vx = data.linear.x
+    goal.vy = data.linear.y
+    goal.vz = data.linear.z
+    goal.vyaw = data.angular.z
 
-    print goal
+    print(goal)
 
     self.client.send_goal(goal)
 
@@ -37,14 +35,14 @@ class WpToAction(object):
     try:
       transition_tracker = rospy.ServiceProxy('trackers_manager/transition', Transition)
       resp1 = transition_tracker('std_trackers/VelocityTrackerAction')
-      print resp1
-    except rospy.ServiceException, e:
-      print "Service call failed: %s"%e
+      print(resp1)
+    except rospy.ServiceException as e:
+      print("Service call failed: %s"%e)
 
 def main():
   rospy.init_node('twist_to_action')
 
-  wta = WpToAction()
+  tta = TwistToAction()
 
   rospy.spin()
   return 0

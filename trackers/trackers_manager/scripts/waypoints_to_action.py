@@ -1,11 +1,9 @@
 #! /usr/bin/env python
-import math
-import copy
+from __future__ import print_function
 
 import rospy
 import actionlib
 
-from geometry_msgs.msg import PoseStamped, Pose
 from nav_msgs.msg import Path
 from std_trackers.msg import TrajectoryTrackerAction, TrajectoryTrackerGoal
 from trackers_manager.srv import Transition
@@ -25,19 +23,19 @@ class WpToAction(object):
 
     goal = TrajectoryTrackerGoal()
     for dt in data.poses:
-      goal.waypoints.append(copy.deepcopy(dt.pose))
+      goal.waypoints.append(dt.pose)
 
-    print goal
+    print(goal)
 
     self.client.send_goal(goal)
 
     rospy.wait_for_service('trackers_manager/transition')
     try:
       transition_tracker = rospy.ServiceProxy('trackers_manager/transition', Transition)
-      resp1 = transition_tracker('std_trackers/TrajectoryTracker')
-      print resp1
-    except rospy.ServiceException, e:
-      print "Service call failed: %s"%e
+      resp = transition_tracker('std_trackers/TrajectoryTracker')
+      print(resp)
+    except rospy.ServiceException as e:
+      print("Service call failed: %s"%e)
 
 def main():
   rospy.init_node('wp_to_action')
