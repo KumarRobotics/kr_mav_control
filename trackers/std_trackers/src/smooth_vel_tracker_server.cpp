@@ -4,9 +4,9 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 
-#include <std_trackers/LineTrackerAction.h>
+#include <trackers_msgs/LineTrackerAction.h>
 #include <trackers_manager/Tracker.h>
-#include <trackers_manager/TrackerStatus.h>
+#include <trackers_msgs/TrackerStatus.h>
 
 #include "initial_conditions.h"
 
@@ -29,7 +29,7 @@ class SmoothVelTrackerAction : public trackers_manager::Tracker
   void preempt_callback();
 
   using ServerType =
-      actionlib::SimpleActionServer<std_trackers::LineTrackerAction>;
+      actionlib::SimpleActionServer<trackers_msgs::LineTrackerAction>;
 
   // Action server that takes a goal.
   // Must be a pointer, because plugin does not support a constructor
@@ -161,7 +161,7 @@ quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTrackerAction::update(
     if(tracker_server_->isActive())
     {
       // Send a success message and reset the length and duration variables.
-      std_trackers::LineTrackerResult result;
+      trackers_msgs::LineTrackerResult result;
       result.duration = total_time_;
       result.length = current_traj_length_;
       result.x = pos(0);
@@ -242,7 +242,7 @@ quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTrackerAction::update(
   ICs_.set_from_cmd(cmd);
 
   if (!goal_reached_) {
-    std_trackers::LineTrackerFeedback feedback;
+    trackers_msgs::LineTrackerFeedback feedback;
     Eigen::Vector3f goal = start_pos_ + total_dist_*dir_;
     feedback.distance_from_goal = (current_pos - goal).norm();
     tracker_server_->publishFeedback(feedback);
@@ -355,8 +355,8 @@ void SmoothVelTrackerAction::goal_callback()
 uint8_t SmoothVelTrackerAction::status() const
 {
   return goal_reached_ ?
-          static_cast<uint8_t>(trackers_manager::TrackerStatus::SUCCEEDED) :
-          static_cast<uint8_t>(trackers_manager::TrackerStatus::ACTIVE);
+          static_cast<uint8_t>(trackers_msgs::TrackerStatus::SUCCEEDED) :
+          static_cast<uint8_t>(trackers_msgs::TrackerStatus::ACTIVE);
 }
 
 #include <pluginlib/class_list_macros.h>

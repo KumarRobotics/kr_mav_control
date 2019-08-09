@@ -10,7 +10,7 @@ LissajousGenerator::LissajousGenerator()
   goal_set_ = false;
 }
 
-void LissajousGenerator::setParams(const std_trackers::LissajousTrackerGoal::ConstPtr &msg)
+void LissajousGenerator::setParams(const trackers_msgs::LissajousTrackerGoal::ConstPtr &msg)
 {
   if(!goal_set_)
   {
@@ -55,7 +55,7 @@ void LissajousGenerator::setParams(const std_trackers::LissajousTrackerGoal::Con
   }
 }
 
-void LissajousGenerator::setParams(const std_trackers::LissajousAdderGoal::ConstPtr &msg, int num)
+void LissajousGenerator::setParams(const trackers_msgs::LissajousAdderGoal::ConstPtr &msg, int num)
 {
   if(!goal_set_)
   {
@@ -123,7 +123,7 @@ const quadrotor_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(vo
   double t7 = t6*t;
   double t8 = t7*t;
   double s, sdot, sddot, sdddot;
-  
+
   Eigen::Vector3f pos, vel, acc, jrk;
   double yaw, yaw_dot;
   if(t > total_time_)
@@ -225,8 +225,8 @@ bool LissajousGenerator::goalIsSet(void)
 bool LissajousGenerator::status() const
 {
   return goal_reached_ ?
-          trackers_manager::TrackerStatus::SUCCEEDED :
-          trackers_manager::TrackerStatus::ACTIVE;
+          trackers_msgs::TrackerStatus::SUCCEEDED :
+          trackers_msgs::TrackerStatus::ACTIVE;
 }
 
 float LissajousGenerator::timeRemaining(void)

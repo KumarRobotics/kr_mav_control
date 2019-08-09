@@ -14,12 +14,12 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   geometry_msgs
   quadrotor_msgs
-  trackers_manager
-  std_trackers
+  trackers_msgs
   std_msgs
   std_srvs
   cmake_modules
-  message_generation)
+  message_generation
+  actionlib)
 
 find_package(Eigen3 REQUIRED)
 
@@ -45,8 +45,7 @@ catkin_package(
     sensor_msgs
     geometry_msgs
     quadrotor_msgs
-    trackers_manager
-    std_trackers
+    trackers_msgs
     std_msgs
     message_runtime
   DEPENDS EIGEN3)

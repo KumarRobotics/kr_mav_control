@@ -1,10 +1,10 @@
 #include <cmath>
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
-#include <trackers_manager/TrackerStatus.h>
+#include <trackers_msgs/TrackerStatus.h>
 #include <tf/transform_datatypes.h>
 #include <actionlib/server/simple_action_server.h>
-#include <std_trackers/VelocityTrackerAction.h>
+#include <trackers_msgs/VelocityTrackerAction.h>
 
 class VelocityTrackerAction : public trackers_manager::Tracker
 {
@@ -24,7 +24,7 @@ private:
 
   void preempt_callback();
 
-  typedef actionlib::SimpleActionServer<std_trackers::VelocityTrackerAction> ServerType;
+  typedef actionlib::SimpleActionServer<trackers_msgs::VelocityTrackerAction> ServerType;
 
   // Action server that takes a goal.
   // Must be a pointer, because plugin does not support a constructor
@@ -105,7 +105,7 @@ void VelocityTrackerAction::Deactivate(void)
     ROS_INFO("VelocityTrackerAction::Deactivate: deactivated tracker while still tracking the velocity.");
     // Consider this successful because we are tracking a
     // velocity indefinitely.
-    std_trackers::VelocityTrackerResult result;
+    trackers_msgs::VelocityTrackerResult result;
     result.duration = current_traj_duration_;
     result.length = current_traj_length_;
     result.vx = pos_[0];
@@ -171,7 +171,7 @@ quadrotor_msgs::PositionCommand::ConstPtr VelocityTrackerAction::update(const na
   position_cmd_.header.frame_id = msg->header.frame_id;
 
   // Send feedback;
-  std_trackers::VelocityTrackerFeedback feedback;
+  trackers_msgs::VelocityTrackerFeedback feedback;
   feedback.duration = current_traj_duration_;
   tracker_server_->publishFeedback(feedback);
 
@@ -233,8 +233,8 @@ void VelocityTrackerAction::preempt_callback() {
 uint8_t VelocityTrackerAction::status() const
 {
   return tracker_server_->isActive() ?
-             static_cast<uint8_t>(trackers_manager::TrackerStatus::ACTIVE) :
-             static_cast<uint8_t>(trackers_manager::TrackerStatus::SUCCEEDED);
+             static_cast<uint8_t>(trackers_msgs::TrackerStatus::ACTIVE) :
+             static_cast<uint8_t>(trackers_msgs::TrackerStatus::SUCCEEDED);
 }
 
 #include <pluginlib/class_list_macros.h>

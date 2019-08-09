@@ -7,9 +7,9 @@
 #include <actionlib/server/simple_action_server.h>
 #include <initial_conditions.h>
 #include <quadrotor_msgs/PositionCommand.h>
-#include <std_trackers/TrajectoryTrackerAction.h>
+#include <trackers_msgs/TrajectoryTrackerAction.h>
 #include <trackers_manager/Tracker.h>
-#include <trackers_manager/TrackerStatus.h>
+#include <trackers_msgs/TrackerStatus.h>
 
 #include "traj_gen.h"
 
@@ -31,7 +31,7 @@ class TrajectoryTracker : public trackers_manager::Tracker
 
   void preempt_callback();
 
-  typedef actionlib::SimpleActionServer<std_trackers::TrajectoryTrackerAction> ServerType;
+  typedef actionlib::SimpleActionServer<trackers_msgs::TrajectoryTrackerAction> ServerType;
 
   // Action server that takes a goal.
   // Must be a pointer because plugin does not support a constructor with inputs, but an action server must be
@@ -50,7 +50,7 @@ class TrajectoryTracker : public trackers_manager::Tracker
   ros::Time traj_start_;
   float traj_total_time_;
 
-  std_trackers::TrajectoryTrackerGoal goal_;
+  trackers_msgs::TrajectoryTrackerGoal goal_;
 
   double kx_[3], kv_[3];
 
@@ -209,7 +209,7 @@ quadrotor_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_ms
   if(traj_time >= traj_total_time_) // Reached goal
   {
     // Send a success message and reset the length variable
-    std_trackers::TrajectoryTrackerResult result;
+    trackers_msgs::TrajectoryTrackerResult result;
     result.total_time = traj_time;
     result.total_distance_travelled = current_traj_length_;
 
@@ -245,7 +245,7 @@ quadrotor_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_ms
 
   if(!goal_reached_)
   {
-    std_trackers::TrajectoryTrackerFeedback feedback;
+    trackers_msgs::TrajectoryTrackerFeedback feedback;
     feedback.remaining_time = traj_total_time_ - traj_time;
     tracker_server_->publishFeedback(feedback);
   }
@@ -318,8 +318,8 @@ void TrajectoryTracker::preempt_callback()
 
 uint8_t TrajectoryTracker::status() const
 {
-  return tracker_server_->isActive() ? static_cast<uint8_t>(trackers_manager::TrackerStatus::ACTIVE) :
-                                       static_cast<uint8_t>(trackers_manager::TrackerStatus::SUCCEEDED);
+  return tracker_server_->isActive() ? static_cast<uint8_t>(trackers_msgs::TrackerStatus::ACTIVE) :
+                                       static_cast<uint8_t>(trackers_msgs::TrackerStatus::SUCCEEDED);
 }
 
 #include <pluginlib/class_list_macros.h>

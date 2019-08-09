@@ -6,26 +6,14 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS roscpp nodelet pluginlib quadrotor_msgs nav_msgs)
+find_package(catkin REQUIRED COMPONENTS roscpp nodelet pluginlib quadrotor_msgs nav_msgs trackers_msgs)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
-
-add_service_files(DIRECTORY srv
-  FILES
-  Transition.srv
-)
-
-add_message_files(DIRECTORY msg
-  FILES
-  TrackerStatus.msg
-)
-
-generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES trackers_manager
-  CATKIN_DEPENDS roscpp nodelet pluginlib quadrotor_msgs nav_msgs
+  CATKIN_DEPENDS roscpp nodelet pluginlib quadrotor_msgs nav_msgs trackers_msgs
   DEPENDS
 )
 
