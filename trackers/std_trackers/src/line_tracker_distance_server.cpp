@@ -7,8 +7,8 @@
 
 #include <initial_conditions.h>
 #include <trackers_manager/Tracker.h>
-#include <trackers_manager/TrackerStatus.h>
-#include <std_trackers/LineTrackerAction.h>
+#include <trackers_msgs/TrackerStatus.h>
+#include <trackers_msgs/LineTrackerAction.h>
 #include <quadrotor_msgs/PositionCommand.h>
 
 class LineTrackerDistanceAction : public trackers_manager::Tracker
@@ -29,7 +29,7 @@ private:
 
   void preempt_callback();
 
-  typedef actionlib::SimpleActionServer<std_trackers::LineTrackerAction> ServerType;
+  typedef actionlib::SimpleActionServer<trackers_msgs::LineTrackerAction> ServerType;
 
   // Action server that takes a goal.
   // Must be a pointer, because plugin does not support a constructor
@@ -180,7 +180,7 @@ quadrotor_msgs::PositionCommand::ConstPtr LineTrackerDistanceAction::update(cons
   if ((pos_ - goal_).norm() <= epsilon_) // Reached goal
   {
     // Send a success message and reset the length and duration variables.
-    std_trackers::LineTrackerResult result;
+    trackers_msgs::LineTrackerResult result;
     result.duration = current_traj_duration_;
     result.length = current_traj_length_;
     result.x = goal_(0);
@@ -240,7 +240,7 @@ quadrotor_msgs::PositionCommand::ConstPtr LineTrackerDistanceAction::update(cons
   ICs_.set_from_cmd(cmd);
 
   if (!goal_reached_) {
-    std_trackers::LineTrackerFeedback feedback;
+    trackers_msgs::LineTrackerFeedback feedback;
     feedback.distance_from_goal = (pos_ - goal_).norm();
     tracker_server_->publishFeedback(feedback);
   }
@@ -319,8 +319,8 @@ void LineTrackerDistanceAction::preempt_callback() {
 uint8_t LineTrackerDistanceAction::status() const
 {
   return tracker_server_->isActive() ?
-             static_cast<uint8_t>(trackers_manager::TrackerStatus::ACTIVE) :
-             static_cast<uint8_t>(trackers_manager::TrackerStatus::SUCCEEDED);
+             static_cast<uint8_t>(trackers_msgs::TrackerStatus::ACTIVE) :
+             static_cast<uint8_t>(trackers_msgs::TrackerStatus::SUCCEEDED);
 }
 
 #include <pluginlib/class_list_macros.h>

@@ -3,9 +3,9 @@
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
 #include <std_srvs/Trigger.h>
-#include <trackers_manager/TrackerStatus.h>
+#include <trackers_msgs/TrackerStatus.h>
 #include <actionlib/server/simple_action_server.h>
-#include <std_trackers/LissajousAdderAction.h>
+#include <trackers_msgs/LissajousAdderAction.h>
 #include <Eigen/Geometry>
 #include <initial_conditions.h>
 #include <cmath>
@@ -26,7 +26,7 @@ class LissajousAdderAction : public trackers_manager::Tracker
     void goal_callback(void);
     void preempt_callback(void);
 
-    typedef actionlib::SimpleActionServer<std_trackers::LissajousAdderAction> ServerType;
+    typedef actionlib::SimpleActionServer<trackers_msgs::LissajousAdderAction> ServerType;
     std::shared_ptr<ServerType> tracker_server_;
 
     ros::ServiceServer vel_control_srv_;
@@ -124,21 +124,21 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav
     // Publish feedback and compute distance traveled
     if(!generator_1_.status() || !generator_2_.status())
     {
-      std_trackers::LissajousAdderFeedback feedback;
+      trackers_msgs::LissajousAdderFeedback feedback;
       feedback.time_to_completion = std::max(generator_1_.timeRemaining(), generator_2_.timeRemaining());
       tracker_server_->publishFeedback(feedback);
 
       Eigen::Vector3d position_current = Eigen::Vector3d(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
       distance_traveled_ += (position_current - position_last_).norm();
       position_last_ = position_current;
-    } 
+    }
     else if(tracker_server_->isActive())
     {
-      std_trackers::LissajousAdderResult result;
+      trackers_msgs::LissajousAdderResult result;
       result.x = msg->pose.pose.position.x;
       result.y = msg->pose.pose.position.y;
       result.z = msg->pose.pose.position.z;
-      result.yaw = ICs_.yaw(); // TODO: Change this to the yaw from msg 
+      result.yaw = ICs_.yaw(); // TODO: Change this to the yaw from msg
       result.duration = std::max(generator_1_.timeElapsed(), generator_2_.timeElapsed());
       result.length = distance_traveled_;
       tracker_server_->setSucceeded(result);
@@ -150,18 +150,18 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav
 uint8_t LissajousAdderAction::status() const
 {
   return tracker_server_->isActive() ?
-             static_cast<uint8_t>(trackers_manager::TrackerStatus::ACTIVE) :
-             static_cast<uint8_t>(trackers_manager::TrackerStatus::SUCCEEDED);
+             static_cast<uint8_t>(trackers_msgs::TrackerStatus::ACTIVE) :
+             static_cast<uint8_t>(trackers_msgs::TrackerStatus::SUCCEEDED);
 }
 
 void LissajousAdderAction::goal_callback(void)
 {
-  if (generator_1_.goalIsSet() || generator_2_.goalIsSet()) 
+  if (generator_1_.goalIsSet() || generator_2_.goalIsSet())
   {
     return;
   }
 
-  std_trackers::LissajousAdderGoal::ConstPtr msg = tracker_server_->acceptNewGoal();
+  trackers_msgs::LissajousAdderGoal::ConstPtr msg = tracker_server_->acceptNewGoal();
 
   if (tracker_server_->isPreemptRequested())
   {
@@ -176,11 +176,11 @@ void LissajousAdderAction::goal_callback(void)
 
 void LissajousAdderAction::preempt_callback(void)
 {
-  if (tracker_server_->isActive()) 
+  if (tracker_server_->isActive())
   {
     tracker_server_->setAborted();
   }
-  else 
+  else
   {
     tracker_server_->setPreempted();
   }

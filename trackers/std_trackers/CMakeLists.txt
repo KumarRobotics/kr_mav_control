@@ -8,20 +8,10 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 
-find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs geometry_msgs tf trackers_manager)
+find_package(catkin REQUIRED COMPONENTS actionlib geometry_msgs tf trackers_manager trackers_msgs)
 find_package(Eigen3 REQUIRED)
 
 include_directories(include ${EIGEN3_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
-
-add_action_files(DIRECTORY action
-  FILES
-  LineTracker.action
-  VelocityTracker.action
-  CircleTracker.action
-  TrajectoryTracker.action
-  LissajousTracker.action
-  LissajousAdder.action)
-generate_messages(DEPENDENCIES actionlib_msgs geometry_msgs)
 
 catkin_package(
   INCLUDE_DIRS include
