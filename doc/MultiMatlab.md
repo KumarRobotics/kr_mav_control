@@ -20,6 +20,7 @@ mkdir -p ~/matlab_msgs
 cp -r quadrotor_msgs mav_manager ~/matlab_msgs
 cd ~/ws_ros/src/quadrotor_control/matlab_interface
 cp quadrotor_msgs.patch.package.xml ~/matlab_msgs/quadrotor_msgs/package.xml
+cp mav_manager.patch.package.xml ~/matlab_msgs/mav_manager/package.xml
 cd ~/matlab_msgs
 git clone https://github.com/ros/ros_comm_msgs.git
 cd ros_comm_msgs

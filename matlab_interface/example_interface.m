@@ -36,9 +36,9 @@ new_odom_listner_handle = addlistener(quad_obj,'NewOdom',@(quad_obj,evnt)odomEve
 
 %Turn on motors and takeoff
 for n_ag = 1:n_agents
-  quad_obj.motors(n_ag, 1);
+  resp = quad_obj.motors(n_ag, 1);
   pause(0.1) %Might need longer pause on real platforms for motors to idle
-  quad_obj.takeoff(n_ag);
+  resp = quad_obj.takeoff(n_ag);
 end
 
 for i=1:30
@@ -62,7 +62,7 @@ end
 
 % send to wp
 for n=1:n_agents
-  quad_obj.send_wp(n, [randi([0,2]), randi([0,2]),0,1.0])
+  response = quad_obj.send_wp(n, [randi([0,2]), randi([0,2]),0,1.0]);
 end
 
 clear quad_obj
