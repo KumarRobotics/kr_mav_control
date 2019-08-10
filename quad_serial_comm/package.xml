@@ -1,4 +1,4 @@
-<package>
+<package format="2">
   <name>quad_serial_comm</name>
   <version>1.0.0</version>
   <description>quad_serial_comm
@@ -8,31 +8,16 @@
 
   <license>GPL</license>
 
-  <url type="website">http://ros.org/wiki/quad_serial_comm</url>
-  <!-- <url type="bugtracker"></url> -->
-
   <author>Kartik Mohta</author>
 
   <!-- Dependencies which this package needs to build itself. -->
   <buildtool_depend>catkin</buildtool_depend>
 
   <!-- Dependencies needed to compile this package. -->
-  <build_depend>roscpp</build_depend>
-  <build_depend>quadrotor_msgs</build_depend>
-  <build_depend>asio_serial_device</build_depend>
-  <build_depend>nodelet</build_depend>
-
-  <!-- Dependencies needed after this package is compiled. -->
-  <run_depend>roscpp</run_depend>
-  <run_depend>quadrotor_msgs</run_depend>
-  <run_depend>asio_serial_device</run_depend>
-  <run_depend>nodelet</run_depend>
-
-  <!-- Dependencies needed only for running tests. -->
-  <!-- <test_depend>roscpp</test_depend> -->
-  <!-- <test_depend>quadrotor_msgs</test_depend> -->
-  <!-- <test_depend>asio_serial_device</test_depend> -->
-  <!-- <test_depend>nodelet</test_depend> -->
+  <depend>roscpp</depend>
+  <depend>quadrotor_msgs</depend>
+  <depend>asio_serial_device</depend>
+  <depend>nodelet</depend>
 
 <export>
     <nodelet plugin="${prefix}/nodelet_plugin.xml"/>

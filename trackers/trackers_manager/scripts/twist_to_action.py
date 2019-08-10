@@ -5,8 +5,8 @@ import rospy
 import actionlib
 
 from geometry_msgs.msg import Twist
-from std_trackers.msg import VelocityTrackerAction, VelocityTrackerGoal
-from trackers_manager.srv import Transition
+from trackers_msgs.msg import VelocityTrackerAction, VelocityTrackerGoal
+from trackers_msgs.srv import Transition
 
 class TwistToAction(object):
   def __init__(self):

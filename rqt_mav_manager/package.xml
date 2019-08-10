@@ -1,4 +1,4 @@
-<package>
+<package format="2">
   <name>rqt_mav_manager</name>
   <version>0.1.0</version>
   <description>Provides a GUI plugin for MAV Manager.</description>
@@ -13,10 +13,10 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>rospy</run_depend>
-  <run_depend>rqt_gui_py</run_depend>
-  <run_depend>mav_manager</run_depend>
-  <run_depend>std_srvs</run_depend>
+  <depend>rospy</depend>
+  <depend>rqt_gui_py</depend>
+  <depend>mav_manager</depend>
+  <depend>std_srvs</depend>
 
   <export>
     <rqt_gui plugin="${prefix}/plugin.xml"/>
