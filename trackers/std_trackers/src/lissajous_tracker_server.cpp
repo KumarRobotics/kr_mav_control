@@ -3,9 +3,9 @@
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
 #include <std_srvs/Trigger.h>
-#include <trackers_msgs/TrackerStatus.h>
+#include <tracker_msgs/TrackerStatus.h>
 #include <actionlib/server/simple_action_server.h>
-#include <trackers_msgs/LissajousTrackerAction.h>
+#include <tracker_msgs/LissajousTrackerAction.h>
 #include <Eigen/Geometry>
 #include <initial_conditions.h>
 #include <cmath>
@@ -26,7 +26,7 @@ class LissajousTrackerAction : public trackers_manager::Tracker
     void goal_callback(void);
     void preempt_callback(void);
 
-    typedef actionlib::SimpleActionServer<trackers_msgs::LissajousTrackerAction> ServerType;
+    typedef actionlib::SimpleActionServer<tracker_msgs::LissajousTrackerAction> ServerType;
     std::shared_ptr<ServerType> tracker_server_;
 
     ros::ServiceServer vel_control_srv_;
@@ -113,7 +113,7 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousTrackerAction::update(const n
     // Publish feedback and compute distance traveled
     if(!generator_.status())
     {
-      trackers_msgs::LissajousTrackerFeedback feedback;
+      tracker_msgs::LissajousTrackerFeedback feedback;
       feedback.time_to_completion = generator_.timeRemaining();
       tracker_server_->publishFeedback(feedback);
 
@@ -123,7 +123,7 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousTrackerAction::update(const n
     }
     else if(tracker_server_->isActive())
     {
-      trackers_msgs::LissajousTrackerResult result;
+      tracker_msgs::LissajousTrackerResult result;
       result.x = msg->pose.pose.position.x;
       result.y = msg->pose.pose.position.y;
       result.z = msg->pose.pose.position.z;
@@ -139,8 +139,8 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousTrackerAction::update(const n
 uint8_t LissajousTrackerAction::status() const
 {
   return tracker_server_->isActive() ?
-             static_cast<uint8_t>(trackers_msgs::TrackerStatus::ACTIVE) :
-             static_cast<uint8_t>(trackers_msgs::TrackerStatus::SUCCEEDED);
+             static_cast<uint8_t>(tracker_msgs::TrackerStatus::ACTIVE) :
+             static_cast<uint8_t>(tracker_msgs::TrackerStatus::SUCCEEDED);
 }
 
 void LissajousTrackerAction::goal_callback(void)
@@ -150,7 +150,7 @@ void LissajousTrackerAction::goal_callback(void)
     return;
   }
 
-  trackers_msgs::LissajousTrackerGoal::ConstPtr msg = tracker_server_->acceptNewGoal();
+  tracker_msgs::LissajousTrackerGoal::ConstPtr msg = tracker_server_->acceptNewGoal();
 
   if (tracker_server_->isPreemptRequested())
   {

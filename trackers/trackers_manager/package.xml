@@ -17,7 +17,7 @@
   <depend>pluginlib</depend>
   <depend>quadrotor_msgs</depend>
   <depend>nav_msgs</depend>
-  <depend>trackers_msgs</depend>
+  <depend>tracker_msgs</depend>
 
   <export>
     <nodelet plugin="${prefix}/nodelet_plugin.xml"/>

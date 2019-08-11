@@ -19,7 +19,7 @@
   <depend>std_msgs</depend>
   <depend>tf</depend>
   <depend>trackers_manager</depend>
-  <depend>trackers_msgs</depend>
+  <depend>tracker_msgs</depend>
 
   <export>
     <trackers_manager plugin="${prefix}/plugin.xml"/>

@@ -10,7 +10,7 @@ LissajousGenerator::LissajousGenerator()
   goal_set_ = false;
 }
 
-void LissajousGenerator::setParams(const trackers_msgs::LissajousTrackerGoal::ConstPtr &msg)
+void LissajousGenerator::setParams(const tracker_msgs::LissajousTrackerGoal::ConstPtr &msg)
 {
   if(!goal_set_)
   {
@@ -55,7 +55,7 @@ void LissajousGenerator::setParams(const trackers_msgs::LissajousTrackerGoal::Co
   }
 }
 
-void LissajousGenerator::setParams(const trackers_msgs::LissajousAdderGoal::ConstPtr &msg, int num)
+void LissajousGenerator::setParams(const tracker_msgs::LissajousAdderGoal::ConstPtr &msg, int num)
 {
   if(!goal_set_)
   {
@@ -225,8 +225,8 @@ bool LissajousGenerator::goalIsSet(void)
 bool LissajousGenerator::status() const
 {
   return goal_reached_ ?
-          trackers_msgs::TrackerStatus::SUCCEEDED :
-          trackers_msgs::TrackerStatus::ACTIVE;
+          tracker_msgs::TrackerStatus::SUCCEEDED :
+          tracker_msgs::TrackerStatus::ACTIVE;
 }
 
 float LissajousGenerator::timeRemaining(void)

@@ -14,7 +14,7 @@
 #include <actionlib/client/simple_action_client.h>
 
 // quadrotor_control
-#include <trackers_msgs/Transition.h>
+#include <tracker_msgs/Transition.h>
 
 namespace mav_manager
 {
@@ -92,7 +92,7 @@ MAVManager::MAVManager(std::string ns)
   tracker_status_sub_ = nh_.subscribe("trackers_manager/status", 10, &MAVManager::tracker_status_cb, this, ros::TransportHints().tcpNoDelay());
 
   // Services
-  srv_transition_ = nh_.serviceClient<trackers_msgs::Transition>("trackers_manager/transition");
+  srv_transition_ = nh_.serviceClient<tracker_msgs::Transition>("trackers_manager/transition");
 
   srv_transition_.waitForExistence();
   if (!this->transition(null_tracker_str))
@@ -130,23 +130,23 @@ MAVManager::MAVManager(std::string ns)
     ROS_ERROR("Could not disable motors");
 }
 
-void MAVManager::tracker_done_callback(const actionlib::SimpleClientGoalState& state, const trackers_msgs::LineTrackerResultConstPtr& result) {
+void MAVManager::tracker_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::LineTrackerResultConstPtr& result) {
   ROS_INFO("Goal (%2.2f, %2.2f, %2.2f, %2.2f) finished with state %s after %2.2f s. and %2.2f m.", result->x, result->y, result->z, result->yaw, state.toString().c_str(), result->duration, result->length);
 }
 
-void MAVManager::velocity_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const trackers_msgs::VelocityTrackerResultConstPtr& result) {
+void MAVManager::velocity_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::VelocityTrackerResultConstPtr& result) {
   ROS_INFO("Velocity tracking at (%2.2f, %2.2f, %2.2f, %2.2f)m/s completed with state %s after %2.2f s. and %2.2f m.", result->vx, result->vy, result->vz, result->vyaw, state.toString().c_str(), result->duration, result->length);
 }
 
-void MAVManager::circle_tracker_done_callback(const actionlib::SimpleClientGoalState &state, const trackers_msgs::CircleTrackerResultConstPtr &result) {
+void MAVManager::circle_tracker_done_callback(const actionlib::SimpleClientGoalState &state, const tracker_msgs::CircleTrackerResultConstPtr &result) {
   ROS_INFO("Circle tracking completed after %2.2f seconds.", result->duration);
 }
 
-void MAVManager::lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState &state, const trackers_msgs::LissajousTrackerResultConstPtr &result) {
+void MAVManager::lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState &state, const tracker_msgs::LissajousTrackerResultConstPtr &result) {
   ROS_INFO("Lissajous tracking completed. Duration: %2.2f seconds, distance: %2.2f m, now located at (%2.2f, %2.2f, %2.2f, %2.2f).", result->duration, result->length, result->x, result->y, result->z, result->yaw);
 }
 
-void MAVManager::lissajous_adder_done_callback(const actionlib::SimpleClientGoalState &state, const trackers_msgs::LissajousAdderResultConstPtr &result) {
+void MAVManager::lissajous_adder_done_callback(const actionlib::SimpleClientGoalState &state, const tracker_msgs::LissajousAdderResultConstPtr &result) {
   ROS_INFO("Lissajous tracking completed. Duration: %2.2f seconds, distance: %2.2f m, now located at (%2.2f, %2.2f, %2.2f, %2.2f).", result->duration, result->length, result->x, result->y, result->z, result->yaw);
 }
 
@@ -201,7 +201,7 @@ bool MAVManager::takeoff() {
 
   ROS_INFO("Initiating launch sequence...");
 
-  trackers_msgs::LineTrackerGoal goal;
+  tracker_msgs::LineTrackerGoal goal;
   goal.z = takeoff_height_;
   goal.relative = true;
   line_tracker_distance_client_.sendGoal(goal,
@@ -266,7 +266,7 @@ bool MAVManager::land() {
     return false;
   }
 
-  trackers_msgs::LineTrackerGoal goal;
+  tracker_msgs::LineTrackerGoal goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
   goal.z = home_(2);
@@ -285,7 +285,7 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
     return false;
   }
 
-  trackers_msgs::LineTrackerGoal goal;
+  tracker_msgs::LineTrackerGoal goal;
   goal.x = x;
   goal.y = y;
   goal.z = z;
@@ -301,7 +301,7 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
 
 bool MAVManager::goToTimed(float x, float y, float z, float yaw, float v_des, float a_des, bool relative, ros::Duration duration, ros::Time t_start) {
 
-  trackers_msgs::LineTrackerGoal goal;
+  tracker_msgs::LineTrackerGoal goal;
   goal.x   = x;
   goal.y   = y;
   goal.z   = z;
@@ -343,7 +343,7 @@ bool MAVManager::circle(float Ax, float Ay, float T, float duration) {
     return false;
   }
 
-  trackers_msgs::CircleTrackerGoal goal;
+  tracker_msgs::CircleTrackerGoal goal;
   goal.Ax = Ax;
   goal.Ay = Ay;
   goal.T = T;
@@ -363,7 +363,7 @@ bool MAVManager::lissajous(float x_amp, float y_amp, float z_amp, float yaw_amp,
     return false;
   }
 
-  trackers_msgs::LissajousTrackerGoal goal;
+  tracker_msgs::LissajousTrackerGoal goal;
   goal.x_amp = x_amp;
   goal.y_amp = y_amp;
   goal.z_amp = z_amp;
@@ -390,7 +390,7 @@ bool MAVManager::compound_lissajous(float x_amp[2], float y_amp[2], float z_amp[
     return false;
   }
 
-  trackers_msgs::LissajousAdderGoal goal;
+  tracker_msgs::LissajousAdderGoal goal;
   goal.x_amp[0] = x_amp[0];
   goal.x_amp[1] = x_amp[1];
   goal.y_amp[0] = y_amp[0];
@@ -428,7 +428,7 @@ bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw, boo
     return false;
   }
 
-  trackers_msgs::VelocityTrackerGoal goal;
+  tracker_msgs::VelocityTrackerGoal goal;
   goal.vx = x;
   goal.vy = y;
   goal.vz = z;
@@ -610,7 +610,7 @@ void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg)
   this->heartbeat();
 }
 
-void MAVManager::tracker_status_cb(const trackers_msgs::TrackerStatus::ConstPtr &msg) {
+void MAVManager::tracker_status_cb(const tracker_msgs::TrackerStatus::ConstPtr &msg) {
   active_tracker_ = msg->tracker;
 }
 
@@ -804,7 +804,7 @@ bool MAVManager::ehover() {
     return false;
   }
 
-  trackers_msgs::LineTrackerGoal goal;
+  tracker_msgs::LineTrackerGoal goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
   goal.z = pos_(2);
@@ -818,7 +818,7 @@ bool MAVManager::ehover() {
 
 bool MAVManager::transition(const std::string &tracker_str) {
   // usleep(100000);
-  trackers_msgs::Transition transition_cmd;
+  tracker_msgs::Transition transition_cmd;
   transition_cmd.request.tracker = tracker_str;
 
   if (srv_transition_.call(transition_cmd) && transition_cmd.response.success) {
