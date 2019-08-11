@@ -17,7 +17,6 @@
   <depend>pluginlib</depend>
   <depend>quadrotor_msgs</depend>
   <depend>nav_msgs</depend>
-  <depend>std_msgs</depend>
   <depend>trackers_msgs</depend>
 
   <export>

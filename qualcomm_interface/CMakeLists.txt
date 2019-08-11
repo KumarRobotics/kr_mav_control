@@ -10,21 +10,21 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
-find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs nav_msgs nodelet cmake_modules tf_conversions)
-find_package(Eigen 3 REQUIRED)
+find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs nav_msgs nodelet tf_conversions)
+find_package(Eigen3 REQUIRED)
 
 find_package(Snav)
 if(NOT ${Snav_FOUND})
   message(WARNING "NOTE: snav not found so not building qualcomm_interface")
 else()
   include_directories(${Snav_INCLUDE_DIR})
-  include_directories(${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
+  include_directories(${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
   catkin_package(
     INCLUDE_DIRS
     LIBRARIES
     CATKIN_DEPENDS roscpp quadrotor_msgs nav_msgs nodelet tf_conversions
-    DEPENDS Eigen)
+    DEPENDS EIGEN3)
 
   add_executable(vio_odom_publisher src/vio_odom_publisher.cpp)
   target_link_libraries(vio_odom_publisher ${catkin_LIBRARIES} ${Snav_LIBRARY})

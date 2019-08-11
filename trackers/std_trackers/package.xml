@@ -12,14 +12,14 @@
   <author>Kartik Mohta</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>quadrotor_msgs</build_depend>
-  <build_depend>trackers_msgs</build_depend>
-  <build_depend>actionlib</build_depend>
 
+  <depend>actionlib</depend>
   <depend>geometry_msgs</depend>
+  <depend>quadrotor_msgs</depend>
+  <depend>std_msgs</depend>
   <depend>tf</depend>
   <depend>trackers_manager</depend>
+  <depend>trackers_msgs</depend>
 
   <export>
     <trackers_manager plugin="${prefix}/plugin.xml"/>
