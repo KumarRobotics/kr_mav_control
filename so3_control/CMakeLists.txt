@@ -15,7 +15,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 catkin_package(
   INCLUDE_DIRS
   LIBRARIES
-  CATKIN_DEPENDS roscpp nav_msgs quadrotor_msgs std_msgs tf nodelet
+  CATKIN_DEPENDS roscpp geometry_msgs nav_msgs quadrotor_msgs std_msgs tf nodelet
   DEPENDS EIGEN3)
 
 add_library(SO3Control src/SO3Control.cpp)

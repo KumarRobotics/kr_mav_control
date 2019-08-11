@@ -8,7 +8,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs nav_msgs rosconsole)
+find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs rosconsole std_msgs)
 find_package(Eigen3 REQUIRED)
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
@@ -26,12 +26,12 @@ add_message_files(DIRECTORY msg
   TRPYCommand.msg)
 
 generate_messages(
-  DEPENDENCIES geometry_msgs std_msgs)
+  DEPENDENCIES geometry_msgs)
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES encode_msgs decode_msgs
-  CATKIN_DEPENDS message_runtime geometry_msgs nav_msgs
+  CATKIN_DEPENDS message_runtime geometry_msgs std_msgs
   DEPENDS EIGEN3)
 
 add_library(encode_msgs src/encode_msgs.cpp)

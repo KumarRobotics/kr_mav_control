@@ -17,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
   trackers_msgs
   std_msgs
   std_srvs
-  cmake_modules
   message_generation
   actionlib)
 

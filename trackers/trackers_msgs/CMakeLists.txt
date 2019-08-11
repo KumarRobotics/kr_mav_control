@@ -8,7 +8,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs nav_msgs actionlib_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs nav_msgs actionlib_msgs std_msgs)
 
 include_directories(${catkin_INCLUDE_DIRS})
 
@@ -37,7 +37,5 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS
   LIBRARIES encode_msgs decode_msgs
-  CATKIN_DEPENDS message_runtime geometry_msgs nav_msgs
+  CATKIN_DEPENDS message_runtime geometry_msgs nav_msgs actionlib_msgs std_msgs
   DEPENDS)
-
-install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
