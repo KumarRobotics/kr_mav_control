@@ -3,9 +3,9 @@
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
 #include <std_srvs/Trigger.h>
-#include <trackers_msgs/TrackerStatus.h>
+#include <tracker_msgs/TrackerStatus.h>
 #include <actionlib/server/simple_action_server.h>
-#include <trackers_msgs/LissajousAdderAction.h>
+#include <tracker_msgs/LissajousAdderAction.h>
 #include <Eigen/Geometry>
 #include <initial_conditions.h>
 #include <cmath>
@@ -26,7 +26,7 @@ class LissajousAdderAction : public trackers_manager::Tracker
     void goal_callback(void);
     void preempt_callback(void);
 
-    typedef actionlib::SimpleActionServer<trackers_msgs::LissajousAdderAction> ServerType;
+    typedef actionlib::SimpleActionServer<tracker_msgs::LissajousAdderAction> ServerType;
     std::shared_ptr<ServerType> tracker_server_;
 
     ros::ServiceServer vel_control_srv_;
@@ -124,7 +124,7 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav
     // Publish feedback and compute distance traveled
     if(!generator_1_.status() || !generator_2_.status())
     {
-      trackers_msgs::LissajousAdderFeedback feedback;
+      tracker_msgs::LissajousAdderFeedback feedback;
       feedback.time_to_completion = std::max(generator_1_.timeRemaining(), generator_2_.timeRemaining());
       tracker_server_->publishFeedback(feedback);
 
@@ -134,7 +134,7 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav
     }
     else if(tracker_server_->isActive())
     {
-      trackers_msgs::LissajousAdderResult result;
+      tracker_msgs::LissajousAdderResult result;
       result.x = msg->pose.pose.position.x;
       result.y = msg->pose.pose.position.y;
       result.z = msg->pose.pose.position.z;
@@ -150,8 +150,8 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav
 uint8_t LissajousAdderAction::status() const
 {
   return tracker_server_->isActive() ?
-             static_cast<uint8_t>(trackers_msgs::TrackerStatus::ACTIVE) :
-             static_cast<uint8_t>(trackers_msgs::TrackerStatus::SUCCEEDED);
+             static_cast<uint8_t>(tracker_msgs::TrackerStatus::ACTIVE) :
+             static_cast<uint8_t>(tracker_msgs::TrackerStatus::SUCCEEDED);
 }
 
 void LissajousAdderAction::goal_callback(void)
@@ -161,7 +161,7 @@ void LissajousAdderAction::goal_callback(void)
     return;
   }
 
-  trackers_msgs::LissajousAdderGoal::ConstPtr msg = tracker_server_->acceptNewGoal();
+  tracker_msgs::LissajousAdderGoal::ConstPtr msg = tracker_server_->acceptNewGoal();
 
   if (tracker_server_->isPreemptRequested())
   {

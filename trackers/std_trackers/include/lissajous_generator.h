@@ -3,17 +3,17 @@
 
 #include <ros/ros.h>
 #include <quadrotor_msgs/PositionCommand.h>
-#include <trackers_msgs/TrackerStatus.h>
-#include <trackers_msgs/LissajousTrackerAction.h>
-#include <trackers_msgs/LissajousAdderAction.h>
+#include <tracker_msgs/TrackerStatus.h>
+#include <tracker_msgs/LissajousTrackerAction.h>
+#include <tracker_msgs/LissajousAdderAction.h>
 #include <actionlib/client/simple_action_client.h>
 
 class LissajousGenerator
 {
   public:
     LissajousGenerator(void);
-    void setParams(const trackers_msgs::LissajousTrackerGoal::ConstPtr &msg);
-    void setParams(const trackers_msgs::LissajousAdderGoal::ConstPtr &msg, int num);
+    void setParams(const tracker_msgs::LissajousTrackerGoal::ConstPtr &msg);
+    void setParams(const tracker_msgs::LissajousAdderGoal::ConstPtr &msg, int num);
     const quadrotor_msgs::PositionCommand::Ptr getPositionCmd(void);
     bool activate(void);
     void deactivate(void);

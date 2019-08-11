@@ -12,9 +12,9 @@
 #include <std_msgs/Empty.h>
 
 #include <trackers_manager/Tracker.h>
-#include <trackers_msgs/TrackerStatus.h>
+#include <tracker_msgs/TrackerStatus.h>
 #include <quadrotor_msgs/PositionCommand.h>
-#include <trackers_msgs/CircleTrackerAction.h>
+#include <tracker_msgs/CircleTrackerAction.h>
 
 class CircleTrackerAction : public trackers_manager::Tracker {
 public:
@@ -32,7 +32,7 @@ private:
   void goal_callback();
   void preempt_callback();
 
-  typedef actionlib::SimpleActionServer<trackers_msgs::CircleTrackerAction> ServerType;
+  typedef actionlib::SimpleActionServer<tracker_msgs::CircleTrackerAction> ServerType;
   // Action server that takes a trajectory.
   // Must be a pointer, because plugin does not support a constructor
   // with inputs, but an action server must be initialized with a Nodehandle.
@@ -165,7 +165,7 @@ void CircleTrackerAction::Deactivate(void) {
   if (tracker_server_->isActive()) {
     ROS_WARN("CircleTrackerAction::Deactivate: deactivated tracker while still tracking position trajectory.");
 
-    trackers_msgs::CircleTrackerResult result;
+    tracker_msgs::CircleTrackerResult result;
     result.duration = std::max(0.0f, static_cast<float>((ros::Time::now() - traj_start_time_).toSec()));
     result.length = current_traj_length_;
     tracker_server_->setAborted(result);
@@ -374,7 +374,7 @@ quadrotor_msgs::PositionCommand::ConstPtr CircleTrackerAction::update(const nav_
 
   // If trajectory is completed, indicate this in the action.
   if (tracker_server_->isActive() && traj_completed_) {
-    trackers_msgs::CircleTrackerResult result;
+    tracker_msgs::CircleTrackerResult result;
     result.duration = traj_time;
     result.length = current_traj_length_;
     tracker_server_->setSucceeded(result);
@@ -382,7 +382,7 @@ quadrotor_msgs::PositionCommand::ConstPtr CircleTrackerAction::update(const nav_
   }
   // Otherwise, send feedback command.
   else {
-    trackers_msgs::CircleTrackerFeedback feedback;
+    tracker_msgs::CircleTrackerFeedback feedback;
     feedback.duration = traj_time;
     tracker_server_->publishFeedback(feedback);
   }
@@ -397,7 +397,7 @@ void CircleTrackerAction::goal_callback() {
   // and track this one instead.
   if (tracker_server_->isActive()) {
     ROS_INFO("CircleTrackerAction trajectory aborted because new goal recieved.");
-    trackers_msgs::CircleTrackerResult result;
+    tracker_msgs::CircleTrackerResult result;
     result.duration = std::max(0.0f, static_cast<float>((ros::Time::now() - traj_start_time_).toSec()));
     result.length = current_traj_length_;
 
@@ -411,7 +411,7 @@ void CircleTrackerAction::goal_callback() {
   // and make no changes to the tracker state.
   if (tracker_server_->isPreemptRequested()) {
     ROS_INFO("CircleTrackerAction trajectory preempted immediately after it was recieved.");
-    trackers_msgs::CircleTrackerResult result;
+    tracker_msgs::CircleTrackerResult result;
     result.duration = 0.0;
     result.length = 0.0;
     tracker_server_->setPreempted(result);
@@ -473,7 +473,7 @@ void CircleTrackerAction::goal_callback() {
 
 void CircleTrackerAction::preempt_callback() {
   // Send a message reporting about the trajectory that was executed.
-  trackers_msgs::CircleTrackerResult result;
+  tracker_msgs::CircleTrackerResult result;
   result.duration = std::max(0.0f, static_cast<float>((ros::Time::now() - traj_start_time_).toSec()));
   result.length = current_traj_length_;
 
@@ -498,8 +498,8 @@ void CircleTrackerAction::preempt_callback() {
 uint8_t CircleTrackerAction::status() const
 {
   return tracker_server_->isActive() ?
-             static_cast<uint8_t>(trackers_msgs::TrackerStatus::ACTIVE) :
-             static_cast<uint8_t>(trackers_msgs::TrackerStatus::SUCCEEDED);
+             static_cast<uint8_t>(tracker_msgs::TrackerStatus::ACTIVE) :
+             static_cast<uint8_t>(tracker_msgs::TrackerStatus::SUCCEEDED);
 }
 
 #include <pluginlib/class_list_macros.h>
