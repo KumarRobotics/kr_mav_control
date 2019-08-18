@@ -57,12 +57,17 @@ void LissajousAdderAction::Initialize(const ros::NodeHandle &nh)
 
 bool LissajousAdderAction::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
-  if(!tracker_server_->isActive())
+  // Only allow activation if a goal has been set
+  if(generator_1_.goalIsSet() && generator_2_.goalIsSet())
   {
-    ROS_WARN("No goal set, not activating");
-    return false;
+    if(!tracker_server_->isActive())
+    {
+      ROS_WARN("LissajousAdderAction::Activate: goal_set is true but action server has no active goal - not activating.");
+      return false;
+    }
+    return (generator_1_.activate() && generator_2_.activate());
   }
-  return (generator_1_.activate() && generator_2_.activate());
+  return false;
 }
 
 void LissajousAdderAction::Deactivate(void)
@@ -92,6 +97,7 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav
   {
     ICs_.set_from_odom(msg);
     position_last_ = Eigen::Vector3d(ICs_.pos()(0), ICs_.pos()(1), ICs_.pos()(2));
+    return quadrotor_msgs::PositionCommand::Ptr();
   }
 
   // Set gains
@@ -184,6 +190,9 @@ void LissajousAdderAction::preempt_callback(void)
   {
     tracker_server_->setPreempted();
   }
+
+  generator_1_.deactivate();
+  generator_2_.deactivate();
 }
 
 #include <pluginlib/class_list_macros.h>

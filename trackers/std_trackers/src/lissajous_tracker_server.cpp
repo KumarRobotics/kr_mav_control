@@ -57,12 +57,17 @@ void LissajousTrackerAction::Initialize(const ros::NodeHandle &nh)
 
 bool LissajousTrackerAction::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
-  if(!tracker_server_->isActive())
+  // Only allow activation if a goal has been set
+  if(generator_.goalIsSet())
   {
-    ROS_WARN("No goal set, not activating");
-    return false;
+    if(!tracker_server_->isActive())
+    {
+      ROS_WARN("LissajousTrackerAction::Activate: goal_set is true but action server has no active goal - not activating.");
+      return false;
+    }
+    return generator_.activate();
   }
-  return generator_.activate();
+  return false;
 }
 
 void LissajousTrackerAction::Deactivate(void)
@@ -91,6 +96,7 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousTrackerAction::update(const n
   {
     ICs_.set_from_odom(msg);
     position_last_ = Eigen::Vector3d(ICs_.pos()(0), ICs_.pos()(1), ICs_.pos()(2));
+    return quadrotor_msgs::PositionCommand::Ptr();
   }
 
   // Set gains
@@ -145,21 +151,27 @@ uint8_t LissajousTrackerAction::status() const
 
 void LissajousTrackerAction::goal_callback(void)
 {
-  if (generator_.goalIsSet())
-  {
-    return;
+  // If another goal is already active, cancel that goal
+  // and track this one instead.
+  if (tracker_server_->isActive()) {
+    ROS_INFO("Previous LissajousTrackerAction goal aborted.");
+    tracker_server_->setAborted();
+    generator_.deactivate();
   }
 
   tracker_msgs::LissajousTrackerGoal::ConstPtr msg = tracker_server_->acceptNewGoal();
 
-  if (tracker_server_->isPreemptRequested())
-  {
+  // If preempt has been requested, then set this goal to preempted
+  // and make no changes to the tracker state.
+  if (tracker_server_->isPreemptRequested()) {
+    ROS_INFO("LissajousTrackerAction going to goal preempted.");
     tracker_server_->setPreempted();
     return;
   }
 
   generator_.setParams(msg);
   distance_traveled_ = 0;
+  generator_.activate();
 }
 
 void LissajousTrackerAction::preempt_callback(void)
@@ -172,6 +184,8 @@ void LissajousTrackerAction::preempt_callback(void)
   {
     tracker_server_->setPreempted();
   }
+
+  generator_.deactivate();
 }
 
 #include <pluginlib/class_list_macros.h>

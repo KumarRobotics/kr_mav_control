@@ -74,7 +74,7 @@ do
 
   # Append rviz/Marker for cuurent mav id.
   MAV_NAME=${MAV_NAMESPACE}${id}
-  sed -i "108a\    - Class: rviz/Marker\n      Enabled: true\n      Marker Topic: /quadrotor/mesh_visualization/robot\n      Name: quadrotor\n      Namespaces:\n        /quadrotor/mesh_visualization: true\n      Queue Size: 100\n      Value: true" ${RVIZ_CONFIG_FILE}
+  sed -i "84a\    - Class: rviz/Marker\n      Enabled: true\n      Marker Topic: /quadrotor/mesh_visualization/robot\n      Name: quadrotor\n      Namespaces:\n        /quadrotor/mesh_visualization: true\n      Queue Size: 100\n      Value: true" ${RVIZ_CONFIG_FILE}
   sed -i "s/quadrotor/${MAV_NAME}/g" ${RVIZ_CONFIG_FILE}
 
   tmux new-window -t $SESSION_NAME -n "r${id}"
