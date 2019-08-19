@@ -13,6 +13,7 @@
 class LissajousAdderAction : public trackers_manager::Tracker
 {
   public:
+    LissajousAdderAction(void);
     void Initialize(const ros::NodeHandle &nh);
     bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
     void Deactivate(void);
@@ -35,7 +36,11 @@ class LissajousAdderAction : public trackers_manager::Tracker
     LissajousGenerator generator_1_, generator_2_;
     double distance_traveled_;
     Eigen::Vector3d position_last_;
+    bool traj_start_set_;
 };
+
+LissajousAdderAction::LissajousAdderAction(void)
+  : traj_start_set_(false) {}
 
 void LissajousAdderAction::Initialize(const ros::NodeHandle &nh)
 {
@@ -80,6 +85,7 @@ void LissajousAdderAction::Deactivate(void)
   ICs_.reset();
   generator_1_.deactivate();
   generator_2_.deactivate();
+  traj_start_set_ = false;
 }
 
 bool LissajousAdderAction::velControlCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
@@ -95,9 +101,14 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav
 {
   if(!(generator_1_.isActive() & generator_2_.isActive()))
   {
+    return quadrotor_msgs::PositionCommand::Ptr();
+  }
+
+  if(!traj_start_set_)
+  {
+    traj_start_set_ = true;
     ICs_.set_from_odom(msg);
     position_last_ = Eigen::Vector3d(ICs_.pos()(0), ICs_.pos()(1), ICs_.pos()(2));
-    return quadrotor_msgs::PositionCommand::Ptr();
   }
 
   // Set gains
@@ -175,9 +186,12 @@ void LissajousAdderAction::goal_callback(void)
     return;
   }
 
+  traj_start_set_ = false;
   generator_1_.setParams(msg,0);
   generator_2_.setParams(msg,1);
   distance_traveled_ = 0;
+  generator_1_.activate();
+  generator_2_.activate();
 }
 
 void LissajousAdderAction::preempt_callback(void)
@@ -191,6 +205,7 @@ void LissajousAdderAction::preempt_callback(void)
     tracker_server_->setPreempted();
   }
 
+  traj_start_set_ = false;
   generator_1_.deactivate();
   generator_2_.deactivate();
 }

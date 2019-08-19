@@ -13,6 +13,7 @@
 class LissajousTrackerAction : public trackers_manager::Tracker
 {
   public:
+    LissajousTrackerAction(void);
     void Initialize(const ros::NodeHandle &nh);
     bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
     void Deactivate(void);
@@ -35,7 +36,11 @@ class LissajousTrackerAction : public trackers_manager::Tracker
     LissajousGenerator generator_;
     double distance_traveled_;
     Eigen::Vector3d position_last_;
+    bool traj_start_set_;
 };
+
+LissajousTrackerAction::LissajousTrackerAction(void)
+  : traj_start_set_(false) {}
 
 void LissajousTrackerAction::Initialize(const ros::NodeHandle &nh)
 {
@@ -74,11 +79,12 @@ void LissajousTrackerAction::Deactivate(void)
 {
   if(tracker_server_->isActive())
   {
-    ROS_WARN("Deactivated tracker prior to reaching goal");
+    ROS_WARN("LissajousTrackerAction deactivated tracker prior to reaching goal");
     tracker_server_->setAborted();
   }
   ICs_.reset();
   generator_.deactivate();
+  traj_start_set_ = false;
 }
 
 bool LissajousTrackerAction::velControlCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
@@ -92,11 +98,15 @@ bool LissajousTrackerAction::velControlCallback(std_srvs::Trigger::Request &req,
 
 quadrotor_msgs::PositionCommand::ConstPtr LissajousTrackerAction::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  if(!generator_.isActive())
+  if (!generator_.isActive()) {
+    return quadrotor_msgs::PositionCommand::Ptr();
+  }
+
+  if(!traj_start_set_)
   {
+    traj_start_set_ = true;
     ICs_.set_from_odom(msg);
     position_last_ = Eigen::Vector3d(ICs_.pos()(0), ICs_.pos()(1), ICs_.pos()(2));
-    return quadrotor_msgs::PositionCommand::Ptr();
   }
 
   // Set gains
@@ -170,12 +180,17 @@ void LissajousTrackerAction::goal_callback(void)
   }
 
   generator_.setParams(msg);
+  traj_start_set_ = false;
   distance_traveled_ = 0;
   generator_.activate();
 }
 
 void LissajousTrackerAction::preempt_callback(void)
 {
+  ICs_.reset();
+  generator_.deactivate();
+  traj_start_set_ = false;
+
   if (tracker_server_->isActive())
   {
     tracker_server_->setAborted();
@@ -185,7 +200,6 @@ void LissajousTrackerAction::preempt_callback(void)
     tracker_server_->setPreempted();
   }
 
-  generator_.deactivate();
 }
 
 #include <pluginlib/class_list_macros.h>
