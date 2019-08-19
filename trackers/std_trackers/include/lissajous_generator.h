@@ -2,6 +2,8 @@
 #define _LISSAJOUS_GENERATOR_H_
 
 #include <ros/ros.h>
+#include <nav_msgs/Path.h>
+#include <geometry_msgs/Point.h>
 #include <quadrotor_msgs/PositionCommand.h>
 #include <tracker_msgs/TrackerStatus.h>
 #include <tracker_msgs/LissajousTrackerAction.h>
@@ -14,6 +16,7 @@ class LissajousGenerator
     LissajousGenerator(void);
     void setParams(const tracker_msgs::LissajousTrackerGoal::ConstPtr &msg);
     void setParams(const tracker_msgs::LissajousAdderGoal::ConstPtr &msg, int num);
+    void generatePath(nav_msgs::Path& path, geometry_msgs::Point& initial_pt, double dt);
     const quadrotor_msgs::PositionCommand::Ptr getPositionCmd(void);
     bool activate(void);
     void deactivate(void);

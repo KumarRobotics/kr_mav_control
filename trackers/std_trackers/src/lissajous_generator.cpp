@@ -190,6 +190,26 @@ const quadrotor_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(vo
   return cmd;
 }
 
+void LissajousGenerator::generatePath(nav_msgs::Path& path, geometry_msgs::Point& initial_pt, double dt)
+{
+  if(goal_set_)
+  {
+    double s = 0.0;
+    double T = period_;
+
+    while(s < period_)
+    {
+      geometry_msgs::PoseStamped ps;
+      ps.pose.position.x  = x_amp_*(1-std::cos(2*M_PI*x_num_periods_*s/T)) + initial_pt.x;
+      ps.pose.position.y  = y_amp_*std::sin(2*M_PI*y_num_periods_*s/T) + initial_pt.y;
+      ps.pose.position.z  = z_amp_*std::sin(2*M_PI*z_num_periods_*s/T) + initial_pt.z;
+
+      path.poses.push_back(ps);
+      s += dt; //increment by 0.1s
+    }
+  }
+}
+
 bool LissajousGenerator::activate(void)
 {
   if(goal_set_)

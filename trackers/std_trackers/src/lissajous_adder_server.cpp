@@ -18,8 +18,6 @@ class LissajousAdderAction : public trackers_manager::Tracker
     bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
     void Deactivate(void);
 
-    bool velControlCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res);
-
     quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
     uint8_t status() const;
 
@@ -29,14 +27,15 @@ class LissajousAdderAction : public trackers_manager::Tracker
 
     typedef actionlib::SimpleActionServer<tracker_msgs::LissajousAdderAction> ServerType;
     std::shared_ptr<ServerType> tracker_server_;
+    ros::Publisher path_pub_;
 
-    ros::ServiceServer vel_control_srv_;
     double kx_[3], kv_[3];
     InitialConditions ICs_;
     LissajousGenerator generator_1_, generator_2_;
     double distance_traveled_;
     Eigen::Vector3d position_last_;
     bool traj_start_set_;
+    std::string frame_id_;
 };
 
 LissajousAdderAction::LissajousAdderAction(void)
@@ -52,7 +51,8 @@ void LissajousAdderAction::Initialize(const ros::NodeHandle &nh)
   nh.param("gains/vel/z", kv_[2], 4.0);
 
   ros::NodeHandle priv_nh(nh, "lissajous_adder");
-  vel_control_srv_ = priv_nh.advertiseService("vel_control", &LissajousAdderAction::velControlCallback, this);
+  priv_nh.param<std::string>("frame_id", frame_id_, "world");
+  path_pub_ = priv_nh.advertise<nav_msgs::Path>("lissajous_path", 1);
 
   tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LissajousAdderAction", false));
   tracker_server_->registerGoalCallback(boost::bind(&LissajousAdderAction::goal_callback, this));
@@ -88,15 +88,6 @@ void LissajousAdderAction::Deactivate(void)
   traj_start_set_ = false;
 }
 
-bool LissajousAdderAction::velControlCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
-{
-  kx_[0] = 0;
-  kx_[1] = 0;
-  kx_[2] = 0;
-  res.success = true;
-  return true;
-}
-
 quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   if(!(generator_1_.isActive() & generator_2_.isActive()))
@@ -109,6 +100,25 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav
     traj_start_set_ = true;
     ICs_.set_from_odom(msg);
     position_last_ = Eigen::Vector3d(ICs_.pos()(0), ICs_.pos()(1), ICs_.pos()(2));
+
+    //Generate path for visualizing
+    geometry_msgs::Point initial_pt;
+    initial_pt.x = ICs_.pos()(0);
+    initial_pt.y = ICs_.pos()(1);
+    initial_pt.z = ICs_.pos()(2);
+    double dt = 0.1;
+    nav_msgs::Path path1, path2;
+    path1.header.frame_id = frame_id_;
+    path1.header.stamp = ros::Time::now();
+    generator_1_.generatePath(path1, initial_pt, dt);
+    generator_2_.generatePath(path2, initial_pt, dt);
+    for(unsigned int i = 0; i < path1.poses.size(); i++)
+    {
+      path1.poses[i].pose.position.x += path2.poses[i].pose.position.x;
+      path1.poses[i].pose.position.y += path2.poses[i].pose.position.y;
+      path1.poses[i].pose.position.z += path2.poses[i].pose.position.z;
+    }
+    path_pub_.publish(path1);
   }
 
   // Set gains
