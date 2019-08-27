@@ -102,7 +102,7 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav
     position_last_ = Eigen::Vector3d(ICs_.pos()(0), ICs_.pos()(1), ICs_.pos()(2));
 
     //Generate path for visualizing
-    geometry_msgs::Point initial_pt;
+    geometry_msgs::Point initial_pt, initial_pt2;
     initial_pt.x = ICs_.pos()(0);
     initial_pt.y = ICs_.pos()(1);
     initial_pt.z = ICs_.pos()(2);
@@ -111,7 +111,7 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav
     path1.header.frame_id = frame_id_;
     path1.header.stamp = ros::Time::now();
     generator_1_.generatePath(path1, initial_pt, dt);
-    generator_2_.generatePath(path2, initial_pt, dt);
+    generator_2_.generatePath(path2, initial_pt2, dt);
     for(unsigned int i = 0; i < path1.poses.size(); i++)
     {
       path1.poses[i].pose.position.x += path2.poses[i].pose.position.x;

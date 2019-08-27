@@ -1,6 +1,6 @@
 # The Simple and Compound Lissajous Trackers
 
-This document exists to give you a sense of how to use the simple
+This document shows how to use the simple
 and compound lissajous trackers. These trackers are used to create
 3D Lissajous trajectories and sums of such trajectories.
 
@@ -35,4 +35,18 @@ The Lissajous tracker and adder may be called by the approprate MAV services
 
 ```
 rosservice call /quadrotor_name/mav_services/lissajous "{x_amp: 1.25, y_amp: 1.25, z_amp: 0.75, yaw_amp: 3.1415, x_num_periods: 12, y_num_periods: 12, z_num_periods: 16, yaw_num_periods: 5, period: 60, num_cycles: 1, ramp_time: 2}"
+```
+
+```
+rosservice call /dragonfly1/mav_services/compound_lissajous "x_amp: [1.25, 0.1]
+y_amp: [1.25, 0.1]
+z_amp: [0.75, 0.3]
+yaw_amp: [3.1415, 0.5]
+x_num_periods: [12, 5.0]
+y_num_periods: [12, 5.0]
+z_num_periods: [16, 1.0]
+yaw_num_periods: [5.0, 3.0]
+period: [60.0, 60.0]
+num_cycles: [1.0, 1.0]
+ramp_time: [2.0, 2.0]"
 ```
