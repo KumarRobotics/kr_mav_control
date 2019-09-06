@@ -41,6 +41,7 @@ RVIZ_CONFIG_FILE="$HOME/.ros/wp_nav.rviz"
 LAUNCH_PATH=$(rospack find quadrotor_simulator)
 cp $LAUNCH_PATH/launch/rviz_config.rviz ${RVIZ_CONFIG_FILE}
 sed -i "s/quadrotor/temp/g" ${RVIZ_CONFIG_FILE}
+sed -i "s/waypoints/${MAV_NAMESPACE}1\/waypoints/g" ${RVIZ_CONFIG_FILE}
 
 # Generate multi_mav_manger yaml config file based on number of robots
 cp $(rospack find multi_mav_manager)/config/dragonfly/multi_mav_manager_single.yaml ~/.ros/multi_mav_manager.yaml
