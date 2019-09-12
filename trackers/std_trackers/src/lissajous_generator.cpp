@@ -1,7 +1,8 @@
-#include <lissajous_generator.h>
 #include <Eigen/Geometry>
 #include <cmath>
 #include <iostream>
+#include <tracker_msgs/TrackerStatus.h>
+#include <std_trackers/lissajous_generator.h>
 
 LissajousGenerator::LissajousGenerator()
 {

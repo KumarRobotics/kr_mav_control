@@ -1,13 +1,13 @@
 #include <memory>
-#include <lissajous_generator.h>
-#include <trackers_manager/Tracker.h>
+#include <cmath>
+#include <Eigen/Geometry>
+#include <std_trackers/initial_conditions.h>
+#include <std_trackers/lissajous_generator.h>
 #include <std_srvs/Trigger.h>
 #include <actionlib/server/simple_action_server.h>
+#include <trackers_manager/Tracker.h>
 #include <tracker_msgs/TrackerStatus.h>
 #include <tracker_msgs/LissajousTrackerAction.h>
-#include <Eigen/Geometry>
-#include <initial_conditions.h>
-#include <cmath>
 
 class LissajousTrackerAction : public trackers_manager::Tracker
 {

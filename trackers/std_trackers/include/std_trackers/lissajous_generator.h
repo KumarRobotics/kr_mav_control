@@ -5,10 +5,8 @@
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/Point.h>
 #include <quadrotor_msgs/PositionCommand.h>
-#include <tracker_msgs/TrackerStatus.h>
 #include <tracker_msgs/LissajousTrackerAction.h>
 #include <tracker_msgs/LissajousAdderAction.h>
-#include <actionlib/client/simple_action_client.h>
 
 class LissajousGenerator
 {
