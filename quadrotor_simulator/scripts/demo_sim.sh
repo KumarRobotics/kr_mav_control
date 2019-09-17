@@ -22,10 +22,19 @@ fi
 
 # TODO parse this from command line? Possibly list of mav ids and namespace?
 MAV_NAMESPACE=dragonfly
+MAV_TYPE=hummingbird
+WORLD_FRAME_ID=simulator
 
 MASTER_URI=http://localhost:11311
 SETUP_ROS_STRING="export ROS_MASTER_URI=${MASTER_URI}"
 SESSION_NAME=demo_sim${NUM_MAV}
+
+CURRENT_DISPLAY=${DISPLAY}
+if [ -z ${DISPLAY} ];
+then
+  echo "DISPLAY is not set"
+  CURRENT_DISPLAY=:=0
+fi
 
 if [ -z ${TMUX} ];
 then
@@ -40,6 +49,7 @@ fi
 RVIZ_CONFIG_FILE="$HOME/.ros/wp_nav.rviz"
 LAUNCH_PATH=$(rospack find quadrotor_simulator)
 cp $LAUNCH_PATH/launch/rviz_config.rviz ${RVIZ_CONFIG_FILE}
+sed -i "s/simulator/${WORLD_FRAME_ID}/g" ${RVIZ_CONFIG_FILE}
 sed -i "s/quadrotor/temp/g" ${RVIZ_CONFIG_FILE}
 sed -i "s/waypoints/${MAV_NAMESPACE}1\/waypoints/g" ${RVIZ_CONFIG_FILE}
 
@@ -58,9 +68,9 @@ tmux setw -g mouse on
 tmux rename-window -t $SESSION_NAME "Main"
 tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; roscore" Enter
 tmux split-window -t $SESSION_NAME
-tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; export DISPLAY=:0; rosrun rviz rviz -d ${RVIZ_CONFIG_FILE}" Enter
+tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; export DISPLAY=${CURRENT_DISPLAY}; rosrun rviz rviz -d ${RVIZ_CONFIG_FILE}" Enter
 tmux split-window -t $SESSION_NAME
-tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; export DISPLAY=:0; rqt --standalone ${RQT_GUI}" Enter
+tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; export DISPLAY=${CURRENT_DISPLAY}; rqt --standalone ${RQT_GUI}" Enter
 tmux split-window -t $SESSION_NAME
 tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch multi_mav_manager multi_mav_manager.launch odom_topic:=odom config_path:=$HOME/.ros/" Enter
 tmux select-layout -t $SESSION_NAME tiled
@@ -92,8 +102,9 @@ do
   COL_G=0.${v:1:2}${v:4:3}
   v=$[100 + (RANDOM % 100)]$[1000 + (RANDOM % 1000)]
   COL_B=0.${v:1:2}${v:4:3}
+  COL_A=0.85
 
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch mav_manager demo.launch sim:=true vicon:=false model:=${MAV_NAME} type:=hummingbird initial_position/x:=${POS_X} initial_position/y:=${POS_Y} color/r:=${COL_R} color/g:=${COL_G} color/b:=${COL_B}" Enter
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch mav_manager demo.launch sim:=true vicon:=false mav_name:=${MAV_NAME} mav_type:=${MAV_TYPE} world_frame_id:=${WORLD_FRAME_ID} initial_position/x:=${POS_X} initial_position/y:=${POS_Y} color/r:=${COL_R} color/g:=${COL_G} color/b:=${COL_B} color/a:=${COL_A}" Enter
   tmux split-window -t $SESSION_NAME
   tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; rosrun trackers_manager waypoints_to_action.py __ns:=${MAV_NAME}" Enter
   tmux split-window -t $SESSION_NAME

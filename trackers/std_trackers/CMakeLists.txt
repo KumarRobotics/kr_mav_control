@@ -15,7 +15,7 @@ include_directories(include ${EIGEN3_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES
+  LIBRARIES initial_conditions
   CATKIN_DEPENDS std_msgs geometry_msgs nav_msgs tf quadrotor_msgs tracker_msgs trackers_manager
   DEPENDS EIGEN3)
 

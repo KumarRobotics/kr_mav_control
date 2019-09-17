@@ -1,6 +1,7 @@
 <launch>
-  <arg name="model" default="quadrotor"/>
-  <arg name="type" default="hummingbird"/>
+  <arg name="mav_name" default="quadrotor"/>
+  <arg name="mav_type" default="hummingbird"/>
+  <arg name="world_frame_id" default="simulator"/>
   <arg name="sim" default="1"/>
   <arg name="vicon" default="1"/>
   <arg name="vicon_fps" default="100"/>
@@ -20,19 +21,20 @@
     <include file="$(find vicon)/launch/vicon.launch" unless="$(arg sim)"/>
 
     <include file="$(find vicon_odom)/launch/vicon_odom.launch" unless="$(arg sim)">
-      <arg name="model" value="$(arg model)" />
+      <arg name="model" value="$(arg mav_name)" />
       <arg name="vicon_fps" value="$(arg vicon_fps)"/>
     </include>
   </group>
 
-  <group ns="$(arg model)">
+  <group ns="$(arg mav_name)">
     <param name="mass" value="$(arg mass)"/>
 
     <!-- Simulator -->
     <include file="$(find quadrotor_simulator)/launch/sim.launch" if="$(arg sim)">
-      <arg name="name" value="$(arg model)"/>
-      <arg name="type" value="$(arg type)"/>
+      <arg name="mav_name" value="$(arg mav_name)"/>
+      <arg name="mav_type" value="$(arg mav_type)"/>
       <arg name="mass" value="$(arg mass)"/>
+      <arg name="world_frame_id" value="$(arg world_frame_id)"/>
       <arg name="initial_position/x" value="$(arg initial_position/x)"/>
       <arg name="initial_position/y" value="$(arg initial_position/y)"/>
       <arg name="initial_position/z" value="$(arg initial_position/z)"/>
