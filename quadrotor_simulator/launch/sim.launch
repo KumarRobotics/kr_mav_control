@@ -41,12 +41,12 @@
   </node>
 
   <include file="$(find quadrotor_simulator)/launch/mesh_vis.launch">
-    <param name="mav_name" value="$(arg mav_name)"/>
-    <param name="mav_type" value="$(arg mav_type)"/>
-    <param name="odom_topic" value="$(arg odom_topic)"/>
-    <param name="color/r" value="$(arg color/r)"/>
-    <param name="color/g" value="$(arg color/g)"/>
-    <param name="color/b" value="$(arg color/b)"/>
-    <param name="color/a" value="$(arg color/a)"/>
+    <arg name="mav_name" value="$(arg mav_name)"/>
+    <arg name="mav_type" value="$(arg mav_type)"/>
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="color/r" value="$(arg color/r)"/>
+    <arg name="color/g" value="$(arg color/g)"/>
+    <arg name="color/b" value="$(arg color/b)"/>
+    <arg name="color/a" value="$(arg color/a)"/>
   </include>
 </launch>

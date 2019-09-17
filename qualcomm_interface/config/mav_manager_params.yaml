@@ -1,3 +1,4 @@
+server_wait_timeout: 0.5
 need_imu: false
 need_output_data: true
 use_attitude_safety_catch: true

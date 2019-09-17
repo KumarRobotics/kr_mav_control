@@ -52,29 +52,31 @@ MAVManager::MAVManager(std::string ns)
     lissajous_adder_client_(nh_, "trackers_manager/lissajous_adder/LissajousAdderAction", true)
 {
   // Action servers.
-  const double server_wait_time = 3.0;
-  if (!line_tracker_distance_client_.waitForServer(ros::Duration(server_wait_time))) {
+  float server_wait_timeout;
+  priv_nh_.param("server_wait_timeout", server_wait_timeout, 0.5f);
+
+  if (!line_tracker_distance_client_.waitForServer(ros::Duration(server_wait_timeout))) {
     ROS_ERROR("LineTrackerDistanceAction server not found.");
   }
 
-  if (!line_tracker_min_jerk_client_.waitForServer(ros::Duration(server_wait_time))) {
+  if (!line_tracker_min_jerk_client_.waitForServer(ros::Duration(server_wait_timeout))) {
     ROS_ERROR("LineTrackerMinJerkAction server not found.");
   }
 
-  if (!velocity_tracker_client_.waitForServer(ros::Duration(server_wait_time))) {
+  if (!velocity_tracker_client_.waitForServer(ros::Duration(server_wait_timeout))) {
     ROS_ERROR("VelocityTrackerAction server not found.");
   }
 
   // Optional trackers.
-  if (!circle_tracker_client_.waitForServer(ros::Duration(server_wait_time))) {
+  if (!circle_tracker_client_.waitForServer(ros::Duration(server_wait_timeout))) {
     ROS_WARN("CircleTrackerAction server not found.");
   }
 
-  if (!lissajous_tracker_client_.waitForServer(ros::Duration(server_wait_time))) {
+  if (!lissajous_tracker_client_.waitForServer(ros::Duration(server_wait_timeout))) {
     ROS_ERROR("LissajousTrackerAction server not found.");
   }
 
-  if (!lissajous_adder_client_.waitForServer(ros::Duration(server_wait_time))) {
+  if (!lissajous_adder_client_.waitForServer(ros::Duration(server_wait_timeout))) {
     ROS_ERROR("LissajousAdderAction server not found.");
   }
 
@@ -294,7 +296,6 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
   goal.a_des = a_des;
   goal.relative = relative;
   line_tracker_min_jerk_client_.sendGoal(goal, boost::bind(&MAVManager::tracker_done_callback, this, _1, _2), ClientType::SimpleActiveCallback(), ClientType::SimpleFeedbackCallback());
-
 
   return this->transition(line_tracker_min_jerk);
 }
