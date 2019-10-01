@@ -17,14 +17,14 @@
 
     <node pkg="nodelet"
       type="nodelet"
-      name="standalone_nodelet"
+      name="snav_standalone_nodelet"
       args="manager"
       output="screen"/>
 
     <node pkg="nodelet"
       type="nodelet"
       name="trackers_manager"
-      args="load trackers_manager/TrackersManager standalone_nodelet"
+      args="load trackers_manager/TrackersManager snav_standalone_nodelet"
       clear_params="true"
       output="screen">
       <rosparam file="$(find qualcomm_interface)/config/trackers.yaml"/>
@@ -36,7 +36,7 @@
     <group if="$(arg use_vicon)">
       <node pkg="nodelet"
         type="nodelet"
-        args="load so3_control/SO3TRPYControlNodelet standalone_nodelet"
+        args="load so3_control/SO3TRPYControlNodelet snav_standalone_nodelet"
         name="trpy_control"
         required="true"
         output="screen">
@@ -51,7 +51,7 @@
       <node pkg="nodelet"
         type="nodelet"
         name="qualcomm_interface"
-        args="load qualcomm_interface/TRPYCmdToSnav standalone_nodelet"
+        args="load qualcomm_interface/TRPYCmdToSnav snav_standalone_nodelet"
         required="true"
         clear_params="true"
         output="screen">
@@ -67,7 +67,7 @@
       <node pkg="nodelet"
         type="nodelet"
         name="qualcomm_interface"
-        args="load qualcomm_interface/PosCmdToSnav standalone_nodelet"
+        args="load qualcomm_interface/PosCmdToSnav snav_standalone_nodelet"
         required="true"
         clear_params="true"
         output="screen">

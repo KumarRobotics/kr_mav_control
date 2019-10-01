@@ -22,8 +22,14 @@ fi
 
 # TODO parse this from command line? Possibly list of mav ids and namespace?
 MAV_NAMESPACE=dragonfly
+
+if [ $# -eq 2 ]; then
+  MAV_NAMESPACE=$2
+fi
+
 MAV_TYPE=hummingbird
 WORLD_FRAME_ID=simulator
+echo "MAV napespace: $MAV_NAMESPACE MAV Type: $MAV_TYPE"
 
 MASTER_URI=http://localhost:11311
 SETUP_ROS_STRING="export ROS_MASTER_URI=${MASTER_URI}"
@@ -33,7 +39,7 @@ CURRENT_DISPLAY=${DISPLAY}
 if [ -z ${DISPLAY} ];
 then
   echo "DISPLAY is not set"
-  CURRENT_DISPLAY=:=0
+  CURRENT_DISPLAY=:0
 fi
 
 if [ -z ${TMUX} ];

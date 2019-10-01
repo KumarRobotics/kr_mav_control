@@ -21,9 +21,17 @@ else
 fi
 
 # TODO parse this from command line? Possibly list of mav ids and namespace?
+# TODO parse this from command line? Possibly list of mav ids and namespace?
 MAV_NAMESPACE=dragonfly
+
+if [ $# -eq 2 ]; then
+  MAV_NAMESPACE=$2
+fi
+
 MAV_TYPE=pelican
 WORLD_FRAME_ID=world
+
+echo "MAV napespace: $MAV_NAMESPACE MAV Type: $MAV_TYPE"
 
 MASTER_URI=http://localhost:11311
 SETUP_ROS_STRING="export ROS_MASTER_URI=${MASTER_URI}"
@@ -33,7 +41,7 @@ CURRENT_DISPLAY=${DISPLAY}
 if [ -z ${DISPLAY} ];
 then
   echo "DISPLAY is not set"
-  CURRENT_DISPLAY=:=0
+  CURRENT_DISPLAY=:0
 fi
 
 if [ -z ${TMUX} ];
@@ -68,11 +76,11 @@ done
 tmux setw -g mouse on
 
 tmux rename-window -t $SESSION_NAME "Main"
-tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; export DISPLAY=:0; roslaunch mrsl_quadrotor_launch gazebo.launch world:=empty" Enter
+tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; export DISPLAY=${CURRENT_DISPLAY}; roslaunch mrsl_quadrotor_launch gazebo.launch world:=empty" Enter
 tmux split-window -t $SESSION_NAME
-tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; export DISPLAY=:0; rosrun rviz rviz -d ${RVIZ_CONFIG_FILE}" Enter
+tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; export DISPLAY=${CURRENT_DISPLAY}; rosrun rviz rviz -d ${RVIZ_CONFIG_FILE}" Enter
 tmux split-window -t $SESSION_NAME
-tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; export DISPLAY=:0; rqt --standalone ${RQT_GUI}" Enter
+tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; export DISPLAY=${CURRENT_DISPLAY}; rqt --standalone ${RQT_GUI}" Enter
 tmux split-window -t $SESSION_NAME
 tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; roslaunch multi_mav_manager multi_mav_manager.launch odom_topic:=${ODOM_TOPIC} config_path:=$HOME/.ros/" Enter
 tmux select-layout -t $SESSION_NAME tiled
