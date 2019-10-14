@@ -7,6 +7,7 @@
   <arg name="vicon_fps" default="100"/>
   <arg name="slow_baud_rate" default="true"/>
   <arg name="mass" default="0.5"/>
+  <arg name="nodelet_manager_name" default="nodelet_manager_control"/>
 
   <arg name="initial_position/x" default="0.0"/>
   <arg name="initial_position/y" default="0.0"/>
@@ -46,7 +47,7 @@
 
     <!-- Control stuff -->
     <include file="$(find quadrotor_simulator)/launch/control.launch">
-      <arg name="nodelet_manager_name" value="nodelet_manager"/>
+      <arg name="nodelet_manager_name" value="$(arg nodelet_manager_name)"/>
       <arg name="mass" value="$(arg mass)"/>
     </include>
 
@@ -54,7 +55,7 @@
     <include file="$(find mav_manager)/launch/asctec_comms.launch" unless="$(arg sim)">
       <arg name="device" value="/dev/ttyUSB0"/>
       <arg name="slow_baud_rate" value="$(arg slow_baud_rate)"/>
-      <arg name="nodelet_manager_name" value="nodelet_manager"/>
+      <arg name="nodelet_manager_name" value="$(arg nodelet_manager_name)"/>
     </include>
 
     <!-- MAV Manager -->
