@@ -6,11 +6,11 @@ fi
 
 NUM_MAV=$1
 
-if echo $NUM_MAV | grep -Eq '^[+-]?[0-9]+$'
+if echo $NUM_MAV | grep -Eq '^[+]?[1-9]+$'
 then
   echo "Running simulated $NUM_MAV MAVs"
 else
-  echo "Input number(integer) of MAVs as first argument"
+  echo "Input number(integer > 0) of MAVs as first argument"
   exit 1
 fi
 
@@ -68,6 +68,19 @@ do
   echo "/${MAV_NAME}/active: true" >> ~/.ros/multi_mav_manager.yaml
 done
 
+round()
+{
+echo $(printf %.$2f $(echo "scale=$2;(((10^$2)*$1)+0.5)/(10^$2)" | bc))
+};
+
+n_rows=`echo "sqrt(${NUM_MAV})" | bc -l`
+n_rows=$(round $n_rows 0)
+
+div=$(( ${NUM_MAV} / ${n_rows} ))
+n_cols=$(round  $div 0)
+echo "Grid rows, cols: " $n_rows $n_cols
+spacing=1
+
 # Make mouse useful in copy mode
 tmux setw -g mouse on
 
@@ -98,8 +111,15 @@ do
 
   # TODO generate poses on circle instead. Separated by robot size
   # Generate random poses x, y
-  POS_X=$(( $RANDOM % 10 ))
-  POS_Y=$(( $RANDOM % 10 ))
+  #POS_X=$(( $RANDOM % 10 ))
+  #POS_Y=$(( $RANDOM % 10 ))
+
+  # Generate poses on a grid
+  row_i=$(( ( ( $id - 1 ) % $n_rows ) + 1 ))
+  col_i=$(( ( ( $id - $row_i ) / $n_rows ) + 1 ))
+
+  POS_X=$(( ( $col_i * $spacing ) + ( $spacing / 2 ) - $spacing ))
+  POS_Y=$(( ( $row_i * $spacing ) + ( $spacing / 2 ) - $spacing ))
 
   # Generate random colors [0-1]
   v=$[100 + (RANDOM % 100)]$[1000 + (RANDOM % 1000)]
