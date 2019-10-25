@@ -10,14 +10,12 @@ from tracker_msgs.srv import Transition
 
 class WpToAction(object):
   def __init__(self):
-    self.ns = '/quadrotor'
-
     self.client = actionlib.SimpleActionClient('trackers_manager/trajectory_tracker/TrajectoryTracker', TrajectoryTrackerAction)
     rospy.loginfo("Waiting for server")
     self.client.wait_for_server()
     rospy.loginfo("Connected!")
 
-    rospy.Subscriber("/waypoints", Path, self.callback)
+    rospy.Subscriber("waypoints", Path, self.callback)
 
   def callback(self, data):
 

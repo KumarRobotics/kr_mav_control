@@ -1,11 +1,13 @@
 <launch>
-  <arg name="model" default="quadrotor"/>
-  <arg name="type" default="hummingbird"/>
+  <arg name="mav_name" default="quadrotor"/>
+  <arg name="mav_type" default="hummingbird"/>
+  <arg name="world_frame_id" default="simulator"/>
   <arg name="sim" default="1"/>
   <arg name="vicon" default="1"/>
   <arg name="vicon_fps" default="100"/>
   <arg name="slow_baud_rate" default="true"/>
   <arg name="mass" default="0.5"/>
+  <arg name="nodelet_manager_name" default="nodelet_manager_control"/>
 
   <arg name="initial_position/x" default="0.0"/>
   <arg name="initial_position/y" default="0.0"/>
@@ -20,19 +22,20 @@
     <include file="$(find vicon)/launch/vicon.launch" unless="$(arg sim)"/>
 
     <include file="$(find vicon_odom)/launch/vicon_odom.launch" unless="$(arg sim)">
-      <arg name="model" value="$(arg model)" />
+      <arg name="model" value="$(arg mav_name)" />
       <arg name="vicon_fps" value="$(arg vicon_fps)"/>
     </include>
   </group>
 
-  <group ns="$(arg model)">
+  <group ns="$(arg mav_name)">
     <param name="mass" value="$(arg mass)"/>
 
     <!-- Simulator -->
     <include file="$(find quadrotor_simulator)/launch/sim.launch" if="$(arg sim)">
-      <arg name="name" value="$(arg model)"/>
-      <arg name="type" value="$(arg type)"/>
+      <arg name="mav_name" value="$(arg mav_name)"/>
+      <arg name="mav_type" value="$(arg mav_type)"/>
       <arg name="mass" value="$(arg mass)"/>
+      <arg name="world_frame_id" value="$(arg world_frame_id)"/>
       <arg name="initial_position/x" value="$(arg initial_position/x)"/>
       <arg name="initial_position/y" value="$(arg initial_position/y)"/>
       <arg name="initial_position/z" value="$(arg initial_position/z)"/>
@@ -44,7 +47,7 @@
 
     <!-- Control stuff -->
     <include file="$(find quadrotor_simulator)/launch/control.launch">
-      <arg name="nodelet_manager_name" value="nodelet_manager"/>
+      <arg name="nodelet_manager_name" value="$(arg nodelet_manager_name)"/>
       <arg name="mass" value="$(arg mass)"/>
     </include>
 
@@ -52,7 +55,7 @@
     <include file="$(find mav_manager)/launch/asctec_comms.launch" unless="$(arg sim)">
       <arg name="device" value="/dev/ttyUSB0"/>
       <arg name="slow_baud_rate" value="$(arg slow_baud_rate)"/>
-      <arg name="nodelet_manager_name" value="nodelet_manager"/>
+      <arg name="nodelet_manager_name" value="$(arg nodelet_manager_name)"/>
     </include>
 
     <!-- MAV Manager -->

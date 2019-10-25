@@ -5,13 +5,12 @@
 //#include <tf/transform_datatypes.h>
 
 #include <actionlib/server/simple_action_server.h>
-#include <initial_conditions.h>
 #include <quadrotor_msgs/PositionCommand.h>
 #include <tracker_msgs/TrajectoryTrackerAction.h>
 #include <trackers_manager/Tracker.h>
 #include <tracker_msgs/TrackerStatus.h>
-
-#include "traj_gen.h"
+#include <std_trackers/initial_conditions.h>
+#include <std_trackers/traj_gen.h>
 
 class TrajectoryTracker : public trackers_manager::Tracker
 {

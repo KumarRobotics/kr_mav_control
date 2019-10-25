@@ -1,7 +1,8 @@
-#include <lissajous_generator.h>
 #include <Eigen/Geometry>
 #include <cmath>
 #include <iostream>
+#include <tracker_msgs/TrackerStatus.h>
+#include <std_trackers/lissajous_generator.h>
 
 LissajousGenerator::LissajousGenerator()
 {
@@ -12,99 +13,92 @@ LissajousGenerator::LissajousGenerator()
 
 void LissajousGenerator::setParams(const tracker_msgs::LissajousTrackerGoal::ConstPtr &msg)
 {
-  if(!goal_set_)
-  {
-    x_amp_ = msg->x_amp;
-    y_amp_ = msg->y_amp;
-    z_amp_ = msg->z_amp;
-    yaw_amp_ = msg->yaw_amp;
-    x_num_periods_ = msg->x_num_periods;
-    y_num_periods_ = msg->y_num_periods;
-    z_num_periods_ = msg->z_num_periods;
-    yaw_num_periods_ = msg->yaw_num_periods;
-    period_ = msg->period;
-    num_cycles_ = msg->num_cycles;
-    ramp_time_ = msg->ramp_time;
+  x_amp_ = msg->x_amp;
+  y_amp_ = msg->y_amp;
+  z_amp_ = msg->z_amp;
+  yaw_amp_ = msg->yaw_amp;
+  x_num_periods_ = msg->x_num_periods;
+  y_num_periods_ = msg->y_num_periods;
+  z_num_periods_ = msg->z_num_periods;
+  yaw_num_periods_ = msg->yaw_num_periods;
+  period_ = msg->period;
+  num_cycles_ = msg->num_cycles;
+  ramp_time_ = msg->ramp_time;
 
-    // Set goal stuff
-    total_s_ = period_*num_cycles_;
+  // Set goal stuff
+  total_s_ = period_*num_cycles_;
 
-    // Compute a3_ and a2_
-    double tr = ramp_time_;
-    double tr2 = tr*tr;
-    double tr3 = tr2*tr;
-    double tr4 = tr3*tr;
-    double tr5 = tr4*tr;
-    double tr6 = tr5*tr;
-    double tr7 = tr6*tr;
-    double tr8 = tr7*tr;
+  // Compute a3_ and a2_
+  double tr = ramp_time_;
+  double tr2 = tr*tr;
+  double tr3 = tr2*tr;
+  double tr4 = tr3*tr;
+  double tr5 = tr4*tr;
+  double tr6 = tr5*tr;
+  double tr7 = tr6*tr;
+  double tr8 = tr7*tr;
 
-    a4_ = 35.0/tr4;
-    a5_ = -84.0/tr5;
-    a6_ = 70.0/tr6;
-    a7_ = -20.0/tr7;
+  a4_ = 35.0/tr4;
+  a5_ = -84.0/tr5;
+  a6_ = 70.0/tr6;
+  a7_ = -20.0/tr7;
 
-    // Compute ramp_s_, const_time_
-    ramp_s_ = a7_*tr8/8.0 + a6_*tr7/7.0 +  a5_*tr6/6.0 + a4_*tr5/5.0;
-    const_time_ = total_s_ - 2.0*ramp_s_;
-    total_time_ = 2.0*ramp_time_ +  const_time_;
+  // Compute ramp_s_, const_time_
+  ramp_s_ = a7_*tr8/8.0 + a6_*tr7/7.0 +  a5_*tr6/6.0 + a4_*tr5/5.0;
+  const_time_ = total_s_ - 2.0*ramp_s_;
+  total_time_ = 2.0*ramp_time_ +  const_time_;
 
-    // Set the start position and time
-    goal_set_ = true;
-    goal_reached_ = false;
-  }
+  // Set the start position and time
+  goal_set_ = true;
+  goal_reached_ = false;
 }
 
 void LissajousGenerator::setParams(const tracker_msgs::LissajousAdderGoal::ConstPtr &msg, int num)
 {
-  if(!goal_set_)
-  {
-    x_amp_ = msg->x_amp[num];
-    y_amp_ = msg->y_amp[num];
-    z_amp_ = msg->z_amp[num];
-    yaw_amp_ = msg->yaw_amp[num];
-    x_num_periods_ = msg->x_num_periods[num];
-    y_num_periods_ = msg->y_num_periods[num];
-    z_num_periods_ = msg->z_num_periods[num];
-    yaw_num_periods_ = msg->yaw_num_periods[num];
-    period_ = msg->period[num];
-    num_cycles_ = msg->num_cycles[num];
-    ramp_time_ = msg->ramp_time[num];
+  x_amp_ = msg->x_amp[num];
+  y_amp_ = msg->y_amp[num];
+  z_amp_ = msg->z_amp[num];
+  yaw_amp_ = msg->yaw_amp[num];
+  x_num_periods_ = msg->x_num_periods[num];
+  y_num_periods_ = msg->y_num_periods[num];
+  z_num_periods_ = msg->z_num_periods[num];
+  yaw_num_periods_ = msg->yaw_num_periods[num];
+  period_ = msg->period[num];
+  num_cycles_ = msg->num_cycles[num];
+  ramp_time_ = msg->ramp_time[num];
 
-    // Set goal stuff
-    total_s_ = period_*num_cycles_;
+  // Set goal stuff
+  total_s_ = period_*num_cycles_;
 
-    // Compute a3_ and a2_
-    double tr = ramp_time_;
-    double tr2 = tr*tr;
-    double tr3 = tr2*tr;
-    double tr4 = tr3*tr;
-    double tr5 = tr4*tr;
-    double tr6 = tr5*tr;
-    double tr7 = tr6*tr;
-    double tr8 = tr7*tr;
+  // Compute a3_ and a2_
+  double tr = ramp_time_;
+  double tr2 = tr*tr;
+  double tr3 = tr2*tr;
+  double tr4 = tr3*tr;
+  double tr5 = tr4*tr;
+  double tr6 = tr5*tr;
+  double tr7 = tr6*tr;
+  double tr8 = tr7*tr;
 
-    a4_ = 35.0/tr4;
-    a5_ = -84.0/tr5;
-    a6_ = 70.0/tr6;
-    a7_ = -20.0/tr7;
+  a4_ = 35.0/tr4;
+  a5_ = -84.0/tr5;
+  a6_ = 70.0/tr6;
+  a7_ = -20.0/tr7;
 
-    // Compute ramp_s_, const_time_
-    ramp_s_ = a7_*tr8/8.0 + a6_*tr7/7.0 +  a5_*tr6/6.0 + a4_*tr5/5.0;
-    const_time_ = total_s_ - 2.0*ramp_s_;
-    total_time_ = 2.0*ramp_time_ +  const_time_;
+  // Compute ramp_s_, const_time_
+  ramp_s_ = a7_*tr8/8.0 + a6_*tr7/7.0 +  a5_*tr6/6.0 + a4_*tr5/5.0;
+  const_time_ = total_s_ - 2.0*ramp_s_;
+  total_time_ = 2.0*ramp_time_ +  const_time_;
 
-    // Set the start position and time
-    goal_set_ = true;
-    goal_reached_ = false;
-  }
+  // Set the start position and time
+  goal_set_ = true;
+  goal_reached_ = false;
 }
 
 const quadrotor_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(void)
 {
   if(!active_)
   {
-    start_time_ = ros::Time::now();
     return quadrotor_msgs::PositionCommand::Ptr();
   }
 
@@ -197,11 +191,32 @@ const quadrotor_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(vo
   return cmd;
 }
 
+void LissajousGenerator::generatePath(nav_msgs::Path& path, geometry_msgs::Point& initial_pt, double dt)
+{
+  if(goal_set_)
+  {
+    double s = 0.0;
+    double T = period_;
+
+    while(s < period_)
+    {
+      geometry_msgs::PoseStamped ps;
+      ps.pose.position.x  = x_amp_*(1-std::cos(2*M_PI*x_num_periods_*s/T)) + initial_pt.x;
+      ps.pose.position.y  = y_amp_*std::sin(2*M_PI*y_num_periods_*s/T) + initial_pt.y;
+      ps.pose.position.z  = z_amp_*std::sin(2*M_PI*z_num_periods_*s/T) + initial_pt.z;
+
+      path.poses.push_back(ps);
+      s += dt; //increment by 0.1s
+    }
+  }
+}
+
 bool LissajousGenerator::activate(void)
 {
   if(goal_set_)
   {
     active_ = true;
+    start_time_ = ros::Time::now();
   }
   return active_;
 }

@@ -1,23 +1,21 @@
 #include <memory>
-#include <lissajous_generator.h>
-#include <ros/ros.h>
-#include <trackers_manager/Tracker.h>
-#include <std_srvs/Trigger.h>
-#include <tracker_msgs/TrackerStatus.h>
-#include <actionlib/server/simple_action_server.h>
-#include <tracker_msgs/LissajousAdderAction.h>
 #include <Eigen/Geometry>
-#include <initial_conditions.h>
 #include <cmath>
+#include <ros/ros.h>
+#include <actionlib/server/simple_action_server.h>
+#include <std_trackers/initial_conditions.h>
+#include <std_trackers/lissajous_generator.h>
+#include <trackers_manager/Tracker.h>
+#include <tracker_msgs/TrackerStatus.h>
+#include <tracker_msgs/LissajousAdderAction.h>
 
 class LissajousAdderAction : public trackers_manager::Tracker
 {
   public:
+    LissajousAdderAction(void);
     void Initialize(const ros::NodeHandle &nh);
     bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
     void Deactivate(void);
-
-    bool velControlCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res);
 
     quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
     uint8_t status() const;
@@ -28,14 +26,19 @@ class LissajousAdderAction : public trackers_manager::Tracker
 
     typedef actionlib::SimpleActionServer<tracker_msgs::LissajousAdderAction> ServerType;
     std::shared_ptr<ServerType> tracker_server_;
+    ros::Publisher path_pub_;
 
-    ros::ServiceServer vel_control_srv_;
     double kx_[3], kv_[3];
     InitialConditions ICs_;
     LissajousGenerator generator_1_, generator_2_;
     double distance_traveled_;
     Eigen::Vector3d position_last_;
+    bool traj_start_set_;
+    std::string frame_id_;
 };
+
+LissajousAdderAction::LissajousAdderAction(void)
+  : traj_start_set_(false) {}
 
 void LissajousAdderAction::Initialize(const ros::NodeHandle &nh)
 {
@@ -47,7 +50,8 @@ void LissajousAdderAction::Initialize(const ros::NodeHandle &nh)
   nh.param("gains/vel/z", kv_[2], 4.0);
 
   ros::NodeHandle priv_nh(nh, "lissajous_adder");
-  vel_control_srv_ = priv_nh.advertiseService("vel_control", &LissajousAdderAction::velControlCallback, this);
+  priv_nh.param<std::string>("frame_id", frame_id_, "world");
+  path_pub_ = priv_nh.advertise<nav_msgs::Path>("lissajous_path", 1);
 
   tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LissajousAdderAction", false));
   tracker_server_->registerGoalCallback(boost::bind(&LissajousAdderAction::goal_callback, this));
@@ -57,12 +61,17 @@ void LissajousAdderAction::Initialize(const ros::NodeHandle &nh)
 
 bool LissajousAdderAction::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
-  if(!tracker_server_->isActive())
+  // Only allow activation if a goal has been set
+  if(generator_1_.goalIsSet() && generator_2_.goalIsSet())
   {
-    ROS_WARN("No goal set, not activating");
-    return false;
+    if(!tracker_server_->isActive())
+    {
+      ROS_WARN("LissajousAdderAction::Activate: goal_set is true but action server has no active goal - not activating.");
+      return false;
+    }
+    return (generator_1_.activate() && generator_2_.activate());
   }
-  return (generator_1_.activate() && generator_2_.activate());
+  return false;
 }
 
 void LissajousAdderAction::Deactivate(void)
@@ -75,23 +84,40 @@ void LissajousAdderAction::Deactivate(void)
   ICs_.reset();
   generator_1_.deactivate();
   generator_2_.deactivate();
-}
-
-bool LissajousAdderAction::velControlCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
-{
-  kx_[0] = 0;
-  kx_[1] = 0;
-  kx_[2] = 0;
-  res.success = true;
-  return true;
+  traj_start_set_ = false;
 }
 
 quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   if(!(generator_1_.isActive() & generator_2_.isActive()))
   {
+    return quadrotor_msgs::PositionCommand::Ptr();
+  }
+
+  if(!traj_start_set_)
+  {
+    traj_start_set_ = true;
     ICs_.set_from_odom(msg);
     position_last_ = Eigen::Vector3d(ICs_.pos()(0), ICs_.pos()(1), ICs_.pos()(2));
+
+    //Generate path for visualizing
+    geometry_msgs::Point initial_pt, initial_pt2;
+    initial_pt.x = ICs_.pos()(0);
+    initial_pt.y = ICs_.pos()(1);
+    initial_pt.z = ICs_.pos()(2);
+    double dt = 0.1;
+    nav_msgs::Path path1, path2;
+    path1.header.frame_id = frame_id_;
+    path1.header.stamp = ros::Time::now();
+    generator_1_.generatePath(path1, initial_pt, dt);
+    generator_2_.generatePath(path2, initial_pt2, dt);
+    for(unsigned int i = 0; i < path1.poses.size(); i++)
+    {
+      path1.poses[i].pose.position.x += path2.poses[i].pose.position.x;
+      path1.poses[i].pose.position.y += path2.poses[i].pose.position.y;
+      path1.poses[i].pose.position.z += path2.poses[i].pose.position.z;
+    }
+    path_pub_.publish(path1);
   }
 
   // Set gains
@@ -169,9 +195,12 @@ void LissajousAdderAction::goal_callback(void)
     return;
   }
 
+  traj_start_set_ = false;
   generator_1_.setParams(msg,0);
   generator_2_.setParams(msg,1);
   distance_traveled_ = 0;
+  generator_1_.activate();
+  generator_2_.activate();
 }
 
 void LissajousAdderAction::preempt_callback(void)
@@ -184,6 +213,10 @@ void LissajousAdderAction::preempt_callback(void)
   {
     tracker_server_->setPreempted();
   }
+
+  traj_start_set_ = false;
+  generator_1_.deactivate();
+  generator_2_.deactivate();
 }
 
 #include <pluginlib/class_list_macros.h>

@@ -33,15 +33,15 @@ else()
   add_dependencies(so3cmd_to_qualcomm_nodelet ${catkin_EXPORTED_TARGETS})
   target_link_libraries(so3cmd_to_qualcomm_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
-  add_library(trpycmd_to_snav_nodelet src/trpycmd_to_snav_nodelet.cpp)
-  add_dependencies(trpycmd_to_snav_nodelet ${catkin_EXPORTED_TARGETS})
-  target_link_libraries(trpycmd_to_snav_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
+  add_library(trpycmd_to_qualcomm_nodelet src/trpycmd_to_snav_nodelet.cpp)
+  add_dependencies(trpycmd_to_qualcomm_nodelet ${catkin_EXPORTED_TARGETS})
+  target_link_libraries(trpycmd_to_qualcomm_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
-  add_library(poscmd_to_snav_nodelet src/poscmd_to_snav_nodelet.cpp)
-  add_dependencies(poscmd_to_snav_nodelet ${catkin_EXPORTED_TARGETS})
-  target_link_libraries(poscmd_to_snav_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
+  add_library(poscmd_to_qualcomm_nodelet src/poscmd_to_snav_nodelet.cpp)
+  add_dependencies(poscmd_to_qualcomm_nodelet ${catkin_EXPORTED_TARGETS})
+  target_link_libraries(poscmd_to_qualcomm_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
-  install(TARGETS vio_odom_publisher so3cmd_to_qualcomm_nodelet trpycmd_to_snav_nodelet poscmd_to_snav_nodelet
+  install(TARGETS vio_odom_publisher so3cmd_to_qualcomm_nodelet trpycmd_to_qualcomm_nodelet poscmd_to_qualcomm_nodelet
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

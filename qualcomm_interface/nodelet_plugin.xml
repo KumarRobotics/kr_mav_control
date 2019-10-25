@@ -5,14 +5,14 @@
     </description>
   </class>
 </library>
-<library path="lib/libtrpycmd_to_snav_nodelet">
+<library path="lib/libtrpycmd_to_qualcomm_nodelet">
   <class name="qualcomm_interface/TRPYCmdToSnav" type="TRPYCmdToSnav" base_class_type="nodelet::Nodelet">
     <description>
       This take a trpy_command and publishes it to the robot using Qualcomm's Snav API
     </description>
   </class>
 </library>
-<library path="lib/libposcmd_to_snav_nodelet">
+<library path="lib/libposcmd_to_qualcomm_nodelet">
   <class name="qualcomm_interface/PosCmdToSnav" type="PosCmdToSnav" base_class_type="nodelet::Nodelet">
     <description>
       This take a pos_command and publishes it to the robot using Qualcomm's Snav API

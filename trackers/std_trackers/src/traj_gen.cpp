@@ -1,4 +1,4 @@
-#include "traj_gen.h"
+#include <std_trackers/traj_gen.h>
 
 #include <Eigen/LU>
 

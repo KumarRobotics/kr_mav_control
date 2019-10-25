@@ -1,23 +1,21 @@
 #include <memory>
-#include <lissajous_generator.h>
-#include <ros/ros.h>
-#include <trackers_manager/Tracker.h>
-#include <std_srvs/Trigger.h>
-#include <tracker_msgs/TrackerStatus.h>
-#include <actionlib/server/simple_action_server.h>
-#include <tracker_msgs/LissajousTrackerAction.h>
-#include <Eigen/Geometry>
-#include <initial_conditions.h>
 #include <cmath>
+#include <Eigen/Geometry>
+#include <std_trackers/initial_conditions.h>
+#include <std_trackers/lissajous_generator.h>
+#include <std_srvs/Trigger.h>
+#include <actionlib/server/simple_action_server.h>
+#include <trackers_manager/Tracker.h>
+#include <tracker_msgs/TrackerStatus.h>
+#include <tracker_msgs/LissajousTrackerAction.h>
 
 class LissajousTrackerAction : public trackers_manager::Tracker
 {
   public:
+    LissajousTrackerAction(void);
     void Initialize(const ros::NodeHandle &nh);
     bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
     void Deactivate(void);
-
-    bool velControlCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res);
 
     quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
     uint8_t status() const;
@@ -28,14 +26,19 @@ class LissajousTrackerAction : public trackers_manager::Tracker
 
     typedef actionlib::SimpleActionServer<tracker_msgs::LissajousTrackerAction> ServerType;
     std::shared_ptr<ServerType> tracker_server_;
+    ros::Publisher path_pub_;
 
-    ros::ServiceServer vel_control_srv_;
     double kx_[3], kv_[3];
     InitialConditions ICs_;
     LissajousGenerator generator_;
     double distance_traveled_;
     Eigen::Vector3d position_last_;
+    bool traj_start_set_;
+    std::string frame_id_;
 };
+
+LissajousTrackerAction::LissajousTrackerAction(void)
+  : traj_start_set_(false) {}
 
 void LissajousTrackerAction::Initialize(const ros::NodeHandle &nh)
 {
@@ -47,7 +50,8 @@ void LissajousTrackerAction::Initialize(const ros::NodeHandle &nh)
   nh.param("gains/vel/z", kv_[2], 4.0);
 
   ros::NodeHandle priv_nh(nh, "lissajous_tracker");
-  vel_control_srv_ = priv_nh.advertiseService("vel_control", &LissajousTrackerAction::velControlCallback, this);
+  priv_nh.param<std::string>("frame_id", frame_id_, "world");
+  path_pub_ = priv_nh.advertise<nav_msgs::Path>("lissajous_path", 1);
 
   tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LissajousTrackerAction", false));
   tracker_server_->registerGoalCallback(boost::bind(&LissajousTrackerAction::goal_callback, this));
@@ -57,40 +61,54 @@ void LissajousTrackerAction::Initialize(const ros::NodeHandle &nh)
 
 bool LissajousTrackerAction::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
-  if(!tracker_server_->isActive())
+  // Only allow activation if a goal has been set
+  if(generator_.goalIsSet())
   {
-    ROS_WARN("No goal set, not activating");
-    return false;
+    if(!tracker_server_->isActive())
+    {
+      ROS_WARN("LissajousTrackerAction::Activate: goal_set is true but action server has no active goal - not activating.");
+      return false;
+    }
+    return generator_.activate();
   }
-  return generator_.activate();
+  return false;
 }
 
 void LissajousTrackerAction::Deactivate(void)
 {
   if(tracker_server_->isActive())
   {
-    ROS_WARN("Deactivated tracker prior to reaching goal");
+    ROS_WARN("LissajousTrackerAction deactivated tracker prior to reaching goal");
     tracker_server_->setAborted();
   }
   ICs_.reset();
   generator_.deactivate();
-}
-
-bool LissajousTrackerAction::velControlCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
-{
-  kx_[0] = 0;
-  kx_[1] = 0;
-  kx_[2] = 0;
-  res.success = true;
-  return true;
+  traj_start_set_ = false;
 }
 
 quadrotor_msgs::PositionCommand::ConstPtr LissajousTrackerAction::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  if(!generator_.isActive())
+  if (!generator_.isActive()) {
+    return quadrotor_msgs::PositionCommand::Ptr();
+  }
+
+  if(!traj_start_set_)
   {
+    traj_start_set_ = true;
     ICs_.set_from_odom(msg);
     position_last_ = Eigen::Vector3d(ICs_.pos()(0), ICs_.pos()(1), ICs_.pos()(2));
+
+    //Generate path for visualizing
+    geometry_msgs::Point initial_pt;
+    initial_pt.x = ICs_.pos()(0);
+    initial_pt.y = ICs_.pos()(1);
+    initial_pt.z = ICs_.pos()(2);
+    double dt = 0.1;
+    nav_msgs::Path path;
+    path.header.frame_id = frame_id_;
+    path.header.stamp = ros::Time::now();
+    generator_.generatePath(path, initial_pt, dt);
+    path_pub_.publish(path);
   }
 
   // Set gains
@@ -145,25 +163,37 @@ uint8_t LissajousTrackerAction::status() const
 
 void LissajousTrackerAction::goal_callback(void)
 {
-  if (generator_.goalIsSet())
-  {
-    return;
+  // If another goal is already active, cancel that goal
+  // and track this one instead.
+  if (tracker_server_->isActive()) {
+    ROS_INFO("Previous LissajousTrackerAction goal aborted.");
+    tracker_server_->setAborted();
+    generator_.deactivate();
   }
 
   tracker_msgs::LissajousTrackerGoal::ConstPtr msg = tracker_server_->acceptNewGoal();
 
-  if (tracker_server_->isPreemptRequested())
-  {
+  // If preempt has been requested, then set this goal to preempted
+  // and make no changes to the tracker state.
+  if (tracker_server_->isPreemptRequested()) {
+    ROS_INFO("LissajousTrackerAction going to goal preempted.");
     tracker_server_->setPreempted();
     return;
   }
 
   generator_.setParams(msg);
+
+  traj_start_set_ = false;
   distance_traveled_ = 0;
+  generator_.activate();
 }
 
 void LissajousTrackerAction::preempt_callback(void)
 {
+  ICs_.reset();
+  generator_.deactivate();
+  traj_start_set_ = false;
+
   if (tracker_server_->isActive())
   {
     tracker_server_->setAborted();
@@ -172,6 +202,7 @@ void LissajousTrackerAction::preempt_callback(void)
   {
     tracker_server_->setPreempted();
   }
+
 }
 
 #include <pluginlib/class_list_macros.h>

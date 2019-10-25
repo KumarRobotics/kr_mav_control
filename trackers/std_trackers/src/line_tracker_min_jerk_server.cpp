@@ -5,7 +5,7 @@
 #include <tf/transform_datatypes.h>
 #include <actionlib/server/simple_action_server.h>
 
-#include <initial_conditions.h>
+#include <std_trackers/initial_conditions.h>
 #include <trackers_manager/Tracker.h>
 #include <tracker_msgs/TrackerStatus.h>
 #include <tracker_msgs/LineTrackerAction.h>

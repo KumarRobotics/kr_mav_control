@@ -8,15 +8,15 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 
-find_package(catkin REQUIRED COMPONENTS actionlib geometry_msgs quadrotor_msgs std_msgs tf trackers_manager tracker_msgs)
+find_package(catkin REQUIRED COMPONENTS actionlib std_msgs geometry_msgs nav_msgs tf quadrotor_msgs tracker_msgs trackers_manager)
 find_package(Eigen3 REQUIRED)
 
 include_directories(include ${EIGEN3_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 catkin_package(
-  INCLUDE_DIRS
-  LIBRARIES
-  CATKIN_DEPENDS geometry_msgs quadrotor_msgs std_msgs tf trackers_manager tracker_msgs
+  INCLUDE_DIRS include
+  LIBRARIES initial_conditions
+  CATKIN_DEPENDS std_msgs geometry_msgs nav_msgs tf quadrotor_msgs tracker_msgs trackers_manager
   DEPENDS EIGEN3)
 
 add_library(initial_conditions src/initial_conditions.cpp)
@@ -90,3 +90,4 @@ install(TARGETS
 )
 
 install(FILES plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})

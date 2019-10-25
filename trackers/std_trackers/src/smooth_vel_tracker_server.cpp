@@ -7,9 +7,7 @@
 #include <tracker_msgs/LineTrackerAction.h>
 #include <trackers_manager/Tracker.h>
 #include <tracker_msgs/TrackerStatus.h>
-
-#include "initial_conditions.h"
-
+#include <std_trackers/initial_conditions.h>
 
 class SmoothVelTrackerAction : public trackers_manager::Tracker
 {
