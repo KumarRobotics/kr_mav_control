@@ -290,11 +290,20 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
   tracker_msgs::LineTrackerGoal goal;
   goal.x = x;
   goal.y = y;
+
+  goal.relative = relative;
+  //Convert relative translation in body frame to global frame
+  if(relative)
+  {
+    goal.x = x * std::cos(yaw_) - y * std::sin(yaw_);
+    goal.y = x * std::sin(yaw_) + y * std::cos(yaw_);
+  }
+
   goal.z = z;
   goal.yaw = yaw;
   goal.v_des = v_des;
   goal.a_des = a_des;
-  goal.relative = relative;
+
   line_tracker_min_jerk_client_.sendGoal(goal, boost::bind(&MAVManager::tracker_done_callback, this, _1, _2), ClientType::SimpleActiveCallback(), ClientType::SimpleFeedbackCallback());
 
   return this->transition(line_tracker_min_jerk);
@@ -303,15 +312,23 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
 bool MAVManager::goToTimed(float x, float y, float z, float yaw, float v_des, float a_des, bool relative, ros::Duration duration, ros::Time t_start) {
 
   tracker_msgs::LineTrackerGoal goal;
-  goal.x   = x;
-  goal.y   = y;
+  goal.x = x;
+  goal.y = y;
+
+  goal.relative = relative;
+  //Convert relative translation in body frame to global frame
+  if(relative)
+  {
+    goal.x = x * std::cos(yaw_) - y * std::sin(yaw_);
+    goal.y = x * std::sin(yaw_) + y * std::cos(yaw_);
+  }
+
   goal.z   = z;
   goal.yaw = yaw;
   goal.duration = duration;
   goal.t_start = t_start;
   goal.v_des = v_des;
   goal.a_des = a_des;
-  goal.relative = relative;
 
   line_tracker_min_jerk_client_.sendGoal(goal, boost::bind(&MAVManager::tracker_done_callback, this, _1, _2),
                                          ClientType::SimpleActiveCallback(), ClientType::SimpleFeedbackCallback());
