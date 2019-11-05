@@ -15,13 +15,14 @@
 
 // quadrotor_control
 #include <tracker_msgs/Transition.h>
+#include <tracker_msgs/Velocity.h>
 
 namespace mav_manager
 {
 // Strings
 static const std::string line_tracker_distance("std_trackers/LineTrackerDistanceAction");
 static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerkAction");
-static const std::string velocity_tracker_str("std_trackers/VelocityTrackerAction");
+static const std::string velocity_tracker_str("std_trackers/VelocityTracker");
 static const std::string null_tracker_str("std_trackers/NullTracker");
 static const std::string circle_tracker_str("std_trackers/CircleTrackerAction");
 static const std::string lissajous_tracker_str("std_trackers/LissajousTrackerAction");
@@ -46,7 +47,6 @@ MAVManager::MAVManager(std::string ns)
     use_attitude_safety_catch_(true),
     line_tracker_distance_client_(nh_, "trackers_manager/line_tracker_distance/LineTrackerAction", true),
     line_tracker_min_jerk_client_(nh_, "trackers_manager/line_tracker_min_jerk/LineTrackerAction", true),
-    velocity_tracker_client_(nh_, "trackers_manager/velocity_tracker/VelocityTrackerAction", true),
     circle_tracker_client_(nh_, "trackers_manager/circle_tracker/CircleTrackerAction", true),
     lissajous_tracker_client_(nh_, "trackers_manager/lissajous_tracker/LissajousTrackerAction", true),
     lissajous_adder_client_(nh_, "trackers_manager/lissajous_adder/LissajousAdderAction", true)
@@ -61,10 +61,6 @@ MAVManager::MAVManager(std::string ns)
 
   if (!line_tracker_min_jerk_client_.waitForServer(ros::Duration(server_wait_timeout))) {
     ROS_ERROR("LineTrackerMinJerkAction server not found.");
-  }
-
-  if (!velocity_tracker_client_.waitForServer(ros::Duration(server_wait_timeout))) {
-    ROS_ERROR("VelocityTrackerAction server not found.");
   }
 
   // Optional trackers.
@@ -86,6 +82,8 @@ MAVManager::MAVManager(std::string ns)
   pub_trpy_command_ = nh_.advertise<quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
   pub_position_command_ = nh_.advertise<quadrotor_msgs::PositionCommand>("position_cmd", 10);
   pub_status_ = priv_nh_.advertise<std_msgs::UInt8>("status", 10);
+  pub_goal_velocity_ = nh_.advertise<tracker_msgs::Velocity>("trackers_manager/velocity_tracker/goal", 10);
+
   // pwm_command_pub_ = nh_ ...
 
   // Subscribers
@@ -134,10 +132,6 @@ MAVManager::MAVManager(std::string ns)
 
 void MAVManager::tracker_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::LineTrackerResultConstPtr& result) {
   ROS_INFO("Goal (%2.2f, %2.2f, %2.2f, %2.2f) finished with state %s after %2.2f s. and %2.2f m.", result->x, result->y, result->z, result->yaw, state.toString().c_str(), result->duration, result->length);
-}
-
-void MAVManager::velocity_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::VelocityTrackerResultConstPtr& result) {
-  ROS_INFO("Velocity tracking at (%2.2f, %2.2f, %2.2f, %2.2f)m/s completed with state %s after %2.2f s. and %2.2f m.", result->vx, result->vy, result->vz, result->vyaw, state.toString().c_str(), result->duration, result->length);
 }
 
 void MAVManager::circle_tracker_done_callback(const actionlib::SimpleClientGoalState &state, const tracker_msgs::CircleTrackerResultConstPtr &result) {
@@ -446,13 +440,14 @@ bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw, boo
     return false;
   }
 
-  tracker_msgs::VelocityTrackerGoal goal;
+  tracker_msgs::Velocity goal;
   goal.vx = x;
   goal.vy = y;
   goal.vz = z;
   goal.vyaw = yaw;
   goal.use_position_gains = use_position_feedback;
-  velocity_tracker_client_.sendGoal(goal, boost::bind(&MAVManager::velocity_tracker_done_callback, this, _1, _2), VelocityClientType::SimpleActiveCallback(), VelocityClientType::SimpleFeedbackCallback());
+
+  pub_goal_velocity_.publish(goal);
 
   ROS_INFO("Desired World velocity: (%1.4f, %1.4f, %1.4f, %1.4f)",
            goal.vx, goal.vy, goal.vz, goal.vyaw);

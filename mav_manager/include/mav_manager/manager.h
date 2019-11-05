@@ -20,7 +20,6 @@
 #include <quadrotor_msgs/TRPYCommand.h>
 #include <tracker_msgs/CircleTrackerAction.h>
 #include <tracker_msgs/LineTrackerAction.h>
-#include <tracker_msgs/VelocityTrackerAction.h>
 #include <tracker_msgs/LissajousTrackerAction.h>
 #include <tracker_msgs/LissajousAdderAction.h>
 #include <tracker_msgs/TrackerStatus.h>
@@ -125,7 +124,6 @@ class MAVManager
 
   private:
     typedef actionlib::SimpleActionClient<tracker_msgs::LineTrackerAction> ClientType;
-    typedef actionlib::SimpleActionClient<tracker_msgs::VelocityTrackerAction> VelocityClientType;
     typedef actionlib::SimpleActionClient<tracker_msgs::CircleTrackerAction> CircleClientType;
     typedef actionlib::SimpleActionClient<tracker_msgs::LissajousTrackerAction> LissajousClientType;
     typedef actionlib::SimpleActionClient<tracker_msgs::LissajousAdderAction> CompoundLissajousClientType;
@@ -134,7 +132,6 @@ class MAVManager
     ros::NodeHandle priv_nh_;
 
     void tracker_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::LineTrackerResultConstPtr& result);
-    void velocity_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::VelocityTrackerResultConstPtr& result);
     void circle_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::CircleTrackerResultConstPtr &result);
     void lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::LissajousTrackerResultConstPtr &result);
     void lissajous_adder_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::LissajousAdderResultConstPtr &result);
@@ -172,7 +169,6 @@ class MAVManager
     // Actionlibs
     ClientType line_tracker_distance_client_;
     ClientType line_tracker_min_jerk_client_;
-    VelocityClientType velocity_tracker_client_;
     CircleClientType circle_tracker_client_;
     LissajousClientType lissajous_tracker_client_;
     CompoundLissajousClientType lissajous_adder_client_;
@@ -182,6 +178,7 @@ class MAVManager
       pub_motors_,
       pub_estop_,
       pub_goal_yaw_,
+      pub_goal_velocity_,
       pub_so3_command_,
       pub_trpy_command_,
       pub_position_command_,
