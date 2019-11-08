@@ -104,7 +104,7 @@ quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs
     position_cmd_.velocity.y = 0.0;
     position_cmd_.velocity.z = 0.0;
     position_cmd_.yaw_dot = 0.0;
-    ROS_WARN("VelocityTracker is active but timed out");
+    ROS_WARN_THROTTLE(1, "VelocityTracker is active but timed out");
 
     if(use_position_gains_)
       position_cmd_.kx[0] = kx_[0], position_cmd_.kx[1] = kx_[1], position_cmd_.kx[2] = kx_[2];

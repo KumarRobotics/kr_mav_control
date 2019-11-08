@@ -28,6 +28,7 @@ class TwistToAction(object):
   def callback(self, data):
 
     goal = VelocityGoal()
+    goal.header.stamp = rospy.Time.now()
     goal.vx = data.linear.x
     goal.vy = data.linear.y
     goal.vz = data.linear.z
