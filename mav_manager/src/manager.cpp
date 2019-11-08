@@ -15,7 +15,7 @@
 
 // quadrotor_control
 #include <tracker_msgs/Transition.h>
-#include <tracker_msgs/Velocity.h>
+#include <tracker_msgs/VelocityGoal.h>
 
 namespace mav_manager
 {
@@ -82,7 +82,7 @@ MAVManager::MAVManager(std::string ns)
   pub_trpy_command_ = nh_.advertise<quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
   pub_position_command_ = nh_.advertise<quadrotor_msgs::PositionCommand>("position_cmd", 10);
   pub_status_ = priv_nh_.advertise<std_msgs::UInt8>("status", 10);
-  pub_goal_velocity_ = nh_.advertise<tracker_msgs::Velocity>("trackers_manager/velocity_tracker/goal", 10);
+  pub_goal_velocity_ = nh_.advertise<tracker_msgs::VelocityGoal>("trackers_manager/velocity_tracker/goal", 10);
 
   // pwm_command_pub_ = nh_ ...
 
@@ -440,7 +440,8 @@ bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw, boo
     return false;
   }
 
-  tracker_msgs::Velocity goal;
+  tracker_msgs::VelocityGoal goal;
+  goal.header.stamp = ros::Time::now();
   goal.vx = x;
   goal.vy = y;
   goal.vz = z;
