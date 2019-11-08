@@ -6,7 +6,7 @@ import actionlib
 
 from geometry_msgs.msg import Twist
 #from tracker_msgs.msg import VelocityTrackerAction, VelocityTrackerGoal
-from tracker_msgs.msg import Velocity, TrackerStatus
+from tracker_msgs.msg import VelocityGoal, TrackerStatus
 from tracker_msgs.srv import Transition
 
 class TwistToAction(object):
@@ -18,7 +18,7 @@ class TwistToAction(object):
     # self.client.wait_for_server()
     # rospy.loginfo("Connected!")
     self.current_tracker = ""
-    self.vel_pub = rospy.Publisher("trackers_manager/velocity_tracker/goal", Velocity, queue_size=1)
+    self.vel_pub = rospy.Publisher("trackers_manager/velocity_tracker/goal", VelocityGoal, queue_size=1)
     rospy.Subscriber("cmd_vel", Twist, self.callback, queue_size=1)
     rospy.Subscriber("trackers_manager/status", TrackerStatus, self.status_callback, queue_size=1)
 
@@ -27,12 +27,12 @@ class TwistToAction(object):
 
   def callback(self, data):
 
-    goal = Velocity()
+    goal = VelocityGoal()
     goal.vx = data.linear.x
     goal.vy = data.linear.y
     goal.vz = data.linear.z
     goal.vyaw = data.angular.z
-    goal.use_position_gains = False
+    goal.use_position_gains = True
     print(goal)
 
     self.vel_pub.publish(goal)

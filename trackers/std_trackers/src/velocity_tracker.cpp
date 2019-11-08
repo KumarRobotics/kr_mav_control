@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
-#include <tracker_msgs/Velocity.h>
+#include <tracker_msgs/VelocityGoal.h>
 #include <tracker_msgs/TrackerStatus.h>
 #include <tf/transform_datatypes.h>
 
@@ -17,7 +17,7 @@ class VelocityTracker : public trackers_manager::Tracker
   uint8_t status() const;
 
  private:
-  void velocity_cmd_cb(const tracker_msgs::Velocity::ConstPtr &msg);
+  void velocity_cmd_cb(const tracker_msgs::VelocityGoal::ConstPtr &msg);
 
   ros::Subscriber sub_vel_cmd_, sub_position_vel_cmd_;
   quadrotor_msgs::PositionCommand position_cmd_;
@@ -26,6 +26,7 @@ class VelocityTracker : public trackers_manager::Tracker
   double kx_[3], kv_[3];
   double pos_[3], cur_yaw_;
   ros::Time last_cmd_time_;
+
   float timeout_;
 };
 
@@ -47,7 +48,7 @@ void VelocityTracker::Initialize(const ros::NodeHandle &nh)
   nh.param("gains/vel/z", kv_[2], 4.0);
 
   ros::NodeHandle priv_nh(nh, "velocity_tracker");
-  priv_nh.param("timeout", timeout_, 1.0f);
+  priv_nh.param("timeout", timeout_, 0.5f);
 
   sub_vel_cmd_ = priv_nh.subscribe("goal", 10, &VelocityTracker::velocity_cmd_cb, this,
                                    ros::TransportHints().tcpNoDelay());
@@ -104,6 +105,13 @@ quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs
     position_cmd_.velocity.z = 0.0;
     position_cmd_.yaw_dot = 0.0;
     ROS_WARN("VelocityTracker is active but timed out");
+
+    if(use_position_gains_)
+      position_cmd_.kx[0] = kx_[0], position_cmd_.kx[1] = kx_[1], position_cmd_.kx[2] = kx_[2];
+
+    position_cmd_.header.stamp = msg->header.stamp;
+    position_cmd_.header.frame_id = msg->header.frame_id;
+    last_t_ = 0;
     return quadrotor_msgs::PositionCommand::ConstPtr(new quadrotor_msgs::PositionCommand(position_cmd_));
   }
 
@@ -138,7 +146,7 @@ quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs
   return quadrotor_msgs::PositionCommand::ConstPtr(new quadrotor_msgs::PositionCommand(position_cmd_));
 }
 
-void VelocityTracker::velocity_cmd_cb(const tracker_msgs::Velocity::ConstPtr &msg)
+void VelocityTracker::velocity_cmd_cb(const tracker_msgs::VelocityGoal::ConstPtr &msg)
 {
   //ROS_INFO("VelocityTracker goal (%2.2f, %2.2f, %2.2f, %2.2f)", msg->vx, msg->vy, msg->vz, msg->vyaw);
   position_cmd_.velocity.x = msg->vx;
