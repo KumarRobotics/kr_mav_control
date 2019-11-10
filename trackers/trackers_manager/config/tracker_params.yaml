@@ -15,6 +15,9 @@ trajectory_tracker:
   max_vel_des: 2.0
   max_acc_des: 2.0
 
+velocity_tracker:
+  timeout: 0.5
+
 lissajous_tracker:
   frame_id: simulator
 

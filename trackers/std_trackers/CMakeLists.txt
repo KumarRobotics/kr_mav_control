@@ -42,9 +42,9 @@ add_library(null_tracker src/null_tracker.cpp)
 add_dependencies(null_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(null_tracker ${catkin_LIBRARIES})
 
-add_library(velocity_tracker_action src/velocity_tracker_server.cpp)
-add_dependencies(velocity_tracker_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(velocity_tracker_action ${catkin_LIBRARIES})
+add_library(velocity_tracker src/velocity_tracker.cpp)
+add_dependencies(velocity_tracker ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(velocity_tracker ${catkin_LIBRARIES})
 
 add_library(circle_tracker_action src/circle_tracker_server.cpp)
 add_dependencies(circle_tracker_action ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
@@ -77,7 +77,7 @@ install(TARGETS
     line_tracker_distance_action
     #line_tracker_yaw
     null_tracker
-    velocity_tracker_action
+    velocity_tracker
     circle_tracker_action
     smooth_vel_tracker_action
     trajectory_tracker

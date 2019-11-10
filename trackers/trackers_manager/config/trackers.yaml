@@ -3,7 +3,7 @@ trackers:
   - std_trackers/LineTrackerDistanceAction
 #  - std_trackers/LineTrackerTrapezoid
 #  - std_trackers/LineTrackerYaw
-  - std_trackers/VelocityTrackerAction
+  - std_trackers/VelocityTracker
   - std_trackers/NullTracker
   - std_trackers/CircleTrackerAction
   - std_trackers/TrajectoryTracker

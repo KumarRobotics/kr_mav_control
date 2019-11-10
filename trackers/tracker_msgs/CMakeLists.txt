@@ -29,6 +29,7 @@ add_action_files(DIRECTORY action
 add_message_files(DIRECTORY msg
   FILES
   TrackerStatus.msg
+  VelocityGoal.msg
 )
 
 generate_messages(

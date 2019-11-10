@@ -42,8 +42,8 @@
   </class>
 </library>
 
-<library path="lib/libvelocity_tracker_action">
-  <class name="std_trackers/VelocityTrackerAction" type="VelocityTrackerAction" base_class_type="trackers_manager::Tracker">
+<library path="lib/libvelocity_tracker">
+  <class name="std_trackers/VelocityTracker" type="VelocityTracker" base_class_type="trackers_manager::Tracker">
     <description>
       This tracker commands a desired velocity for the robot.
     </description>
