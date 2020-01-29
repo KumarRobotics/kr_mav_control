@@ -1,0 +1,17 @@
+<package format="2">
+  <name>rosflight_example</name>
+  <version>0.1.0</version>
+  <description>
+   Example quadrotor_control with rosflight (in unity simulation)
+  </description>
+  <maintainer email="jonathan.r.fink3.civ@mail.mil">Jon Fink</maintainer>
+  <author email="jonathan.r.fink3.civ@mail.mil">Jon Fink</author>
+  <license>None</license>
+  <license>ARL-Shared</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>rosflight_interface</depend>
+  <depend>mav_manager</depend>
+
+</package>

@@ -1,0 +1,76 @@
+<launch>
+  <arg name="name" default="quadrotor"/>
+  <arg name="mass" default="1.74"/>
+  <arg name="max_prop_force" default="7" />
+
+  <arg name="odom_topic" default="/unity_ros/$(arg name)/TrueState/odom"/>
+
+  <arg name="start_nodelet_manager" default="true"/>
+  <arg name="nodelet_manager_name" default="$(arg name)_manager_control"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="true_quadrotor_tf"
+        args="0 0 0 0 0 0 $(arg name)/TrueState $(arg name) 100"/>
+
+  <group ns="$(arg name)">
+
+    <param name="mass" value="$(arg mass)"/>
+    <node pkg="nodelet"
+          type="nodelet"
+          name="$(arg nodelet_manager_name)"
+          args="manager"
+          output="screen"
+          if="$(arg start_nodelet_manager)"/>
+
+    <node pkg="nodelet"
+          type="nodelet"
+          name="trackers_manager"
+          args="load trackers_manager/TrackersManager $(arg nodelet_manager_name)"
+          output="screen">
+      <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
+      <rosparam file="$(find trackers_manager)/config/tracker_params.yaml"/>
+      <rosparam file="$(find so3_control)/config/gains.yaml"/>
+      <remap from="~odom" to="$(arg odom_topic)"/>
+      <remap from="~cmd" to="position_cmd"/>
+    </node>
+
+    <node pkg="nodelet"
+          type="nodelet"
+          args="load so3_control/SO3ControlNodelet $(arg nodelet_manager_name)"
+          name="so3_control"
+          required="true"
+          output="screen">
+      <rosparam file="$(find so3_control)/config/gains.yaml"/>
+      <param name="mass" value="$(arg mass)"/>
+      <remap from="~odom" to="$(arg odom_topic)"/>
+      <remap from="~position_cmd" to="position_cmd"/>
+      <remap from="~so3_cmd" to="so3_cmd"/>
+      <remap from="~motors" to="motors"/>
+    </node>
+
+    <node pkg="mav_manager"
+          type="mav_services"
+          name="mav_services"
+          clear_params="true"
+          output="screen">
+      <rosparam file="$(find mav_manager)/config/mav_manager_params.yaml" />
+      <remap from="odom" to="$(arg odom_topic)"/>
+    </node>
+
+
+    <node pkg="nodelet"
+          type="nodelet"
+          args="standalone rosflight_interface/SO3CmdToRosflight"
+          name="so3cmd_to_rosflight"
+          required="true"
+          clear_params="true"
+          output="screen">
+      <param name="num_props" value="4"/>
+      <param name="max_prop_force" value="$(arg max_prop_force)"/>
+      <remap from="~odom" to="$(arg odom_topic)"/>
+      <remap from="~so3_cmd" to="so3_cmd"/>
+      <remap from="~imu" to="/$(arg name)/rosflight/imu/data" />
+      <remap from="~command" to="/$(arg name)/rosflight/command" />
+    </node>
+
+  </group>
+</launch>
