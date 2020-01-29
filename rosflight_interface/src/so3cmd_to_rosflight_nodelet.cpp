@@ -77,30 +77,11 @@ void SO3CmdToRosflight::so3_cmd_callback(
   const Eigen::Quaterniond q_des(msg->orientation.w, msg->orientation.x,
                                  msg->orientation.y, msg->orientation.z);
 
-  // convert to tf::Quaternion
-  tf::Quaternion imu_tf =
-      tf::Quaternion(imu_q_.x(), imu_q_.y(), imu_q_.z(), imu_q_.w());
-  tf::Quaternion odom_tf =
-      tf::Quaternion(odom_q_.x(), odom_q_.y(), odom_q_.z(), odom_q_.w());
-
-  // extract RPY's
-  double imu_roll, imu_pitch, imu_yaw;
-  double odom_roll, odom_pitch, odom_yaw;
-  tf::Matrix3x3(imu_tf).getRPY(imu_roll, imu_pitch, imu_yaw);
-  tf::Matrix3x3(odom_tf).getRPY(odom_roll, odom_pitch, odom_yaw);
-
-  // create only yaw tf:Quaternions
-  tf::Quaternion imu_tf_yaw;
-  tf::Quaternion odom_tf_yaw;
-  imu_tf_yaw.setRPY(0.0, 0.0, imu_yaw);
-  odom_tf_yaw.setRPY(0.0, 0.0, odom_yaw);
-  const tf::Quaternion tf_imu_odom_yaw = imu_tf_yaw * odom_tf_yaw.inverse();
-
-  // transform!
-  const Eigen::Quaterniond q_des_transformed =
-      Eigen::Quaterniond(tf_imu_odom_yaw.w(), tf_imu_odom_yaw.x(),
-                         tf_imu_odom_yaw.y(), tf_imu_odom_yaw.z()) *
-      q_des;
+  tf::Quaternion q_des_tf =
+      tf::Quaternion(msg->orientation.x,
+                     msg->orientation.y,
+                     msg->orientation.z,
+                     msg->orientation.w);
 
   // check psi for stability
   const Eigen::Matrix3d R_des(q_des);
@@ -136,16 +117,15 @@ void SO3CmdToRosflight::so3_cmd_callback(
   setpoint_msg->mode = rosflight_msgs::Command::MODE_ROLL_PITCH_YAWRATE_THROTTLE;
   setpoint_msg->ignore = rosflight_msgs::Command::IGNORE_NONE;
 
-  Eigen::Vector3d c = q_des_transformed.toRotationMatrix().eulerAngles(0, 1, 2);
+  double roll_sp, pitch_sp, yaw_sp;
+  tf::Matrix3x3(q_des_tf).getRPY(roll_sp, pitch_sp, yaw_sp);
 
-  ROS_INFO("Desired attitude: %2.2f %2.2f %2.2f", c[0], c[1], c[2]);
-  
-  setpoint_msg->x = c[0]; // roll setpoint
-  setpoint_msg->y = c[1]; // pitch setpoint
-  //setpoint_msg->z = c[2];
-  setpoint_msg->z = 0.0; //msg->angular_velocity.z; // yaw rate
+  // Require conversion to FRD frame for rosflight
+  setpoint_msg->x = roll_sp; 
+  setpoint_msg->y = -pitch_sp; 
+  setpoint_msg->z = -msg->angular_velocity.z; // yaw rate
 
-  // TODO: No field in rosflight_msgs/Command for rate setpoints at same time as attitude?
+  // No field in rosflight_msgs/Command for rate setpoints at same time as attitude?
   // setpoint_msg->mode = rosflight_msgs::Command::MODE_ROLLRATE_PITCHRATE_YAWRATE_THROTTLE;
   // setpoint_msg->x = msg->angular_velocity.x;
   // setpoint_msg->y = msg->angular_velocity.y;
