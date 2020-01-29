@@ -1,7 +1,7 @@
-# mavros_interface
+# rosflight_interface
 
-This node translates `quadrotor_msgs/SO3Command` to `mavros_msgs/AttitudeTarget`.
+This node translates `quadrotor_msgs/SO3Command` to `rosflight_msgs/Command`.
 
-#### `mavros_msgs` requirement
+#### `rosflight_msgs` requirement
 
-This node requires `mavros_msgs` to be present when building. If `mavros_msgs` is not found when building the first time, a warning is given and nothing in this package is built. If `mavros_msgs` is installed after this, force a recheck by adding `--force-cmake` to the `catkin_make`/`catkin build` command.
+This node requires `rosflight_msgs` to be present when building. If `rosflight_msgs` is not found when building the first time, a warning is given and nothing in this package is built. If `rosflight_msgs` is installed after this, force a recheck by adding `--force-cmake` to the `catkin_make`/`catkin build` command.
