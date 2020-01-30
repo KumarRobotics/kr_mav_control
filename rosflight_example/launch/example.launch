@@ -72,5 +72,9 @@
       <remap from="~command" to="/$(arg name)/rosflight/command" />
     </node>
 
+    <node pkg="trackers_manager"
+          type="twist_to_action.py"
+          name="twist_to_velocity"/>
+
   </group>
 </launch>
