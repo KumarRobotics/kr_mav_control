@@ -78,7 +78,7 @@ void PosCmdToSnav::motors_on()
     }
     case SN_PROPS_STATE_STARTING:
     {
-      ROS_WARN("Properllers are starting to spin");
+      ROS_WARN("Propellers are starting to spin");
       break;
     }
     case SN_PROPS_STATE_SPINNING:
@@ -120,7 +120,7 @@ void PosCmdToSnav::motors_off()
   //check the propellers status
   if(snav_cached_data_struct_->general_status.props_state == SN_PROPS_STATE_SPINNING)
   {
-    ROS_ERROR("All the propellers are still spinnig");
+    ROS_ERROR("All the propellers are still spinning");
     motor_status_ = 1;
   }
   else
