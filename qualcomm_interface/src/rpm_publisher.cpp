@@ -45,12 +45,10 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  sn_update_data();
-  unsigned long stamp(snav_cached_data_struct->general_status.time);
-
-  ros::Time snavtime;
-  snavtime.fromNSec(stamp*1e3);
-  ros::Duration snav_offset = realtime - snavtime;
+  unsigned long stmp(snav_cached_data_struct->general_status.time);
+  ros::Time sntime;
+  sntime.fromNSec(stmp*1e3);
+  ros::Duration snav_offset = realtime - sntime;
 
   ROS_INFO_STREAM("Snav offset: " << snav_offset);
 

@@ -10,15 +10,15 @@
 
 int main(int argc, char *argv[])
 {
-  ros::init(argc, argv, "motor_rpm_publisher");
+  ros::init(argc, argv, "status_publisher");
   ros::NodeHandle nh;
+  ros::NodeHandle pnh("~");
   int rate;
-  nh.param("rate", rate, 5);
+  pnh.param("rate", rate, 5);
   ros::Publisher battery_pub_ = nh.advertise<sensor_msgs::BatteryState>("battery", 2);
   ros::Publisher joy_pub = nh.advertise<sensor_msgs::Joy>("spektrum_joy", 2);
-
-  ros::Publisher props_state_pub = nh.advertise<std_msgs::String>("props_state", 2);
   ros::Publisher on_ground_pub = nh.advertise<std_msgs::Bool>("on_ground", 2);
+  ros::Publisher props_state_pub = nh.advertise<std_msgs::String>("props_state", 2);
 
   ros::Rate loop_rate(rate);
 
@@ -53,12 +53,10 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  sn_update_data();
-  unsigned long stamp(snav_cached_data_struct->general_status.time);
-
-  ros::Time snavtime;
-  snavtime.fromNSec(stamp*1e3);
-  ros::Duration snav_offset = realtime - snavtime;
+  unsigned long stmp(snav_cached_data_struct->general_status.time);
+  ros::Time sntime;
+  sntime.fromNSec(stmp*1e3);
+  ros::Duration snav_offset = realtime - sntime;
 
   ROS_INFO_STREAM("Snav offset: " << snav_offset);
 
@@ -99,7 +97,6 @@ int main(int argc, char *argv[])
       //joy.axes.resize();
       //joy.buttons.resize();
       */
-
 
       //On Ground
       bool on_ground = snav_cached_data_struct->general_status.on_ground;
