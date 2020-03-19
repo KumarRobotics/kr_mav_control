@@ -15,6 +15,7 @@ int main(int argc, char *argv[])
   ros::NodeHandle pnh("~");
   int rate;
   pnh.param("rate", rate, 5);
+  uint8_t max_channels = 16;
   ros::Publisher battery_pub_ = nh.advertise<sensor_msgs::BatteryState>("battery", 2);
   ros::Publisher joy_pub = nh.advertise<sensor_msgs::Joy>("spektrum_joy", 2);
   ros::Publisher on_ground_pub = nh.advertise<std_msgs::Bool>("on_ground", 2);
@@ -89,14 +90,27 @@ int main(int argc, char *argv[])
       battery_pub_.publish(bat_state);
 
       //Spektrum joy
-      /*
       int32_t rc_status = snav_cached_data_struct->data_status.spektrum_rc_0_status;
       uint8_t num_channels = snav_cached_data_struct->spektrum_rc_0_raw.num_channels;
-      uint8_t max_channels = 16;
-      sensor_msgs::Joy joy;
-      //joy.axes.resize();
-      //joy.buttons.resize();
-      */
+
+      if(rc_status == SN_DATA_VALID && num_channels < max_channels)
+      {
+        sensor_msgs::Joy joy;
+        joy.header.frame_id = "spektrum";
+        joy.header.stamp = data_time;
+        joy.axes.reserve(5);
+        joy.axes.push_back(snav_cached_data_struct->spektrum_rc_0_raw.vals[0]);
+        joy.axes.push_back(snav_cached_data_struct->spektrum_rc_0_raw.vals[3]);
+        joy.axes.push_back(snav_cached_data_struct->spektrum_rc_0_raw.vals[1]);
+        joy.axes.push_back(snav_cached_data_struct->spektrum_rc_0_raw.vals[2]);
+        joy.axes.push_back(snav_cached_data_struct->spektrum_rc_0_raw.vals[7]);
+
+        joy.buttons.reserve(2);
+        joy.buttons.push_back(snav_cached_data_struct->spektrum_rc_0_raw.vals[4]);
+        joy.buttons.push_back(snav_cached_data_struct->spektrum_rc_0_raw.vals[5]);
+
+        joy_pub.publish(joy);
+      }
 
       //On Ground
       bool on_ground = snav_cached_data_struct->general_status.on_ground;
