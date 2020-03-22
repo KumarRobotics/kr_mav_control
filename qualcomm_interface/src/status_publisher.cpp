@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  unsigned long stmp(snav_cached_data_struct->general_status.time);
+  unsigned long long stmp(snav_cached_data_struct->general_status.time);
   ros::Time sntime;
   sntime.fromNSec(stmp*1000);
   ros::Duration snav_offset = realtime - sntime;
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-      unsigned long stamp(snav_cached_data_struct->general_status.time);
+      unsigned long long stamp(snav_cached_data_struct->general_status.time);
       ros::Time data_time;
       data_time.fromNSec(stamp*1000);
       data_time += monotonic_offset;

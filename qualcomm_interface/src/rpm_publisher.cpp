@@ -30,8 +30,6 @@ int main(int argc, char *argv[])
 
   ros::Duration monotonic_offset = realtime - monotonic;
 
-  ROS_INFO_STREAM("Monotonic offset: " << monotonic_offset);
-
   if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &snav_cached_data_struct) != 0)
   {
     ROS_ERROR("failed to get flight data ptr");
@@ -43,12 +41,18 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  unsigned long stmp(snav_cached_data_struct->general_status.time);
+  unsigned long long stmp(snav_cached_data_struct->general_status.time);
   ros::Time sntime;
   sntime.fromNSec(stmp*1000);
   ros::Duration snav_offset = realtime - sntime;
 
+  ROS_INFO_STREAM("monotonic time: " << monotonic.toSec());
+  ROS_INFO_STREAM("real time: " << realtime.toSec());
+  ROS_INFO_STREAM("snav time: " << sntime.toSec());
+
   ROS_INFO_STREAM("Snav offset: " << snav_offset);
+  ROS_INFO_STREAM("Monotonic offset: " << monotonic_offset);
+
 
   while(ros::ok())
   {
@@ -65,7 +69,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-      unsigned long stamp(snav_cached_data_struct->general_status.time);
+      unsigned long long stamp(snav_cached_data_struct->general_status.time);
       ros::Time data_time;
       data_time.fromNSec(stamp*1000);
       data_time += monotonic_offset;
