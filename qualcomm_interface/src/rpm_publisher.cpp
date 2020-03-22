@@ -14,7 +14,6 @@ int main(int argc, char *argv[])
   ros::Publisher motor_speeds_pub_ = nh.advertise<quadrotor_msgs::MotorRPM>("motor_rpm", 2);
   ros::Rate loop_rate(rate);
 
-  int update_ret;
   SnavCachedData* snav_cached_data_struct = NULL;
 
   // Snav/Imu samples are timestamped with the monotonic clock
@@ -38,8 +37,7 @@ int main(int argc, char *argv[])
     ROS_ERROR("failed to get flight data ptr");
     return 0;
   }
-  update_ret = sn_update_data();
-  if(update_ret != 0)
+  if(sn_update_data() != 0)
   {
     ROS_ERROR("detected likely failure in snav, ensure it is running");
     return 0;
@@ -47,7 +45,7 @@ int main(int argc, char *argv[])
 
   unsigned long stmp(snav_cached_data_struct->general_status.time);
   ros::Time sntime;
-  sntime.fromNSec(stmp*1e3);
+  sntime.fromNSec(stmp*1000);
   ros::Duration snav_offset = realtime - sntime;
 
   ROS_INFO_STREAM("Snav offset: " << snav_offset);
@@ -60,8 +58,7 @@ int main(int argc, char *argv[])
       ROS_ERROR("failed to get flight data ptr");
       continue;
     }
-    update_ret = sn_update_data();
-    if(update_ret != 0)
+    if(sn_update_data() != 0)
     {
       ROS_ERROR("detected likely failure in snav, ensure it is running");
       continue;
@@ -70,7 +67,7 @@ int main(int argc, char *argv[])
     {
       unsigned long stamp(snav_cached_data_struct->general_status.time);
       ros::Time data_time;
-      data_time.fromNSec(stamp*1e3);
+      data_time.fromNSec(stamp*1000);
       data_time += monotonic_offset;
 
       quadrotor_msgs::MotorRPM speed;
