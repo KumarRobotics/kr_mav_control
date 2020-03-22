@@ -1,0 +1,16 @@
+<launch>
+  <arg name="model" default="$(env MAV_NAME)"/>
+  <group ns="$(arg model)">
+
+  <node pkg="qualcomm_interface" type="rpm_publisher" name="snav_rpm_publisher" output="screen">
+    <param name="rate" type="int" value="200" />
+  </node>
+
+  <node pkg="qualcomm_interface" type="status_publisher" name="snav_status_publisher" output="screen">
+    <param name="rate" type="int" value="150" />
+  </node>
+
+
+  </group>
+</launch>
+
