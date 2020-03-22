@@ -46,14 +46,20 @@ int main(int argc, char *argv[])
   sntime.fromNSec(stmp*1000);
   ros::Duration snav_offset = realtime - sntime;
 
+  int64_t gen_timestamp_ns = (int64_t) snav_cached_data_struct->general_status.time * 1000;
+  ros::Time gentime;
+  gentime.fromNSec(gen_timestamp_ns);
+
   int64_t dt_timestamp_ns = (int64_t) snav_cached_data_struct->data_status.time * 1000;
   ros::Time dttime;
   dttime.fromNSec(dt_timestamp_ns);
+
   ros::Duration time_offset = realtime - dttime;
 
   ROS_INFO_STREAM("monotonic time: " << monotonic.toSec());
   ROS_INFO_STREAM("real time: " << realtime);
   ROS_INFO_STREAM("snav time: " << sntime);
+  ROS_INFO_STREAM("gen time: " << gentime);
   ROS_INFO_STREAM("data time: " << dttime);
 
   ROS_INFO_STREAM("Monotonic offset: " << monotonic_offset);
@@ -75,26 +81,14 @@ int main(int argc, char *argv[])
     }
     else
     {
-      unsigned long long stamp(snav_cached_data_struct->general_status.time);
-      ros::Time data_time;
-      data_time.fromNSec(stamp*1000);
-      data_time += monotonic_offset;
-
-      ros::Time gen_time, dt_time, esc_time;
-      int64_t gen_timestamp_ns = (int64_t) snav_cached_data_struct->general_status.time * 1000;
-      gen_time.fromNSec(gen_timestamp_ns);
-
-      int64_t data_timestamp_ns = (int64_t) snav_cached_data_struct->data_status.time * 1000;
-      dt_time.fromNSec(data_timestamp_ns);
-
       int64_t esc_timestamp_ns = (int64_t) snav_cached_data_struct->esc_raw.time * 1000;
+      ros::Time esc_time;
       esc_time.fromNSec(esc_timestamp_ns);
-
-      ROS_INFO_STREAM("Gen time" << gen_time << " data time: " << dt_time << " Esc time " << esc_time);
+      esc_time += monotonic_offset;
 
       quadrotor_msgs::MotorRPM speed;
       int16_t *rpm = snav_cached_data_struct->esc_raw.rpm;
-      speed.header.stamp = data_time;
+      speed.header.stamp = esc_time;
       speed.motor_count = 4;
       speed.rpm[0] = *rpm;
       speed.rpm[1] = *(rpm+1);

@@ -41,24 +41,6 @@ int main(int argc, char *argv[])
 
   ROS_INFO_STREAM("Monotonic offset: " << monotonic_offset);
 
-  if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &snav_cached_data_struct) != 0)
-  {
-    ROS_ERROR("failed to get flight data ptr");
-    return 0;
-  }
-  if(sn_update_data() != 0)
-  {
-    ROS_ERROR("detected likely failure in snav, ensure it is running");
-    return 0;
-  }
-
-  unsigned long long stmp(snav_cached_data_struct->general_status.time);
-  ros::Time sntime;
-  sntime.fromNSec(stmp*1000);
-  ros::Duration snav_offset = realtime - sntime;
-
-  ROS_INFO_STREAM("Snav offset: " << snav_offset);
-
   while(ros::ok())
   {
     //read the flight data
@@ -74,9 +56,9 @@ int main(int argc, char *argv[])
     }
     else
     {
-      unsigned long long stamp(snav_cached_data_struct->general_status.time);
+      int64_t gen_timestamp_ns = (int64_t) snav_cached_data_struct->general_status.time * 1000;
       ros::Time data_time;
-      data_time.fromNSec(stamp*1000);
+      data_time.fromNSec(gen_timestamp_ns);
       data_time += monotonic_offset;
 
       //Battery
@@ -87,6 +69,11 @@ int main(int argc, char *argv[])
       battery_pub_.publish(bat_state);
 
       //Spektrum joy
+      int64_t rc_timestamp_ns = (int64_t) snav_cached_data_struct->spektrum_rc_0_raw.time * 1000;
+      ros::Time rc_time;
+      rc_time.fromNSec(rc_timestamp_ns);
+      rc_time += monotonic_offset;
+
       int32_t rc_status = snav_cached_data_struct->data_status.spektrum_rc_0_status;
       uint8_t num_channels = snav_cached_data_struct->spektrum_rc_0_raw.num_channels;
 
@@ -94,7 +81,7 @@ int main(int argc, char *argv[])
       {
         sensor_msgs::Joy joy;
         joy.header.frame_id = "spektrum";
-        joy.header.stamp = data_time;
+        joy.header.stamp = rc_time;
         joy.axes.reserve(5);
         joy.axes.push_back(snav_cached_data_struct->spektrum_rc_0_raw.vals[0]);
         joy.axes.push_back(snav_cached_data_struct->spektrum_rc_0_raw.vals[3]);
