@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
       int64_t esc_timestamp_ns = (int64_t) snav_cached_data_struct->esc_raw.time * 1000;
       ros::Time esc_time;
       esc_time.fromNSec(esc_timestamp_ns);
-      esc_time += monotonic_offset;
+      esc_time += snav_offset;
 
       quadrotor_msgs::MotorRPM speed;
       int16_t *rpm = snav_cached_data_struct->esc_raw.rpm;
