@@ -40,15 +40,73 @@ ros::Duration get_snav_offset(SnavCachedData* snav_cached_data_struct)
   return snav_offset;
 }
 
+class rpmSampler
+{
+public:
+  rpmSampler(ros::NodeHandle* nh, ros::NodeHandle* pnh, SnavCachedData *sn_struct);
+  ~rpmSampler();
+  void rpmTimerCallback(const ros::TimerEvent& event);
+private:
+  ros::NodeHandle nh_;
+  ros::NodeHandle pnh_;
+  float rpm_rate_;
+  ros::Publisher motor_speeds_pub_;
+  ros::Timer rpm_timer_;
+  SnavCachedData* sn_struct_;
+  ros::Duration snav_offset_;
+};
+
+rpmSampler::rpmSampler(ros::NodeHandle *nh, ros::NodeHandle *pnh, SnavCachedData* sn_struct)
+  : nh_(*nh), pnh_(*pnh), sn_struct_(sn_struct)
+{
+  pnh_.param<float>("rpm_rate", rpm_rate_, 100.0);
+  motor_speeds_pub_ = nh_.advertise<quadrotor_msgs::MotorRPM>("motor_rpm", 2);
+  rpm_timer_ = nh_.createTimer(ros::Duration(1.0/rpm_rate_),
+                              &rpmSampler::rpmTimerCallback, this);
+  try {
+    snav_offset_ = get_snav_offset(sn_struct_);
+  } catch (const char* e) {
+    ROS_ERROR("%s", e);
+  }
+}
+
+rpmSampler::~rpmSampler()
+{
+  delete sn_struct_;
+}
+
+void rpmSampler::rpmTimerCallback(const ros::TimerEvent& event)
+{
+  if(sn_update_data() != 0)
+    ROS_ERROR("snav data retrieval failure");
+  else
+  {
+    quadrotor_msgs::MotorRPM speed;
+
+    int64_t esc_timestamp_ns = (int64_t) sn_struct_->esc_raw.time * 1000;
+    ros::Time esc_time;
+    esc_time.fromNSec(esc_timestamp_ns);
+    esc_time += snav_offset_;
+    speed.header.stamp = esc_time;
+
+    speed.stamp_timer_real = event.current_real;
+    speed.stamp_timer_expected = event.current_expected;
+
+    int16_t *rpm = sn_struct_->esc_raw.rpm;
+    speed.motor_count = 4;
+    speed.rpm[0] = *rpm;
+    speed.rpm[1] = *(rpm+1);
+    speed.rpm[2] = *(rpm+2);
+    speed.rpm[3] = *(rpm+3);
+    motor_speeds_pub_.publish(speed);
+  }
+}
+
 int main(int argc, char *argv[])
 {
   ros::init(argc, argv, "snav_status_publisher");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
-  int rate;
-  pnh.param("rate", rate, 100);
-  ros::Publisher motor_speeds_pub_ = nh.advertise<quadrotor_msgs::MotorRPM>("motor_rpm", 2);
-  ros::Rate loop_rate(rate);
 
   SnavCachedData* snav_cached_data_struct = NULL;
   // It seems there can only be one pointer in snav API? (wenxin)
@@ -58,45 +116,8 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  ros::Duration monotonic_offset;
-  ros::Duration snav_offset;
-  try {
-    monotonic_offset = get_monotonic_offset();
-    snav_offset = get_snav_offset(snav_cached_data_struct);
-  } catch (const char* e) {
-    ROS_ERROR("%s", e);
-    return 0;
-  }
-  ROS_INFO_STREAM("Monotonic offset: " << monotonic_offset);
-  ROS_INFO_STREAM("Snav offset: " << snav_offset);
+  rpmSampler rpm(&nh, &pnh, snav_cached_data_struct);
+  ros::spin();
 
-  while(ros::ok())
-  {
-    if(sn_update_data() != 0)
-    {
-      ROS_ERROR("detected likely failure in snav, ensure it is running");
-      continue;
-    }
-    else
-    {
-      int64_t esc_timestamp_ns = (int64_t) snav_cached_data_struct->esc_raw.time * 1000;
-      ros::Time esc_time;
-      esc_time.fromNSec(esc_timestamp_ns);
-      esc_time += snav_offset;
-
-      quadrotor_msgs::MotorRPM speed;
-      int16_t *rpm = snav_cached_data_struct->esc_raw.rpm;
-      speed.header.stamp = esc_time;
-      speed.motor_count = 4;
-      speed.rpm[0] = *rpm;
-      speed.rpm[1] = *(rpm+1);
-      speed.rpm[2] = *(rpm+2);
-      speed.rpm[3] = *(rpm+3);
-      motor_speeds_pub_.publish(speed);
-
-      ros::spinOnce();
-      loop_rate.sleep();
-    }
-  }
   return 0;
 }
