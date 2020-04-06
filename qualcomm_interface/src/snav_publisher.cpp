@@ -25,9 +25,7 @@ ros::Duration get_monotonic_offset()
 ros::Duration get_snav_offset(SnavCachedData* snav_cached_data_struct)
 {
   if(sn_update_data() != 0)
-  {
     throw "snav data retrieval failure";
-  }
   struct timespec time_realtime;
   clock_gettime(CLOCK_REALTIME, &time_realtime);
   ros::Time realtime(time_realtime.tv_sec, time_realtime.tv_nsec);
@@ -36,6 +34,8 @@ ros::Duration get_snav_offset(SnavCachedData* snav_cached_data_struct)
   ros::Time sntime;
   sntime.fromNSec(stmp*1000);
   ros::Duration snav_offset = realtime - sntime;
+  if (realtime < sntime)
+    throw "snavtime larger than realtime, potential overflow";
 
   return snav_offset;
 }
