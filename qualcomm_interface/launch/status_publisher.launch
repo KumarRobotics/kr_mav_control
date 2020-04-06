@@ -2,18 +2,9 @@
   <arg name="model" default="$(env MAV_NAME)"/>
   <group ns="$(arg model)">
 
-  <!--
-  <node pkg="qualcomm_interface" type="rpm_publisher" name="snav_rpm_publisher" output="screen">
-    <param name="rate" type="int" value="200" />
-  </node>
-
-  <node pkg="qualcomm_interface" type="status_publisher" name="snav_status_publisher" output="screen">
-    <param name="rate" type="int" value="150" />
-  </node>
-  -->
-
-  <node pkg="qualcomm_interface" type="snav_publisher" name="snav_snav_publisher" output="screen">
-    <param name="rpm_rate" value="500" />
+  <node pkg="qualcomm_interface" type="snav_publisher" name="snav_publisher" output="screen">
+    <param name="rpm_rate" value="100.0" />
+    <param name="status_rate" value="5.0" />
   </node>
 
   </group>
