@@ -48,7 +48,7 @@ ros::Duration get_snav_offset(SnavCachedData* snav_cached_data_struct)
 class snavSampler
 {
 public:
-  snavSampler(ros::NodeHandle* nh, ros::NodeHandle* pnh, SnavCachedData *sn_struct);
+  snavSampler(ros::NodeHandle* nh, ros::NodeHandle* pnh);
   ~snavSampler();
   void rpmTimerCallback(const ros::TimerEvent& event);
   void statusTimerCallback(const ros::TimerEvent& event);
@@ -68,9 +68,12 @@ private:
   ros::Timer status_timer_;
 };
 
-snavSampler::snavSampler(ros::NodeHandle *nh, ros::NodeHandle *pnh, SnavCachedData* sn_struct)
-  : nh_(*nh), pnh_(*pnh), sn_struct_(sn_struct)
+snavSampler::snavSampler(ros::NodeHandle *nh, ros::NodeHandle *pnh)
+  : nh_(*nh), pnh_(*pnh), sn_struct_(NULL)
 {
+  // It seems there can only be one pointer in snav API? (wenxin)
+  if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &sn_struct_) != 0)
+    ROS_ERROR("failed to get flight data ptr");
   try {
     snav_offset_ = get_snav_offset(sn_struct_);
   } catch (const char* e) {
@@ -195,16 +198,7 @@ int main(int argc, char *argv[])
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
 
-  SnavCachedData* snav_cached_data_struct = NULL;
-  // It seems there can only be one pointer in snav API? (wenxin)
-  if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &snav_cached_data_struct) != 0)
-  {
-    ROS_ERROR("failed to get flight data ptr");
-    return 0;
-  }
-
-  snavSampler snav_sampler(&nh, &pnh, snav_cached_data_struct);
+  snavSampler snav_sampler(&nh, &pnh);
   ros::spin();
-
   return 0;
 }
