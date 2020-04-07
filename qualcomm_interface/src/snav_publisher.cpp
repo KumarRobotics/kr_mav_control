@@ -9,7 +9,71 @@
 #include <sensor_msgs/BatteryState.h>
 #include <sensor_msgs/Joy.h>
 
-ros::Duration get_monotonic_offset()
+class snavSampler
+{
+public:
+  snavSampler(ros::NodeHandle* nh, ros::NodeHandle* pnh);
+  ~snavSampler();
+  void rpmTimerCallback(const ros::TimerEvent& event);
+  void statusTimerCallback(const ros::TimerEvent& event);
+private:
+  void get_snav_offset();
+  ros::Duration get_monotonic_offset();
+
+  ros::NodeHandle nh_;
+  ros::NodeHandle pnh_;
+
+  ros::Publisher motor_speeds_pub_;
+  ros::Publisher battery_pub_;
+  ros::Publisher joy_pub_;
+  ros::Publisher on_ground_pub_;
+  ros::Publisher props_state_pub_;
+
+  ros::Timer status_timer_;
+  ros::Timer rpm_timer_;
+
+  ros::Duration snav_offset_;
+
+  float rpm_rate_;
+  float status_rate_;
+
+  SnavCachedData* sn_struct_;
+};
+
+snavSampler::snavSampler(ros::NodeHandle *nh, ros::NodeHandle *pnh)
+  : nh_(*nh), pnh_(*pnh), sn_struct_(NULL)
+{
+  // It seems there can only be one pointer in snav API? (wenxin)
+  if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &sn_struct_) != 0)
+    ROS_ERROR("failed to get flight data ptr");
+  try {
+    get_snav_offset();
+  } catch (const char* e) {
+    ROS_ERROR("%s", e);
+  }
+
+  pnh_.param<float>("rpm_rate", rpm_rate_, 100.0);
+  pnh_.param<float>("status_rate", status_rate_, 5.0);
+
+  motor_speeds_pub_ = nh_.advertise<quadrotor_msgs::MotorRPM>("motor_rpm", 2);
+  battery_pub_ = nh_.advertise<sensor_msgs::BatteryState>("battery", 2);
+  joy_pub_ = nh_.advertise<sensor_msgs::Joy>("spektrum_joy", 2);
+  on_ground_pub_ = nh_.advertise<std_msgs::Bool>("on_ground", 2);
+  props_state_pub_ = nh_.advertise<std_msgs::String>("props_state", 2);
+
+  rpm_timer_ = nh_.createTimer(ros::Duration(1.0/rpm_rate_),
+                              &snavSampler::rpmTimerCallback, this);
+  status_timer_ = nh_.createTimer(ros::Duration(1.0/status_rate_),
+                                  &snavSampler::statusTimerCallback, this);
+}
+
+snavSampler::~snavSampler()
+{
+  if(sn_struct_ != NULL)
+    delete sn_struct_;
+}
+
+ros::Duration snavSampler::get_monotonic_offset()
 {
   // Snav/Imu samples are timestamped with the monotonic clock
   // ROS timestamps use the realtime clock.  Compute the difference and apply to messages
@@ -27,75 +91,22 @@ ros::Duration get_monotonic_offset()
   return  monotonic_offset;
 }
 
-ros::Duration get_snav_offset(SnavCachedData* snav_cached_data_struct)
+void snavSampler::get_snav_offset()
 {
   if(sn_update_data() != 0)
     throw "snav data retrieval failure";
+
   struct timespec time_realtime;
   clock_gettime(CLOCK_REALTIME, &time_realtime);
   ros::Time realtime(time_realtime.tv_sec, time_realtime.tv_nsec);
 
-  unsigned long long stmp(snav_cached_data_struct->general_status.time);
+  int64_t gen_timestamp_ns = (int64_t) sn_struct_->general_status.time * 1000;
   ros::Time sntime;
-  sntime.fromNSec(stmp*1000);
-  ros::Duration snav_offset = realtime - sntime;
+  sntime.fromNSec(gen_timestamp_ns);
+  snav_offset_ = realtime - sntime;
+
   if (realtime < sntime)
     throw "snavtime larger than realtime, potential overflow";
-
-  return snav_offset;
-}
-
-class snavSampler
-{
-public:
-  snavSampler(ros::NodeHandle* nh, ros::NodeHandle* pnh);
-  ~snavSampler();
-  void rpmTimerCallback(const ros::TimerEvent& event);
-  void statusTimerCallback(const ros::TimerEvent& event);
-private:
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
-  SnavCachedData* sn_struct_;
-  ros::Duration snav_offset_;
-  float rpm_rate_;
-  ros::Publisher motor_speeds_pub_;
-  ros::Timer rpm_timer_;
-  float status_rate_;
-  ros::Publisher battery_pub_;
-  ros::Publisher joy_pub_;
-  ros::Publisher on_ground_pub_;
-  ros::Publisher props_state_pub_;
-  ros::Timer status_timer_;
-};
-
-snavSampler::snavSampler(ros::NodeHandle *nh, ros::NodeHandle *pnh)
-  : nh_(*nh), pnh_(*pnh), sn_struct_(NULL)
-{
-  // It seems there can only be one pointer in snav API? (wenxin)
-  if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &sn_struct_) != 0)
-    ROS_ERROR("failed to get flight data ptr");
-  try {
-    snav_offset_ = get_snav_offset(sn_struct_);
-  } catch (const char* e) {
-    ROS_ERROR("%s", e);
-  }
-
-  pnh_.param<float>("rpm_rate", rpm_rate_, 100.0);
-  motor_speeds_pub_ = nh_.advertise<quadrotor_msgs::MotorRPM>("motor_rpm", 2);
-  rpm_timer_ = nh_.createTimer(ros::Duration(1.0/rpm_rate_),
-                              &snavSampler::rpmTimerCallback, this);
-  pnh_.param<float>("status_rate", status_rate_, 5.0);
-  battery_pub_ = nh_.advertise<sensor_msgs::BatteryState>("battery", 2);
-  joy_pub_ = nh_.advertise<sensor_msgs::Joy>("spektrum_joy", 2);
-  on_ground_pub_ = nh_.advertise<std_msgs::Bool>("on_ground", 2);
-  props_state_pub_ = nh_.advertise<std_msgs::String>("props_state", 2);
-  status_timer_ = nh_.createTimer(ros::Duration(1.0/status_rate_),
-                                  &snavSampler::statusTimerCallback, this);
-}
-
-snavSampler::~snavSampler()
-{
-  delete sn_struct_;
 }
 
 void snavSampler::rpmTimerCallback(const ros::TimerEvent& event)
