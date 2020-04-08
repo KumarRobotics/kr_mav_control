@@ -41,20 +41,12 @@ else()
   add_dependencies(poscmd_to_qualcomm_nodelet ${catkin_EXPORTED_TARGETS})
   target_link_libraries(poscmd_to_qualcomm_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
-  add_executable(rpm_publisher src/rpm_publisher.cpp)
-  add_dependencies(rpm_publisher ${catkin_EXPORTED_TARGETS})
-  target_link_libraries(rpm_publisher ${catkin_LIBRARIES} ${Snav_LIBRARY})
-
-  add_executable(status_publisher src/status_publisher.cpp)
-  add_dependencies(status_publisher ${catkin_EXPORTED_TARGETS})
-  target_link_libraries(status_publisher ${catkin_LIBRARIES} ${Snav_LIBRARY})
-
   add_executable(snav_publisher src/snav_publisher.cpp)
   add_dependencies(snav_publisher ${catkin_EXPORTED_TARGETS})
   target_link_libraries(snav_publisher ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
   install(TARGETS vio_odom_publisher so3cmd_to_qualcomm_nodelet trpycmd_to_qualcomm_nodelet
-      poscmd_to_qualcomm_nodelet rpm_publisher status_publisher snav_publisher
+      poscmd_to_qualcomm_nodelet snav_publisher
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

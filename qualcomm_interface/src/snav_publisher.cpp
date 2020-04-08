@@ -40,7 +40,6 @@ private:
 snavSampler::snavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
   : sn_struct_(NULL)
 {
-  // It seems there can only be one pointer in snav API? (wenxin)
   if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &sn_struct_) != 0)
     ROS_ERROR("failed to get flight data ptr");
   try {
@@ -66,6 +65,7 @@ snavSampler::snavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
 
 ros::Duration snavSampler::get_monotonic_offset()
 {
+  // (wenxin) not used.
   // Snav/Imu samples are timestamped with the monotonic clock
   // ROS timestamps use the realtime clock.  Compute the difference and apply to messages
   // Note: timestamp_in_us is apps monotonic clock, raw_timestamp_in_us is DSP monotonic clock
@@ -117,10 +117,10 @@ void snavSampler::rpmTimerCallback(const ros::TimerEvent& event)
     speed.stamp_timer_expected = event.current_expected;
     int16_t *rpm = sn_struct_->esc_raw.rpm;
     speed.motor_count = 4;
-    speed.rpm[0] = *rpm;
-    speed.rpm[1] = *(rpm+1);
-    speed.rpm[2] = *(rpm+2);
-    speed.rpm[3] = *(rpm+3);
+    speed.rpm[0] = rpm[0];
+    speed.rpm[1] = rpm[1];
+    speed.rpm[2] = rpm[2];
+    speed.rpm[3] = rpm[3];
     motor_speeds_pub_.publish(speed);
   }
 }

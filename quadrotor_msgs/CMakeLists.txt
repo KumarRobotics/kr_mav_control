@@ -17,14 +17,14 @@ add_message_files(DIRECTORY msg
   FILES
   AuxCommand.msg
   Corrections.msg
+  MotorRPM.msg
   OutputData.msg
-  PositionCommand.msg
   PWMCommand.msg
-  Serial.msg
+  PositionCommand.msg
   SO3Command.msg
+  Serial.msg
   StatusData.msg
-  TRPYCommand.msg
-  MotorRPM.msg)
+  TRPYCommand.msg)
 
 generate_messages(
   DEPENDENCIES geometry_msgs)
