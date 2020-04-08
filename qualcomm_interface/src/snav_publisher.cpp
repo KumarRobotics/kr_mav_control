@@ -16,18 +16,17 @@ public:
 private:
   bool get_snav_offset();
 
+  SnavCachedData* sn_struct_;
+  ros::Duration snav_offset_;
+
   ros::Publisher motor_speeds_pub_;
+  ros::Timer rpm_timer_;
+
   ros::Publisher battery_pub_;
   ros::Publisher joy_pub_;
   ros::Publisher on_ground_pub_;
   ros::Publisher props_state_pub_;
-
   ros::Timer status_timer_;
-  ros::Timer rpm_timer_;
-
-  ros::Duration snav_offset_;
-
-  SnavCachedData* sn_struct_;
 };
 
 SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
@@ -43,16 +42,24 @@ SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
   pnh.param<float>("rpm_rate", rpm_rate, 100.0);
   pnh.param<float>("status_rate", status_rate, 5.0);
 
-  motor_speeds_pub_ = nh.advertise<quadrotor_msgs::MotorRPM>("motor_rpm", 2);
-  battery_pub_ = nh.advertise<sensor_msgs::BatteryState>("battery", 2);
-  joy_pub_ = nh.advertise<sensor_msgs::Joy>("spektrum_joy", 2);
-  on_ground_pub_ = nh.advertise<std_msgs::Bool>("on_ground", 2);
-  props_state_pub_ = nh.advertise<std_msgs::String>("props_state", 2);
-
-  rpm_timer_ = nh.createTimer(ros::Duration(1.0/rpm_rate),
-                              &SnavSampler::rpmTimerCallback, this);
-  status_timer_ = nh.createTimer(ros::Duration(1.0/status_rate),
-                                  &SnavSampler::statusTimerCallback, this);
+  if (rpm_rate > 1e-3)
+  {
+    ROS_INFO("Publish motor_rpm at %4.2fHz", rpm_rate);
+    motor_speeds_pub_ = nh.advertise<quadrotor_msgs::MotorRPM>("motor_rpm", 2);
+    rpm_timer_ = nh.createTimer(ros::Duration(1.0/rpm_rate),
+            &SnavSampler::rpmTimerCallback, this);
+  }
+  if (status_rate > 1e-3)
+  {
+    ROS_INFO("Publish status (battery, spektrum_joy, on_ground, props_state) at %4.2fHz",
+             status_rate);
+    battery_pub_ = nh.advertise<sensor_msgs::BatteryState>("battery", 2);
+    joy_pub_ = nh.advertise<sensor_msgs::Joy>("spektrum_joy", 2);
+    on_ground_pub_ = nh.advertise<std_msgs::Bool>("on_ground", 2);
+    props_state_pub_ = nh.advertise<std_msgs::String>("props_state", 2);
+    status_timer_ = nh.createTimer(ros::Duration(1.0/status_rate),
+                                    &SnavSampler::statusTimerCallback, this);
+  }
 }
 
 bool SnavSampler::get_snav_offset()
@@ -177,11 +184,7 @@ int main(int argc, char *argv[])
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
 
-  try {
-    SnavSampler snav_sampler(nh, pnh);
-  } catch (const char* e) {
-    ROS_ERROR("%s", e);
-  }
+  SnavSampler snav_sampler(nh, pnh);
   ros::spin();
   return 0;
 }
