@@ -11,11 +11,10 @@ class SnavSampler
 {
 public:
   SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh);
-  ~SnavSampler() {};
   void rpmTimerCallback(const ros::TimerEvent& event);
   void statusTimerCallback(const ros::TimerEvent& event);
 private:
-  void get_snav_offset();
+  bool get_snav_offset();
   ros::Duration get_monotonic_offset();
 
   ros::Publisher motor_speeds_pub_;
@@ -40,10 +39,9 @@ SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
 {
   if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &sn_struct_) != 0)
     ROS_ERROR("failed to get flight data ptr");
-  try {
-    get_snav_offset();
-  } catch (const char* e) {
-    ROS_ERROR("%s", e);
+
+  if (!get_snav_offset())
+    throw "unable to obtain snav offset due to update failure";
   }
 
   pnh.param<float>("rpm_rate", rpm_rate_, 100.0);
@@ -77,14 +75,16 @@ ros::Duration SnavSampler::get_monotonic_offset()
   ros::Time monotonic(time_monotonic.tv_sec, time_monotonic.tv_nsec);
 
   ros::Duration monotonic_offset = realtime - monotonic;
-  return  monotonic_offset;
+  return monotonic_offset;
 }
 
-void SnavSampler::get_snav_offset()
+bool SnavSampler::get_snav_offset()
 {
   if(sn_update_data() != 0)
-    throw "snav data retrieval failure";
-
+  {
+    ROS_ERROR("snav data retrieval failure");
+    return false;
+  }
   struct timespec time_realtime;
   clock_gettime(CLOCK_REALTIME, &time_realtime);
   ros::Time realtime(time_realtime.tv_sec, time_realtime.tv_nsec);
@@ -95,7 +95,9 @@ void SnavSampler::get_snav_offset()
   snav_offset_ = realtime - sntime;
 
   if (realtime < sntime)
-    throw "snavtime larger than realtime, potential overflow";
+    ROS_WARN("snavtime larger than realtime, potential overflow");
+
+  return true
 }
 
 void SnavSampler::rpmTimerCallback(const ros::TimerEvent& event)
@@ -198,7 +200,11 @@ int main(int argc, char *argv[])
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
 
-  SnavSampler snav_sampler(nh, pnh);
+  try {
+    SnavSampler snav_sampler(nh, pnh);
+  } catch (const char* e) {
+    ROS_ERROR("%s", e);
+  }
   ros::spin();
   return 0;
 }
