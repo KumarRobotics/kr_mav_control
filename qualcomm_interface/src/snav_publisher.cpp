@@ -13,7 +13,7 @@ class snavSampler
 {
 public:
   snavSampler(ros::NodeHandle* nh, ros::NodeHandle* pnh);
-  ~snavSampler();
+  ~snavSampler() {};
   void rpmTimerCallback(const ros::TimerEvent& event);
   void statusTimerCallback(const ros::TimerEvent& event);
 private:
@@ -67,12 +67,6 @@ snavSampler::snavSampler(ros::NodeHandle *nh, ros::NodeHandle *pnh)
                                   &snavSampler::statusTimerCallback, this);
 }
 
-snavSampler::~snavSampler()
-{
-  if(sn_struct_ != NULL)
-    delete sn_struct_;
-}
-
 ros::Duration snavSampler::get_monotonic_offset()
 {
   // Snav/Imu samples are timestamped with the monotonic clock
@@ -115,7 +109,7 @@ void snavSampler::rpmTimerCallback(const ros::TimerEvent& event)
     ROS_ERROR("snav data retrieval failure");
   else
   {
-    int64_t esc_timestamp_ns = (int64_t) sn_struct_->esc_raw.time * 1000;
+    int64_t esc_timestamp_ns = sn_struct_->esc_raw.time * 1000;
     ros::Time esc_time;
     esc_time.fromNSec(esc_timestamp_ns);
     esc_time += snav_offset_;
@@ -140,7 +134,7 @@ void snavSampler::statusTimerCallback(const ros::TimerEvent& event)
     ROS_ERROR("snav data retrieval failure");
   else
   {
-    int64_t gen_timestamp_ns = (int64_t) sn_struct_->general_status.time * 1000;
+    int64_t gen_timestamp_ns = sn_struct_->general_status.time * 1000;
     ros::Time data_time;
     data_time.fromNSec(gen_timestamp_ns);
     data_time += snav_offset_;
@@ -153,7 +147,7 @@ void snavSampler::statusTimerCallback(const ros::TimerEvent& event)
     battery_pub_.publish(bat_state);
 
     //Spektrum joy
-    int64_t rc_timestamp_ns = (int64_t) sn_struct_->spektrum_rc_0_raw.time * 1000;
+    int64_t rc_timestamp_ns = sn_struct_->spektrum_rc_0_raw.time * 1000;
     ros::Time rc_time;
     rc_time.fromNSec(rc_timestamp_ns);
     rc_time += snav_offset_;
