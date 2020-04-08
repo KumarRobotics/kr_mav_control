@@ -15,7 +15,6 @@ public:
   void statusTimerCallback(const ros::TimerEvent& event);
 private:
   bool get_snav_offset();
-  ros::Duration get_monotonic_offset();
 
   ros::Publisher motor_speeds_pub_;
   ros::Publisher battery_pub_;
@@ -55,25 +54,6 @@ SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
                               &SnavSampler::rpmTimerCallback, this);
   status_timer_ = nh.createTimer(ros::Duration(1.0/status_rate_),
                                   &SnavSampler::statusTimerCallback, this);
-}
-
-ros::Duration SnavSampler::get_monotonic_offset()
-{
-  // (wenxin) not used.
-  // Snav/Imu samples are timestamped with the monotonic clock
-  // ROS timestamps use the realtime clock.  Compute the difference and apply to messages
-  // Note: timestamp_in_us is apps monotonic clock, raw_timestamp_in_us is DSP monotonic clock
-  // Here, we use timestamp_in_us
-  struct timespec time_monotonic;
-  struct timespec time_realtime;
-  clock_gettime(CLOCK_REALTIME, &time_realtime);
-  clock_gettime(CLOCK_MONOTONIC, &time_monotonic);
-
-  ros::Time realtime(time_realtime.tv_sec, time_realtime.tv_nsec);
-  ros::Time monotonic(time_monotonic.tv_sec, time_monotonic.tv_nsec);
-
-  ros::Duration monotonic_offset = realtime - monotonic;
-  return monotonic_offset;
 }
 
 bool SnavSampler::get_snav_offset()
