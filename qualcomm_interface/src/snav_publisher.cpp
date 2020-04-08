@@ -38,11 +38,9 @@ SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
   : sn_struct_(NULL)
 {
   if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &sn_struct_) != 0)
-    ROS_ERROR("failed to get flight data ptr");
-
+    throw "failed to get flight data ptr";
   if (!get_snav_offset())
     throw "unable to obtain snav offset due to update failure";
-  }
 
   pnh.param<float>("rpm_rate", rpm_rate_, 100.0);
   pnh.param<float>("status_rate", status_rate_, 5.0);
@@ -97,7 +95,7 @@ bool SnavSampler::get_snav_offset()
   if (realtime < sntime)
     ROS_WARN("snavtime larger than realtime, potential overflow");
 
-  return true
+  return true;
 }
 
 void SnavSampler::rpmTimerCallback(const ros::TimerEvent& event)
