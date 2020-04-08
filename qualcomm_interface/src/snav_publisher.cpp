@@ -9,11 +9,11 @@
 #include <sensor_msgs/BatteryState.h>
 #include <sensor_msgs/Joy.h>
 
-class snavSampler
+class SnavSampler
 {
 public:
-  snavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh);
-  ~snavSampler() {};
+  SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh);
+  ~SnavSampler() {};
   void rpmTimerCallback(const ros::TimerEvent& event);
   void statusTimerCallback(const ros::TimerEvent& event);
 private:
@@ -37,7 +37,7 @@ private:
   SnavCachedData* sn_struct_;
 };
 
-snavSampler::snavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
+SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
   : sn_struct_(NULL)
 {
   if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &sn_struct_) != 0)
@@ -58,12 +58,12 @@ snavSampler::snavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
   props_state_pub_ = nh.advertise<std_msgs::String>("props_state", 2);
 
   rpm_timer_ = nh.createTimer(ros::Duration(1.0/rpm_rate_),
-                              &snavSampler::rpmTimerCallback, this);
+                              &SnavSampler::rpmTimerCallback, this);
   status_timer_ = nh.createTimer(ros::Duration(1.0/status_rate_),
-                                  &snavSampler::statusTimerCallback, this);
+                                  &SnavSampler::statusTimerCallback, this);
 }
 
-ros::Duration snavSampler::get_monotonic_offset()
+ros::Duration SnavSampler::get_monotonic_offset()
 {
   // (wenxin) not used.
   // Snav/Imu samples are timestamped with the monotonic clock
@@ -82,7 +82,7 @@ ros::Duration snavSampler::get_monotonic_offset()
   return  monotonic_offset;
 }
 
-void snavSampler::get_snav_offset()
+void SnavSampler::get_snav_offset()
 {
   if(sn_update_data() != 0)
     throw "snav data retrieval failure";
@@ -100,7 +100,7 @@ void snavSampler::get_snav_offset()
     throw "snavtime larger than realtime, potential overflow";
 }
 
-void snavSampler::rpmTimerCallback(const ros::TimerEvent& event)
+void SnavSampler::rpmTimerCallback(const ros::TimerEvent& event)
 {
   if(sn_update_data() != 0)
     ROS_ERROR("snav data retrieval failure");
@@ -125,7 +125,7 @@ void snavSampler::rpmTimerCallback(const ros::TimerEvent& event)
   }
 }
 
-void snavSampler::statusTimerCallback(const ros::TimerEvent& event)
+void SnavSampler::statusTimerCallback(const ros::TimerEvent& event)
 {
   if(sn_update_data() != 0)
     ROS_ERROR("snav data retrieval failure");
@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
 
-  snavSampler snav_sampler(nh, pnh);
+  SnavSampler snav_sampler(nh, pnh);
   ros::spin();
   return 0;
 }
