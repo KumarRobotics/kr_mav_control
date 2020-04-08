@@ -196,7 +196,7 @@ void SnavSampler::statusTimerCallback(const ros::TimerEvent& event)
 
 int main(int argc, char *argv[])
 {
-  ros::init(argc, argv, "snav_status_publisher");
+  ros::init(argc, argv, "snav_publisher");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
 
