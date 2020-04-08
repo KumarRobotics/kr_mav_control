@@ -12,16 +12,13 @@
 class snavSampler
 {
 public:
-  snavSampler(ros::NodeHandle* nh, ros::NodeHandle* pnh);
+  snavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh);
   ~snavSampler() {};
   void rpmTimerCallback(const ros::TimerEvent& event);
   void statusTimerCallback(const ros::TimerEvent& event);
 private:
   void get_snav_offset();
   ros::Duration get_monotonic_offset();
-
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
 
   ros::Publisher motor_speeds_pub_;
   ros::Publisher battery_pub_;
@@ -40,8 +37,8 @@ private:
   SnavCachedData* sn_struct_;
 };
 
-snavSampler::snavSampler(ros::NodeHandle *nh, ros::NodeHandle *pnh)
-  : nh_(*nh), pnh_(*pnh), sn_struct_(NULL)
+snavSampler::snavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
+  : sn_struct_(NULL)
 {
   // It seems there can only be one pointer in snav API? (wenxin)
   if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &sn_struct_) != 0)
@@ -52,18 +49,18 @@ snavSampler::snavSampler(ros::NodeHandle *nh, ros::NodeHandle *pnh)
     ROS_ERROR("%s", e);
   }
 
-  pnh_.param<float>("rpm_rate", rpm_rate_, 100.0);
-  pnh_.param<float>("status_rate", status_rate_, 5.0);
+  pnh.param<float>("rpm_rate", rpm_rate_, 100.0);
+  pnh.param<float>("status_rate", status_rate_, 5.0);
 
-  motor_speeds_pub_ = nh_.advertise<quadrotor_msgs::MotorRPM>("motor_rpm", 2);
-  battery_pub_ = nh_.advertise<sensor_msgs::BatteryState>("battery", 2);
-  joy_pub_ = nh_.advertise<sensor_msgs::Joy>("spektrum_joy", 2);
-  on_ground_pub_ = nh_.advertise<std_msgs::Bool>("on_ground", 2);
-  props_state_pub_ = nh_.advertise<std_msgs::String>("props_state", 2);
+  motor_speeds_pub_ = nh.advertise<quadrotor_msgs::MotorRPM>("motor_rpm", 2);
+  battery_pub_ = nh.advertise<sensor_msgs::BatteryState>("battery", 2);
+  joy_pub_ = nh.advertise<sensor_msgs::Joy>("spektrum_joy", 2);
+  on_ground_pub_ = nh.advertise<std_msgs::Bool>("on_ground", 2);
+  props_state_pub_ = nh.advertise<std_msgs::String>("props_state", 2);
 
-  rpm_timer_ = nh_.createTimer(ros::Duration(1.0/rpm_rate_),
+  rpm_timer_ = nh.createTimer(ros::Duration(1.0/rpm_rate_),
                               &snavSampler::rpmTimerCallback, this);
-  status_timer_ = nh_.createTimer(ros::Duration(1.0/status_rate_),
+  status_timer_ = nh.createTimer(ros::Duration(1.0/status_rate_),
                                   &snavSampler::statusTimerCallback, this);
 }
 
@@ -203,7 +200,7 @@ int main(int argc, char *argv[])
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
 
-  snavSampler snav_sampler(&nh, &pnh);
+  snavSampler snav_sampler(nh, pnh);
   ros::spin();
   return 0;
 }
