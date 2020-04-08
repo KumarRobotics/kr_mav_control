@@ -27,9 +27,6 @@ private:
 
   ros::Duration snav_offset_;
 
-  float rpm_rate_;
-  float status_rate_;
-
   SnavCachedData* sn_struct_;
 };
 
@@ -41,8 +38,10 @@ SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
   if (!get_snav_offset())
     throw "unable to obtain snav offset due to update failure";
 
-  pnh.param<float>("rpm_rate", rpm_rate_, 100.0);
-  pnh.param<float>("status_rate", status_rate_, 5.0);
+  float rpm_rate;
+  float status_rate;
+  pnh.param<float>("rpm_rate", rpm_rate, 100.0);
+  pnh.param<float>("status_rate", status_rate, 5.0);
 
   motor_speeds_pub_ = nh.advertise<quadrotor_msgs::MotorRPM>("motor_rpm", 2);
   battery_pub_ = nh.advertise<sensor_msgs::BatteryState>("battery", 2);
@@ -50,9 +49,9 @@ SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
   on_ground_pub_ = nh.advertise<std_msgs::Bool>("on_ground", 2);
   props_state_pub_ = nh.advertise<std_msgs::String>("props_state", 2);
 
-  rpm_timer_ = nh.createTimer(ros::Duration(1.0/rpm_rate_),
+  rpm_timer_ = nh.createTimer(ros::Duration(1.0/rpm_rate),
                               &SnavSampler::rpmTimerCallback, this);
-  status_timer_ = nh.createTimer(ros::Duration(1.0/status_rate_),
+  status_timer_ = nh.createTimer(ros::Duration(1.0/status_rate),
                                   &SnavSampler::statusTimerCallback, this);
 }
 
