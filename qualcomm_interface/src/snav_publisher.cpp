@@ -73,7 +73,7 @@ bool SnavSampler::get_snav_offset()
   clock_gettime(CLOCK_REALTIME, &time_realtime);
   ros::Time realtime(time_realtime.tv_sec, time_realtime.tv_nsec);
 
-  int64_t gen_timestamp_ns = (int64_t) sn_struct_->general_status.time * 1000;
+  int64_t gen_timestamp_ns = sn_struct_->general_status.time * 1000;
   ros::Time sntime;
   sntime.fromNSec(gen_timestamp_ns);
   snav_offset_ = realtime - sntime;
@@ -97,8 +97,6 @@ void SnavSampler::rpmTimerCallback(const ros::TimerEvent& event)
 
     quadrotor_msgs::MotorRPM speed;
     speed.header.stamp = esc_time;
-    speed.stamp_timer_real = event.current_real;
-    speed.stamp_timer_expected = event.current_expected;
     int16_t *rpm = sn_struct_->esc_raw.rpm;
     speed.motor_count = 4;
     speed.rpm[0] = rpm[0];
