@@ -184,7 +184,11 @@ int main(int argc, char *argv[])
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
 
-  SnavSampler snav_sampler(nh, pnh);
-  ros::spin();
+  try {
+    SnavSampler snav_sampler(nh, pnh);
+    ros::spin();
+  } catch (const char* e) {
+    ROS_ERROR("%s", e);
+  }
   return 0;
 }
