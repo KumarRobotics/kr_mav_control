@@ -6,9 +6,6 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs quadrotor_msgs std_msgs tf nodelet cmake_modules)
-find_package(Eigen REQUIRED)
-
 find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs nav_msgs quadrotor_msgs std_msgs tf nodelet dynamic_reconfigure)
 find_package(Eigen3 REQUIRED)
 

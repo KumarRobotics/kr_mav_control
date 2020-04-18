@@ -210,6 +210,79 @@ void SO3ControlNodelet::corrections_callback(const quadrotor_msgs::Corrections::
   corrections_[2] = msg->angle_corrections[1];
 }
 
+void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t level)
+{
+  if (level == 0)
+  {
+    NODELET_DEBUG_STREAM("Nothing changed. level: " << level);
+    return;
+  }
+
+  if (level & (1 << 0))
+  {
+    kx_[0]  = config.kp_x;
+    kx_[1]  = config.kp_y;
+    kx_[2]  = config.kp_z;
+
+    kv_[0]  = config.kd_x;
+    kv_[1]  = config.kd_y;
+    kv_[2]  = config.kd_z;
+
+    NODELET_INFO("Position Gains set to kp: {%2.3g, %2.3g, %2.3g}, kd: {%2.3g, %2.3g, %2.3g}",
+                                         kx_[0], kx_[1], kx_[2], kv_[0], kv_[1], kv_[2]);
+  }
+
+  if (level & (1 << 1))
+  {
+    ki_[0]  = config.ki_x;
+    ki_[1]  = config.ki_y;
+    ki_[2]  = config.ki_z;
+
+    kib_[0] = config.kib_x;
+    kib_[1] = config.kib_y;
+    kib_[2] = config.kib_z;
+
+    NODELET_INFO("Integral Gains set to ki: {%2.2g, %2.2g, %2.2g}, kib: {%2.2g, %2.2g, %2.2g}",
+                                        ki_[0], ki_[1], ki_[2], kib_[0], kib_[1], kib_[2]);
+  }
+
+  if (level & (1 << 2))
+  {
+    kR_[0]  = config.rot_x;
+    kR_[1]  = config.rot_y;
+    kR_[2]  = config.rot_z;
+
+    kOm_[0]  = config.ang_x;
+    kOm_[1]  = config.ang_y;
+    kOm_[2]  = config.ang_z;
+
+    NODELET_INFO("Attitude Gains set to kp: {%2.2g, %2.2g, %2.2g}, kd: {%2.2g, %2.2g, %2.2g}",
+                                       kR_[0], kR_[1], kR_[2], kOm_[0], kOm_[1], kOm_[2]);
+  }
+
+  if (level & (1 << 3))
+  {
+    corrections_[0] = config.kf_correction;
+    corrections_[1] = config.roll_correction;
+    corrections_[2] = config.pitch_correction;
+    NODELET_INFO("Corrections set to kf: %2.2g, roll: %2.2g, pitch: %2.2g",
+        corrections_[0], corrections_[1], corrections_[2]);
+  }
+
+  if (level & (1 << 4))
+  {
+      controller_.setMaxIntegral(config.max_pos_int);
+      controller_.setMaxIntegralBody(config.max_pos_int_b);
+      controller_.setMaxTiltAngle(config.max_tilt_angle);
+
+      NODELET_INFO("Maxes set to Integral: %2.2g, Integral Body: %2.2g, Tilt Angle (rad): %2.2g",
+          config.max_pos_int, config.max_pos_int_b, config.max_tilt_angle);
+  }
+
+  NODELET_WARN_STREAM_COND(level != std::numeric_limits<uint32_t>::max() && level >= std::pow(2,5),
+      "so3_control dynamic reconfigure called, but with unknown level: " << level);
+}
+
 void SO3ControlNodelet::onInit(void)
 {
   ros::NodeHandle priv_nh(getPrivateNodeHandle());
