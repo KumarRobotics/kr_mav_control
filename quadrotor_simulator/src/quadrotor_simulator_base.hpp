@@ -62,6 +62,7 @@ class QuadrotorSimulatorBase
   double simulation_rate_;
   double odom_rate_;
   std::string quad_name_;
+  std::string world_frame_id_;
   tf2_ros::TransformBroadcaster tf_broadcaster_;
 };
 
@@ -86,6 +87,7 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
 
   n.param("rate/odom", odom_rate_, 100.0);
 
+  n.param("world_frame_id", world_frame_id_, std::string("simulator"));
   n.param("quadrotor_name", quad_name_, std::string("quadrotor"));
 
   auto get_param = [&n](const std::string &param_name) {
@@ -148,7 +150,7 @@ void QuadrotorSimulatorBase<T, U>::run(void)
   nav_msgs::Odometry odom_msg;
   sensor_msgs::Imu imu_msg;
   quadrotor_msgs::OutputData output_data_msg;
-  odom_msg.header.frame_id = "simulator";
+  odom_msg.header.frame_id = world_frame_id_;
   odom_msg.child_frame_id = quad_name_;
   imu_msg.header.frame_id = quad_name_;
   output_data_msg.header.frame_id = quad_name_;

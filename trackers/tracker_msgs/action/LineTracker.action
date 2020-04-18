@@ -1,0 +1,25 @@
+#goal definition
+float64 x
+float64 y
+float64 z
+float64 yaw
+float64 v_des
+float64 a_des
+bool relative
+time t_start
+duration duration
+---
+#result definition
+# send back goal
+float64 x
+float64 y
+float64 z
+float64 yaw
+# time duration of the trajectory
+float64 duration
+# approximate arc length of the trajectory (ie. sum of distances between position commands)
+float64 length
+---
+#feedback
+# distance from the goal
+float64 distance_from_goal

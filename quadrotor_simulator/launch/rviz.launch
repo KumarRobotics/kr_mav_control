@@ -1,8 +1,7 @@
 <launch>
-  <group ns="quadrotor">
-    <node pkg="rviz"
-      type="rviz"
-      name="rviz"
-      args="-d $(find quadrotor_simulator)/launch/rviz_config.rviz"/>
-  </group>
+  <arg name="rviz_config" default="$(find quadrotor_simulator)/launch/rviz_config.rviz"/>
+  <node pkg="rviz"
+    type="rviz"
+    name="rviz"
+    args="-d $(arg rviz_config)"/>
 </launch>

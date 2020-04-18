@@ -1,0 +1,22 @@
+#goal definition
+float64 vx
+float64 vy
+float64 vz
+float64 vyaw
+bool use_position_gains
+---
+#result definition
+# send back goal
+float64 vx
+float64 vy
+float64 vz
+float64 vyaw
+bool use_position_gains
+# time duration of the trajectory
+float64 duration 
+# approximate arc length of the trajectory (ie. sum of distances between position commands)
+float64 length 
+---
+#feedback
+# time in tracker
+float64 duration

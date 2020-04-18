@@ -1,4 +1,4 @@
-<package>
+<package format="2">
   <name>quadrotor_msgs</name>
   <version>1.0.0</version>
   <description>quadrotor_msgs</description>
@@ -8,9 +8,6 @@
 
   <license>BSD</license>
 
-  <url type="website">http://ros.org/wiki/quadrotor_msgs</url>
-  <!-- <url type="bugtracker"></url> -->
-
   <author>Kartik Mohta</author>
 
   <!-- Dependencies which this package needs to build itself. -->
@@ -18,15 +15,13 @@
 
   <!-- Dependencies needed to compile this package. -->
   <build_depend>message_generation</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>nav_msgs</build_depend>
-  <build_depend>cmake_modules</build_depend>
 
+  <depend>geometry_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>rosconsole</depend>
 
   <!-- Dependencies needed after this package is compiled. -->
-  <run_depend>message_runtime</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>nav_msgs</run_depend>
+  <exec_depend>message_runtime</exec_depend>
 
   <!-- Dependencies needed only for running tests. -->
   <!-- <test_depend>geometry_msgs</test_depend> -->

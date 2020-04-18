@@ -12,13 +12,12 @@
   <author>Kartik Mohta</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>message_generation</build_depend>
   <depend>roscpp</depend>
   <depend>nodelet</depend>
   <depend>pluginlib</depend>
   <depend>quadrotor_msgs</depend>
   <depend>nav_msgs</depend>
-  <exec_depend>message_runtime</exec_depend>
+  <depend>tracker_msgs</depend>
 
   <export>
     <nodelet plugin="${prefix}/nodelet_plugin.xml"/>

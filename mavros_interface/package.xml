@@ -18,7 +18,6 @@
   <depend>quadrotor_msgs</depend>
   <depend>mavros_msgs</depend>
   <depend>nodelet</depend>
-  <depend>cmake_modules</depend>
 
   <export>
     <nodelet plugin="${prefix}/nodelet_plugin.xml"/>

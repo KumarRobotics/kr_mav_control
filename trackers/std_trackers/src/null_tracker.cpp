@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
-#include <quadrotor_msgs/TrackerStatus.h>
+#include <tracker_msgs/TrackerStatus.h>
 
 class NullTracker : public trackers_manager::Tracker
 {
@@ -9,8 +9,8 @@ class NullTracker : public trackers_manager::Tracker
   bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
-  const quadrotor_msgs::TrackerStatus::Ptr status();
+  quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+  uint8_t status() const;
 };
 
 void NullTracker::Initialize(const ros::NodeHandle &nh)
@@ -26,17 +26,15 @@ void NullTracker::Deactivate(void)
 {
 }
 
-const quadrotor_msgs::PositionCommand::ConstPtr NullTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
+quadrotor_msgs::PositionCommand::ConstPtr NullTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   // Return a null message (will not publish the position command)
   return quadrotor_msgs::PositionCommand::Ptr();
 }
 
-const quadrotor_msgs::TrackerStatus::Ptr NullTracker::status()
+uint8_t NullTracker::status() const
 {
-  quadrotor_msgs::TrackerStatus::Ptr msg(new quadrotor_msgs::TrackerStatus);
-  msg->status = quadrotor_msgs::TrackerStatus::SUCCEEDED;
-  return msg;
+  return tracker_msgs::TrackerStatus::SUCCEEDED;
 }
 
 #include <pluginlib/class_list_macros.h>

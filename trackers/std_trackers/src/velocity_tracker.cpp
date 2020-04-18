@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
-#include <quadrotor_msgs/FlatOutputs.h>
-#include <quadrotor_msgs/TrackerStatus.h>
+#include <tracker_msgs/VelocityGoal.h>
+#include <tracker_msgs/TrackerStatus.h>
 #include <tf/transform_datatypes.h>
 
 class VelocityTracker : public trackers_manager::Tracker
@@ -13,12 +13,11 @@ class VelocityTracker : public trackers_manager::Tracker
   bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
-  const quadrotor_msgs::TrackerStatus::Ptr status();
+  quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+  uint8_t status() const;
 
  private:
-  void velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPtr &msg);
-  void position_velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPtr &msg);
+  void velocity_cmd_cb(const tracker_msgs::VelocityGoal::ConstPtr &msg);
 
   ros::Subscriber sub_vel_cmd_, sub_position_vel_cmd_;
   quadrotor_msgs::PositionCommand position_cmd_;
@@ -26,6 +25,9 @@ class VelocityTracker : public trackers_manager::Tracker
   double last_t_;
   double kx_[3], kv_[3];
   double pos_[3], cur_yaw_;
+  ros::Time last_cmd_time_;
+
+  float timeout_;
 };
 
 VelocityTracker::VelocityTracker(void) :
@@ -46,12 +48,10 @@ void VelocityTracker::Initialize(const ros::NodeHandle &nh)
   nh.param("gains/vel/z", kv_[2], 4.0);
 
   ros::NodeHandle priv_nh(nh, "velocity_tracker");
+  priv_nh.param("timeout", timeout_, 0.5f);
 
   sub_vel_cmd_ = priv_nh.subscribe("goal", 10, &VelocityTracker::velocity_cmd_cb, this,
                                    ros::TransportHints().tcpNoDelay());
-
-  sub_position_vel_cmd_ = priv_nh.subscribe("position_velocity_goal", 10, &VelocityTracker::position_velocity_cmd_cb,
-                                            this, ros::TransportHints().tcpNoDelay());
 
   position_cmd_.kv[0] = kv_[0], position_cmd_.kv[1] = kv_[1], position_cmd_.kv[2] = kv_[2];
 }
@@ -85,7 +85,7 @@ void VelocityTracker::Deactivate(void)
   last_t_ = 0;
 }
 
-const quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
+quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   pos_[0] = msg->pose.pose.position.x;
   pos_[1] = msg->pose.pose.position.y;
@@ -96,6 +96,24 @@ const quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const na
   if(!active_)
     return quadrotor_msgs::PositionCommand::Ptr();
 
+  if((ros::Time::now() - last_cmd_time_).toSec() > timeout_)
+  {
+    // TODO: How much overshoot will this cause at high velocities?
+    // Ideally ramp down?
+    position_cmd_.velocity.x = 0.0;
+    position_cmd_.velocity.y = 0.0;
+    position_cmd_.velocity.z = 0.0;
+    position_cmd_.yaw_dot = 0.0;
+    ROS_WARN_THROTTLE(1, "VelocityTracker is active but timed out");
+
+    if(use_position_gains_)
+      position_cmd_.kx[0] = kx_[0], position_cmd_.kx[1] = kx_[1], position_cmd_.kx[2] = kx_[2];
+
+    position_cmd_.header.stamp = msg->header.stamp;
+    position_cmd_.header.frame_id = msg->header.frame_id;
+    last_t_ = 0;
+    return quadrotor_msgs::PositionCommand::ConstPtr(new quadrotor_msgs::PositionCommand(position_cmd_));
+  }
 
   if(last_t_ == 0)
     last_t_ = ros::Time::now().toSec();
@@ -128,34 +146,24 @@ const quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const na
   return quadrotor_msgs::PositionCommand::ConstPtr(new quadrotor_msgs::PositionCommand(position_cmd_));
 }
 
-void VelocityTracker::velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPtr &msg)
+void VelocityTracker::velocity_cmd_cb(const tracker_msgs::VelocityGoal::ConstPtr &msg)
 {
-  position_cmd_.velocity.x = msg->x;
-  position_cmd_.velocity.y = msg->y;
-  position_cmd_.velocity.z = msg->z;
-  position_cmd_.yaw_dot = msg->yaw;
+  //ROS_INFO("VelocityTracker goal (%2.2f, %2.2f, %2.2f, %2.2f)", msg->vx, msg->vy, msg->vz, msg->vyaw);
+  position_cmd_.velocity.x = msg->vx;
+  position_cmd_.velocity.y = msg->vy;
+  position_cmd_.velocity.z = msg->vz;
+  position_cmd_.yaw_dot = msg->vyaw;
 
-  use_position_gains_ = false;
+  use_position_gains_ = msg->use_position_gains;
+
+  last_cmd_time_ = ros::Time::now();
 }
 
-void VelocityTracker::position_velocity_cmd_cb(const quadrotor_msgs::FlatOutputs::ConstPtr &msg)
+uint8_t VelocityTracker::status() const
 {
-  position_cmd_.velocity.x = msg->x;
-  position_cmd_.velocity.y = msg->y;
-  position_cmd_.velocity.z = msg->z;
-  position_cmd_.yaw_dot = msg->yaw;
-
-  use_position_gains_ = true;
-}
-
-const quadrotor_msgs::TrackerStatus::Ptr VelocityTracker::status()
-{
-  if(!active_)
-    return quadrotor_msgs::TrackerStatus::Ptr();
-
-  quadrotor_msgs::TrackerStatus::Ptr msg(new quadrotor_msgs::TrackerStatus);
-  msg->status = quadrotor_msgs::TrackerStatus::SUCCEEDED;
-  return msg;
+  return active_ ?
+             static_cast<uint8_t>(tracker_msgs::TrackerStatus::ACTIVE) :
+             static_cast<uint8_t>(tracker_msgs::TrackerStatus::SUCCEEDED);
 }
 
 #include <pluginlib/class_list_macros.h>
