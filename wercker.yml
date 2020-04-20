@@ -21,4 +21,5 @@ build:
         mv source catkin_ws/src/
         cd catkin_ws
         catkin_init_workspace src
+        export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,--no-undefined,-z,relro,-z,now -pthread"
         catkin_make -DCMAKE_BUILD_TYPE=Release

@@ -8,7 +8,7 @@ endif()
 
 find_package(catkin REQUIRED COMPONENTS roscpp quadrotor_msgs sensor_msgs nodelet)
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(${catkin_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS

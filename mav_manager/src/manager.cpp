@@ -11,58 +11,88 @@
 #include <std_msgs/Empty.h>
 #include <std_msgs/UInt8.h>
 #include <tf/transform_datatypes.h>
+#include <actionlib/client/simple_action_client.h>
 
 // quadrotor_control
-#include <trackers_manager/Transition.h>
-#include <quadrotor_msgs/FlatOutputs.h>
-#include <quadrotor_msgs/LineTrackerGoal.h>
-#include <quadrotor_msgs/LineTrackerGoalTimed.h>
+#include <tracker_msgs/Transition.h>
+#include <tracker_msgs/VelocityGoal.h>
 
+namespace mav_manager
+{
 // Strings
-static const std::string line_tracker_distance("std_trackers/LineTrackerDistance");
-static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerk");
+static const std::string line_tracker_distance("std_trackers/LineTrackerDistanceAction");
+static const std::string line_tracker_min_jerk("std_trackers/LineTrackerMinJerkAction");
 static const std::string velocity_tracker_str("std_trackers/VelocityTracker");
 static const std::string null_tracker_str("std_trackers/NullTracker");
+static const std::string circle_tracker_str("std_trackers/CircleTrackerAction");
+static const std::string lissajous_tracker_str("std_trackers/LissajousTrackerAction");
+static const std::string lissajous_adder_str("std_trackers/LissajousAdderAction");
 
-MAVManager::MAVManager()
-    : nh_(""),
-      priv_nh_("~"),
-      active_tracker_(""),
-      status_(INIT),
-      last_odom_t_(0.0),
-      last_imu_t_(0.0),
-      last_output_data_t_(0.0),
-      last_heartbeat_t_(0.0),
-      mass_(-1.0),
-      kGravity_(9.81),
-      odom_q_(1.0, 0.0, 0.0, 0.0),
-      imu_q_(1.0, 0.0 ,0.0 ,0.0),
-      max_attitude_angle_(45.0 / 180.0 * M_PI),
-      need_imu_(false),
-      need_output_data_(true),
-      need_odom_(true),
-      use_attitude_safety_catch_(true) {
+MAVManager::MAVManager(std::string ns)
+    : nh_(ns),
+    priv_nh_("~"),
+    active_tracker_(""),
+    status_(INIT),
+    last_odom_t_(0.0),
+    last_imu_t_(0.0),
+    last_output_data_t_(0.0),
+    last_heartbeat_t_(0.0),
+    mass_(-1.0),
+    odom_q_(1.0, 0.0, 0.0, 0.0),
+    imu_q_(1.0, 0.0 , 0.0 , 0.0),
+    max_attitude_angle_(45.0 / 180.0 * M_PI),
+    need_imu_(false),
+    need_output_data_(true),
+    need_odom_(true),
+    use_attitude_safety_catch_(true),
+    line_tracker_distance_client_(nh_, "trackers_manager/line_tracker_distance/LineTrackerAction", true),
+    line_tracker_min_jerk_client_(nh_, "trackers_manager/line_tracker_min_jerk/LineTrackerAction", true),
+    circle_tracker_client_(nh_, "trackers_manager/circle_tracker/CircleTrackerAction", true),
+    lissajous_tracker_client_(nh_, "trackers_manager/lissajous_tracker/LissajousTrackerAction", true),
+    lissajous_adder_client_(nh_, "trackers_manager/lissajous_adder/LissajousAdderAction", true)
+{
+  // Action servers.
+  float server_wait_timeout;
+  priv_nh_.param("server_wait_timeout", server_wait_timeout, 0.5f);
 
-  // Publishers
-  pub_goal_line_tracker_distance_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_distance/goal", 10);
-  pub_goal_min_jerk_ = nh_.advertise<quadrotor_msgs::LineTrackerGoal>("trackers_manager/line_tracker_min_jerk/goal", 10);
-  pub_goal_min_jerk_timed_ = nh_.advertise<quadrotor_msgs::LineTrackerGoalTimed>("trackers_manager/line_tracker_min_jerk/goal_timed", 10);
-  pub_goal_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/velocity_tracker/goal", 10);
-  pub_goal_position_velocity_ = nh_.advertise<quadrotor_msgs::FlatOutputs>("trackers_manager/velocity_tracker/position_velocity_goal", 10);
+  if (!line_tracker_distance_client_.waitForServer(ros::Duration(server_wait_timeout))) {
+    ROS_ERROR("LineTrackerDistanceAction server not found.");
+  }
+
+  if (!line_tracker_min_jerk_client_.waitForServer(ros::Duration(server_wait_timeout))) {
+    ROS_ERROR("LineTrackerMinJerkAction server not found.");
+  }
+
+  // Optional trackers.
+  if (!circle_tracker_client_.waitForServer(ros::Duration(server_wait_timeout))) {
+    ROS_WARN("CircleTrackerAction server not found.");
+  }
+
+  if (!lissajous_tracker_client_.waitForServer(ros::Duration(server_wait_timeout))) {
+    ROS_ERROR("LissajousTrackerAction server not found.");
+  }
+
+  if (!lissajous_adder_client_.waitForServer(ros::Duration(server_wait_timeout))) {
+    ROS_ERROR("LissajousAdderAction server not found.");
+  }
+
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
   pub_so3_command_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
+  pub_trpy_command_ = nh_.advertise<quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
   pub_position_command_ = nh_.advertise<quadrotor_msgs::PositionCommand>("position_cmd", 10);
   pub_status_ = priv_nh_.advertise<std_msgs::UInt8>("status", 10);
+  pub_goal_velocity_ = nh_.advertise<tracker_msgs::VelocityGoal>("trackers_manager/velocity_tracker/goal", 10);
+
   // pwm_command_pub_ = nh_ ...
 
   // Subscribers
   odom_sub_ = nh_.subscribe("odom", 10, &MAVManager::odometry_cb, this, ros::TransportHints().tcpNoDelay());
-  heartbeat_sub_ = nh_.subscribe("/heartbeat", 10, &MAVManager::heartbeat_cb, this, ros::TransportHints().tcpNoDelay());
+  heartbeat_sub_ = nh_.subscribe("heartbeat", 10, &MAVManager::heartbeat_cb, this, ros::TransportHints().tcpNoDelay());
   tracker_status_sub_ = nh_.subscribe("trackers_manager/status", 10, &MAVManager::tracker_status_cb, this, ros::TransportHints().tcpNoDelay());
 
   // Services
-  srv_transition_ = nh_.serviceClient<trackers_manager::Transition>("trackers_manager/transition");
+  srv_transition_ = nh_.serviceClient<tracker_msgs::Transition>("trackers_manager/transition");
 
   srv_transition_.waitForExistence();
   if (!this->transition(null_tracker_str))
@@ -82,10 +112,8 @@ MAVManager::MAVManager()
   if (!priv_nh_.getParam("use_attitude_safety_catch", use_attitude_safety_catch_))
     ROS_WARN("Couldn't find use_attitude_safety_catch param");
 
-  double max_attitude_angle;
-  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle))
+  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle_))
     ROS_WARN("Couldn't find max_attitude_angle param");
-  max_attitude_angle_ = max_attitude_angle;
 
   double m;
   if (!nh_.getParam("mass", m))
@@ -100,6 +128,22 @@ MAVManager::MAVManager()
   // Disable motors
   if (!this->set_motors(false))
     ROS_ERROR("Could not disable motors");
+}
+
+void MAVManager::tracker_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::LineTrackerResultConstPtr& result) {
+  ROS_INFO("Goal (%2.2f, %2.2f, %2.2f, %2.2f) finished with state %s after %2.2f s. and %2.2f m.", result->x, result->y, result->z, result->yaw, state.toString().c_str(), result->duration, result->length);
+}
+
+void MAVManager::circle_tracker_done_callback(const actionlib::SimpleClientGoalState &state, const tracker_msgs::CircleTrackerResultConstPtr &result) {
+  ROS_INFO("Circle tracking completed after %2.2f seconds.", result->duration);
+}
+
+void MAVManager::lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState &state, const tracker_msgs::LissajousTrackerResultConstPtr &result) {
+  ROS_INFO("Lissajous tracking completed. Duration: %2.2f seconds, distance: %2.2f m, now located at (%2.2f, %2.2f, %2.2f, %2.2f).", result->duration, result->length, result->x, result->y, result->z, result->yaw);
+}
+
+void MAVManager::lissajous_adder_done_callback(const actionlib::SimpleClientGoalState &state, const tracker_msgs::LissajousAdderResultConstPtr &result) {
+  ROS_INFO("Lissajous tracking completed. Duration: %2.2f seconds, distance: %2.2f m, now located at (%2.2f, %2.2f, %2.2f, %2.2f).", result->duration, result->length, result->x, result->y, result->z, result->yaw);
 }
 
 void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg) {
@@ -152,10 +196,15 @@ bool MAVManager::takeoff() {
   }
 
   ROS_INFO("Initiating launch sequence...");
-  quadrotor_msgs::LineTrackerGoal goal;
+
+  tracker_msgs::LineTrackerGoal goal;
   goal.z = takeoff_height_;
   goal.relative = true;
-  pub_goal_line_tracker_distance_.publish(goal);
+  line_tracker_distance_client_.sendGoal(goal,
+                                         boost::bind(&MAVManager::tracker_done_callback, this, _1, _2),
+                                         ClientType::SimpleActiveCallback(),
+                                         ClientType::SimpleFeedbackCallback());
+
 
   if (this->transition(line_tracker_distance))
   {
@@ -167,7 +216,7 @@ bool MAVManager::takeoff() {
 }
 
 bool MAVManager::set_mass(float m) {
-  if (m>0)
+  if (m > 0)
   {
     // TODO: This should update the mass in so3_control and everywhere else that is necessary.
     mass_ = m;
@@ -198,7 +247,7 @@ bool MAVManager::setHome() {
 bool MAVManager::goHome() {
 
   if (home_set_)
-    return this->goTo(home_ + Vec3(0,0,0.15), home_yaw_);
+    return this->goTo(home_ + Vec3(0, 0, 0.15), home_yaw_);
   else {
     ROS_WARN("Home not set. Cannot go home.");
     return false;
@@ -213,12 +262,13 @@ bool MAVManager::land() {
     return false;
   }
 
-  ROS_INFO("Initiating landing sequence...");
-  quadrotor_msgs::LineTrackerGoal goal;
+  tracker_msgs::LineTrackerGoal goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
-  goal.z = home_(2) - 0.1f;
-  pub_goal_line_tracker_distance_.publish(goal);
+  goal.z = home_(2);
+  std::cout << " landing at " << goal.x << " " << goal.y << " " << goal.z << "\n";
+  line_tracker_distance_client_.sendGoal(goal, boost::bind(&MAVManager::tracker_done_callback, this, _1, _2), ClientType::SimpleActiveCallback(), ClientType::SimpleFeedbackCallback());
+
 
   return this->transition(line_tracker_distance);
 }
@@ -231,38 +281,53 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
     return false;
   }
 
-  quadrotor_msgs::LineTrackerGoal goal;
-  goal.x   = x;
-  goal.y   = y;
-  goal.z   = z;
+  tracker_msgs::LineTrackerGoal goal;
+  goal.x = x;
+  goal.y = y;
+
+  goal.relative = relative;
+  //Convert relative translation in body frame to global frame
+  if(relative)
+  {
+    goal.x = x * std::cos(yaw_) - y * std::sin(yaw_);
+    goal.y = x * std::sin(yaw_) + y * std::cos(yaw_);
+  }
+
+  goal.z = z;
   goal.yaw = yaw;
   goal.v_des = v_des;
   goal.a_des = a_des;
-  goal.relative = relative;
 
-  pub_goal_min_jerk_.publish(goal);
-  ROS_INFO("Going to {%2.2f, %2.2f, %2.2f, %2.2f}%s",
-      x, y, z, yaw, (relative ? " relative to the current position." : "."));
+  line_tracker_min_jerk_client_.sendGoal(goal, boost::bind(&MAVManager::tracker_done_callback, this, _1, _2), ClientType::SimpleActiveCallback(), ClientType::SimpleFeedbackCallback());
 
   return this->transition(line_tracker_min_jerk);
 }
 
 bool MAVManager::goToTimed(float x, float y, float z, float yaw, float v_des, float a_des, bool relative, ros::Duration duration, ros::Time t_start) {
 
-  quadrotor_msgs::LineTrackerGoalTimed goal;
-  goal.x   = x;
-  goal.y   = y;
+  tracker_msgs::LineTrackerGoal goal;
+  goal.x = x;
+  goal.y = y;
+
+  goal.relative = relative;
+  //Convert relative translation in body frame to global frame
+  if(relative)
+  {
+    goal.x = x * std::cos(yaw_) - y * std::sin(yaw_);
+    goal.y = x * std::sin(yaw_) + y * std::cos(yaw_);
+  }
+
   goal.z   = z;
   goal.yaw = yaw;
   goal.duration = duration;
   goal.t_start = t_start;
   goal.v_des = v_des;
   goal.a_des = a_des;
-  goal.relative = relative;
 
-  pub_goal_min_jerk_timed_.publish(goal);
-  ROS_INFO("Going to {%2.2f, %2.2f, %2.2f, %2.2f}%s with duration %2.2f",
-      x, y, z, yaw, (relative ? " relative to the current position." : ""), duration.toSec());
+  line_tracker_min_jerk_client_.sendGoal(goal, boost::bind(&MAVManager::tracker_done_callback, this, _1, _2),
+                                         ClientType::SimpleActiveCallback(), ClientType::SimpleFeedbackCallback());
+  ROS_INFO("Going to {%2.2f, %2.2f, %2.2f, %2.2f}%s with duration %2.2f", x, y, z, yaw,
+           (relative ? " relative to the current position." : ""), duration.toSec());
 
   return this->transition(line_tracker_min_jerk);
 }
@@ -283,6 +348,89 @@ bool MAVManager::goToYaw(float yaw) {
   return this->goTo(pos_(0), pos_(1), pos_(2), yaw);
 }
 
+bool MAVManager::circle(float Ax, float Ay, float T, float duration) {
+  if (!this->motors() || status_ != FLYING)
+  {
+    ROS_WARN("The robot must be flying before using the circle method.");
+    return false;
+  }
+
+  tracker_msgs::CircleTrackerGoal goal;
+  goal.Ax = Ax;
+  goal.Ay = Ay;
+  goal.T = T;
+  goal.duration = duration;
+
+  circle_tracker_client_.sendGoal(goal, boost::bind(&MAVManager::circle_tracker_done_callback, this, _1, _2), CircleClientType::SimpleActiveCallback(), CircleClientType::SimpleFeedbackCallback());
+
+  return this->transition(circle_tracker_str);
+}
+
+bool MAVManager::lissajous(float x_amp, float y_amp, float z_amp, float yaw_amp, float x_num_periods, float y_num_periods, float z_num_periods,
+                           float yaw_num_periods, float period, float num_cycles, float ramp_time)
+{
+  if (!this->motors() || status_ != FLYING)
+  {
+    ROS_WARN("The robot must be flying to execute a Lissajous.");
+    return false;
+  }
+
+  tracker_msgs::LissajousTrackerGoal goal;
+  goal.x_amp = x_amp;
+  goal.y_amp = y_amp;
+  goal.z_amp = z_amp;
+  goal.yaw_amp = yaw_amp;
+  goal.x_num_periods = x_num_periods;
+  goal.y_num_periods = y_num_periods;
+  goal.z_num_periods = z_num_periods;
+  goal.yaw_num_periods = yaw_num_periods;
+  goal.period = period;
+  goal.num_cycles = num_cycles;
+  goal.ramp_time = ramp_time;
+
+  lissajous_tracker_client_.sendGoal(goal, boost::bind(&MAVManager::lissajous_tracker_done_callback, this, _1, _2), LissajousClientType::SimpleActiveCallback(), LissajousClientType::SimpleFeedbackCallback());
+
+  return this->transition(lissajous_tracker_str);
+}
+
+bool MAVManager::compound_lissajous(float x_amp[2], float y_amp[2], float z_amp[2], float yaw_amp[2], float x_num_periods[2], float y_num_periods[2], float z_num_periods[2],
+                                    float yaw_num_periods[2], float period[2], float num_cycles[2], float ramp_time[2])
+{
+  if (!this->motors() || status_ != FLYING)
+  {
+    ROS_WARN("The robot must be flying to execute a Lissajous.");
+    return false;
+  }
+
+  tracker_msgs::LissajousAdderGoal goal;
+  goal.x_amp[0] = x_amp[0];
+  goal.x_amp[1] = x_amp[1];
+  goal.y_amp[0] = y_amp[0];
+  goal.y_amp[1] = y_amp[1];
+  goal.z_amp[0] = z_amp[0];
+  goal.z_amp[1] = z_amp[1];
+  goal.yaw_amp[0] = yaw_amp[0];
+  goal.yaw_amp[1] = yaw_amp[1];
+  goal.x_num_periods[0] = x_num_periods[0];
+  goal.x_num_periods[1] = x_num_periods[1];
+  goal.y_num_periods[0] = y_num_periods[0];
+  goal.y_num_periods[1] = y_num_periods[1];
+  goal.z_num_periods[0] = z_num_periods[0];
+  goal.z_num_periods[1] = z_num_periods[1];
+  goal.yaw_num_periods[0] = yaw_num_periods[0];
+  goal.yaw_num_periods[1] = yaw_num_periods[1];
+  goal.period[0] = period[0];
+  goal.period[1] = period[1];
+  goal.num_cycles[0] = num_cycles[0];
+  goal.num_cycles[1] = num_cycles[1];
+  goal.ramp_time[0] = ramp_time[0];
+  goal.ramp_time[1] = ramp_time[1];
+
+  lissajous_adder_client_.sendGoal(goal, boost::bind(&MAVManager::lissajous_adder_done_callback, this, _1, _2), CompoundLissajousClientType::SimpleActiveCallback(), CompoundLissajousClientType::SimpleFeedbackCallback());
+
+  return this->transition(lissajous_adder_str);
+}
+
 // World Velocity commands
 bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw, bool use_position_feedback) {
 
@@ -292,24 +440,24 @@ bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw, boo
     return false;
   }
 
-  quadrotor_msgs::FlatOutputs goal;
-  goal.x = x;
-  goal.y = y;
-  goal.z = z;
-  goal.yaw = yaw;
+  tracker_msgs::VelocityGoal goal;
+  goal.header.stamp = ros::Time::now();
+  goal.vx = x;
+  goal.vy = y;
+  goal.vz = z;
+  goal.vyaw = yaw;
+  goal.use_position_gains = use_position_feedback;
 
-  if (use_position_feedback)
-    pub_goal_position_velocity_.publish(goal);
-  else
-    pub_goal_velocity_.publish(goal);
+  pub_goal_velocity_.publish(goal);
 
   ROS_INFO("Desired World velocity: (%1.4f, %1.4f, %1.4f, %1.4f)",
-      goal.x, goal.y, goal.z, goal.yaw);
+           goal.vx, goal.vy, goal.vz, goal.vyaw);
 
   // Since this could be called quite often,
   // only try to transition if it is not the active tracker.
-  if (active_tracker_.compare(velocity_tracker_str) != 0)
+  if (active_tracker_.compare(velocity_tracker_str) != 0) {
     return this->transition(velocity_tracker_str);
+  }
 
   return true;
 }
@@ -368,6 +516,27 @@ bool MAVManager::setSO3Command(const quadrotor_msgs::SO3Command &msg) {
   return flag;
 }
 
+bool MAVManager::setTRPYCommand(const quadrotor_msgs::TRPYCommand &msg) {
+
+  // Note: To enable motors, the motors method must be used
+  if (!this->motors())
+  {
+    ROS_WARN("Refusing to publish an SO3Command until motors have been enabled using the motors method.");
+    return false;
+  }
+
+  // Since this could be called quite often,
+  // only try to transition if it is not the active tracker.
+  bool flag(true);
+  if (active_tracker_.compare(null_tracker_str) != 0)
+    flag = this->transition(null_tracker_str);
+
+  if (flag)
+    pub_trpy_command_.publish(msg);
+
+  return flag;
+}
+
 bool MAVManager::useNullTracker() {
 
   if (active_tracker_.compare(null_tracker_str) != 0)
@@ -403,17 +572,23 @@ bool MAVManager::set_motors(bool motors) {
 
   // Publish a couple so3_commands to ensure motors are or are not spinning
   quadrotor_msgs::SO3Command so3_cmd;
+  so3_cmd.header.stamp = ros::Time::now();
   so3_cmd.force.z = FLT_MIN;
   so3_cmd.orientation.w = 1.0;
   so3_cmd.aux.enable_motors = motors;
 
+  quadrotor_msgs::TRPYCommand trpy_cmd;
+  trpy_cmd.thrust = FLT_MIN;
+  trpy_cmd.aux.enable_motors = motors;
+
   // Queue a few to make sure the signal gets through.
   // Also, the crazyflie interface throttles commands to 30 Hz, so this needs
   // to have a sufficent duration.
-  for (int i=0; i<10; i++)
+  for (int i = 0; i < 10; i++)
   {
     pub_so3_command_.publish(so3_cmd);
-    ros::Duration(1.0/100.0).sleep();
+    pub_trpy_command_.publish(trpy_cmd);
+    ros::Duration(1.0 / 100.0).sleep();
   }
 
   motors_ = motors;
@@ -425,7 +600,7 @@ void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr &msg) {
   last_imu_t_ = ros::Time::now();
 
   imu_q_ = Quat(msg->orientation.w, msg->orientation.x,
-      msg->orientation.y, msg->orientation.z);
+                msg->orientation.y, msg->orientation.z);
 
   this->heartbeat();
 }
@@ -435,7 +610,7 @@ void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg)
   last_imu_t_ = ros::Time::now();
 
   imu_q_ = Quat(msg->orientation.w, msg->orientation.x,
-      msg->orientation.y, msg->orientation.z);
+                msg->orientation.y, msg->orientation.z);
 
   voltage_ = msg->voltage;
   pressure_dheight_ = msg->pressure_dheight;
@@ -449,9 +624,8 @@ void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg)
   this->heartbeat();
 }
 
-void MAVManager::tracker_status_cb(const quadrotor_msgs::TrackerStatus::ConstPtr &msg) {
-  active_tracker_ = msg->tracker.c_str();
-  tracker_status_ = msg->status;
+void MAVManager::tracker_status_cb(const tracker_msgs::TrackerStatus::ConstPtr &msg) {
+  active_tracker_ = msg->tracker;
 }
 
 void MAVManager::heartbeat_cb(const std_msgs::Empty::ConstPtr &msg) {
@@ -466,7 +640,7 @@ void MAVManager::heartbeat() {
   // Only need to do monitoring at the specified frequency
   ros::Time t = ros::Time::now();
   float dt = (t - last_heartbeat_t_).toSec();
-  if (dt < 1/freq)
+  if (dt < 1 / freq)
     return;
   else
     last_heartbeat_t_ = t;
@@ -526,7 +700,7 @@ void MAVManager::heartbeat() {
       // Reset the timer so we don't keep calling ehover
       attitude_limit_timer = 0;
       ROS_WARN("Attitude exceeded threshold of %2.2f deg! Geodesic = %2.2f deg. Entering emergency hover.",
-          max_attitude_angle_ * 180.0f / M_PI, geodesic * 180.0f / M_PI);
+               max_attitude_angle_ * 180.0f / M_PI, geodesic * 180.0f / M_PI);
       this->ehover();
     }
   }
@@ -621,10 +795,10 @@ bool MAVManager::hover() {
 
     // xf = xo + vo * t + 1/2 * a * t^2
     Vec4 goal(
-        pos_(0) + vel_(0)  * t     + 0.5f * acc(0)    * t     * t,
-        pos_(1) + vel_(1)  * t     + 0.5f * acc(1)    * t     * t,
-        pos_(2) + vel_(2)  * t     + 0.5f * acc(2)    * t     * t,
-        yaw_);//    + yaw_dot_ * t_yaw + 0.5 * yaw_a_des * t_yaw * t_yaw);
+      pos_(0) + vel_(0)  * t     + 0.5f * acc(0)    * t     * t,
+      pos_(1) + vel_(1)  * t     + 0.5f * acc(1)    * t     * t,
+      pos_(2) + vel_(2)  * t     + 0.5f * acc(2)    * t     * t,
+      yaw_);//    + yaw_dot_ * t_yaw + 0.5 * yaw_a_des * t_yaw * t_yaw);
 
     Vec2 v_and_a_des(std::sqrt(vel_.dot(vel_)), a_des);
 
@@ -644,23 +818,25 @@ bool MAVManager::ehover() {
     return false;
   }
 
-  quadrotor_msgs::LineTrackerGoal goal;
+  tracker_msgs::LineTrackerGoal goal;
   goal.x = pos_(0);
   goal.y = pos_(1);
   goal.z = pos_(2);
-  pub_goal_line_tracker_distance_.publish(goal);
+  line_tracker_distance_client_.sendGoal(goal,
+                                         boost::bind(&MAVManager::tracker_done_callback, this, _1, _2),
+                                         ClientType::SimpleActiveCallback(),
+                                         ClientType::SimpleFeedbackCallback());
 
   return this->transition(line_tracker_distance);
 }
 
 bool MAVManager::transition(const std::string &tracker_str) {
   // usleep(100000);
-  trackers_manager::Transition transition_cmd;
+  tracker_msgs::Transition transition_cmd;
   transition_cmd.request.tracker = tracker_str;
 
-  if (srv_transition_.call(transition_cmd)) {
+  if (srv_transition_.call(transition_cmd) && transition_cmd.response.success) {
     active_tracker_ = tracker_str;
-    tracker_status_ = quadrotor_msgs::TrackerStatus::ACTIVE;
     ROS_INFO("Current tracker: %s", tracker_str.c_str());
     return true;
   }
@@ -679,3 +855,4 @@ bool MAVManager::have_recent_imu() {
 bool MAVManager::have_recent_output_data() {
   return (ros::Time::now() - last_output_data_t_).toSec() < 0.1;
 }
+} // namespace mav_manager

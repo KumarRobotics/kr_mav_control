@@ -1,7 +1,9 @@
+// TODO: make into actionlib
+
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
+#include <tracker_msgs/TrackerStatus.h>
 #include <quadrotor_msgs/LineTrackerGoal.h>
-#include <quadrotor_msgs/TrackerStatus.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
 #include <initial_conditions.h>
@@ -15,8 +17,8 @@ class LineTrackerTrapezoid : public trackers_manager::Tracker
   bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  const quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
-  const quadrotor_msgs::TrackerStatus::Ptr status();
+  quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+  uint8_t status() const;
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
@@ -86,7 +88,7 @@ void LineTrackerTrapezoid::Deactivate(void)
   active_ = false;
 }
 
-const quadrotor_msgs::PositionCommand::ConstPtr LineTrackerTrapezoid::update(const nav_msgs::Odometry::ConstPtr &msg)
+quadrotor_msgs::PositionCommand::ConstPtr LineTrackerTrapezoid::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   pos_(0) = msg->pose.pose.position.x;
   pos_(1) = msg->pose.pose.position.y;
@@ -207,18 +209,11 @@ void LineTrackerTrapezoid::goal_callback(const quadrotor_msgs::LineTrackerGoal::
   goal_reached_ = false;
 }
 
-const quadrotor_msgs::TrackerStatus::Ptr LineTrackerTrapezoid::status()
+uint8_t LineTrackerTrapezoid::status() const
 {
-  if(!active_)
-    return quadrotor_msgs::TrackerStatus::Ptr();
-
-  quadrotor_msgs::TrackerStatus::Ptr msg(new quadrotor_msgs::TrackerStatus);
-
-  msg->status = goal_reached_ ?
-          static_cast<uint8_t>(quadrotor_msgs::TrackerStatus::SUCCEEDED) :
-          static_cast<uint8_t>(quadrotor_msgs::TrackerStatus::ACTIVE);
-
-  return msg;
+  return goal_reached_ ?
+             static_cast<uint8_t>(tracker_msgs::TrackerStatus::SUCCEEDED) :
+             static_cast<uint8_t>(tracker_msgs::TrackerStatus::ACTIVE);
 }
 
 #include <pluginlib/class_list_macros.h>

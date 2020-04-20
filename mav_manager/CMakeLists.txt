@@ -14,22 +14,24 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   geometry_msgs
   quadrotor_msgs
-  trackers_manager
-  std_trackers
+  tracker_msgs
   std_msgs
   std_srvs
-  cmake_modules
-  message_generation)
+  message_generation
+  actionlib)
 
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIR})
+include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
 add_service_files(
   DIRECTORY srv
   FILES
     Vec4.srv
     GoalTimed.srv
+    Circle.srv
+    Lissajous.srv
+    CompoundLissajous.srv
 )
 generate_messages()
 
@@ -42,17 +44,16 @@ catkin_package(
     sensor_msgs
     geometry_msgs
     quadrotor_msgs
-    trackers_manager
-    std_trackers
+    tracker_msgs
     std_msgs
     message_runtime
-  DEPENDS Eigen)
+  DEPENDS EIGEN3)
 
 add_library(mav_manager src/manager.cpp)
 add_dependencies(mav_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(mav_manager ${catkin_LIBRARIES})
 
-add_executable(mav_services src/sample.cpp)
+add_executable(mav_services src/mav_services.cpp)
 target_link_libraries(mav_services mav_manager ${catkin_LIBRARIES})
 
 install(TARGETS

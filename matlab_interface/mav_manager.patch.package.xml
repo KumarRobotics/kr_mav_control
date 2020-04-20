@@ -1,0 +1,34 @@
+<package>
+  <name>mav_manager</name>
+  <version>1.0.0</version>
+  <description>
+    This package provides tools to interface with the quadrotor_control stack
+  </description>
+  <maintainer email="jut@seas.upenn.edu">Justin Thomas</maintainer>
+  <license>BSD</license>
+
+  <!-- TODO: Remove unnecessary dependencies -->
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>quadrotor_msgs</build_depend>
+  <build_depend>tracker_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_srvs</build_depend>
+
+  <!-- Dependencies needed after this package is compiled. -->
+  <run_depend>roscpp</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>quadrotor_msgs</run_depend>
+  <run_depend>tracker_msgs</run_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>std_srvs</run_depend>
+</package>
