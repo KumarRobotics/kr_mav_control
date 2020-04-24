@@ -49,7 +49,7 @@ uint8_t SSP_receiption_complete=1;
 
 uint8_t data_sent_to_HL=1;
 
-void SSPHandler (void) __irq
+void __irq SSPHandler (void)
 {
     int regValue;
     uint16_t input_data;
