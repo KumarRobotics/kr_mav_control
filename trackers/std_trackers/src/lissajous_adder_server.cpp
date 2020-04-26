@@ -28,7 +28,6 @@ class LissajousAdderAction : public trackers_manager::Tracker
     std::shared_ptr<ServerType> tracker_server_;
     ros::Publisher path_pub_;
 
-    double kx_[3], kv_[3];
     InitialConditions ICs_;
     LissajousGenerator generator_1_, generator_2_;
     double distance_traveled_;
@@ -42,13 +41,6 @@ LissajousAdderAction::LissajousAdderAction(void)
 
 void LissajousAdderAction::Initialize(const ros::NodeHandle &nh)
 {
-  nh.param("gains/pos/x", kx_[0], 2.5);
-  nh.param("gains/pos/y", kx_[1], 2.5);
-  nh.param("gains/pos/z", kx_[2], 5.0);
-  nh.param("gains/vel/x", kv_[0], 2.2);
-  nh.param("gains/vel/y", kv_[1], 2.2);
-  nh.param("gains/vel/z", kv_[2], 4.0);
-
   ros::NodeHandle priv_nh(nh, "lissajous_adder");
   priv_nh.param<std::string>("frame_id", frame_id_, "world");
   path_pub_ = priv_nh.advertise<nav_msgs::Path>("lissajous_path", 1);
@@ -131,8 +123,6 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav
   {
     cmd1->header.stamp = ros::Time::now();
     cmd1->header.frame_id = msg->header.frame_id;
-    cmd1->kx[0] = kx_[0], cmd1->kx[1] = kx_[1], cmd1->kx[2] = kx_[2];
-    cmd1->kv[0] = kv_[0], cmd1->kv[1] = kv_[1], cmd1->kv[2] = kv_[2];
     cmd1->position.x += ICs_.pos()(0) + cmd2->position.x;
     cmd1->position.y += ICs_.pos()(1) + cmd2->position.y;
     cmd1->position.z += ICs_.pos()(2) + cmd2->position.z;

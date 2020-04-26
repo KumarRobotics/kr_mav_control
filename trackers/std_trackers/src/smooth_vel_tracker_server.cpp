@@ -45,7 +45,6 @@ class SmoothVelTrackerAction : public trackers_manager::Tracker
   ros::Time start_time_;
   Eigen::Vector3f start_pos_, dir_;
   Eigen::Matrix<float, 7, 1> vel_coeffs_;
-  float kx_[3], kv_[3];
   float current_traj_length_;
   Eigen::Vector3f prev_pos_;
 };
@@ -57,13 +56,6 @@ SmoothVelTrackerAction::SmoothVelTrackerAction(void)
 
 void SmoothVelTrackerAction::Initialize(const ros::NodeHandle &nh)
 {
-  nh.param("gains/pos/x", kx_[0], 2.5f);
-  nh.param("gains/pos/y", kx_[1], 2.5f);
-  nh.param("gains/pos/z", kx_[2], 5.0f);
-  nh.param("gains/vel/x", kv_[0], 2.2f);
-  nh.param("gains/vel/y", kv_[1], 2.2f);
-  nh.param("gains/vel/z", kv_[2], 4.0f);
-
   ros::NodeHandle priv_nh(nh, "smooth_vel_tracker");
 
   // Set up the action server.
@@ -129,8 +121,6 @@ quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTrackerAction::update(
   quadrotor_msgs::PositionCommand::Ptr cmd(new quadrotor_msgs::PositionCommand);
   cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
-  cmd->kx[0] = kx_[0], cmd->kx[1] = kx_[1], cmd->kx[2] = kx_[2];
-  cmd->kv[0] = kv_[0], cmd->kv[1] = kv_[1], cmd->kv[2] = kv_[2];
 
   // Get elapsed time
   const ros::Duration elapsed_time = t_now - start_time_;

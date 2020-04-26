@@ -51,8 +51,6 @@ class TrajectoryTracker : public trackers_manager::Tracker
 
   tracker_msgs::TrajectoryTrackerGoal goal_;
 
-  double kx_[3], kv_[3];
-
   float current_traj_length_;
 };
 
@@ -60,13 +58,6 @@ TrajectoryTracker::TrajectoryTracker(void) : pos_set_(false), goal_set_(false), 
 
 void TrajectoryTracker::Initialize(const ros::NodeHandle &nh)
 {
-  nh.param("gains/pos/x", kx_[0], 2.5);
-  nh.param("gains/pos/y", kx_[1], 2.5);
-  nh.param("gains/pos/z", kx_[2], 5.0);
-  nh.param("gains/vel/x", kv_[0], 2.2);
-  nh.param("gains/vel/y", kv_[1], 2.2);
-  nh.param("gains/vel/z", kv_[2], 4.0);
-
   ros::NodeHandle priv_nh(nh, "trajectory_tracker");
 
   priv_nh.param("max_vel_des", max_v_des_, 1.0f);
@@ -147,8 +138,6 @@ quadrotor_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_ms
   auto cmd = boost::make_shared<quadrotor_msgs::PositionCommand>();
   cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
-  cmd->kx[0] = kx_[0], cmd->kx[1] = kx_[1], cmd->kx[2] = kx_[2];
-  cmd->kv[0] = kv_[0], cmd->kv[1] = kv_[1], cmd->kv[2] = kv_[2];
 
   if(goal_set_)
   {
