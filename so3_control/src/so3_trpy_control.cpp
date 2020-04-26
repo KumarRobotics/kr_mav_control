@@ -7,6 +7,8 @@
 #include <std_msgs/Bool.h>
 #include <Eigen/Geometry>
 #include <so3_control/SO3Control.h>
+#include <dynamic_reconfigure/server.h>
+#include <so3_control/SO3Config.h>
 
 #define CLAMP(x,min,max) ((x) < (min)) ? (min) : ((x) > (max)) ? (max) : (x)
 
@@ -37,6 +39,7 @@ class SO3TRPYControlNodelet : public nodelet::Nodelet
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void enable_motors_callback(const std_msgs::Bool::ConstPtr &msg);
   void corrections_callback(const quadrotor_msgs::Corrections::ConstPtr &msg);
+  void cfg_callback(so3_control::SO3Config &config, uint32_t level);
 
   SO3Control controller_;
   ros::Publisher trpy_command_pub_;
@@ -45,7 +48,7 @@ class SO3TRPYControlNodelet : public nodelet::Nodelet
   bool odom_set_, position_cmd_updated_, position_cmd_init_;
   std::string frame_id_;
 
-  Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, kx_, kv_, ki_, ki_b_;
+  Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, config_kx_, config_kv_, config_ki_, config_kib_, kx_, kv_;
   float des_yaw_, des_yaw_dot_, yaw_int_;
   bool enable_motors_, use_external_yaw_;
   float kR_[3], kOm_[3], corrections_[3];
@@ -53,6 +56,10 @@ class SO3TRPYControlNodelet : public nodelet::Nodelet
   float mass_;
   const float g_;
   Eigen::Quaternionf current_orientation_;
+
+  boost::recursive_mutex config_mutex_;
+  typedef dynamic_reconfigure::Server<so3_control::SO3Config> ReconfigureServer;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 };
 
 
@@ -66,14 +73,14 @@ void SO3TRPYControlNodelet::publishCommand()
 
   float ki_yaw = 0;
   Eigen::Vector3f ki = Eigen::Vector3f::Zero();
-  Eigen::Vector3f ki_b = Eigen::Vector3f::Zero();
+  Eigen::Vector3f kib = Eigen::Vector3f::Zero();
   if(enable_motors_)
   {
     ki_yaw = ki_yaw_;
-    ki = ki_;
-    ki_b = ki_b_;
+    ki = config_ki_;
+    kib = config_kib_;
   }
-  controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki, ki_b);
+  controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki, kib);
 
   const Eigen::Vector3f &force = controller_.getComputedForce();
   const Eigen::Quaternionf &q_des = controller_.getComputedOrientation();
@@ -149,8 +156,14 @@ void SO3TRPYControlNodelet::position_cmd_callback(const quadrotor_msgs::Position
   des_vel_ = Eigen::Vector3f(cmd->velocity.x, cmd->velocity.y, cmd->velocity.z);
   des_acc_ = Eigen::Vector3f(cmd->acceleration.x, cmd->acceleration.y, cmd->acceleration.z);
   des_jrk_ = Eigen::Vector3f(cmd->jerk.x, cmd->jerk.y, cmd->jerk.z);
-  kx_ = Eigen::Vector3f(cmd->kx[0], cmd->kx[1], cmd->kx[2]);
-  kv_ = Eigen::Vector3f(cmd->kv[0], cmd->kv[1], cmd->kv[2]);
+
+  // Check use_msg_gains_flag to decide whether to use gains from the msg or config
+  kx_[0] = (cmd->use_msg_gains_flags & cmd->USE_MSG_GAINS_POSITION_X) ? cmd->kx[0] : config_kx_[0];
+  kx_[1] = (cmd->use_msg_gains_flags & cmd->USE_MSG_GAINS_POSITION_Y) ? cmd->kx[1] : config_kx_[1];
+  kx_[2] = (cmd->use_msg_gains_flags & cmd->USE_MSG_GAINS_POSITION_Z) ? cmd->kx[2] : config_kx_[2];
+  kv_[0] = (cmd->use_msg_gains_flags & cmd->USE_MSG_GAINS_VELOCITY_X) ? cmd->kv[0] : config_kv_[0];
+  kv_[1] = (cmd->use_msg_gains_flags & cmd->USE_MSG_GAINS_VELOCITY_Y) ? cmd->kv[1] : config_kv_[1];
+  kv_[2] = (cmd->use_msg_gains_flags & cmd->USE_MSG_GAINS_VELOCITY_Z) ? cmd->kv[2] : config_kv_[2];
 
   des_yaw_ = cmd->yaw;
   des_yaw_dot_ = cmd->yaw_dot;
@@ -213,6 +226,79 @@ void SO3TRPYControlNodelet::corrections_callback(const quadrotor_msgs::Correctio
   corrections_[2] = msg->angle_corrections[1];
 }
 
+void SO3TRPYControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t level)
+{
+  if (level == 0)
+  {
+    NODELET_DEBUG_STREAM("Nothing changed. level: " << level);
+    return;
+  }
+
+  if (level & (1 << 0))
+  {
+    config_kx_[0]  = config.kp_x;
+    config_kx_[1]  = config.kp_y;
+    config_kx_[2]  = config.kp_z;
+
+    config_kv_[0]  = config.kd_x;
+    config_kv_[1]  = config.kd_y;
+    config_kv_[2]  = config.kd_z;
+
+    NODELET_INFO("Position Gains set to kp: {%2.3g, %2.3g, %2.3g}, kd: {%2.3g, %2.3g, %2.3g}", config_kx_[0],
+                 config_kx_[1], config_kx_[2], config_kv_[0], config_kv_[1], config_kv_[2]);
+  }
+
+  if (level & (1 << 1))
+  {
+    config_ki_[0]  = config.ki_x;
+    config_ki_[1]  = config.ki_y;
+    config_ki_[2]  = config.ki_z;
+
+    config_kib_[0] = config.kib_x;
+    config_kib_[1] = config.kib_y;
+    config_kib_[2] = config.kib_z;
+
+    NODELET_INFO("Integral Gains set to ki: {%2.2g, %2.2g, %2.2g}, kib: {%2.2g, %2.2g, %2.2g}",
+                                        config_ki_[0], config_ki_[1], config_ki_[2], config_kib_[0], config_kib_[1], config_kib_[2]);
+  }
+
+  if (level & (1 << 2))
+  {
+    kR_[0]  = config.rot_x;
+    kR_[1]  = config.rot_y;
+    kR_[2]  = config.rot_z;
+
+    kOm_[0]  = config.ang_x;
+    kOm_[1]  = config.ang_y;
+    kOm_[2]  = config.ang_z;
+
+    NODELET_INFO("Attitude Gains set to kp: {%2.2g, %2.2g, %2.2g}, kd: {%2.2g, %2.2g, %2.2g}",
+                                       kR_[0], kR_[1], kR_[2], kOm_[0], kOm_[1], kOm_[2]);
+  }
+
+  if (level & (1 << 3))
+  {
+    corrections_[0] = config.kf_correction;
+    corrections_[1] = config.roll_correction;
+    corrections_[2] = config.pitch_correction;
+    NODELET_INFO("Corrections set to kf: %2.2g, roll: %2.2g, pitch: %2.2g",
+        corrections_[0], corrections_[1], corrections_[2]);
+  }
+
+  if (level & (1 << 4))
+  {
+      controller_.setMaxIntegral(config.max_pos_int);
+      controller_.setMaxIntegralBody(config.max_pos_int_b);
+      controller_.setMaxTiltAngle(config.max_tilt_angle);
+
+      NODELET_INFO("Maxes set to Integral: %2.2g, Integral Body: %2.2g, Tilt Angle (rad): %2.2g",
+          config.max_pos_int, config.max_pos_int_b, config.max_tilt_angle);
+  }
+
+  NODELET_WARN_STREAM_COND(level != std::numeric_limits<uint32_t>::max() && (level > (1 << 4)),
+      "so3_control dynamic reconfigure called, but with unknown level: " << level);
+}
+
 void SO3TRPYControlNodelet::onInit()
 {
   ros::NodeHandle n(getPrivateNodeHandle());
@@ -221,41 +307,74 @@ void SO3TRPYControlNodelet::onInit()
   n.param("quadrotor_name", quadrotor_name, std::string("quadrotor"));
   frame_id_ = "/" + quadrotor_name;
 
-  double mass;
-  n.param("mass", mass, 0.5);
+  float mass;
+  n.param("mass", mass, 0.5f);
   mass_ = mass;
   controller_.setMass(mass_);
   controller_.setGravity(g_);
 
+  // Dynamic reconfigure struct
+  so3_control::SO3Config config;
+
   n.param("use_external_yaw", use_external_yaw_, true);
 
-  double ki_x, ki_y, ki_z, ki_yaw;
-  n.param("gains/ki/x", ki_x, 0.0);
-  n.param("gains/ki/y", ki_y, 0.0);
-  n.param("gains/ki/z", ki_z, 0.0);
-  n.param("gains/ki/yaw", ki_yaw, 0.0);
-  ki_[0] = ki_x, ki_[1] = ki_y, ki_[2] = ki_z;
-  ki_yaw_ = ki_yaw;
+  n.param("gains/pos/x", config_kx_[0],  7.4f);
+  n.param("gains/pos/y", config_kx_[1],  7.4f);
+  n.param("gains/pos/z", config_kx_[2], 10.4f);
+  kx_[0] = config_kx_[0]; kx_[1] = config_kx_[1]; kx_[2] = config_kx_[2];
+  config.kp_x = config_kx_[0]; config.kp_y = config_kx_[1]; config.kp_z = config_kx_[2];
 
-  double kR[3], kOm[3];
-  n.param("gains/rot/x", kR[0], 1.5);
-  n.param("gains/rot/y", kR[1], 1.5);
-  n.param("gains/rot/z", kR[2], 1.0);
-  n.param("gains/ang/x", kOm[0], 0.13);
-  n.param("gains/ang/y", kOm[1], 0.13);
-  n.param("gains/ang/z", kOm[2], 0.1);
-  kR_[0] = kR[0], kR_[1] = kR[1], kR_[2] = kR[2];
-  kOm_[0] = kOm[0], kOm_[1] = kOm[1], kOm_[2] = kOm[2];
+  n.param("gains/vel/x", config_kv_[0],  4.8f);
+  n.param("gains/vel/y", config_kv_[1],  4.8f);
+  n.param("gains/vel/z", config_kv_[2],  6.0f);
+  kv_[0] = config_kv_[0]; kv_[1] = config_kv_[1]; kv_[2] = config_kv_[2];
+  config.kd_x = config_kv_[0]; config.kd_y = config_kv_[1]; config.kd_z = config_kv_[2];
 
-  double corrections[3];
-  n.param("corrections/kf", corrections[0], 0.0);
-  n.param("corrections/r", corrections[1], 0.0);
-  n.param("corrections/p", corrections[2], 0.0);
-  corrections_[0] = corrections[0], corrections_[1] = corrections[1], corrections_[2] = corrections[2];
+  n.param("gains/ki/x", config_ki_[0], 0.0f);
+  n.param("gains/ki/y", config_ki_[1], 0.0f);
+  n.param("gains/ki/z", config_ki_[2], 0.0f);
+  config.ki_x = config_ki_[0]; config.ki_y = config_ki_[1]; config.ki_z = config_ki_[2];
 
-  double max_tilt_angle;
-  n.param("max_tilt_angle", max_tilt_angle, M_PI);
+  n.param("gains/ki/yaw", ki_yaw_, 0.0f);
+
+  n.param("gains/kib/x", config_kib_[0], 0.0f);
+  n.param("gains/kib/y", config_kib_[1], 0.0f);
+  n.param("gains/kib/z", config_kib_[2], 0.0f);
+  config.kib_x = config_kib_[0]; config.kib_y = config_kib_[1]; config.kib_z = config_kib_[2];
+
+  n.param("gains/rot/x", kR_[0], 1.5f);
+  n.param("gains/rot/y", kR_[1], 1.5f);
+  n.param("gains/rot/z", kR_[2], 1.0f);
+  n.param("gains/ang/x", kOm_[0], 0.13f);
+  n.param("gains/ang/y", kOm_[1], 0.13f);
+  n.param("gains/ang/z", kOm_[2], 0.1f);
+  config.rot_x = kR_[0];  config.rot_y = kR_[1];  config.rot_z =  kR_[2];
+  config.ang_x = kOm_[0]; config.ang_y = kOm_[1]; config.ang_z = kOm_[2];
+
+  n.param("corrections/kf", corrections_[0], 0.0f);
+  n.param("corrections/r", corrections_[1], 0.0f);
+  n.param("corrections/p", corrections_[2], 0.0f);
+  config.kf_correction    = corrections_[0];
+  config.roll_correction  = corrections_[1];
+  config.pitch_correction = corrections_[2];
+
+  float max_pos_int, max_pos_int_b;
+  n.param("max_pos_int", max_pos_int, 0.5f);
+  n.param("mas_pos_int_b", max_pos_int_b, 0.5f);
+  controller_.setMaxIntegral(max_pos_int);
+  controller_.setMaxIntegralBody(max_pos_int_b);
+  config.max_pos_int = max_pos_int;
+  config.max_pos_int_b = max_pos_int_b;
+
+  float max_tilt_angle;
+  n.param("max_tilt_angle", max_tilt_angle, static_cast<float>(M_PI));
   controller_.setMaxTiltAngle(max_tilt_angle);
+  config.max_tilt_angle = max_tilt_angle;
+
+  // Initialize dynamic reconfigure
+  reconfigure_server_ = boost::make_shared<ReconfigureServer>(config_mutex_, n);
+  reconfigure_server_->updateConfig(config);
+  reconfigure_server_->setCallback(boost::bind(&SO3TRPYControlNodelet::cfg_callback, this, _1, _2));
 
   trpy_command_pub_ = n.advertise<quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
 
