@@ -49,7 +49,7 @@ class SO3ControlNodelet : public nodelet::Nodelet
   bool position_cmd_updated_, position_cmd_init_;
   std::string frame_id_;
 
-  Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, kx_, kv_, ki_, kib_;
+  Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, config_kx_, config_kv_, config_ki_, config_kib_, kx_, kv_;
   float des_yaw_, des_yaw_dot_;
   float current_yaw_;
   bool enable_motors_, use_external_yaw_, have_odom_;
@@ -59,8 +59,7 @@ class SO3ControlNodelet : public nodelet::Nodelet
   Eigen::Quaternionf current_orientation_;
 
   boost::recursive_mutex config_mutex_;
-  typedef so3_control::SO3Config Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  typedef dynamic_reconfigure::Server<so3_control::SO3Config> ReconfigureServer;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 };
 
@@ -77,8 +76,8 @@ void SO3ControlNodelet::publishSO3Command()
   Eigen::Vector3f kib = Eigen::Vector3f::Zero();
   if(enable_motors_)
   {
-    ki = ki_;
-    kib = kib_;
+    ki = config_ki_;
+    kib = config_kib_;
   }
 
   controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki, kib);
@@ -134,19 +133,13 @@ void SO3ControlNodelet::position_cmd_callback(const quadrotor_msgs::PositionComm
   des_acc_ = Eigen::Vector3f(cmd->acceleration.x, cmd->acceleration.y, cmd->acceleration.z);
   des_jrk_ = Eigen::Vector3f(cmd->jerk.x, cmd->jerk.y, cmd->jerk.z);
 
-  // If we want to set new gains
-  if (cmd->use_gains_flag == 2)
-  {
-    // TODO: Update config server with new config
-  }
-
-  // Use these gains temporarily
-  if (cmd->use_gains_flag == 1)
-  {
-    // TODO:
-    // kx_ = Eigen::Vector3f(cmd->kx[0], cmd->kx[1], cmd->kx[2]);
-    // kv_ = Eigen::Vector3f(cmd->kv[0], cmd->kv[1], cmd->kv[2]);
-  }
+  // Check use_msg_gains_flag to decide whether to use gains from the msg or config
+  kx_[0] = (cmd->use_msg_gains_flags & cmd->USE_MSG_GAINS_POSITION_X) ? cmd->kx[0] : config_kx_[0];
+  kx_[1] = (cmd->use_msg_gains_flags & cmd->USE_MSG_GAINS_POSITION_Y) ? cmd->kx[1] : config_kx_[1];
+  kx_[2] = (cmd->use_msg_gains_flags & cmd->USE_MSG_GAINS_POSITION_Z) ? cmd->kx[2] : config_kx_[2];
+  kv_[0] = (cmd->use_msg_gains_flags & cmd->USE_MSG_GAINS_VELOCITY_X) ? cmd->kv[0] : config_kv_[0];
+  kv_[1] = (cmd->use_msg_gains_flags & cmd->USE_MSG_GAINS_VELOCITY_Y) ? cmd->kv[1] : config_kv_[1];
+  kv_[2] = (cmd->use_msg_gains_flags & cmd->USE_MSG_GAINS_VELOCITY_Z) ? cmd->kv[2] : config_kv_[2];
 
   des_yaw_ = cmd->yaw;
   des_yaw_dot_ = cmd->yaw_dot;
@@ -220,30 +213,30 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
 
   if (level & (1 << 0))
   {
-    kx_[0]  = config.kp_x;
-    kx_[1]  = config.kp_y;
-    kx_[2]  = config.kp_z;
+    config_kx_[0]  = config.kp_x;
+    config_kx_[1]  = config.kp_y;
+    config_kx_[2]  = config.kp_z;
 
-    kv_[0]  = config.kd_x;
-    kv_[1]  = config.kd_y;
-    kv_[2]  = config.kd_z;
+    config_kv_[0]  = config.kd_x;
+    config_kv_[1]  = config.kd_y;
+    config_kv_[2]  = config.kd_z;
 
-    NODELET_INFO("Position Gains set to kp: {%2.3g, %2.3g, %2.3g}, kd: {%2.3g, %2.3g, %2.3g}",
-                                         kx_[0], kx_[1], kx_[2], kv_[0], kv_[1], kv_[2]);
+    NODELET_INFO("Position Gains set to kp: {%2.3g, %2.3g, %2.3g}, kd: {%2.3g, %2.3g, %2.3g}", config_kx_[0],
+                 config_kx_[1], config_kx_[2], config_kv_[0], config_kv_[1], config_kv_[2]);
   }
 
   if (level & (1 << 1))
   {
-    ki_[0]  = config.ki_x;
-    ki_[1]  = config.ki_y;
-    ki_[2]  = config.ki_z;
+    config_ki_[0]  = config.ki_x;
+    config_ki_[1]  = config.ki_y;
+    config_ki_[2]  = config.ki_z;
 
-    kib_[0] = config.kib_x;
-    kib_[1] = config.kib_y;
-    kib_[2] = config.kib_z;
+    config_kib_[0] = config.kib_x;
+    config_kib_[1] = config.kib_y;
+    config_kib_[2] = config.kib_z;
 
     NODELET_INFO("Integral Gains set to ki: {%2.2g, %2.2g, %2.2g}, kib: {%2.2g, %2.2g, %2.2g}",
-                                        ki_[0], ki_[1], ki_[2], kib_[0], kib_[1], kib_[2]);
+                                        config_ki_[0], config_ki_[1], config_ki_[2], config_kib_[0], config_kib_[1], config_kib_[2]);
   }
 
   if (level & (1 << 2))
@@ -279,7 +272,7 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
           config.max_pos_int, config.max_pos_int_b, config.max_tilt_angle);
   }
 
-  NODELET_WARN_STREAM_COND(level != std::numeric_limits<uint32_t>::max() && level >= std::pow(2,5),
+  NODELET_WARN_STREAM_COND(level != std::numeric_limits<uint32_t>::max() && (level > (1 << 4)),
       "so3_control dynamic reconfigure called, but with unknown level: " << level);
 }
 
@@ -300,25 +293,27 @@ void SO3ControlNodelet::onInit(void)
 
   priv_nh.param("use_external_yaw", use_external_yaw_, true);
 
-  priv_nh.param("gains/pos/x", kx_[0],  7.4f);
-  priv_nh.param("gains/pos/y", kx_[1],  7.4f);
-  priv_nh.param("gains/pos/z", kx_[2], 10.4f);
-  config.kp_x = kx_[0]; config.kp_y = kx_[1]; config.kp_z = kx_[2];
+  priv_nh.param("gains/pos/x", config_kx_[0],  7.4f);
+  priv_nh.param("gains/pos/y", config_kx_[1],  7.4f);
+  priv_nh.param("gains/pos/z", config_kx_[2], 10.4f);
+  kx_[0] = config_kx_[0]; kx_[1] = config_kx_[1]; kx_[2] = config_kx_[2];
+  config.kp_x = config_kx_[0]; config.kp_y = config_kx_[1]; config.kp_z = config_kx_[2];
 
-  priv_nh.param("gains/vel/x", kv_[0],  4.8f);
-  priv_nh.param("gains/vel/y", kv_[1],  4.8f);
-  priv_nh.param("gains/vel/z", kv_[2],  6.0f);
-  config.kd_x = kv_[0]; config.kd_y = kv_[1]; config.kd_z = kv_[2];
+  priv_nh.param("gains/vel/x", config_kv_[0],  4.8f);
+  priv_nh.param("gains/vel/y", config_kv_[1],  4.8f);
+  priv_nh.param("gains/vel/z", config_kv_[2],  6.0f);
+  kv_[0] = config_kv_[0]; kv_[1] = config_kv_[1]; kv_[2] = config_kv_[2];
+  config.kd_x = config_kv_[0]; config.kd_y = config_kv_[1]; config.kd_z = config_kv_[2];
 
-  priv_nh.param("gains/ki/x", ki_[0], 0.0f);
-  priv_nh.param("gains/ki/y", ki_[1], 0.0f);
-  priv_nh.param("gains/ki/z", ki_[2], 0.0f);
-  config.ki_x = ki_[0]; config.ki_y = ki_[1]; config.ki_z = ki_[2];
+  priv_nh.param("gains/ki/x", config_ki_[0], 0.0f);
+  priv_nh.param("gains/ki/y", config_ki_[1], 0.0f);
+  priv_nh.param("gains/ki/z", config_ki_[2], 0.0f);
+  config.ki_x = config_ki_[0]; config.ki_y = config_ki_[1]; config.ki_z = config_ki_[2];
 
-  priv_nh.param("gains/kib/x", kib_[0], 0.0f);
-  priv_nh.param("gains/kib/y", kib_[1], 0.0f);
-  priv_nh.param("gains/kib/z", kib_[2], 0.0f);
-  config.kib_x = kib_[0]; config.kib_y = kib_[1]; config.kib_z = kib_[2];
+  priv_nh.param("gains/kib/x", config_kib_[0], 0.0f);
+  priv_nh.param("gains/kib/y", config_kib_[1], 0.0f);
+  priv_nh.param("gains/kib/z", config_kib_[2], 0.0f);
+  config.kib_x = config_kib_[0]; config.kib_y = config_kib_[1]; config.kib_z = config_kib_[2];
 
   priv_nh.param("gains/rot/x", kR_[0], 1.5f);
   priv_nh.param("gains/rot/y", kR_[1], 1.5f);
@@ -350,10 +345,9 @@ void SO3ControlNodelet::onInit(void)
   config.max_tilt_angle = max_tilt_angle;
 
   // Initialize dynamic reconfigure
-  reconfigure_server_.reset(new ReconfigureServer(config_mutex_, priv_nh));
+  reconfigure_server_ = boost::make_shared<ReconfigureServer>(config_mutex_, priv_nh);
   reconfigure_server_->updateConfig(config);
-  ReconfigureServer::CallbackType f = boost::bind(&SO3ControlNodelet::cfg_callback, this, _1, _2);
-  reconfigure_server_->setCallback(f);
+  reconfigure_server_->setCallback(boost::bind(&SO3ControlNodelet::cfg_callback, this, _1, _2));
 
   so3_command_pub_ = priv_nh.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
   command_viz_pub_ = priv_nh.advertise<geometry_msgs::PoseStamped>("cmd_viz", 10);
