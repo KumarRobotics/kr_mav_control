@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(pid_control)
 
+message(FATAL_ERROR "This package has not been updated for the the changes in \
+the PositionCommand message and does not work. Please use the controllers in \
+the so3_control package!")
+
 # set default build type
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
