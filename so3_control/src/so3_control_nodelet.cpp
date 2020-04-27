@@ -272,8 +272,8 @@ void SO3ControlNodelet::cfg_callback(so3_control::SO3Config &config, uint32_t le
           config.max_pos_int, config.max_pos_int_b, config.max_tilt_angle);
   }
 
-  NODELET_WARN_STREAM_COND(level != std::numeric_limits<uint32_t>::max() && (level > (1 << 4)),
-      "so3_control dynamic reconfigure called, but with unknown level: " << level);
+  NODELET_WARN_STREAM_COND(level != std::numeric_limits<uint32_t>::max() && (level >= (1 << 5)),
+                           "so3_control dynamic reconfigure called, but with unknown level: " << level);
 }
 
 void SO3ControlNodelet::onInit(void)
