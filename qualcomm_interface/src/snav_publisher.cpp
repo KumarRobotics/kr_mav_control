@@ -6,6 +6,10 @@
 #include <std_msgs/Bool.h>
 #include <sensor_msgs/BatteryState.h>
 #include <sensor_msgs/Joy.h>
+#include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 class SnavSampler
 {
@@ -13,6 +17,7 @@ public:
   SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh);
   void rpmTimerCallback(const ros::TimerEvent& event);
   void statusTimerCallback(const ros::TimerEvent& event);
+  void attitudeTimerCallback(const ros::TimerEvent& event);
 private:
   bool get_snav_offset();
 
@@ -26,7 +31,11 @@ private:
   ros::Publisher joy_pub_;
   ros::Publisher on_ground_pub_;
   ros::Publisher props_state_pub_;
+  ros::Publisher imu_accel_offset_pub_;
   ros::Timer status_timer_;
+
+  ros::Publisher attitude_estimator_pub_;
+  ros::Timer attitude_estimator_timer_;
 };
 
 SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
@@ -39,8 +48,10 @@ SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
 
   float rpm_rate;
   float status_rate;
+  float attitude_rate;
   pnh.param<float>("rpm_rate", rpm_rate, 100.0);
   pnh.param<float>("status_rate", status_rate, 5.0);
+  pnh.param<float>("attitude_rate", attitude_rate, 100.0);
 
   if (rpm_rate > 1e-3)
   {
@@ -57,8 +68,16 @@ SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
     joy_pub_ = nh.advertise<sensor_msgs::Joy>("spektrum_joy", 2);
     on_ground_pub_ = nh.advertise<std_msgs::Bool>("on_ground", 2);
     props_state_pub_ = nh.advertise<std_msgs::String>("props_state", 2);
+    imu_accel_offset_pub_ = nh.advertise<geometry_msgs::Vector3>("imu_accel_offset", 2);
     status_timer_ = nh.createTimer(ros::Duration(1.0/status_rate),
                                     &SnavSampler::statusTimerCallback, this);
+  }
+  if (attitude_rate > 1e-3)
+  {
+    ROS_INFO("Publish attitude estimates at %4.2fHz", attitude_rate);
+    attitude_estimator_pub_ = nh.advertise<geometry_msgs::PoseStamped>("attitude_estimator", 2);
+    attitude_estimator_timer_ = nh.createTimer(ros::Duration(1.0/attitude_rate),
+                                               &SnavSampler::attitudeTimerCallback, this);
   }
 }
 
@@ -82,6 +101,39 @@ bool SnavSampler::get_snav_offset()
     ROS_WARN("snavtime larger than realtime, potential overflow");
 
   return true;
+}
+
+void SnavSampler::attitudeTimerCallback(const ros::TimerEvent& event)
+{
+  if (sn_update_data() != 0)
+    ROS_ERROR("snav data retrieval failure");
+  else
+  {
+    int64_t attitude_timestamp_ns = sn_struct_->attitude_estimate.time * 1000;
+    ros::Time attitude_time;
+    attitude_time.fromNSec(attitude_timestamp_ns);
+    attitude_time += snav_offset_;
+
+    geometry_msgs::PoseStamped attitude_msg;
+    attitude_msg.header.stamp = attitude_time;
+    tf2::Matrix3x3 R(
+        sn_struct_->attitude_estimate.rotation_matrix[0],
+        sn_struct_->attitude_estimate.rotation_matrix[1],
+        sn_struct_->attitude_estimate.rotation_matrix[2],
+        sn_struct_->attitude_estimate.rotation_matrix[3],
+        sn_struct_->attitude_estimate.rotation_matrix[4],
+        sn_struct_->attitude_estimate.rotation_matrix[5],
+        sn_struct_->attitude_estimate.rotation_matrix[6],
+        sn_struct_->attitude_estimate.rotation_matrix[7],
+        sn_struct_->attitude_estimate.rotation_matrix[8]);
+    tf2::Quaternion q;
+    R.getRotation(q);
+    attitude_msg.pose.orientation.x = q.getX();
+    attitude_msg.pose.orientation.y = q.getY();
+    attitude_msg.pose.orientation.z = q.getZ();
+    attitude_msg.pose.orientation.w = q.getW();
+    attitude_estimator_pub_.publish(attitude_msg);
+  }
 }
 
 void SnavSampler::rpmTimerCallback(const ros::TimerEvent& event)
@@ -173,6 +225,14 @@ void SnavSampler::statusTimerCallback(const ros::TimerEvent& event)
       props_state_msg.data = "UNKNOWN";
     }
     props_state_pub_.publish(props_state_msg);
+
+    // imu accel offset
+    geometry_msgs::Vector3 imu_offset_msg;
+    imu_offset_msg.x = sn_struct_->imu_0_calibration_offset.accel_offset[0];
+    imu_offset_msg.y = sn_struct_->imu_0_calibration_offset.accel_offset[1];
+    imu_offset_msg.z = sn_struct_->imu_0_calibration_offset.accel_offset[2];
+    imu_accel_offset_pub_.publish(imu_offset_msg);
+
   }
 }
 
