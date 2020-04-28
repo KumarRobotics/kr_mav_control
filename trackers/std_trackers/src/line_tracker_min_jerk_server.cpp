@@ -60,8 +60,6 @@ private:
   float goal_yaw_, yaw_coeffs_[4];
   bool traj_start_set_;
 
-  double kx_[3], kv_[3];
-
   float current_traj_length_;
 };
 
@@ -70,13 +68,6 @@ LineTrackerMinJerkAction::LineTrackerMinJerkAction(void)
     traj_start_(ros::Time::now()), traj_start_set_(false) {}
 
 void LineTrackerMinJerkAction::Initialize(const ros::NodeHandle &nh) {
-  nh.param("gains/pos/x", kx_[0], 2.5);
-  nh.param("gains/pos/y", kx_[1], 2.5);
-  nh.param("gains/pos/z", kx_[2], 5.0);
-  nh.param("gains/vel/x", kv_[0], 2.2);
-  nh.param("gains/vel/y", kv_[1], 2.2);
-  nh.param("gains/vel/z", kv_[2], 4.0);
-
   ros::NodeHandle priv_nh(nh, "line_tracker_min_jerk");
 
   priv_nh.param("default_v_des", default_v_des_, 0.5);
@@ -150,8 +141,6 @@ quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerkAction::update(
   quadrotor_msgs::PositionCommand::Ptr cmd(new quadrotor_msgs::PositionCommand);
   cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
-  cmd->kx[0] = kx_[0], cmd->kx[1] = kx_[1], cmd->kx[2] = kx_[2];
-  cmd->kv[0] = kv_[0], cmd->kv[1] = kv_[1], cmd->kv[2] = kv_[2];
 
   if(goal_set_)
   {

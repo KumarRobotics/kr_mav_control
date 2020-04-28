@@ -18,6 +18,7 @@
   <depend>std_msgs</depend>
   <depend>tf</depend>
   <depend>nodelet</depend>
+  <depend>dynamic_reconfigure</depend>
 
 <export>
     <nodelet plugin="${prefix}/nodelet_plugin.xml"/>

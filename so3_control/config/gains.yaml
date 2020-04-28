@@ -13,3 +13,4 @@ corrections:
 
 max_pos_int:   0.5
 max_pos_int_b: 0.5
+max_tilt_angle: 3.14

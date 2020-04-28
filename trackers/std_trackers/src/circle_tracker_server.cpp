@@ -43,9 +43,6 @@ private:
   // Do we have odometry?
   bool have_odom_;
 
-  // Position gains.
-  double kx_[3], kv_[3];
-
   // Time trajectory started.
   ros::Time traj_start_time_;
   // traj_started_ indicates whether to reset start_time_.
@@ -105,13 +102,6 @@ CircleTrackerAction::CircleTrackerAction(void) :
 
 
 void CircleTrackerAction::Initialize(const ros::NodeHandle &nh) {
-  nh.param("gains/pos/x", kx_[0], 2.5);
-  nh.param("gains/pos/y", kx_[1], 2.5);
-  nh.param("gains/pos/z", kx_[2], 5.0);
-  nh.param("gains/vel/x", kv_[0], 2.2);
-  nh.param("gains/vel/y", kv_[1], 2.2);
-  nh.param("gains/vel/z", kv_[2], 4.0);
-
   ros::NodeHandle priv_nh(nh, "circle_tracker");
 
   priv_nh.param("alpha_des", alpha_des_, static_cast<float>(M_PI / 20.0));
@@ -200,8 +190,6 @@ quadrotor_msgs::PositionCommand::ConstPtr CircleTrackerAction::update(const nav_
   quadrotor_msgs::PositionCommand::Ptr cmd(new quadrotor_msgs::PositionCommand);
   cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
-  cmd->kx[0] = kx_[0], cmd->kx[1] = kx_[1], cmd->kx[2] = kx_[2];
-  cmd->kv[0] = kv_[0], cmd->kv[1] = kv_[1], cmd->kv[2] = kv_[2];
 
   if (!traj_started_) {
 
