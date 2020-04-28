@@ -23,7 +23,6 @@ class VelocityTracker : public trackers_manager::Tracker
   quadrotor_msgs::PositionCommand position_cmd_;
   bool odom_set_, active_, use_position_gains_;
   double last_t_;
-  double kx_[3], kv_[3];
   double pos_[3], cur_yaw_;
   ros::Time last_cmd_time_;
 
@@ -40,20 +39,11 @@ VelocityTracker::VelocityTracker(void) :
 
 void VelocityTracker::Initialize(const ros::NodeHandle &nh)
 {
-  nh.param("gains/pos/x", kx_[0], 2.5);
-  nh.param("gains/pos/y", kx_[1], 2.5);
-  nh.param("gains/pos/z", kx_[2], 5.0);
-  nh.param("gains/vel/x", kv_[0], 2.2);
-  nh.param("gains/vel/y", kv_[1], 2.2);
-  nh.param("gains/vel/z", kv_[2], 4.0);
-
   ros::NodeHandle priv_nh(nh, "velocity_tracker");
   priv_nh.param("timeout", timeout_, 0.5f);
 
   sub_vel_cmd_ = priv_nh.subscribe("goal", 10, &VelocityTracker::velocity_cmd_cb, this,
                                    ros::TransportHints().tcpNoDelay());
-
-  position_cmd_.kv[0] = kv_[0], position_cmd_.kv[1] = kv_[1], position_cmd_.kv[2] = kv_[2];
 }
 
 bool VelocityTracker::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
@@ -107,7 +97,7 @@ quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs
     ROS_WARN_THROTTLE(1, "VelocityTracker is active but timed out");
 
     if(use_position_gains_)
-      position_cmd_.kx[0] = kx_[0], position_cmd_.kx[1] = kx_[1], position_cmd_.kx[2] = kx_[2];
+      position_cmd_.use_msg_gains_flags = quadrotor_msgs::PositionCommand::USE_MSG_GAINS_NONE;
 
     position_cmd_.header.stamp = msg->header.stamp;
     position_cmd_.header.frame_id = msg->header.frame_id;
@@ -124,7 +114,7 @@ quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs
 
   if(use_position_gains_)
   {
-    position_cmd_.kx[0] = kx_[0], position_cmd_.kx[1] = kx_[1], position_cmd_.kx[2] = kx_[2];
+    position_cmd_.use_msg_gains_flags = quadrotor_msgs::PositionCommand::USE_MSG_GAINS_NONE;
 
     position_cmd_.position.x = position_cmd_.position.x + dt * position_cmd_.velocity.x;
     position_cmd_.position.y = position_cmd_.position.y + dt * position_cmd_.velocity.y;
@@ -133,6 +123,7 @@ quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs
   else
   {
     position_cmd_.kx[0] = 0, position_cmd_.kx[1] = 0, position_cmd_.kx[2] = 0;
+    position_cmd_.use_msg_gains_flags = quadrotor_msgs::PositionCommand::USE_MSG_GAINS_POSITION_ALL;
 
     position_cmd_.position.x = pos_[0];
     position_cmd_.position.y = pos_[1];

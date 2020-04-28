@@ -28,23 +28,23 @@
 ** Function name:		DefaultVICHandler
 **
 ** Descriptions:		Default VIC interrupt handler.
-**				This handler is set to deal with spurious 
+**				This handler is set to deal with spurious
 **				interrupt.
 **				If the IRQ service routine reads the VIC
 **				address register, and no IRQ slot responses
 **				as described above, this address is returned.
 ** parameters:			None
 ** Returned value:		None
-** 
+**
 ******************************************************************************/
 // mthomas: inserted static to avoid gcc-warning
-static void DefaultVICHandler (void) __irq 
+static void __irq DefaultVICHandler (void)
 {
     /* if the IRQ is not installed into the VIC, and interrupt occurs, the
-    default interrupt VIC address will be used. This could happen in a race 
+    default interrupt VIC address will be used. This could happen in a race
     condition. For debugging, use this endless loop to trace back. */
     /* For more details, see Philips appnote AN10414 */
-    VICVectAddr = 0;		/* Acknowledge Interrupt */ 
+    VICVectAddr = 0;		/* Acknowledge Interrupt */
     while ( 1 );
 }
 
@@ -55,13 +55,13 @@ static void DefaultVICHandler (void) __irq
 ** Descriptions:		Initialize VIC interrupt controller.
 ** parameters:			None
 ** Returned value:		None
-** 
+**
 ******************************************************************************/
-void init_VIC(void) 
+void init_VIC(void)
 {
     unsigned long i = 0;
     unsigned long *vect_addr, *vect_cntl;
-   	
+
     /* initialize VIC*/
     VICIntEnClr = 0xffffffff;
     VICVectAddr = 0;
@@ -72,12 +72,12 @@ void init_VIC(void)
     {
 	vect_addr = (unsigned long *)(VIC_BASE_ADDR + VECT_ADDR_INDEX + i*4);
 	vect_cntl = (unsigned long *)(VIC_BASE_ADDR + VECT_CNTL_INDEX + i*4);
-	*vect_addr = 0;	
+	*vect_addr = 0;
 	*vect_cntl = 0;
     }
 
     /* Install the default VIC handler here */
-    VICDefVectAddr = (unsigned long)DefaultVICHandler;   
+    VICDefVectAddr = (unsigned long)DefaultVICHandler;
     return;
 }
 
@@ -92,16 +92,16 @@ void init_VIC(void)
 **				first come first serve.
 ** parameters:			Interrupt number and interrupt handler address
 ** Returned value:		true or false, when the table is full, return false
-** 
+**
 ******************************************************************************/
 unsigned long install_irq( unsigned long IntNumber, void *HandlerAddr )
 {
     unsigned long i;
     unsigned long *vect_addr;
     unsigned long *vect_cntl;
-      
+
     VICIntEnClr = 1 << IntNumber;	/* Disable Interrupt */
-    
+
     for ( i = 0; i < VIC_SIZE; i++ )
     {
 	/* find first un-assigned VIC address for the handler */
@@ -131,18 +131,18 @@ unsigned long install_irq( unsigned long IntNumber, void *HandlerAddr )
 **				based on the interrupt number, set the location
 **				back to NULL to uninstall it.
 ** parameters:			Interrupt number
-** Returned value:		true or false, when the interrupt number is not found, 
+** Returned value:		true or false, when the interrupt number is not found,
 **				return false
-** 
+**
 ******************************************************************************/
 unsigned long uninstall_irq( unsigned long IntNumber )
 {
     unsigned long i;
     unsigned long *vect_addr;
     unsigned long *vect_cntl;
-      
+
     VICIntEnClr = 1 << IntNumber;	/* Disable Interrupt */
-    
+
     for ( i = 0; i < VIC_SIZE; i++ )
     {
 	/* find first un-assigned VIC address for the handler */
@@ -151,13 +151,13 @@ unsigned long uninstall_irq( unsigned long IntNumber )
 	if ( (*vect_cntl & ~IRQ_SLOT_EN ) == IntNumber )
 	{
 	    *vect_addr = (unsigned long)NULL;	/* clear the VIC entry in the VIC table */
-	    *vect_cntl &= ~IRQ_SLOT_EN;	/* disable SLOT_EN bit */	
+	    *vect_cntl &= ~IRQ_SLOT_EN;	/* disable SLOT_EN bit */
 	    break;
 	}
     }
     if ( i == VIC_SIZE )
     {
-	return( FALSE );		/* fatal error, can't find interrupt number 
+	return( FALSE );		/* fatal error, can't find interrupt number
 					in vector slot */
     }
     VICIntEnable = 1 << IntNumber;	/* Enable Interrupt */
