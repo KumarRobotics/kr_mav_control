@@ -11,7 +11,7 @@ endif()
 find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs rosconsole std_msgs)
 find_package(Eigen3 REQUIRED)
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
+include_directories(${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
 add_message_files(DIRECTORY msg
   FILES
@@ -30,7 +30,7 @@ generate_messages(
   DEPENDENCIES geometry_msgs)
 
 catkin_package(
-  INCLUDE_DIRS include
+  INCLUDE_DIRS
   LIBRARIES
   CATKIN_DEPENDS message_runtime geometry_msgs std_msgs
   DEPENDS EIGEN3)
