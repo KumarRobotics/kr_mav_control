@@ -228,9 +228,9 @@ void SnavSampler::statusTimerCallback(const ros::TimerEvent& event)
 
     // imu accel offset
     geometry_msgs::Vector3 imu_offset_msg;
-    imu_offset_msg.x = sn_struct_->imu_0_calibration_offset.accel_offset[0];
-    imu_offset_msg.y = sn_struct_->imu_0_calibration_offset.accel_offset[1];
-    imu_offset_msg.z = sn_struct_->imu_0_calibration_offset.accel_offset[2];
+    imu_offset_msg.x = 9.81 * sn_struct_->imu_0_calibration_offset.accel_offset[0];
+    imu_offset_msg.y = 9.81 * sn_struct_->imu_0_calibration_offset.accel_offset[1];
+    imu_offset_msg.z = 9.81 * sn_struct_->imu_0_calibration_offset.accel_offset[2];
     imu_accel_offset_pub_.publish(imu_offset_msg);
 
   }
