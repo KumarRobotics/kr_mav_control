@@ -34,8 +34,8 @@ private:
   ros::Publisher imu_accel_offset_pub_;
   ros::Timer status_timer_;
 
-  ros::Publisher attitude_estimator_pub_;
-  ros::Timer attitude_estimator_timer_;
+  ros::Publisher attitude_estimate_pub_;
+  ros::Timer attitude_estimate_timer_;
 };
 
 SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
@@ -75,8 +75,8 @@ SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
   if (attitude_rate > 1e-3)
   {
     ROS_INFO("Publish attitude estimates at %4.2fHz", attitude_rate);
-    attitude_estimator_pub_ = nh.advertise<geometry_msgs::QuaternionStamped>("attitude_estimator", 2);
-    attitude_estimator_timer_ = nh.createTimer(ros::Duration(1.0/attitude_rate),
+    attitude_estimate_pub_ = nh.advertise<geometry_msgs::QuaternionStamped>("attitude_estimate", 2);
+    attitude_estimate_timer_ = nh.createTimer(ros::Duration(1.0/attitude_rate),
                                                &SnavSampler::attitudeTimerCallback, this);
   }
 }
@@ -132,7 +132,7 @@ void SnavSampler::attitudeTimerCallback(const ros::TimerEvent& event)
     attitude_msg.quaternion.y = q.getY();
     attitude_msg.quaternion.z = q.getZ();
     attitude_msg.quaternion.w = q.getW();
-    attitude_estimator_pub_.publish(attitude_msg);
+    attitude_estimate_pub_.publish(attitude_msg);
   }
 }
 
