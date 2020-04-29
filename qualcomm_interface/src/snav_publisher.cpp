@@ -7,7 +7,7 @@
 #include <sensor_msgs/BatteryState.h>
 #include <sensor_msgs/Joy.h>
 #include <geometry_msgs/Vector3.h>
-#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/QuaternionStamped.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 
@@ -75,7 +75,7 @@ SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
   if (attitude_rate > 1e-3)
   {
     ROS_INFO("Publish attitude estimates at %4.2fHz", attitude_rate);
-    attitude_estimator_pub_ = nh.advertise<geometry_msgs::PoseStamped>("attitude_estimator", 2);
+    attitude_estimator_pub_ = nh.advertise<geometry_msgs::QuaternionStamped>("attitude_estimator", 2);
     attitude_estimator_timer_ = nh.createTimer(ros::Duration(1.0/attitude_rate),
                                                &SnavSampler::attitudeTimerCallback, this);
   }
@@ -114,7 +114,7 @@ void SnavSampler::attitudeTimerCallback(const ros::TimerEvent& event)
     attitude_time.fromNSec(attitude_timestamp_ns);
     attitude_time += snav_offset_;
 
-    geometry_msgs::PoseStamped attitude_msg;
+    geometry_msgs::QuaternionStamped attitude_msg;
     attitude_msg.header.stamp = attitude_time;
     tf2::Matrix3x3 R(
         sn_struct_->attitude_estimate.rotation_matrix[0],
@@ -128,10 +128,10 @@ void SnavSampler::attitudeTimerCallback(const ros::TimerEvent& event)
         sn_struct_->attitude_estimate.rotation_matrix[8]);
     tf2::Quaternion q;
     R.getRotation(q);
-    attitude_msg.pose.orientation.x = q.getX();
-    attitude_msg.pose.orientation.y = q.getY();
-    attitude_msg.pose.orientation.z = q.getZ();
-    attitude_msg.pose.orientation.w = q.getW();
+    attitude_msg.quaternion.x = q.getX();
+    attitude_msg.quaternion.y = q.getY();
+    attitude_msg.quaternion.z = q.getZ();
+    attitude_msg.quaternion.w = q.getW();
     attitude_estimator_pub_.publish(attitude_msg);
   }
 }
