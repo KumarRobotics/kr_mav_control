@@ -31,7 +31,6 @@ private:
   ros::Publisher joy_pub_;
   ros::Publisher on_ground_pub_;
   ros::Publisher props_state_pub_;
-  ros::Publisher imu_accel_offset_pub_;
   ros::Timer status_timer_;
 
   ros::Publisher attitude_estimate_pub_;
@@ -68,7 +67,6 @@ SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
     joy_pub_ = nh.advertise<sensor_msgs::Joy>("spektrum_joy", 2);
     on_ground_pub_ = nh.advertise<std_msgs::Bool>("on_ground", 2);
     props_state_pub_ = nh.advertise<std_msgs::String>("props_state", 2);
-    imu_accel_offset_pub_ = nh.advertise<geometry_msgs::Vector3>("imu_accel_offset", 2);
     status_timer_ = nh.createTimer(ros::Duration(1.0/status_rate),
                                     &SnavSampler::statusTimerCallback, this);
   }
@@ -225,14 +223,6 @@ void SnavSampler::statusTimerCallback(const ros::TimerEvent& event)
       props_state_msg.data = "UNKNOWN";
     }
     props_state_pub_.publish(props_state_msg);
-
-    // imu accel offset
-    geometry_msgs::Vector3 imu_offset_msg;
-    imu_offset_msg.x = 9.81 * sn_struct_->imu_0_calibration_offset.accel_offset[0];
-    imu_offset_msg.y = 9.81 * sn_struct_->imu_0_calibration_offset.accel_offset[1];
-    imu_offset_msg.z = 9.81 * sn_struct_->imu_0_calibration_offset.accel_offset[2];
-    imu_accel_offset_pub_.publish(imu_offset_msg);
-
   }
 }
 
