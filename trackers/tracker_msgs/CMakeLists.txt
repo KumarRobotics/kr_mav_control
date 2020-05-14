@@ -37,6 +37,6 @@ generate_messages(
 
 catkin_package(
   INCLUDE_DIRS
-  LIBRARIES encode_msgs decode_msgs
+  LIBRARIES
   CATKIN_DEPENDS message_runtime geometry_msgs nav_msgs actionlib_msgs std_msgs
   DEPENDS)

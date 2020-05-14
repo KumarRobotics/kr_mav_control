@@ -1,3 +1,0 @@
-[submodule "asio_serial_device"]
-	path = asio_serial_device
-	url = https://github.com/KumarRobotics/asio_serial_device.git

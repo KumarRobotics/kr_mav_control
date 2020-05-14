@@ -1,7 +1,0 @@
-<library path="lib/libquad_encode_msg_nodelet">
-  <class name="quad_encode_msg/QuadEncodeMsg" type="QuadEncodeMsg" base_class_type="nodelet::Nodelet">
-    <description>
-      This packs the data being sent to the quad into a nice efficient byte-stream.
-    </description>
-  </class>
-</library>
