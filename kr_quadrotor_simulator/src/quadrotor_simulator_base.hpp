@@ -2,7 +2,7 @@
 #define QUADROTOR_SIMULATOR_BASE_HPP_
 
 #include <ros/ros.h>
-#include <quadrotor_simulator/Quadrotor.h>
+#include <kr_quadrotor_simulator/Quadrotor.h>
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
 #include <tf2_ros/transform_broadcaster.h>

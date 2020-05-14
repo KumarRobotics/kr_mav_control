@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(quadrotor_simulator)
+project(kr_quadrotor_simulator)
 
 # set default build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -21,18 +21,18 @@ catkin_package(
 
 add_library(quadrotor_dynamics src/dynamics/Quadrotor.cpp)
 
-add_executable(quadrotor_simulator_so3 src/quadrotor_simulator_so3.cpp)
-target_link_libraries(quadrotor_simulator_so3 quadrotor_dynamics ${catkin_LIBRARIES})
-add_dependencies(quadrotor_simulator_so3 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_executable(kr_quadrotor_simulator_so3 src/quadrotor_simulator_so3.cpp)
+target_link_libraries(kr_quadrotor_simulator_so3 quadrotor_dynamics ${catkin_LIBRARIES})
+add_dependencies(kr_quadrotor_simulator_so3 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
-add_executable(quadrotor_simulator_trpy src/quadrotor_simulator_trpy.cpp)
-target_link_libraries(quadrotor_simulator_trpy quadrotor_dynamics ${catkin_LIBRARIES})
-add_dependencies(quadrotor_simulator_trpy ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_executable(kr_quadrotor_simulator_trpy src/quadrotor_simulator_trpy.cpp)
+target_link_libraries(kr_quadrotor_simulator_trpy quadrotor_dynamics ${catkin_LIBRARIES})
+add_dependencies(kr_quadrotor_simulator_trpy ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 install(TARGETS
     quadrotor_dynamics
-    quadrotor_simulator_so3
-    quadrotor_simulator_trpy
+    kr_quadrotor_simulator_so3
+    kr_quadrotor_simulator_trpy
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

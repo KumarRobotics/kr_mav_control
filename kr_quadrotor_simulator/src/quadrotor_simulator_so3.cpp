@@ -1,40 +1,43 @@
 #include <Eigen/Geometry>
-#include <kr_quadrotor_msgs/TRPYCommand.h>
+#include <kr_quadrotor_msgs/SO3Command.h>
 #include "quadrotor_simulator_base.hpp"
 
 namespace QuadrotorSimulator
 {
-typedef struct _TRPYCommand
+typedef struct _SO3Command
 {
-  float thrust;
-  float roll, pitch, yaw;
+  float force[3];
+  float qx, qy, qz, qw;
   float angular_velocity[3];
   float kR[3];
   float kOm[3];
+  float kf_correction;
+  float angle_corrections[2];
   bool enable_motors;
-} TRPYCommand;
+} SO3Command;
 
-class QuadrotorSimulatorTRPY
-    : public QuadrotorSimulatorBase<kr_quadrotor_msgs::TRPYCommand, TRPYCommand>
+class QuadrotorSimulatorSO3
+    : public QuadrotorSimulatorBase<kr_quadrotor_msgs::SO3Command, SO3Command>
 {
  public:
-  QuadrotorSimulatorTRPY(ros::NodeHandle &nh)
-      : QuadrotorSimulatorBase(nh)
-  {
-  }
+  QuadrotorSimulatorSO3(ros::NodeHandle &nh) : QuadrotorSimulatorBase(nh) {}
 
  private:
-  virtual void cmd_callback(const kr_quadrotor_msgs::TRPYCommand::ConstPtr &cmd);
+  virtual void cmd_callback(const kr_quadrotor_msgs::SO3Command::ConstPtr &cmd);
   virtual ControlInput getControl(const Quadrotor &quad,
-                                  const TRPYCommand &cmd) const;
+                                  const SO3Command &cmd) const;
 };
-void QuadrotorSimulatorTRPY::cmd_callback(
-    const kr_quadrotor_msgs::TRPYCommand::ConstPtr &cmd)
+
+void QuadrotorSimulatorSO3::cmd_callback(
+    const kr_quadrotor_msgs::SO3Command::ConstPtr &cmd)
 {
-  command_.thrust = cmd->thrust;
-  command_.roll = cmd->roll;
-  command_.pitch = cmd->pitch;
-  command_.yaw = cmd->yaw;
+  command_.force[0] = cmd->force.x;
+  command_.force[1] = cmd->force.y;
+  command_.force[2] = cmd->force.z;
+  command_.qx = cmd->orientation.x;
+  command_.qy = cmd->orientation.y;
+  command_.qz = cmd->orientation.z;
+  command_.qw = cmd->orientation.w;
   command_.angular_velocity[0] = cmd->angular_velocity.x;
   command_.angular_velocity[1] = cmd->angular_velocity.y;
   command_.angular_velocity[2] = cmd->angular_velocity.z;
@@ -44,15 +47,18 @@ void QuadrotorSimulatorTRPY::cmd_callback(
   command_.kOm[0] = cmd->kOm[0];
   command_.kOm[1] = cmd->kOm[1];
   command_.kOm[2] = cmd->kOm[2];
+  command_.kf_correction = cmd->aux.kf_correction;
+  command_.angle_corrections[0] = cmd->aux.angle_corrections[0]; // Not used yet
+  command_.angle_corrections[1] = cmd->aux.angle_corrections[1]; // Not used yet
   command_.enable_motors = cmd->aux.enable_motors;
 }
 
-QuadrotorSimulatorTRPY::ControlInput QuadrotorSimulatorTRPY::getControl(
-    const Quadrotor &quad, const TRPYCommand &cmd) const
+QuadrotorSimulatorSO3::ControlInput QuadrotorSimulatorSO3::getControl(
+    const Quadrotor &quad, const SO3Command &cmd) const
 {
   const double _kf = quad.getPropellerThrustCoefficient();
   const double _km = quad.getPropellerMomentCoefficient();
-  const double kf = _kf;
+  const double kf = _kf - cmd.kf_correction;
   const double km = _km / _kf * kf;
 
   const double d = quad.getArmLength();
@@ -76,27 +82,27 @@ QuadrotorSimulatorTRPY::ControlInput QuadrotorSimulatorTRPY::getControl(
   float Om2 = state.omega(1);
   float Om3 = state.omega(2);
 
-  float Rd11 = cos(cmd.yaw) * cos(cmd.pitch);
-  float Rd12 = cos(cmd.yaw) * sin(cmd.pitch) * sin(cmd.roll) -
-               cos(cmd.roll) * sin(cmd.yaw);
-  float Rd13 = sin(cmd.yaw) * sin(cmd.roll) +
-               cos(cmd.yaw) * cos(cmd.roll) * sin(cmd.pitch);
-  float Rd21 = cos(cmd.pitch) * sin(cmd.yaw);
-  float Rd22 = cos(cmd.yaw) * cos(cmd.roll) +
-               sin(cmd.yaw) * sin(cmd.pitch) * sin(cmd.roll);
-  float Rd23 = cos(cmd.roll) * sin(cmd.yaw) * sin(cmd.pitch) -
-               cos(cmd.yaw) * sin(cmd.roll);
-  float Rd31 = -sin(cmd.pitch);
-  float Rd32 = cos(cmd.pitch) * sin(cmd.roll);
-  float Rd33 = cos(cmd.pitch) * cos(cmd.roll);
+  float Rd11 =
+      cmd.qw * cmd.qw + cmd.qx * cmd.qx - cmd.qy * cmd.qy - cmd.qz * cmd.qz;
+  float Rd12 = 2 * (cmd.qx * cmd.qy - cmd.qw * cmd.qz);
+  float Rd13 = 2 * (cmd.qx * cmd.qz + cmd.qw * cmd.qy);
+  float Rd21 = 2 * (cmd.qx * cmd.qy + cmd.qw * cmd.qz);
+  float Rd22 =
+      cmd.qw * cmd.qw - cmd.qx * cmd.qx + cmd.qy * cmd.qy - cmd.qz * cmd.qz;
+  float Rd23 = 2 * (cmd.qy * cmd.qz - cmd.qw * cmd.qx);
+  float Rd31 = 2 * (cmd.qx * cmd.qz - cmd.qw * cmd.qy);
+  float Rd32 = 2 * (cmd.qy * cmd.qz + cmd.qw * cmd.qx);
+  float Rd33 =
+      cmd.qw * cmd.qw - cmd.qx * cmd.qx - cmd.qy * cmd.qy + cmd.qz * cmd.qz;
 
   float Psi = 0.5f * (3.0f - (Rd11 * R11 + Rd21 * R21 + Rd31 * R31 +
                               Rd12 * R12 + Rd22 * R22 + Rd32 * R32 +
                               Rd13 * R13 + Rd23 * R23 + Rd33 * R33));
 
-  float force = 0;
-  if(Psi < 1.0f) // Position control stability guaranteed only when Psi < 1
-    force = cmd.thrust;
+  if(Psi > 1.0f) // Position control stability guaranteed only when Psi < 1
+    ROS_WARN_THROTTLE(1, "Warning Psi = %f > 1", Psi);
+
+  float force = cmd.force[0] * R13 + cmd.force[1] * R23 + cmd.force[2] * R33;
 
   float eR1 = 0.5f * (R12 * Rd13 - R13 * Rd12 + R22 * Rd23 - R23 * Rd22 +
                       R32 * Rd33 - R33 * Rd32);
@@ -122,21 +128,14 @@ QuadrotorSimulatorTRPY::ControlInput QuadrotorSimulatorTRPY::getControl(
   float eOm2 = Om2 - Omd2;
   float eOm3 = Om3 - Omd3;
 
-#if 0
+  // TODO: Change this to the new term as in http://arxiv.org/abs/1304.6765:
+  // Omd^ * J * Omd
   float in1 = Om2 * (I[2][0] * Om1 + I[2][1] * Om2 + I[2][2] * Om3) -
               Om3 * (I[1][0] * Om1 + I[1][1] * Om2 + I[1][2] * Om3);
   float in2 = Om3 * (I[0][0] * Om1 + I[0][1] * Om2 + I[0][2] * Om3) -
               Om1 * (I[2][0] * Om1 + I[2][1] * Om2 + I[2][2] * Om3);
   float in3 = Om1 * (I[1][0] * Om1 + I[1][1] * Om2 + I[1][2] * Om3) -
               Om2 * (I[0][0] * Om1 + I[0][1] * Om2 + I[0][2] * Om3);
-#else
-  float in1 = Omd2 * (I[2][0] * Omd1 + I[2][1] * Omd2 + I[2][2] * Omd3) -
-              Omd3 * (I[1][0] * Omd1 + I[1][1] * Omd2 + I[1][2] * Omd3);
-  float in2 = Omd3 * (I[0][0] * Omd1 + I[0][1] * Omd2 + I[0][2] * Omd3) -
-              Omd1 * (I[2][0] * Omd1 + I[2][1] * Omd2 + I[2][2] * Omd3);
-  float in3 = Omd1 * (I[1][0] * Omd1 + I[1][1] * Omd2 + I[1][2] * Omd3) -
-              Omd2 * (I[0][0] * Omd1 + I[0][1] * Omd2 + I[0][2] * Omd3);
-#endif
 
   float M1 = -cmd.kR[0] * eR1 - cmd.kOm[0] * eOm1 + in1;
   float M2 = -cmd.kR[1] * eR2 - cmd.kOm[1] * eOm2 + in2;
@@ -169,11 +168,11 @@ QuadrotorSimulatorTRPY::ControlInput QuadrotorSimulatorTRPY::getControl(
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "quadrotor_simulator_trpy");
+  ros::init(argc, argv, "kr_quadrotor_simulator_so3");
 
-  ros::NodeHandle n("~");
+  ros::NodeHandle nh("~");
 
-  QuadrotorSimulator::QuadrotorSimulatorTRPY quad_sim(n);
+  QuadrotorSimulator::QuadrotorSimulatorSO3 quad_sim(nh);
 
   quad_sim.run();
 

@@ -6,11 +6,11 @@ fi
 
 NUM_MAV=$1
 
-if echo $NUM_MAV | grep -Eq '^[+]?[1-9]+$'
+if echo $NUM_MAV | grep -Eq '^[+-]?[0-9]+$'
 then
   echo "Running simulated $NUM_MAV MAVs"
 else
-  echo "Input number(integer > 0) of MAVs as first argument"
+  echo "Input number(integer) of MAVs as first argument"
   exit 1
 fi
 
@@ -21,19 +21,21 @@ else
 fi
 
 # TODO parse this from command line? Possibly list of mav ids and namespace?
+# TODO parse this from command line? Possibly list of mav ids and namespace?
 MAV_NAMESPACE=dragonfly
 
 if [ $# -eq 2 ]; then
   MAV_NAMESPACE=$2
 fi
 
-MAV_TYPE=hummingbird
-WORLD_FRAME_ID=simulator
+MAV_TYPE=pelican
+WORLD_FRAME_ID=world
+
 echo "MAV napespace: $MAV_NAMESPACE MAV Type: $MAV_TYPE"
 
 MASTER_URI=http://localhost:11311
 SETUP_ROS_STRING="export ROS_MASTER_URI=${MASTER_URI}"
-SESSION_NAME=demo_sim${NUM_MAV}
+SESSION_NAME=demo_gs${NUM_MAV}
 
 CURRENT_DISPLAY=${DISPLAY}
 if [ -z ${DISPLAY} ];
@@ -51,9 +53,11 @@ else
   exit
 fi
 
+ODOM_TOPIC=ground_truth/odom
+
 # Generate rviz config file for specific mav from default one
 RVIZ_CONFIG_FILE="$HOME/.ros/wp_nav.rviz"
-LAUNCH_PATH=$(rospack find quadrotor_simulator)
+LAUNCH_PATH=$(rospack find kr_quadrotor_simulator)
 cp $LAUNCH_PATH/launch/rviz_config.rviz ${RVIZ_CONFIG_FILE}
 sed -i "s/simulator/${WORLD_FRAME_ID}/g" ${RVIZ_CONFIG_FILE}
 sed -i "s/quadrotor/temp/g" ${RVIZ_CONFIG_FILE}
@@ -81,17 +85,18 @@ n_cols=$(round  $div 0)
 echo "Grid rows, cols: " $n_rows $n_cols
 spacing=1
 
+
 # Make mouse useful in copy mode
 tmux setw -g mouse on
 
 tmux rename-window -t $SESSION_NAME "Main"
-tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; roscore" Enter
+tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; export DISPLAY=${CURRENT_DISPLAY}; roslaunch mrsl_quadrotor_launch gazebo.launch world:=empty" Enter
 tmux split-window -t $SESSION_NAME
-tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; export DISPLAY=${CURRENT_DISPLAY}; rosrun rviz rviz -d ${RVIZ_CONFIG_FILE}" Enter
+tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; export DISPLAY=${CURRENT_DISPLAY}; rosrun rviz rviz -d ${RVIZ_CONFIG_FILE}" Enter
 tmux split-window -t $SESSION_NAME
-tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; export DISPLAY=${CURRENT_DISPLAY}; rqt --standalone ${RQT_GUI}" Enter
+tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; export DISPLAY=${CURRENT_DISPLAY}; rqt --standalone ${RQT_GUI}" Enter
 tmux split-window -t $SESSION_NAME
-tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch multi_mav_manager multi_mav_manager.launch odom_topic:=odom config_path:=$HOME/.ros/" Enter
+tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; roslaunch multi_mav_manager multi_mav_manager.launch odom_topic:=${ODOM_TOPIC} config_path:=$HOME/.ros/" Enter
 tmux select-layout -t $SESSION_NAME tiled
 
 # Add window to easily kill all processes
@@ -130,14 +135,19 @@ do
   COL_B=0.${v:1:2}${v:4:3}
   COL_A=0.85
 
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch mav_manager demo.launch sim:=true vicon:=false mav_name:=${MAV_NAME} mav_type:=${MAV_TYPE} world_frame_id:=${WORLD_FRAME_ID} initial_position/x:=${POS_X} initial_position/y:=${POS_Y} color/r:=${COL_R} color/g:=${COL_G} color/b:=${COL_B} color/a:=${COL_A}" Enter
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; roslaunch mrsl_quadrotor_launch spawn.launch robot_type:=${MAV_TYPE} robot:=${MAV_NAME} x:=${POS_X} y:=${POS_Y}" Enter
   tmux split-window -t $SESSION_NAME
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; rosrun trackers_manager waypoints_to_action.py __ns:=${MAV_NAME}" Enter
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; roslaunch mav_manager example_control.launch model:=${MAV_NAME} odom_topic:=${ODOM_TOPIC} mass:=0.5" Enter
   tmux split-window -t $SESSION_NAME
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; rosrun trackers_manager twist_to_action.py __ns:=${MAV_NAME}" Enter
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch kr_quadrotor_simulator mesh_vis.launch __ns:=${MAV_NAME} mav_name:=${MAV_NAME} mav_type:=hummingbird odom_topic:=${ODOM_TOPIC} color/r:=${COL_R} color/g:=${COL_G} color/b:=${COL_B} color/a:=${COL_A}" Enter
+  tmux select-layout -t $SESSION_NAME even-horizontal
   tmux split-window -t $SESSION_NAME
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; cd $(rospack find mav_manager)/scripts/; ./takeoff.sh ${MAV_NAME}"
-  tmux select-layout -t $SESSION_NAME tiled
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; rosrun trackers_manager waypoints_to_action.py __ns:=${MAV_NAME}" Enter
+  tmux split-window -t $SESSION_NAME
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; rosrun trackers_manager twist_to_action.py __ns:=${MAV_NAME}" Enter
+  tmux split-window -t $SESSION_NAME
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; cd $(rospack find mav_manager)/scripts/; ./takeoff.sh ${MAV_NAME}"
+  tmux select-layout -t $SESSION_NAME even-horizontal
 done
 
 tmux select-window -t $SESSION_NAME:0

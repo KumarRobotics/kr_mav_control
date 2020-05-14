@@ -1,4 +1,4 @@
-#include "quadrotor_simulator/Quadrotor.h"
+#include "kr_quadrotor_simulator/Quadrotor.h"
 #include <iostream>
 #include <boost/bind.hpp>
 #include <boost/numeric/odeint.hpp>

@@ -4,7 +4,7 @@ Clone and build [kr_ui](https://github.com/KumarRobotics/kr_ui) and [multi_mav_m
 
 Helper bash scripts are added to launch multiple robots.
 ```
-roscd quadrotor_simulator/scripts
+roscd kr_quadrotor_simulator/scripts
 ./demo_sim.sh 4
 ```
  * This will launch 4 robots in simulator
