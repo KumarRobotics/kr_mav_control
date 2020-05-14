@@ -1,6 +1,6 @@
 #include <ros/console.h>
 #include <tf/transform_datatypes.h>
-#include "so3_control/SO3Control.h"
+#include "kr_so3_control/SO3Control.h"
 
 SO3Control::SO3Control()
   : mass_(0.5),

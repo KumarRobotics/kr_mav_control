@@ -15,7 +15,7 @@ git submodule update
   - `xyz_interface`: Translates `kr_quadrotor_msgs/SO3Command` to corresponding `xyz` robots interface.
   - `kr_quadrotor_simulator`: Simple quadrotor dynamics simulator
   - `kr_quadrotor_msgs`: Common msgs used accross packages
-  - `so3_control`: The main controller
+  - `kr_so3_control`: The main controller
   - `trackers`: Different trackers under `std_trackers`, and `trackers_manager`
 
 ### Example use cases

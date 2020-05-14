@@ -36,7 +36,7 @@
     <group if="$(arg use_vicon)">
       <node pkg="nodelet"
         type="nodelet"
-        args="load so3_control/SO3TRPYControlNodelet snav_standalone_nodelet"
+        args="load kr_so3_control/SO3TRPYControlNodelet snav_standalone_nodelet"
         name="trpy_control"
         required="true"
         output="screen">

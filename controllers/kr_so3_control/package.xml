@@ -1,7 +1,7 @@
 <package format="2">
-  <name>so3_control</name>
+  <name>kr_so3_control</name>
   <version>1.0.0</version>
-  <description>so3_control</description>
+  <description>kr_so3_control</description>
   <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
   <maintainer email="michael.f.watterson@gmail.com">Michael Watterson</maintainer>
 

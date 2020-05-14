@@ -218,7 +218,7 @@ bool MAVManager::takeoff() {
 bool MAVManager::set_mass(float m) {
   if (m > 0)
   {
-    // TODO: This should update the mass in so3_control and everywhere else that is necessary.
+    // TODO: This should update the mass in kr_so3_control and everywhere else that is necessary.
     mass_ = m;
     return true;
   }

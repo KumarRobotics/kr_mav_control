@@ -21,7 +21,7 @@
 
   <node pkg="kr_quadrotor_simulator"
     type="kr_quadrotor_simulator_so3"
-    name="kr_quadrotor_simulator_so3"
+    name="quadrotor_simulator_so3"
     output="screen">
     <rosparam file="$(find kr_quadrotor_simulator)/config/$(arg mav_type)_params.yaml"/>
     <param name="world_frame_id" value="$(arg world_frame_id)"/>
