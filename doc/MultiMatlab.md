@@ -1,6 +1,6 @@
 ## Example with multiple simulated robots and MATLAB (Compatible with 2018b and later versions)
 
-MATLAB wrappers for `quadrotor_control` using the [Robotics Systems Toolbox](https://www.mathworks.com/help/robotics/index.html?s_tid=CRUX_lftnav) are available in `matlab_interface`.
+MATLAB wrappers for `quadrotor_control` using the [Robotics Systems Toolbox](https://www.mathworks.com/help/robotics/index.html?s_tid=CRUX_lftnav) are available in `kr_matlab_interface`.
 
 Make sure you have the toolbox installed. In addition, for the interface to work with `quadrotor_control`, ROS custom messages have to be generated.
 
@@ -18,7 +18,7 @@ Once installed follow the following instructions to generate custom messages use
 cd ~/ws_ros/src/quadrotor_control
 mkdir -p ~/matlab_msgs
 cp -r kr_quadrotor_msgs kr_mav_manager ~/matlab_msgs
-cd ~/ws_ros/src/quadrotor_control/matlab_interface
+cd ~/ws_ros/src/quadrotor_control/kr_matlab_interface
 cp kr_quadrotor_msgs.patch.package.xml ~/matlab_msgs/kr_quadrotor_msgs/package.xml
 cp kr_mav_manager.patch.package.xml ~/matlab_msgs/kr_mav_manager/package.xml
 cd ~/matlab_msgs
@@ -39,7 +39,7 @@ rosgenmsg('~/matlab_msgs')
 
 Clone and build [kr_ui](https://github.com/KumarRobotics/kr_ui) and [multi_kr_mav_manager](https://github.com/KumarRobotics/multi_kr_mav_manager) in your workspace
 
-## Running simple simulator with matlab_interface
+## Running simple simulator with kr_matlab_interface
 
 Helper bash scripts are added to launch multiple robots.
 ```
@@ -52,7 +52,7 @@ roscd kr_quadrotor_simulator/scripts
 
 In MATLAB
 ```
-cd ~/ws_ros/src/quadrotor_control/matlab_interface
+cd ~/ws_ros/src/quadrotor_control/kr_matlab_interface
 example_interface('localhost', 4)
 ```
  * This starts the motors, calls takeoff and moves all the 4 MAVs with random velocity.

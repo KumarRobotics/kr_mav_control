@@ -1,0 +1,21 @@
+<library path="lib/libso3cmd_to_qualcomm_nodelet">
+  <class name="kr_qualcomm_interface/SO3CmdToQualcomm" type="SO3CmdToQualcomm" base_class_type="nodelet::Nodelet">
+    <description>
+      This take a so3_command and publishes it to the robot using Qualcomm's API
+    </description>
+  </class>
+</library>
+<library path="lib/libtrpycmd_to_qualcomm_nodelet">
+  <class name="kr_qualcomm_interface/TRPYCmdToSnav" type="TRPYCmdToSnav" base_class_type="nodelet::Nodelet">
+    <description>
+      This take a trpy_command and publishes it to the robot using Qualcomm's Snav API
+    </description>
+  </class>
+</library>
+<library path="lib/libposcmd_to_qualcomm_nodelet">
+  <class name="kr_qualcomm_interface/PosCmdToSnav" type="PosCmdToSnav" base_class_type="nodelet::Nodelet">
+    <description>
+      This take a pos_command and publishes it to the robot using Qualcomm's Snav API
+    </description>
+  </class>
+</library>

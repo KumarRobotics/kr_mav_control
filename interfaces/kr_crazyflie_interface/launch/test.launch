@@ -1,0 +1,18 @@
+<launch>
+  <arg name="robot" default="/"/>
+  <arg name="odom" default="odom"/>
+  <arg name="so3_cmd" default="so3_cmd"/>
+ 
+  <group ns="$(arg robot)">
+    <node pkg="nodelet"
+      type="nodelet"
+      args="standalone kr_crazyflie_interface/SO3CmdToCrazyflie"
+      name="so3cmd_to_crazyflie"
+      required="true"
+      clear_params="true"
+      output="screen">
+      <remap from="~odom" to="$(arg odom)"/>
+      <remap from="~so3_cmd" to="$(arg so3_cmd)"/>
+    </node>
+  </group>
+</launch>
