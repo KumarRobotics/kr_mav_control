@@ -2,11 +2,11 @@
   <arg name="input" default="/quadrotor/odom"/>
   <arg name="new_frame_id" default=""/>
 
-  <node pkg="mesh_visualization"
-    type="mesh_visualization"
+  <node pkg="kr_mesh_visualization"
+    type="kr_mesh_visualization"
     name="mesh_visualization"
     output="screen">
-    <param name="mesh_resource" value="package://mesh_visualization/mesh/hummingbird.mesh"/>
+    <param name="mesh_resource" value="package://kr_mesh_visualization/mesh/hummingbird.mesh"/>
     <param name="color/r" value="0.0"/>
     <param name="color/g" value="0.0"/>
     <param name="color/b" value="1.0"/>

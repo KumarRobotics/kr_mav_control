@@ -61,12 +61,12 @@ static void any_callback(const topic_tools::ShapeShifter::ConstPtr &msg)
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "mesh_visualization");
+  ros::init(argc, argv, "kr_mesh_visualization");
 
   ros::NodeHandle nh("~");
 
   nh.param("mesh_resource", mesh_resource,
-           std::string("package://mesh_visualization/mesh/hummingbird.mesh"));
+           std::string("package://kr_mesh_visualization/mesh/hummingbird.mesh"));
   nh.param("color/r", color_r, 1.0);
   nh.param("color/g", color_g, 0.0);
   nh.param("color/b", color_b, 0.0);
