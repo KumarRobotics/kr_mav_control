@@ -7,12 +7,12 @@
 
     <param name="mass" value="$(arg mass)"/>
 
-    <node pkg="mav_manager"
+    <node pkg="kr_mav_manager"
       type="mav_services"
       name="mav_services"
       clear_params="true"
       output="screen">
-      <rosparam file="$(find qualcomm_interface)/config/mav_manager_params.yaml" />
+      <rosparam file="$(find qualcomm_interface)/config/kr_mav_manager_params.yaml" />
     </node>
 
     <node pkg="nodelet"

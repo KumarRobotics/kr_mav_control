@@ -24,7 +24,7 @@
 #include <kr_tracker_msgs/LissajousAdderAction.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
 
-namespace mav_manager
+namespace kr_mav_manager
 {
 class MAVManager
 {
@@ -197,5 +197,5 @@ class MAVManager
     ros::ServiceClient srv_transition_;
 };
 
-} // namespace mav_manager
+} // namespace kr_mav_manager
 #endif /* MANAGER_H */

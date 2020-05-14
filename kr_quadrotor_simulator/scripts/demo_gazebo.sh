@@ -15,7 +15,7 @@ else
 fi
 
 if [ ${NUM_MAV} -eq 1 ]; then
-  RQT_GUI=rqt_mav_manager
+  RQT_GUI=rqt_kr_mav_manager
 else
   RQT_GUI=rqt_multi_mav_gui
 fi
@@ -137,7 +137,7 @@ do
 
   tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; roslaunch mrsl_quadrotor_launch spawn.launch robot_type:=${MAV_TYPE} robot:=${MAV_NAME} x:=${POS_X} y:=${POS_Y}" Enter
   tmux split-window -t $SESSION_NAME
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; roslaunch mav_manager example_control.launch model:=${MAV_NAME} odom_topic:=${ODOM_TOPIC} mass:=0.5" Enter
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; roslaunch kr_mav_manager example_control.launch model:=${MAV_NAME} odom_topic:=${ODOM_TOPIC} mass:=0.5" Enter
   tmux split-window -t $SESSION_NAME
   tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch kr_quadrotor_simulator mesh_vis.launch __ns:=${MAV_NAME} mav_name:=${MAV_NAME} mav_type:=hummingbird odom_topic:=${ODOM_TOPIC} color/r:=${COL_R} color/g:=${COL_G} color/b:=${COL_B} color/a:=${COL_A}" Enter
   tmux select-layout -t $SESSION_NAME even-horizontal
@@ -146,7 +146,7 @@ do
   tmux split-window -t $SESSION_NAME
   tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; rosrun kr_trackers_manager twist_to_action.py __ns:=${MAV_NAME}" Enter
   tmux split-window -t $SESSION_NAME
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; cd $(rospack find mav_manager)/scripts/; ./takeoff.sh ${MAV_NAME}"
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; cd $(rospack find kr_mav_manager)/scripts/; ./takeoff.sh ${MAV_NAME}"
   tmux select-layout -t $SESSION_NAME even-horizontal
 done
 

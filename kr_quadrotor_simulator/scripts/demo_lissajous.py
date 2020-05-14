@@ -17,7 +17,7 @@ from std_srvs.srv import EmptyResponse
 from geometry_msgs.msg import PoseStamped, Pose, Vector3
 from nav_msgs.msg import Path, Odometry
 from nav_msgs.srv import GetPlan, GetPlanRequest, GetPlanResponse
-from mav_manager.srv import Vec4, Vec4Request
+from kr_mav_manager.srv import Vec4, Vec4Request
 
 from multi_mav_manager.srv import RawPosFormation, RawPosFormationRequest
 

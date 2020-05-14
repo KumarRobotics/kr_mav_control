@@ -10,8 +10,8 @@ git submodule update
 ```
 
 ### Stacks include:
-  - `mav_manager`: A manager for the quadrotor_control stack
-  - `rqt_mav_manager`: GUI interface for common mav_manager functions
+  - `kr_mav_manager`: A manager for the quadrotor_control stack
+  - `rqt_kr_mav_manager`: GUI interface for common kr_mav_manager functions
   - `xyz_interface`: Translates `kr_quadrotor_msgs/SO3Command` to corresponding `xyz` robots interface.
   - `kr_quadrotor_simulator`: Simple quadrotor dynamics simulator
   - `kr_quadrotor_msgs`: Common msgs used accross packages

@@ -130,13 +130,13 @@ do
   COL_B=0.${v:1:2}${v:4:3}
   COL_A=0.85
 
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch mav_manager demo.launch sim:=true vicon:=false mav_name:=${MAV_NAME} mav_type:=${MAV_TYPE} world_frame_id:=${WORLD_FRAME_ID} initial_position/x:=${POS_X} initial_position/y:=${POS_Y} color/r:=${COL_R} color/g:=${COL_G} color/b:=${COL_B} color/a:=${COL_A}" Enter
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch kr_mav_manager demo.launch sim:=true vicon:=false mav_name:=${MAV_NAME} mav_type:=${MAV_TYPE} world_frame_id:=${WORLD_FRAME_ID} initial_position/x:=${POS_X} initial_position/y:=${POS_Y} color/r:=${COL_R} color/g:=${COL_G} color/b:=${COL_B} color/a:=${COL_A}" Enter
   tmux split-window -t $SESSION_NAME
   tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; rosrun kr_trackers_manager waypoints_to_action.py __ns:=${MAV_NAME}" Enter
   tmux split-window -t $SESSION_NAME
   tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; rosrun kr_trackers_manager twist_to_action.py __ns:=${MAV_NAME}" Enter
   tmux split-window -t $SESSION_NAME
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; cd $(rospack find mav_manager)/scripts/; ./takeoff.sh ${MAV_NAME}"
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 4; cd $(rospack find kr_mav_manager)/scripts/; ./takeoff.sh ${MAV_NAME}"
   tmux select-layout -t $SESSION_NAME tiled
 done
 

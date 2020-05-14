@@ -1,4 +1,4 @@
-mav_manager
+kr_mav_manager
 =============
 
 A manager for the quadrotor_control stack.

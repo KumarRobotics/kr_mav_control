@@ -1,5 +1,5 @@
 <package format="2">
-  <name>mav_manager</name>
+  <name>kr_mav_manager</name>
   <version>1.0.0</version>
   <description>
     This package provides tools to interface with the quadrotor_control stack

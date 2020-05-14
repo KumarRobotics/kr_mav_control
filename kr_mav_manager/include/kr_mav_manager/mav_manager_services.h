@@ -1,16 +1,16 @@
 #ifndef MAV_MANAGER_SERVICES_H
 #define MAV_MANAGER_SERVICES_H
 
-#include <mav_manager/manager.h>
+#include <kr_mav_manager/manager.h>
 #include <std_srvs/SetBool.h>
 #include <std_srvs/Trigger.h>
-#include <mav_manager/Vec4.h>
-#include <mav_manager/GoalTimed.h>
-#include <mav_manager/Circle.h>
-#include <mav_manager/Lissajous.h>
-#include <mav_manager/CompoundLissajous.h>
+#include <kr_mav_manager/Vec4.h>
+#include <kr_mav_manager/GoalTimed.h>
+#include <kr_mav_manager/Circle.h>
+#include <kr_mav_manager/Lissajous.h>
+#include <kr_mav_manager/CompoundLissajous.h>
 
-namespace mav_manager
+namespace kr_mav_manager
 {
 class MAVManagerServices
 {
@@ -43,7 +43,7 @@ public:
       last_cb_ = "goHome";
     return true;
   }
-  bool goTo_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
+  bool goTo_cb(kr_mav_manager::Vec4::Request &req, kr_mav_manager::Vec4::Response &res)
   {
     res.success = mav->goTo(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
     res.message = "Going To...";
@@ -51,7 +51,7 @@ public:
       last_cb_ = "goTo";
     return true;
   }
-  bool goToTimed_cb(mav_manager::GoalTimed::Request &req, mav_manager::GoalTimed::Response &res)
+  bool goToTimed_cb(kr_mav_manager::GoalTimed::Request &req, kr_mav_manager::GoalTimed::Response &res)
   {
     res.success = mav->goToTimed(req.goal[0], req.goal[1], req.goal[2], req.goal[3], 0.0f, 0.0f, false, req.duration,
                                  req.t_start);
@@ -60,7 +60,7 @@ public:
       last_cb_ = "goToTimed";
     return res.success;
   }
-  bool goToRelative_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
+  bool goToRelative_cb(kr_mav_manager::Vec4::Request &req, kr_mav_manager::Vec4::Response &res)
   {
     res.success = mav->goTo(req.goal[0], req.goal[1], req.goal[2], req.goal[3], 0.0f, 0.0f, true);
     res.message = "Going To Relative Position...";
@@ -68,7 +68,7 @@ public:
       last_cb_ = "goToRelative";
     return res.success;
   }
-  bool setDesVelInWorldFrame_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
+  bool setDesVelInWorldFrame_cb(kr_mav_manager::Vec4::Request &req, kr_mav_manager::Vec4::Response &res)
   {
     res.success = mav->setDesVelInWorldFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3], true);
     res.message = "World Velocity";
@@ -76,7 +76,7 @@ public:
       last_cb_ = "setDesVelInWorldFrmae";
     return true;
   }
-  bool setDesVelInBodyFrame_cb(mav_manager::Vec4::Request &req, mav_manager::Vec4::Response &res)
+  bool setDesVelInBodyFrame_cb(kr_mav_manager::Vec4::Request &req, kr_mav_manager::Vec4::Response &res)
   {
     res.success = mav->setDesVelInBodyFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3], true);
     res.message = "Body Velocity";
@@ -84,7 +84,7 @@ public:
       last_cb_ = "setDesVelInBodyFrame";
     return true;
   }
-  bool circle_cb(mav_manager::Circle::Request &req, mav_manager::Circle::Response &res) 
+  bool circle_cb(kr_mav_manager::Circle::Request &req, kr_mav_manager::Circle::Response &res) 
   {
     res.success = mav->circle(req.Ax, req.Ay, req.T, req.duration);
     res.message = "Circling motion";
@@ -92,7 +92,7 @@ public:
       last_cb_ = "circle";
     return true;
   }
-  bool lissajous_cb(mav_manager::Lissajous::Request &req, mav_manager::Lissajous::Response &res) 
+  bool lissajous_cb(kr_mav_manager::Lissajous::Request &req, kr_mav_manager::Lissajous::Response &res) 
   {
     res.success = mav->lissajous(req.x_amp, req.y_amp, req.z_amp, req.yaw_amp, req.x_num_periods, req.y_num_periods, 
                                  req.z_num_periods, req.yaw_num_periods, req.period, req.num_cycles, req.ramp_time);
@@ -101,7 +101,7 @@ public:
       last_cb_ = "lissajous";
     return true;
   }
-  bool compound_lissajous_cb(mav_manager::CompoundLissajous::Request &req, mav_manager::CompoundLissajous::Response &res) 
+  bool compound_lissajous_cb(kr_mav_manager::CompoundLissajous::Request &req, kr_mav_manager::CompoundLissajous::Response &res) 
   {
     float x_amp[2] = {req.x_amp[0], req.x_amp[1]};
     float y_amp[2] = {req.y_amp[0], req.y_amp[1]};
@@ -192,5 +192,5 @@ protected:
 
   std::string last_cb_;
 };
-} // namespace mav_manager
+} // namespace kr_mav_manager
 #endif /* MAV_MANAGER_SERVICES_H */

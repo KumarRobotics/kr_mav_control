@@ -17,10 +17,10 @@ Once installed follow the following instructions to generate custom messages use
 ```
 cd ~/ws_ros/src/quadrotor_control
 mkdir -p ~/matlab_msgs
-cp -r kr_quadrotor_msgs mav_manager ~/matlab_msgs
+cp -r kr_quadrotor_msgs kr_mav_manager ~/matlab_msgs
 cd ~/ws_ros/src/quadrotor_control/matlab_interface
 cp kr_quadrotor_msgs.patch.package.xml ~/matlab_msgs/kr_quadrotor_msgs/package.xml
-cp mav_manager.patch.package.xml ~/matlab_msgs/mav_manager/package.xml
+cp kr_mav_manager.patch.package.xml ~/matlab_msgs/kr_mav_manager/package.xml
 cd ~/matlab_msgs
 git clone https://github.com/ros/ros_comm_msgs.git
 cd ros_comm_msgs
@@ -37,7 +37,7 @@ rosgenmsg('~/matlab_msgs')
 
  * Follow the instructions spilled out in MATLAB console, i.e edit `javaclasspath.txt` and `addpath` with necessary locations.
 
-Clone and build [kr_ui](https://github.com/KumarRobotics/kr_ui) and [multi_mav_manager](https://github.com/KumarRobotics/multi_mav_manager) in your workspace
+Clone and build [kr_ui](https://github.com/KumarRobotics/kr_ui) and [multi_kr_mav_manager](https://github.com/KumarRobotics/multi_kr_mav_manager) in your workspace
 
 ## Running simple simulator with matlab_interface
 

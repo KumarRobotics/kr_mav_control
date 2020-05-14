@@ -1,5 +1,5 @@
-// mav_manager
-#include <mav_manager/manager.h>
+// kr_mav_manager
+#include <kr_mav_manager/manager.h>
 
 // Standard C++
 #include <math.h>
@@ -17,7 +17,7 @@
 #include <kr_tracker_msgs/Transition.h>
 #include <kr_tracker_msgs/VelocityGoal.h>
 
-namespace mav_manager
+namespace kr_mav_manager
 {
 // Strings
 static const std::string line_tracker_distance("std_trackers/LineTrackerDistanceAction");
@@ -855,4 +855,4 @@ bool MAVManager::have_recent_imu() {
 bool MAVManager::have_recent_output_data() {
   return (ros::Time::now() - last_output_data_t_).toSec() < 0.1;
 }
-} // namespace mav_manager
+} // namespace kr_mav_manager

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
-project(mav_manager)
+project(kr_mav_manager)
 
 # set default build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -37,7 +37,7 @@ generate_messages()
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES mav_manager
+  LIBRARIES kr_mav_manager
   CATKIN_DEPENDS
     roscpp
     nav_msgs
@@ -49,15 +49,15 @@ catkin_package(
     message_runtime
   DEPENDS EIGEN3)
 
-add_library(mav_manager src/manager.cpp)
-add_dependencies(mav_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(mav_manager ${catkin_LIBRARIES})
+add_library(kr_mav_manager src/manager.cpp)
+add_dependencies(kr_mav_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(kr_mav_manager ${catkin_LIBRARIES})
 
 add_executable(mav_services src/mav_services.cpp)
-target_link_libraries(mav_services mav_manager ${catkin_LIBRARIES})
+target_link_libraries(mav_services kr_mav_manager ${catkin_LIBRARIES})
 
 install(TARGETS
-    mav_manager
+    kr_mav_manager
     mav_services
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
