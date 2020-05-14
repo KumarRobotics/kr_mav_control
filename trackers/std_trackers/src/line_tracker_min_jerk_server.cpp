@@ -9,7 +9,7 @@
 #include <trackers_manager/Tracker.h>
 #include <tracker_msgs/TrackerStatus.h>
 #include <tracker_msgs/LineTrackerAction.h>
-#include <quadrotor_msgs/PositionCommand.h>
+#include <kr_quadrotor_msgs/PositionCommand.h>
 
 
 class LineTrackerMinJerkAction : public trackers_manager::Tracker {
@@ -17,10 +17,10 @@ public:
   LineTrackerMinJerkAction(void);
 
   void Initialize(const ros::NodeHandle &nh);
-  bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
+  bool Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  quadrotor_msgs::PositionCommand::ConstPtr update(
+  kr_quadrotor_msgs::PositionCommand::ConstPtr update(
     const nav_msgs::Odometry::ConstPtr &msg);
 
   uint8_t status() const;
@@ -88,7 +88,7 @@ void LineTrackerMinJerkAction::Initialize(const ros::NodeHandle &nh) {
   tracker_server_->start();
 }
 
-bool LineTrackerMinJerkAction::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
+bool LineTrackerMinJerkAction::Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
 
   // Only allow activation if a goal has been set
@@ -117,7 +117,7 @@ void LineTrackerMinJerkAction::Deactivate(void) {
   active_ = false;
 }
 
-quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerkAction::update(
+kr_quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerkAction::update(
     const nav_msgs::Odometry::ConstPtr &msg) {
 
   // Record distance between last position and current.
@@ -133,12 +133,12 @@ quadrotor_msgs::PositionCommand::ConstPtr LineTrackerMinJerkAction::update(
   const ros::Time t_now = ros::Time::now();
 
   if (!active_) {
-    return quadrotor_msgs::PositionCommand::Ptr();
+    return kr_quadrotor_msgs::PositionCommand::Ptr();
   }
 
   current_traj_length_ += dx;
 
-  quadrotor_msgs::PositionCommand::Ptr cmd(new quadrotor_msgs::PositionCommand);
+  kr_quadrotor_msgs::PositionCommand::Ptr cmd(new kr_quadrotor_msgs::PositionCommand);
   cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
 

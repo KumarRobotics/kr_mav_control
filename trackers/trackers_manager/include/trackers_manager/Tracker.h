@@ -3,7 +3,7 @@
 
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
-#include <quadrotor_msgs/PositionCommand.h>
+#include <kr_quadrotor_msgs/PositionCommand.h>
 
 namespace trackers_manager
 {
@@ -27,7 +27,7 @@ class Tracker
    *
    * @return Should return true if the tracker is ready to publish commands, else return false.
    */
-  virtual bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd) = 0;
+  virtual bool Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd) = 0;
 
   /**
    * @brief Deactivate the tracker. This is called when the trackers_manager switches to another tracker.
@@ -44,7 +44,7 @@ class Tracker
    * @return The PositionCommand message which would be published. If an uninitialized ConstPtr is returned, then no
    * PositionCommand message would be published.
    */
-  virtual quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg) = 0;
+  virtual kr_quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg) = 0;
 
 
   /**

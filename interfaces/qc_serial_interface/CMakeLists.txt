@@ -8,14 +8,14 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 
-find_package(catkin REQUIRED COMPONENTS nodelet quadrotor_msgs roscpp sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS nodelet kr_quadrotor_msgs roscpp sensor_msgs)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS
   LIBRARIES
-  CATKIN_DEPENDS nodelet quadrotor_msgs roscpp sensor_msgs
+  CATKIN_DEPENDS nodelet kr_quadrotor_msgs roscpp sensor_msgs
   DEPENDS)
 
 add_library(quad_encode_msg_nodelet src/encode_msgs.cpp src/quad_encode_msg_nodelet.cpp)

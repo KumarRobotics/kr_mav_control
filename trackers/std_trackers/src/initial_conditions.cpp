@@ -27,7 +27,7 @@ InitialConditions::InitialConditions() :
 }
 
 void InitialConditions::set_from_cmd(
-    const quadrotor_msgs::PositionCommand::ConstPtr &msg)
+    const kr_quadrotor_msgs::PositionCommand::ConstPtr &msg)
 {
   if (msg == NULL)
   {

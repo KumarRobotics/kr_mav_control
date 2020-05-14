@@ -1,7 +1,7 @@
 #include <iostream>
 #include <ros/ros.h>
 #include <snav/snapdragon_navigator.h>
-#include <quadrotor_msgs/MotorRPM.h>
+#include <kr_quadrotor_msgs/MotorRPM.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
 #include <sensor_msgs/BatteryState.h>
@@ -55,7 +55,7 @@ SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh)
   if (rpm_rate > 1e-3)
   {
     ROS_INFO("Publish motor_rpm at %4.2fHz", rpm_rate);
-    motor_speeds_pub_ = nh.advertise<quadrotor_msgs::MotorRPM>("motor_rpm", 2);
+    motor_speeds_pub_ = nh.advertise<kr_quadrotor_msgs::MotorRPM>("motor_rpm", 2);
     rpm_timer_ = nh.createTimer(ros::Duration(1.0/rpm_rate),
             &SnavSampler::rpmTimerCallback, this);
   }
@@ -145,7 +145,7 @@ void SnavSampler::rpmTimerCallback(const ros::TimerEvent& event)
     esc_time.fromNSec(esc_timestamp_ns);
     esc_time += snav_offset_;
 
-    quadrotor_msgs::MotorRPM speed;
+    kr_quadrotor_msgs::MotorRPM speed;
     speed.header.stamp = esc_time;
     int16_t *rpm = sn_struct_->esc_raw.rpm;
     speed.motor_count = 4;

@@ -8,7 +8,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <Eigen/Geometry>
 #include <geometry_msgs/Vector3Stamped.h>
-#include <quadrotor_msgs/OutputData.h>
+#include <kr_quadrotor_msgs/OutputData.h>
 
 namespace QuadrotorSimulator
 {
@@ -72,7 +72,7 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
   pub_odom_ = n.advertise<nav_msgs::Odometry>("odom", 100);
   pub_imu_ = n.advertise<sensor_msgs::Imu>("imu", 100);
   pub_output_data_ =
-      n.advertise<quadrotor_msgs::OutputData>("output_data", 100);
+      n.advertise<kr_quadrotor_msgs::OutputData>("output_data", 100);
   sub_cmd_ = n.subscribe<T>("cmd", 100, &QuadrotorSimulatorBase::cmd_callback,
                             this, ros::TransportHints().tcpNoDelay());
   sub_extern_force_ = n.subscribe<geometry_msgs::Vector3Stamped>(
@@ -149,7 +149,7 @@ void QuadrotorSimulatorBase<T, U>::run(void)
 
   nav_msgs::Odometry odom_msg;
   sensor_msgs::Imu imu_msg;
-  quadrotor_msgs::OutputData output_data_msg;
+  kr_quadrotor_msgs::OutputData output_data_msg;
   odom_msg.header.frame_id = world_frame_id_;
   odom_msg.child_frame_id = quad_name_;
   imu_msg.header.frame_id = quad_name_;

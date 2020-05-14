@@ -12,9 +12,9 @@ git submodule update
 ### Stacks include:
   - `mav_manager`: A manager for the quadrotor_control stack
   - `rqt_mav_manager`: GUI interface for common mav_manager functions
-  - `xyz_interface`: Translates `quadrotor_msgs/SO3Command` to corresponding `xyz` robots interface.
+  - `xyz_interface`: Translates `kr_quadrotor_msgs/SO3Command` to corresponding `xyz` robots interface.
   - `quadrotor_simulator`: Simple quadrotor dynamics simulator
-  - `quadrotor_msgs`: Common msgs used accross packages
+  - `kr_quadrotor_msgs`: Common msgs used accross packages
   - `so3_control`: The main controller
   - `trackers`: Different trackers under `std_trackers`, and `trackers_manager`
 

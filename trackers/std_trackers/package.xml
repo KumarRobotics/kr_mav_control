@@ -18,7 +18,7 @@
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>tf</depend>
-  <depend>quadrotor_msgs</depend>
+  <depend>kr_quadrotor_msgs</depend>
   <depend>tracker_msgs</depend>
   <depend>trackers_manager</depend>
 

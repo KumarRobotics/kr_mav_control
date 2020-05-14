@@ -14,10 +14,10 @@ class LineTrackerYaw : public trackers_manager::Tracker
   LineTrackerYaw(void);
 
   void Initialize(const ros::NodeHandle &nh);
-  bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
+  bool Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+  kr_quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
   uint8_t status() const;
 
  private:
@@ -92,7 +92,7 @@ void LineTrackerYaw::Deactivate(void)
   active_ = false;
 }
 
-quadrotor_msgs::PositionCommand::ConstPtr LineTrackerYaw::update(const nav_msgs::Odometry::ConstPtr &msg)
+kr_quadrotor_msgs::PositionCommand::ConstPtr LineTrackerYaw::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   pos_(0) = msg->pose.pose.position.x;
   pos_(1) = msg->pose.pose.position.y;
@@ -108,11 +108,11 @@ quadrotor_msgs::PositionCommand::ConstPtr LineTrackerYaw::update(const nav_msgs:
   t_prev = t_now; // msg->header.stamp;
 
   if(!active_)
-    return quadrotor_msgs::PositionCommand::Ptr();
+    return kr_quadrotor_msgs::PositionCommand::Ptr();
 
   bool goal_pos_reached(false), goal_yaw_reached(false);
 
-  quadrotor_msgs::PositionCommand::Ptr cmd(new quadrotor_msgs::PositionCommand);
+  kr_quadrotor_msgs::PositionCommand::Ptr cmd(new kr_quadrotor_msgs::PositionCommand);
   cmd->header.stamp = ros::Time::now();
   cmd->header.frame_id = msg->header.frame_id;
 

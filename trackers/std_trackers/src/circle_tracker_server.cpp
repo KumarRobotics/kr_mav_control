@@ -13,7 +13,7 @@
 
 #include <trackers_manager/Tracker.h>
 #include <tracker_msgs/TrackerStatus.h>
-#include <quadrotor_msgs/PositionCommand.h>
+#include <kr_quadrotor_msgs/PositionCommand.h>
 #include <tracker_msgs/CircleTrackerAction.h>
 
 class CircleTrackerAction : public trackers_manager::Tracker {
@@ -21,10 +21,10 @@ public:
   CircleTrackerAction(void);
 
   void Initialize(const ros::NodeHandle &nh);
-  bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
+  bool Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate();
 
-  quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+  kr_quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
 
   uint8_t status() const;
 
@@ -117,7 +117,7 @@ void CircleTrackerAction::Initialize(const ros::NodeHandle &nh) {
   pub_end_ = priv_nh.advertise<std_msgs::Empty>("traj_end", 10);
 }
 
-bool CircleTrackerAction::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd) {
+bool CircleTrackerAction::Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd) {
   if (!have_odom_) {
     ROS_WARN("CircleTrackerAction::Activate: could not activate because no odom recieved - not activating.");
     active_ = false;
@@ -169,7 +169,7 @@ void CircleTrackerAction::Deactivate(void) {
 
 }
 
-quadrotor_msgs::PositionCommand::ConstPtr CircleTrackerAction::update(const nav_msgs::Odometry::ConstPtr &msg) {
+kr_quadrotor_msgs::PositionCommand::ConstPtr CircleTrackerAction::update(const nav_msgs::Odometry::ConstPtr &msg) {
   // Record distance between last position and current.
   const float dx = Eigen::Vector3f((current_pos_(0) - msg->pose.pose.position.x), (current_pos_(1) - msg->pose.pose.position.y), (current_pos_(2) - msg->pose.pose.position.z)).norm();
 
@@ -181,13 +181,13 @@ quadrotor_msgs::PositionCommand::ConstPtr CircleTrackerAction::update(const nav_
   have_odom_ = true;
 
   if (!active_) {
-    return quadrotor_msgs::PositionCommand::Ptr();
+    return kr_quadrotor_msgs::PositionCommand::Ptr();
   }
 
   current_traj_length_ += dx;
 
   const ros::Time t_now = ros::Time::now();
-  quadrotor_msgs::PositionCommand::Ptr cmd(new quadrotor_msgs::PositionCommand);
+  kr_quadrotor_msgs::PositionCommand::Ptr cmd(new kr_quadrotor_msgs::PositionCommand);
   cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
 

@@ -9,7 +9,7 @@
 #include <trackers_manager/Tracker.h>
 #include <tracker_msgs/TrackerStatus.h>
 #include <tracker_msgs/LineTrackerAction.h>
-#include <quadrotor_msgs/PositionCommand.h>
+#include <kr_quadrotor_msgs/PositionCommand.h>
 
 class LineTrackerDistanceAction : public trackers_manager::Tracker
 {
@@ -17,10 +17,10 @@ public:
   LineTrackerDistanceAction(void);
 
   void Initialize(const ros::NodeHandle &nh);
-  bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
+  bool Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+  kr_quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
 
   uint8_t status() const;
 
@@ -76,7 +76,7 @@ void LineTrackerDistanceAction::Initialize(const ros::NodeHandle &nh)
   tracker_server_->start();
 }
 
-bool LineTrackerDistanceAction::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
+bool LineTrackerDistanceAction::Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
   if (goal_set_ && pos_set_)
@@ -113,7 +113,7 @@ void LineTrackerDistanceAction::Deactivate(void)
   active_ = false;
 }
 
-quadrotor_msgs::PositionCommand::ConstPtr LineTrackerDistanceAction::update(const nav_msgs::Odometry::ConstPtr &msg)
+kr_quadrotor_msgs::PositionCommand::ConstPtr LineTrackerDistanceAction::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   // Record distance between last position and current.
   const float dx = Eigen::Vector3f((pos_(0) - msg->pose.pose.position.x), (pos_(1) - msg->pose.pose.position.y), (pos_(2) - msg->pose.pose.position.z)).norm();
@@ -130,14 +130,14 @@ quadrotor_msgs::PositionCommand::ConstPtr LineTrackerDistanceAction::update(cons
   t_prev = msg->header.stamp;
 
   if (!active_) {
-    return quadrotor_msgs::PositionCommand::Ptr();
+    return kr_quadrotor_msgs::PositionCommand::Ptr();
   }
 
   // Track the distance and time in the current trajectory.
   current_traj_duration_ += dT;
   current_traj_length_ += dx;
 
-  quadrotor_msgs::PositionCommand::Ptr cmd(new quadrotor_msgs::PositionCommand);
+  kr_quadrotor_msgs::PositionCommand::Ptr cmd(new kr_quadrotor_msgs::PositionCommand);
   cmd->header.stamp = ros::Time::now();
   cmd->header.frame_id = msg->header.frame_id;
   cmd->yaw = start_yaw_;

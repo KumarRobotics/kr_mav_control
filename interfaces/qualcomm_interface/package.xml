@@ -11,7 +11,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>nav_msgs</depend>
   <depend>nodelet</depend>
-  <depend>quadrotor_msgs</depend>
+  <depend>kr_quadrotor_msgs</depend>
   <depend>roscpp</depend>
   <depend>tf_conversions</depend>
   <export>

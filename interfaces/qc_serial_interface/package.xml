@@ -15,7 +15,7 @@
 
   <!-- Dependencies needed to compile this package. -->
   <depend>nodelet</depend>
-  <depend>quadrotor_msgs</depend>
+  <depend>kr_quadrotor_msgs</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
 

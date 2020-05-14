@@ -1,6 +1,6 @@
 #include <nav_msgs/Odometry.h>
 #include <nodelet/nodelet.h>
-#include <quadrotor_msgs/PositionCommand.h>
+#include <kr_quadrotor_msgs/PositionCommand.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Bool.h>
@@ -14,7 +14,7 @@ class PosCmdToSnav : public nodelet::Nodelet
  private:
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void imu_callback(const sensor_msgs::Imu::ConstPtr &pose);
-  void position_cmd_callback(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
+  void position_cmd_callback(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void enable_motors_callback(const std_msgs::Bool::ConstPtr &msg);
   void motors_on();
   void motors_off();
@@ -30,7 +30,7 @@ class PosCmdToSnav : public nodelet::Nodelet
 
   double pos_cmd_timeout_;
   ros::Time last_pos_cmd_time_;
-  quadrotor_msgs::PositionCommand last_pos_cmd_;
+  kr_quadrotor_msgs::PositionCommand last_pos_cmd_;
 };
 
 void PosCmdToSnav::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
@@ -50,7 +50,7 @@ void PosCmdToSnav::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
     ROS_DEBUG("pos_cmd timeout. %f seconds since last command",
              (ros::Time::now() - last_pos_cmd_time_).toSec());
     const auto last_pos_cmd_ptr =
-        boost::make_shared<quadrotor_msgs::PositionCommand>(last_pos_cmd_);
+        boost::make_shared<kr_quadrotor_msgs::PositionCommand>(last_pos_cmd_);
 
     position_cmd_callback(last_pos_cmd_ptr);
   }
@@ -148,7 +148,7 @@ void PosCmdToSnav::enable_motors_callback(const std_msgs::Bool::ConstPtr &msg)
   }
 }
 
-void PosCmdToSnav::position_cmd_callback(const quadrotor_msgs::PositionCommand::ConstPtr &pos)
+void PosCmdToSnav::position_cmd_callback(const kr_quadrotor_msgs::PositionCommand::ConstPtr &pos)
 {
   float yaw = static_cast<float>(pos->yaw);
   float yaw_rate = static_cast<float>(pos->yaw_dot);

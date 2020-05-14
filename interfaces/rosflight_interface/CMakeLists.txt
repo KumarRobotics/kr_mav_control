@@ -7,7 +7,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
-find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs geometry_msgs quadrotor_msgs nodelet)
+find_package(catkin REQUIRED COMPONENTS roscpp nav_msgs geometry_msgs kr_quadrotor_msgs nodelet)
 find_package(Eigen3 REQUIRED)
 
 # If rosflight_msgs not found, don't build but do not cause a build error
@@ -21,7 +21,7 @@ else()
   catkin_package(
     INCLUDE_DIRS
     LIBRARIES
-    CATKIN_DEPENDS roscpp nav_msgs geometry_msgs quadrotor_msgs rosflight_msgs nodelet
+    CATKIN_DEPENDS roscpp nav_msgs geometry_msgs kr_quadrotor_msgs rosflight_msgs nodelet
     DEPENDS EIGEN3)
 
   add_library(so3cmd_to_rosflight_nodelet src/so3cmd_to_rosflight_nodelet.cpp)

@@ -95,15 +95,15 @@ void LissajousGenerator::setParams(const tracker_msgs::LissajousAdderGoal::Const
   goal_reached_ = false;
 }
 
-const quadrotor_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(void)
+const kr_quadrotor_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(void)
 {
   if(!active_)
   {
-    return quadrotor_msgs::PositionCommand::Ptr();
+    return kr_quadrotor_msgs::PositionCommand::Ptr();
   }
 
   // Set gains
-  quadrotor_msgs::PositionCommand::Ptr cmd(new quadrotor_msgs::PositionCommand);
+  kr_quadrotor_msgs::PositionCommand::Ptr cmd(new kr_quadrotor_msgs::PositionCommand);
 
   // Get elapsed time
   ros::Time current_time = ros::Time::now();

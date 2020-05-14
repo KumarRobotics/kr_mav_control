@@ -10,17 +10,17 @@ class VelocityTracker : public trackers_manager::Tracker
   VelocityTracker(void);
 
   void Initialize(const ros::NodeHandle &nh);
-  bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
+  bool Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+  kr_quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
   uint8_t status() const;
 
  private:
   void velocity_cmd_cb(const tracker_msgs::VelocityGoal::ConstPtr &msg);
 
   ros::Subscriber sub_vel_cmd_, sub_position_vel_cmd_;
-  quadrotor_msgs::PositionCommand position_cmd_;
+  kr_quadrotor_msgs::PositionCommand position_cmd_;
   bool odom_set_, active_, use_position_gains_;
   double last_t_;
   double pos_[3], cur_yaw_;
@@ -46,7 +46,7 @@ void VelocityTracker::Initialize(const ros::NodeHandle &nh)
                                    ros::TransportHints().tcpNoDelay());
 }
 
-bool VelocityTracker::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
+bool VelocityTracker::Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
   if(cmd)
   {
@@ -75,7 +75,7 @@ void VelocityTracker::Deactivate(void)
   last_t_ = 0;
 }
 
-quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
+kr_quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   pos_[0] = msg->pose.pose.position.x;
   pos_[1] = msg->pose.pose.position.y;
@@ -84,7 +84,7 @@ quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs
   odom_set_ = true;
 
   if(!active_)
-    return quadrotor_msgs::PositionCommand::Ptr();
+    return kr_quadrotor_msgs::PositionCommand::Ptr();
 
   if((ros::Time::now() - last_cmd_time_).toSec() > timeout_)
   {
@@ -97,12 +97,12 @@ quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs
     ROS_WARN_THROTTLE(1, "VelocityTracker is active but timed out");
 
     if(use_position_gains_)
-      position_cmd_.use_msg_gains_flags = quadrotor_msgs::PositionCommand::USE_MSG_GAINS_NONE;
+      position_cmd_.use_msg_gains_flags = kr_quadrotor_msgs::PositionCommand::USE_MSG_GAINS_NONE;
 
     position_cmd_.header.stamp = msg->header.stamp;
     position_cmd_.header.frame_id = msg->header.frame_id;
     last_t_ = 0;
-    return quadrotor_msgs::PositionCommand::ConstPtr(new quadrotor_msgs::PositionCommand(position_cmd_));
+    return kr_quadrotor_msgs::PositionCommand::ConstPtr(new kr_quadrotor_msgs::PositionCommand(position_cmd_));
   }
 
   if(last_t_ == 0)
@@ -114,7 +114,7 @@ quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs
 
   if(use_position_gains_)
   {
-    position_cmd_.use_msg_gains_flags = quadrotor_msgs::PositionCommand::USE_MSG_GAINS_NONE;
+    position_cmd_.use_msg_gains_flags = kr_quadrotor_msgs::PositionCommand::USE_MSG_GAINS_NONE;
 
     position_cmd_.position.x = position_cmd_.position.x + dt * position_cmd_.velocity.x;
     position_cmd_.position.y = position_cmd_.position.y + dt * position_cmd_.velocity.y;
@@ -123,7 +123,7 @@ quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs
   else
   {
     position_cmd_.kx[0] = 0, position_cmd_.kx[1] = 0, position_cmd_.kx[2] = 0;
-    position_cmd_.use_msg_gains_flags = quadrotor_msgs::PositionCommand::USE_MSG_GAINS_POSITION_ALL;
+    position_cmd_.use_msg_gains_flags = kr_quadrotor_msgs::PositionCommand::USE_MSG_GAINS_POSITION_ALL;
 
     position_cmd_.position.x = pos_[0];
     position_cmd_.position.y = pos_[1];
@@ -134,7 +134,7 @@ quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs
   position_cmd_.header.stamp = msg->header.stamp;
   position_cmd_.header.frame_id = msg->header.frame_id;
 
-  return quadrotor_msgs::PositionCommand::ConstPtr(new quadrotor_msgs::PositionCommand(position_cmd_));
+  return kr_quadrotor_msgs::PositionCommand::ConstPtr(new kr_quadrotor_msgs::PositionCommand(position_cmd_));
 }
 
 void VelocityTracker::velocity_cmd_cb(const tracker_msgs::VelocityGoal::ConstPtr &msg)

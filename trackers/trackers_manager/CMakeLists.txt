@@ -6,14 +6,14 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS roscpp nodelet pluginlib quadrotor_msgs nav_msgs tracker_msgs)
+find_package(catkin REQUIRED COMPONENTS roscpp nodelet pluginlib kr_quadrotor_msgs nav_msgs tracker_msgs)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES trackers_manager
-  CATKIN_DEPENDS roscpp nodelet pluginlib quadrotor_msgs nav_msgs tracker_msgs
+  CATKIN_DEPENDS roscpp nodelet pluginlib kr_quadrotor_msgs nav_msgs tracker_msgs
   DEPENDS
 )
 

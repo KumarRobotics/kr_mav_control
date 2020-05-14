@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <nodelet/nodelet.h>
-#include <quadrotor_msgs/Serial.h>
+#include <kr_quadrotor_msgs/Serial.h>
 #include <qc_serial_interface/ASIOSerialDevice.h>
 #include <qc_serial_interface/serial_interface.h>
 
@@ -11,8 +11,8 @@ class QuadSerialComm : public nodelet::Nodelet
   ~QuadSerialComm();
 
  private:
-  void serial_callback(const quadrotor_msgs::Serial::ConstPtr &msg);
-  void output_data_callback(quadrotor_msgs::Serial &msg);
+  void serial_callback(const kr_quadrotor_msgs::Serial::ConstPtr &msg);
+  void output_data_callback(kr_quadrotor_msgs::Serial &msg);
   void serial_read_callback(const unsigned char *data, size_t count);
 
   ASIOSerialDevice sd_;
@@ -21,7 +21,7 @@ class QuadSerialComm : public nodelet::Nodelet
 };
 
 
-void QuadSerialComm::serial_callback(const quadrotor_msgs::Serial::ConstPtr &msg)
+void QuadSerialComm::serial_callback(const kr_quadrotor_msgs::Serial::ConstPtr &msg)
 {
   std::vector<unsigned char> serial_msg;
 
@@ -30,7 +30,7 @@ void QuadSerialComm::serial_callback(const quadrotor_msgs::Serial::ConstPtr &msg
   sd_.Write(serial_msg);
 }
 
-void QuadSerialComm::output_data_callback(quadrotor_msgs::Serial &msg)
+void QuadSerialComm::output_data_callback(kr_quadrotor_msgs::Serial &msg)
 {
   msg.header.stamp = ros::Time::now();
   output_data_pub_.publish(msg);
@@ -53,7 +53,7 @@ void QuadSerialComm::onInit(void)
 
   sd_.Open(device, baud_rate);
 
-  output_data_pub_ = n.advertise<quadrotor_msgs::Serial>("from_robot", 10);
+  output_data_pub_ = n.advertise<kr_quadrotor_msgs::Serial>("from_robot", 10);
 
   serial_sub_ = n.subscribe("to_robot", 10, &QuadSerialComm::serial_callback, this,
                             ros::TransportHints().tcpNoDelay());

@@ -14,10 +14,10 @@ class LissajousAdderAction : public trackers_manager::Tracker
   public:
     LissajousAdderAction(void);
     void Initialize(const ros::NodeHandle &nh);
-    bool Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd);
+    bool Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd);
     void Deactivate(void);
 
-    quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+    kr_quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
     uint8_t status() const;
 
   private:
@@ -51,7 +51,7 @@ void LissajousAdderAction::Initialize(const ros::NodeHandle &nh)
   tracker_server_->start();
 }
 
-bool LissajousAdderAction::Activate(const quadrotor_msgs::PositionCommand::ConstPtr &cmd)
+bool LissajousAdderAction::Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
   if(generator_1_.goalIsSet() && generator_2_.goalIsSet())
@@ -79,11 +79,11 @@ void LissajousAdderAction::Deactivate(void)
   traj_start_set_ = false;
 }
 
-quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav_msgs::Odometry::ConstPtr &msg)
+kr_quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   if(!(generator_1_.isActive() & generator_2_.isActive()))
   {
-    return quadrotor_msgs::PositionCommand::Ptr();
+    return kr_quadrotor_msgs::PositionCommand::Ptr();
   }
 
   if(!traj_start_set_)
@@ -113,8 +113,8 @@ quadrotor_msgs::PositionCommand::ConstPtr LissajousAdderAction::update(const nav
   }
 
   // Set gains
-  quadrotor_msgs::PositionCommand::Ptr cmd1 = generator_1_.getPositionCmd();
-  quadrotor_msgs::PositionCommand::Ptr cmd2 = generator_2_.getPositionCmd();
+  kr_quadrotor_msgs::PositionCommand::Ptr cmd1 = generator_1_.getPositionCmd();
+  kr_quadrotor_msgs::PositionCommand::Ptr cmd2 = generator_2_.getPositionCmd();
   if(cmd1 == NULL && cmd2 == NULL)
   {
     return cmd1;

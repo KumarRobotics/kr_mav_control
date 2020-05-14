@@ -1,7 +1,7 @@
 #include <Eigen/Geometry>
 #include <nav_msgs/Odometry.h>
 #include <nodelet/nodelet.h>
-#include <quadrotor_msgs/TRPYCommand.h>
+#include <kr_quadrotor_msgs/TRPYCommand.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64.h>
@@ -15,10 +15,10 @@ class TRPYCmdToSnav : public nodelet::Nodelet
   void onInit(void);
 
  private:
-  void trpy_cmd_callback(const quadrotor_msgs::TRPYCommand::ConstPtr &msg);
+  void trpy_cmd_callback(const kr_quadrotor_msgs::TRPYCommand::ConstPtr &msg);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void imu_callback(const sensor_msgs::Imu::ConstPtr &pose);
-  void trpy_cmd_to_qc_interface(const quadrotor_msgs::TRPYCommand::ConstPtr &msg);
+  void trpy_cmd_to_qc_interface(const kr_quadrotor_msgs::TRPYCommand::ConstPtr &msg);
   void motors_on();
   void motors_off();
 
@@ -36,7 +36,7 @@ class TRPYCmdToSnav : public nodelet::Nodelet
 
   double trpy_cmd_timeout_;
   ros::Time last_trpy_cmd_time_;
-  quadrotor_msgs::TRPYCommand last_trpy_cmd_;
+  kr_quadrotor_msgs::TRPYCommand last_trpy_cmd_;
 };
 
 void TRPYCmdToSnav::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
@@ -53,7 +53,7 @@ void TRPYCmdToSnav::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
     ROS_DEBUG("trpy_cmd timeout. %f seconds since last command",
              (ros::Time::now() - last_trpy_cmd_time_).toSec());
     const auto last_trpy_cmd_ptr =
-        boost::make_shared<quadrotor_msgs::TRPYCommand>(last_trpy_cmd_);
+        boost::make_shared<kr_quadrotor_msgs::TRPYCommand>(last_trpy_cmd_);
 
     trpy_cmd_callback(last_trpy_cmd_ptr);
   }
@@ -73,7 +73,7 @@ void TRPYCmdToSnav::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
     ROS_DEBUG("trpy_cmd timeout. %f seconds since last command",
              (ros::Time::now() - last_trpy_cmd_time_).toSec());
     const auto last_trpy_cmd_ptr =
-        boost::make_shared<quadrotor_msgs::TRPYCommand>(last_trpy_cmd_);
+        boost::make_shared<kr_quadrotor_msgs::TRPYCommand>(last_trpy_cmd_);
 
     trpy_cmd_callback(last_trpy_cmd_ptr);
   }
@@ -152,7 +152,7 @@ void TRPYCmdToSnav::motors_off()
 }
 
 void TRPYCmdToSnav::trpy_cmd_to_qc_interface(
-  const quadrotor_msgs::TRPYCommand::ConstPtr &msg)
+  const kr_quadrotor_msgs::TRPYCommand::ConstPtr &msg)
 {
   const tf::Quaternion q_rot = tf::createQuaternionFromRPY(msg->roll, msg->pitch, msg->yaw);
   Eigen::Quaterniond q_des;
@@ -184,7 +184,7 @@ void TRPYCmdToSnav::trpy_cmd_to_qc_interface(
 }
 
 void TRPYCmdToSnav::trpy_cmd_callback(
-    const quadrotor_msgs::TRPYCommand::ConstPtr &msg)
+    const kr_quadrotor_msgs::TRPYCommand::ConstPtr &msg)
 {
   if(!trpy_cmd_set_)
     trpy_cmd_set_ = true;

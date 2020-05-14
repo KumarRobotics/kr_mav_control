@@ -2,13 +2,13 @@
 #define QUAD_SERIAL_COMM_SERIAL_INTERFACE_H
 
 #include <vector>
-#include <quadrotor_msgs/Serial.h>
+#include <kr_quadrotor_msgs/Serial.h>
 #include <boost/function.hpp>
 
-void encode_serial_msg(const quadrotor_msgs::Serial &msg,
+void encode_serial_msg(const kr_quadrotor_msgs::Serial &msg,
                        std::vector<uint8_t> &serial_data);
 
 void process_serial_data(
     const uint8_t *data, const size_t count,
-    boost::function<void(quadrotor_msgs::Serial &)> callback);
+    boost::function<void(kr_quadrotor_msgs::Serial &)> callback);
 #endif

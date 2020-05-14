@@ -78,9 +78,9 @@ MAVManager::MAVManager(std::string ns)
 
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
   pub_estop_ = nh_.advertise<std_msgs::Empty>("estop", 10);
-  pub_so3_command_ = nh_.advertise<quadrotor_msgs::SO3Command>("so3_cmd", 10);
-  pub_trpy_command_ = nh_.advertise<quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
-  pub_position_command_ = nh_.advertise<quadrotor_msgs::PositionCommand>("position_cmd", 10);
+  pub_so3_command_ = nh_.advertise<kr_quadrotor_msgs::SO3Command>("so3_cmd", 10);
+  pub_trpy_command_ = nh_.advertise<kr_quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
+  pub_position_command_ = nh_.advertise<kr_quadrotor_msgs::PositionCommand>("position_cmd", 10);
   pub_status_ = priv_nh_.advertise<std_msgs::UInt8>("status", 10);
   pub_goal_velocity_ = nh_.advertise<tracker_msgs::VelocityGoal>("trackers_manager/velocity_tracker/goal", 10);
 
@@ -469,7 +469,7 @@ bool MAVManager::setDesVelInBodyFrame(float x, float y, float z, float yaw, bool
   return this->setDesVelInWorldFrame(vel(0), vel(1), vel(2), yaw, use_position_feedback);
 }
 
-bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand &msg) {
+bool MAVManager::setPositionCommand(const kr_quadrotor_msgs::PositionCommand &msg) {
 
   // TODO: Need to keep publishing a position command if there is no update.
   // Otherwise, no so3_command will be published.
@@ -495,7 +495,7 @@ bool MAVManager::setPositionCommand(const quadrotor_msgs::PositionCommand &msg) 
   }
 }
 
-bool MAVManager::setSO3Command(const quadrotor_msgs::SO3Command &msg) {
+bool MAVManager::setSO3Command(const kr_quadrotor_msgs::SO3Command &msg) {
 
   // Note: To enable motors, the motors method must be used
   if (!this->motors())
@@ -516,7 +516,7 @@ bool MAVManager::setSO3Command(const quadrotor_msgs::SO3Command &msg) {
   return flag;
 }
 
-bool MAVManager::setTRPYCommand(const quadrotor_msgs::TRPYCommand &msg) {
+bool MAVManager::setTRPYCommand(const kr_quadrotor_msgs::TRPYCommand &msg) {
 
   // Note: To enable motors, the motors method must be used
   if (!this->motors())
@@ -571,13 +571,13 @@ bool MAVManager::set_motors(bool motors) {
   pub_motors_.publish(motors_cmd);
 
   // Publish a couple so3_commands to ensure motors are or are not spinning
-  quadrotor_msgs::SO3Command so3_cmd;
+  kr_quadrotor_msgs::SO3Command so3_cmd;
   so3_cmd.header.stamp = ros::Time::now();
   so3_cmd.force.z = FLT_MIN;
   so3_cmd.orientation.w = 1.0;
   so3_cmd.aux.enable_motors = motors;
 
-  quadrotor_msgs::TRPYCommand trpy_cmd;
+  kr_quadrotor_msgs::TRPYCommand trpy_cmd;
   trpy_cmd.thrust = FLT_MIN;
   trpy_cmd.aux.enable_motors = motors;
 
@@ -605,7 +605,7 @@ void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr &msg) {
   this->heartbeat();
 }
 
-void MAVManager::output_data_cb(const quadrotor_msgs::OutputData::ConstPtr &msg) {
+void MAVManager::output_data_cb(const kr_quadrotor_msgs::OutputData::ConstPtr &msg) {
   last_output_data_t_ = ros::Time::now();
   last_imu_t_ = ros::Time::now();
 
@@ -742,7 +742,7 @@ bool MAVManager::eland() {
   {
     ROS_WARN("Emergency Land");
 
-    quadrotor_msgs::PositionCommand goal;
+    kr_quadrotor_msgs::PositionCommand goal;
     goal.acceleration.z = - 0.45f;
     goal.yaw = yaw_;
 

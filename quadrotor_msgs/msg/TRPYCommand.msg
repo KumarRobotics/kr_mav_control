@@ -6,4 +6,4 @@ float64 yaw
 geometry_msgs/Vector3 angular_velocity
 float64[3] kR
 float64[3] kOm
-quadrotor_msgs/AuxCommand aux
+kr_quadrotor_msgs/AuxCommand aux

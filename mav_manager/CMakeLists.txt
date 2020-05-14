@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   sensor_msgs
   geometry_msgs
-  quadrotor_msgs
+  kr_quadrotor_msgs
   tracker_msgs
   std_msgs
   std_srvs
@@ -43,7 +43,7 @@ catkin_package(
     nav_msgs
     sensor_msgs
     geometry_msgs
-    quadrotor_msgs
+    kr_quadrotor_msgs
     tracker_msgs
     std_msgs
     message_runtime
