@@ -6,12 +6,12 @@
 #include <actionlib/server/simple_action_server.h>
 
 #include <std_trackers/initial_conditions.h>
-#include <trackers_manager/Tracker.h>
+#include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_tracker_msgs/LineTrackerAction.h>
 #include <kr_quadrotor_msgs/PositionCommand.h>
 
-class LineTrackerDistanceAction : public trackers_manager::Tracker
+class LineTrackerDistanceAction : public kr_trackers_manager::Tracker
 {
 public:
   LineTrackerDistanceAction(void);
@@ -313,4 +313,4 @@ uint8_t LineTrackerDistanceAction::status() const
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(LineTrackerDistanceAction, trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(LineTrackerDistanceAction, kr_trackers_manager::Tracker);

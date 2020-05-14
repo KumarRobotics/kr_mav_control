@@ -8,9 +8,9 @@
   <node pkg="nodelet"
     type="nodelet"
     name="trackers_manager"
-    args="load trackers_manager/TrackersManager standalone_nodelet"
+    args="load kr_trackers_manager/TrackersManager standalone_nodelet"
     output="screen">
-    <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
+    <rosparam file="$(find kr_trackers_manager)/config/trackers.yaml"/>
     <rosparam file="$(find kr_so3_control)/config/gains.yaml"/>
     <remap from="~odom" to="odom"/>
   </node>

@@ -1,8 +1,8 @@
 #include <ros/ros.h>
-#include <trackers_manager/Tracker.h>
+#include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
 
-class NullTracker : public trackers_manager::Tracker
+class NullTracker : public kr_trackers_manager::Tracker
 {
  public:
   void Initialize(const ros::NodeHandle &nh);
@@ -38,4 +38,4 @@ uint8_t NullTracker::status() const
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(NullTracker, trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(NullTracker, kr_trackers_manager::Tracker);

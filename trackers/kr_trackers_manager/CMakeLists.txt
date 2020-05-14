@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(trackers_manager)
+project(kr_trackers_manager)
 
 # set default build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -12,14 +12,14 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES trackers_manager
+  LIBRARIES kr_trackers_manager
   CATKIN_DEPENDS roscpp nodelet pluginlib kr_quadrotor_msgs nav_msgs kr_tracker_msgs
   DEPENDS
 )
 
-add_library(trackers_manager src/trackers_manager.cpp)
-add_dependencies(trackers_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
-target_link_libraries(trackers_manager ${catkin_LIBRARIES})
+add_library(kr_trackers_manager src/trackers_manager.cpp)
+add_dependencies(kr_trackers_manager ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(kr_trackers_manager ${catkin_LIBRARIES})
 
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

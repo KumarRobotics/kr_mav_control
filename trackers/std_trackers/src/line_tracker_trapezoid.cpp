@@ -1,14 +1,14 @@
 // TODO: make into actionlib
 
 #include <ros/ros.h>
-#include <trackers_manager/Tracker.h>
+#include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_quadrotor_msgs/LineTrackerGoal.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
 #include <initial_conditions.h>
 
-class LineTrackerTrapezoid : public trackers_manager::Tracker
+class LineTrackerTrapezoid : public kr_trackers_manager::Tracker
 {
  public:
   LineTrackerTrapezoid(void);
@@ -206,4 +206,4 @@ uint8_t LineTrackerTrapezoid::status() const
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(LineTrackerTrapezoid, trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(LineTrackerTrapezoid, kr_trackers_manager::Tracker);

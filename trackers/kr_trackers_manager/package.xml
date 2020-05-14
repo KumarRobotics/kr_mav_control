@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>trackers_manager</name>
+  <name>kr_trackers_manager</name>
   <version>1.0.0</version>
-  <description>trackers_manager</description>
+  <description>kr_trackers_manager</description>
   <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
   <maintainer email="michael.f.watterson@gmail.com">Michael Watterson</maintainer>
   <maintainer email="justinthomas@jtwebs.net">Justin Thomas</maintainer>

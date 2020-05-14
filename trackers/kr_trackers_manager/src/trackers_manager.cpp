@@ -2,7 +2,7 @@
 #include <nodelet/nodelet.h>
 #include <nav_msgs/Odometry.h>
 #include <pluginlib/class_loader.h>
-#include <trackers_manager/Tracker.h>
+#include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/Transition.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
 
@@ -21,19 +21,19 @@ class TrackersManager : public nodelet::Nodelet {
   ros::Subscriber sub_odom_;
   ros::Publisher pub_cmd_, pub_status_;
   ros::ServiceServer srv_tracker_;
-  pluginlib::ClassLoader<trackers_manager::Tracker> *tracker_loader_;
-  trackers_manager::Tracker *active_tracker_;
-  std::map<std::string, trackers_manager::Tracker*> tracker_map_;
+  pluginlib::ClassLoader<kr_trackers_manager::Tracker> *tracker_loader_;
+  kr_trackers_manager::Tracker *active_tracker_;
+  std::map<std::string, kr_trackers_manager::Tracker*> tracker_map_;
   kr_quadrotor_msgs::PositionCommand::ConstPtr cmd_;
 };
 
 TrackersManager::TrackersManager(void) :
     active_tracker_(NULL) {
-  tracker_loader_ = new pluginlib::ClassLoader<trackers_manager::Tracker>("trackers_manager", "trackers_manager::Tracker");
+  tracker_loader_ = new pluginlib::ClassLoader<kr_trackers_manager::Tracker>("kr_trackers_manager", "kr_trackers_manager::Tracker");
 }
 
 TrackersManager::~TrackersManager(void) {
-  std::map<std::string, trackers_manager::Tracker*>::iterator it;
+  std::map<std::string, kr_trackers_manager::Tracker*>::iterator it;
   for(it = tracker_map_.begin(); it != tracker_map_.end(); it++) {
     delete it->second;
 #if ROS_VERSION_MINIMUM(1,8,0)
@@ -54,9 +54,9 @@ void TrackersManager::onInit(void) {
     const std::string tracker_name = static_cast<const std::string>(tracker_list[i]);
     try {
 #if ROS_VERSION_MINIMUM(1,8,0)
-      trackers_manager::Tracker *c = tracker_loader_->createUnmanagedInstance(tracker_name);
+      kr_trackers_manager::Tracker *c = tracker_loader_->createUnmanagedInstance(tracker_name);
 #else
-      trackers_manager::Tracker *c = tracker_loader_->createClassInstance(tracker_name);
+      kr_trackers_manager::Tracker *c = tracker_loader_->createClassInstance(tracker_name);
 #endif
       c->Initialize(priv_nh);
       tracker_map_.insert(std::make_pair(tracker_name, c));
@@ -78,7 +78,7 @@ void TrackersManager::onInit(void) {
 }
 
 void TrackersManager::odom_callback(const nav_msgs::Odometry::ConstPtr &msg) {
-  std::map<std::string, trackers_manager::Tracker*>::iterator it;
+  std::map<std::string, kr_trackers_manager::Tracker*>::iterator it;
   for(it = tracker_map_.begin(); it != tracker_map_.end(); it++) {
     if(it->second == active_tracker_) {
       cmd_ = it->second->update(msg);
@@ -98,7 +98,7 @@ void TrackersManager::odom_callback(const nav_msgs::Odometry::ConstPtr &msg) {
 }
 
 bool TrackersManager::transition_callback(kr_tracker_msgs::Transition::Request &req, kr_tracker_msgs::Transition::Response &res) {
-  const std::map<std::string, trackers_manager::Tracker*>::iterator it = tracker_map_.find(req.tracker);
+  const std::map<std::string, kr_trackers_manager::Tracker*>::iterator it = tracker_map_.find(req.tracker);
   if(it == tracker_map_.end())
   {
     res.success = false;

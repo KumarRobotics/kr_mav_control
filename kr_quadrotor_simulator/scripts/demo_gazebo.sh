@@ -142,9 +142,9 @@ do
   tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch kr_quadrotor_simulator mesh_vis.launch __ns:=${MAV_NAME} mav_name:=${MAV_NAME} mav_type:=hummingbird odom_topic:=${ODOM_TOPIC} color/r:=${COL_R} color/g:=${COL_G} color/b:=${COL_B} color/a:=${COL_A}" Enter
   tmux select-layout -t $SESSION_NAME even-horizontal
   tmux split-window -t $SESSION_NAME
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; rosrun trackers_manager waypoints_to_action.py __ns:=${MAV_NAME}" Enter
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; rosrun kr_trackers_manager waypoints_to_action.py __ns:=${MAV_NAME}" Enter
   tmux split-window -t $SESSION_NAME
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; rosrun trackers_manager twist_to_action.py __ns:=${MAV_NAME}" Enter
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; rosrun kr_trackers_manager twist_to_action.py __ns:=${MAV_NAME}" Enter
   tmux split-window -t $SESSION_NAME
   tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; cd $(rospack find mav_manager)/scripts/; ./takeoff.sh ${MAV_NAME}"
   tmux select-layout -t $SESSION_NAME even-horizontal

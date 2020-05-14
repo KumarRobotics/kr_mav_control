@@ -20,10 +20,10 @@
     <node pkg="nodelet"
       type="nodelet"
       name="trackers_manager"
-      args="load trackers_manager/TrackersManager $(arg nodelet_manager_name)"
+      args="load kr_trackers_manager/TrackersManager $(arg nodelet_manager_name)"
       output="screen">
-      <rosparam file="$(find trackers_manager)/config/trackers.yaml"/>
-      <rosparam file="$(find trackers_manager)/config/tracker_params.yaml"/>
+      <rosparam file="$(find kr_trackers_manager)/config/trackers.yaml"/>
+      <rosparam file="$(find kr_trackers_manager)/config/tracker_params.yaml"/>
       <rosparam file="$(find kr_so3_control)/config/gains.yaml"/>
       <remap from="~odom" to="$(arg odom_topic)"/>
       <remap from="~cmd" to="position_cmd"/>

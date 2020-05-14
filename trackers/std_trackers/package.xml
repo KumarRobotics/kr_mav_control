@@ -20,9 +20,9 @@
   <depend>tf</depend>
   <depend>kr_quadrotor_msgs</depend>
   <depend>kr_tracker_msgs</depend>
-  <depend>trackers_manager</depend>
+  <depend>kr_trackers_manager</depend>
 
   <export>
-    <trackers_manager plugin="${prefix}/plugin.xml"/>
+    <kr_trackers_manager plugin="${prefix}/plugin.xml"/>
   </export>
 </package>

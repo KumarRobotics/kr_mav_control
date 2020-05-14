@@ -23,7 +23,7 @@ Clone the [waypoint_navigation_tool](https://github.com/KumarRobotics/waypoint_n
 ```
 roslaunch kr_quadrotor_simulator wp_nav.launch
 roslaunch mav_manager demo.launch sim:=true vicon:=false
-rosrun trackers_manager waypoints_to_action.py __ns:=quadrotor
+rosrun kr_trackers_manager waypoints_to_action.py __ns:=quadrotor
 ```
 
 Use rqt to start motors and takeoff.

@@ -1,6 +1,0 @@
-<library path="lib/libtrackers_manager">
-  <class name="trackers_manager/TrackersManager" type="TrackersManager" base_class_type="nodelet::Nodelet">
-    <description>
-    </description>
-  </class>
-</library>

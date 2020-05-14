@@ -5,11 +5,11 @@
 #include <actionlib/server/simple_action_server.h>
 #include <std_trackers/initial_conditions.h>
 #include <std_trackers/lissajous_generator.h>
-#include <trackers_manager/Tracker.h>
+#include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_tracker_msgs/LissajousAdderAction.h>
 
-class LissajousAdderAction : public trackers_manager::Tracker
+class LissajousAdderAction : public kr_trackers_manager::Tracker
 {
   public:
     LissajousAdderAction(void);
@@ -210,4 +210,4 @@ void LissajousAdderAction::preempt_callback(void)
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(LissajousAdderAction, trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(LissajousAdderAction, kr_trackers_manager::Tracker);

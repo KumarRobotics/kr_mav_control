@@ -1,10 +1,10 @@
 #include <ros/ros.h>
-#include <trackers_manager/Tracker.h>
+#include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/VelocityGoal.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
 #include <tf/transform_datatypes.h>
 
-class VelocityTracker : public trackers_manager::Tracker
+class VelocityTracker : public kr_trackers_manager::Tracker
 {
  public:
   VelocityTracker(void);
@@ -158,4 +158,4 @@ uint8_t VelocityTracker::status() const
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(VelocityTracker, trackers_manager::Tracker)
+PLUGINLIB_EXPORT_CLASS(VelocityTracker, kr_trackers_manager::Tracker)

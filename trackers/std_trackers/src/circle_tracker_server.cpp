@@ -11,12 +11,12 @@
 #include <actionlib/server/simple_action_server.h>
 #include <std_msgs/Empty.h>
 
-#include <trackers_manager/Tracker.h>
+#include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_quadrotor_msgs/PositionCommand.h>
 #include <kr_tracker_msgs/CircleTrackerAction.h>
 
-class CircleTrackerAction : public trackers_manager::Tracker {
+class CircleTrackerAction : public kr_trackers_manager::Tracker {
 public:
   CircleTrackerAction(void);
 
@@ -491,4 +491,4 @@ uint8_t CircleTrackerAction::status() const
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(CircleTrackerAction, trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(CircleTrackerAction, kr_trackers_manager::Tracker);

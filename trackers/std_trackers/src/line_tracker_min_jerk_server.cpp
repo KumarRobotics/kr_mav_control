@@ -6,13 +6,13 @@
 #include <actionlib/server/simple_action_server.h>
 
 #include <std_trackers/initial_conditions.h>
-#include <trackers_manager/Tracker.h>
+#include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_tracker_msgs/LineTrackerAction.h>
 #include <kr_quadrotor_msgs/PositionCommand.h>
 
 
-class LineTrackerMinJerkAction : public trackers_manager::Tracker {
+class LineTrackerMinJerkAction : public kr_trackers_manager::Tracker {
 public:
   LineTrackerMinJerkAction(void);
 
@@ -460,4 +460,4 @@ uint8_t LineTrackerMinJerkAction::status() const
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(LineTrackerMinJerkAction, trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(LineTrackerMinJerkAction, kr_trackers_manager::Tracker);

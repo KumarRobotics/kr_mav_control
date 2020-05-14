@@ -1,0 +1,6 @@
+<library path="lib/libkr_trackers_manager">
+  <class name="kr_trackers_manager/TrackersManager" type="TrackersManager" base_class_type="nodelet::Nodelet">
+    <description>
+    </description>
+  </class>
+</library>

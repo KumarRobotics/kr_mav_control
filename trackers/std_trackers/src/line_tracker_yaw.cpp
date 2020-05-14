@@ -1,14 +1,14 @@
 // TODO: make into actionlib
 
 #include <ros/ros.h>
-#include <trackers_manager/Tracker.h>
+#include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_tracker_msgs/LineTrackerGoal.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
 #include <initial_conditions.h>
 
-class LineTrackerYaw : public trackers_manager::Tracker
+class LineTrackerYaw : public kr_trackers_manager::Tracker
 {
  public:
   LineTrackerYaw(void);
@@ -289,4 +289,4 @@ uint8_t LineTrackerYaw::status() const
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(LineTrackerYaw, trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(LineTrackerYaw, kr_trackers_manager::Tracker);

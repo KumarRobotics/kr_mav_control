@@ -24,7 +24,7 @@
     <node pkg="nodelet"
       type="nodelet"
       name="trackers_manager"
-      args="load trackers_manager/TrackersManager snav_standalone_nodelet"
+      args="load kr_trackers_manager/TrackersManager snav_standalone_nodelet"
       clear_params="true"
       output="screen">
       <rosparam file="$(find qualcomm_interface)/config/trackers.yaml"/>

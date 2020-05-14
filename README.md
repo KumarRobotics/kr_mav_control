@@ -16,7 +16,7 @@ git submodule update
   - `kr_quadrotor_simulator`: Simple quadrotor dynamics simulator
   - `kr_quadrotor_msgs`: Common msgs used accross packages
   - `kr_so3_control`: The main controller
-  - `trackers`: Different trackers under `std_trackers`, and `trackers_manager`
+  - `trackers`: Different trackers under `std_trackers`, and `kr_trackers_manager`
 
 ### Example use cases
 

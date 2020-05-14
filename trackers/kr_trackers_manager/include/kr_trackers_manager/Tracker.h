@@ -5,7 +5,7 @@
 #include <nav_msgs/Odometry.h>
 #include <kr_quadrotor_msgs/PositionCommand.h>
 
-namespace trackers_manager
+namespace kr_trackers_manager
 {
 class Tracker
 {
@@ -15,7 +15,7 @@ class Tracker
   /**
    * @brief Initialize the tracker. Should be used to get the params, construct the publishers and subscribers.
    *
-   * @param nh The NodeHandle with the trackers_manager's namespace, can be used to read common params such as gains.
+   * @param nh The NodeHandle with the kr_trackers_manager's namespace, can be used to read common params such as gains.
    */
   virtual void Initialize(const ros::NodeHandle &nh) = 0;
 
@@ -30,7 +30,7 @@ class Tracker
   virtual bool Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd) = 0;
 
   /**
-   * @brief Deactivate the tracker. This is called when the trackers_manager switches to another tracker.
+   * @brief Deactivate the tracker. This is called when the kr_trackers_manager switches to another tracker.
    */
   virtual void Deactivate(void) = 0;
 
@@ -55,6 +55,6 @@ class Tracker
   virtual uint8_t status() const = 0;
 };
 
-} // namespace trackers_manager
+} // namespace kr_trackers_manager
 
 #endif
