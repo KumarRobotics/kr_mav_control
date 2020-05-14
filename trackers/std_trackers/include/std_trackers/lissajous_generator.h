@@ -5,15 +5,15 @@
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/Point.h>
 #include <kr_quadrotor_msgs/PositionCommand.h>
-#include <tracker_msgs/LissajousTrackerAction.h>
-#include <tracker_msgs/LissajousAdderAction.h>
+#include <kr_tracker_msgs/LissajousTrackerAction.h>
+#include <kr_tracker_msgs/LissajousAdderAction.h>
 
 class LissajousGenerator
 {
   public:
     LissajousGenerator(void);
-    void setParams(const tracker_msgs::LissajousTrackerGoal::ConstPtr &msg);
-    void setParams(const tracker_msgs::LissajousAdderGoal::ConstPtr &msg, int num);
+    void setParams(const kr_tracker_msgs::LissajousTrackerGoal::ConstPtr &msg);
+    void setParams(const kr_tracker_msgs::LissajousAdderGoal::ConstPtr &msg, int num);
     void generatePath(nav_msgs::Path& path, geometry_msgs::Point& initial_pt, double dt);
     const kr_quadrotor_msgs::PositionCommand::Ptr getPositionCmd(void);
     bool activate(void);

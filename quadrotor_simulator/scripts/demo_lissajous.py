@@ -21,9 +21,9 @@ from mav_manager.srv import Vec4, Vec4Request
 
 from multi_mav_manager.srv import RawPosFormation, RawPosFormationRequest
 
-from tracker_msgs.msg import LissajousTrackerAction, LissajousTrackerGoal, LissajousTrackerResult
-from tracker_msgs.msg import LineTrackerAction, LineTrackerGoal, LineTrackerResult
-from tracker_msgs.srv import Transition
+from kr_tracker_msgs.msg import LissajousTrackerAction, LissajousTrackerGoal, LissajousTrackerResult
+from kr_tracker_msgs.msg import LineTrackerAction, LineTrackerGoal, LineTrackerResult
+from kr_tracker_msgs.srv import Transition
 
 def general_service_cb(userdata, response):
   if response.success:

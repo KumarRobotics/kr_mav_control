@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
-project(tracker_msgs)
+project(kr_tracker_msgs)
 
 add_compile_options(-std=c++11)
 

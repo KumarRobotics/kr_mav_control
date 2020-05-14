@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
-#include <tracker_msgs/TrackerStatus.h>
+#include <kr_tracker_msgs/TrackerStatus.h>
 
 class NullTracker : public trackers_manager::Tracker
 {
@@ -34,7 +34,7 @@ kr_quadrotor_msgs::PositionCommand::ConstPtr NullTracker::update(const nav_msgs:
 
 uint8_t NullTracker::status() const
 {
-  return tracker_msgs::TrackerStatus::SUCCEEDED;
+  return kr_tracker_msgs::TrackerStatus::SUCCEEDED;
 }
 
 #include <pluginlib/class_list_macros.h>

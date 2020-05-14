@@ -4,9 +4,9 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 
-#include <tracker_msgs/LineTrackerAction.h>
+#include <kr_tracker_msgs/LineTrackerAction.h>
 #include <trackers_manager/Tracker.h>
-#include <tracker_msgs/TrackerStatus.h>
+#include <kr_tracker_msgs/TrackerStatus.h>
 #include <std_trackers/initial_conditions.h>
 
 class SmoothVelTrackerAction : public trackers_manager::Tracker
@@ -27,7 +27,7 @@ class SmoothVelTrackerAction : public trackers_manager::Tracker
   void preempt_callback();
 
   using ServerType =
-      actionlib::SimpleActionServer<tracker_msgs::LineTrackerAction>;
+      actionlib::SimpleActionServer<kr_tracker_msgs::LineTrackerAction>;
 
   // Action server that takes a goal.
   // Must be a pointer, because plugin does not support a constructor
@@ -149,7 +149,7 @@ kr_quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTrackerAction::update(
     if(tracker_server_->isActive())
     {
       // Send a success message and reset the length and duration variables.
-      tracker_msgs::LineTrackerResult result;
+      kr_tracker_msgs::LineTrackerResult result;
       result.duration = total_time_;
       result.length = current_traj_length_;
       result.x = pos(0);
@@ -230,7 +230,7 @@ kr_quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTrackerAction::update(
   ICs_.set_from_cmd(cmd);
 
   if (!goal_reached_) {
-    tracker_msgs::LineTrackerFeedback feedback;
+    kr_tracker_msgs::LineTrackerFeedback feedback;
     Eigen::Vector3f goal = start_pos_ + total_dist_*dir_;
     feedback.distance_from_goal = (current_pos - goal).norm();
     tracker_server_->publishFeedback(feedback);
@@ -343,8 +343,8 @@ void SmoothVelTrackerAction::goal_callback()
 uint8_t SmoothVelTrackerAction::status() const
 {
   return goal_reached_ ?
-          static_cast<uint8_t>(tracker_msgs::TrackerStatus::SUCCEEDED) :
-          static_cast<uint8_t>(tracker_msgs::TrackerStatus::ACTIVE);
+          static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED) :
+          static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE);
 }
 
 #include <pluginlib/class_list_macros.h>

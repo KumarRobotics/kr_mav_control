@@ -2,7 +2,7 @@
 
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
-#include <tracker_msgs/TrackerStatus.h>
+#include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_quadrotor_msgs/LineTrackerGoal.h>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
@@ -201,8 +201,8 @@ void LineTrackerTrapezoid::goal_callback(const kr_quadrotor_msgs::LineTrackerGoa
 uint8_t LineTrackerTrapezoid::status() const
 {
   return goal_reached_ ?
-             static_cast<uint8_t>(tracker_msgs::TrackerStatus::SUCCEEDED) :
-             static_cast<uint8_t>(tracker_msgs::TrackerStatus::ACTIVE);
+             static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED) :
+             static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE);
 }
 
 #include <pluginlib/class_list_macros.h>

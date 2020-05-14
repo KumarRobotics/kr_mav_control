@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   geometry_msgs
   kr_quadrotor_msgs
-  tracker_msgs
+  kr_tracker_msgs
   std_msgs
   std_srvs
   message_generation
@@ -44,7 +44,7 @@ catkin_package(
     sensor_msgs
     geometry_msgs
     kr_quadrotor_msgs
-    tracker_msgs
+    kr_tracker_msgs
     std_msgs
     message_runtime
   DEPENDS EIGEN3)

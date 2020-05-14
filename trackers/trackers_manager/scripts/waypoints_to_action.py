@@ -5,8 +5,8 @@ import rospy
 import actionlib
 
 from nav_msgs.msg import Path
-from tracker_msgs.msg import TrajectoryTrackerAction, TrajectoryTrackerGoal
-from tracker_msgs.srv import Transition
+from kr_tracker_msgs.msg import TrajectoryTrackerAction, TrajectoryTrackerGoal
+from kr_tracker_msgs.srv import Transition
 
 class WpToAction(object):
   def __init__(self):

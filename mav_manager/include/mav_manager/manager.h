@@ -18,11 +18,11 @@
 #include <kr_quadrotor_msgs/PositionCommand.h>
 #include <kr_quadrotor_msgs/SO3Command.h>
 #include <kr_quadrotor_msgs/TRPYCommand.h>
-#include <tracker_msgs/CircleTrackerAction.h>
-#include <tracker_msgs/LineTrackerAction.h>
-#include <tracker_msgs/LissajousTrackerAction.h>
-#include <tracker_msgs/LissajousAdderAction.h>
-#include <tracker_msgs/TrackerStatus.h>
+#include <kr_tracker_msgs/CircleTrackerAction.h>
+#include <kr_tracker_msgs/LineTrackerAction.h>
+#include <kr_tracker_msgs/LissajousTrackerAction.h>
+#include <kr_tracker_msgs/LissajousAdderAction.h>
+#include <kr_tracker_msgs/TrackerStatus.h>
 
 namespace mav_manager
 {
@@ -123,24 +123,24 @@ class MAVManager
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
   private:
-    typedef actionlib::SimpleActionClient<tracker_msgs::LineTrackerAction> ClientType;
-    typedef actionlib::SimpleActionClient<tracker_msgs::CircleTrackerAction> CircleClientType;
-    typedef actionlib::SimpleActionClient<tracker_msgs::LissajousTrackerAction> LissajousClientType;
-    typedef actionlib::SimpleActionClient<tracker_msgs::LissajousAdderAction> CompoundLissajousClientType;
+    typedef actionlib::SimpleActionClient<kr_tracker_msgs::LineTrackerAction> ClientType;
+    typedef actionlib::SimpleActionClient<kr_tracker_msgs::CircleTrackerAction> CircleClientType;
+    typedef actionlib::SimpleActionClient<kr_tracker_msgs::LissajousTrackerAction> LissajousClientType;
+    typedef actionlib::SimpleActionClient<kr_tracker_msgs::LissajousAdderAction> CompoundLissajousClientType;
 
     ros::NodeHandle nh_;
     ros::NodeHandle priv_nh_;
 
-    void tracker_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::LineTrackerResultConstPtr& result);
-    void circle_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::CircleTrackerResultConstPtr &result);
-    void lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::LissajousTrackerResultConstPtr &result);
-    void lissajous_adder_done_callback(const actionlib::SimpleClientGoalState& state, const tracker_msgs::LissajousAdderResultConstPtr &result);
+    void tracker_done_callback(const actionlib::SimpleClientGoalState& state, const kr_tracker_msgs::LineTrackerResultConstPtr& result);
+    void circle_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const kr_tracker_msgs::CircleTrackerResultConstPtr &result);
+    void lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState& state, const kr_tracker_msgs::LissajousTrackerResultConstPtr &result);
+    void lissajous_adder_done_callback(const actionlib::SimpleClientGoalState& state, const kr_tracker_msgs::LissajousAdderResultConstPtr &result);
 
     void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
     void output_data_cb(const kr_quadrotor_msgs::OutputData::ConstPtr &msg);
     void heartbeat_cb(const std_msgs::Empty::ConstPtr &msg);
-    void tracker_status_cb(const tracker_msgs::TrackerStatus::ConstPtr &msg);
+    void tracker_status_cb(const kr_tracker_msgs::TrackerStatus::ConstPtr &msg);
     void heartbeat();
 
     std::string active_tracker_;

@@ -3,8 +3,8 @@
 #include <nav_msgs/Odometry.h>
 #include <pluginlib/class_loader.h>
 #include <trackers_manager/Tracker.h>
-#include <tracker_msgs/Transition.h>
-#include <tracker_msgs/TrackerStatus.h>
+#include <kr_tracker_msgs/Transition.h>
+#include <kr_tracker_msgs/TrackerStatus.h>
 
 class TrackersManager : public nodelet::Nodelet {
  public:
@@ -15,8 +15,8 @@ class TrackersManager : public nodelet::Nodelet {
 
  private:
   void odom_callback(const nav_msgs::Odometry::ConstPtr &msg);
-  bool transition_callback(tracker_msgs::Transition::Request &req,
-                           tracker_msgs::Transition::Response &res);
+  bool transition_callback(kr_tracker_msgs::Transition::Request &req,
+                           kr_tracker_msgs::Transition::Response &res);
 
   ros::Subscriber sub_odom_;
   ros::Publisher pub_cmd_, pub_status_;
@@ -70,7 +70,7 @@ void TrackersManager::onInit(void) {
   }
 
   pub_cmd_ = priv_nh.advertise<kr_quadrotor_msgs::PositionCommand>("cmd", 10);
-  pub_status_ = priv_nh.advertise<tracker_msgs::TrackerStatus>("status", 10);
+  pub_status_ = priv_nh.advertise<kr_tracker_msgs::TrackerStatus>("status", 10);
 
   sub_odom_ = priv_nh.subscribe("odom", 10, &TrackersManager::odom_callback, this, ros::TransportHints().tcpNoDelay());
 
@@ -85,7 +85,7 @@ void TrackersManager::odom_callback(const nav_msgs::Odometry::ConstPtr &msg) {
       if(cmd_ != NULL)
         pub_cmd_.publish(cmd_);
 
-      tracker_msgs::TrackerStatus::Ptr status_msg(new tracker_msgs::TrackerStatus);
+      kr_tracker_msgs::TrackerStatus::Ptr status_msg(new kr_tracker_msgs::TrackerStatus);
       status_msg->header.stamp = msg->header.stamp;
       status_msg->tracker = it->first;
       status_msg->status = it->second->status();
@@ -97,7 +97,7 @@ void TrackersManager::odom_callback(const nav_msgs::Odometry::ConstPtr &msg) {
   }
 }
 
-bool TrackersManager::transition_callback(tracker_msgs::Transition::Request &req, tracker_msgs::Transition::Response &res) {
+bool TrackersManager::transition_callback(kr_tracker_msgs::Transition::Request &req, kr_tracker_msgs::Transition::Response &res) {
   const std::map<std::string, trackers_manager::Tracker*>::iterator it = tracker_map_.find(req.tracker);
   if(it == tracker_map_.end())
   {

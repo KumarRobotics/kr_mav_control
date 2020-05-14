@@ -1,7 +1,7 @@
 #include <Eigen/Geometry>
 #include <cmath>
 #include <iostream>
-#include <tracker_msgs/TrackerStatus.h>
+#include <kr_tracker_msgs/TrackerStatus.h>
 #include <std_trackers/lissajous_generator.h>
 
 LissajousGenerator::LissajousGenerator()
@@ -11,7 +11,7 @@ LissajousGenerator::LissajousGenerator()
   goal_set_ = false;
 }
 
-void LissajousGenerator::setParams(const tracker_msgs::LissajousTrackerGoal::ConstPtr &msg)
+void LissajousGenerator::setParams(const kr_tracker_msgs::LissajousTrackerGoal::ConstPtr &msg)
 {
   x_amp_ = msg->x_amp;
   y_amp_ = msg->y_amp;
@@ -53,7 +53,7 @@ void LissajousGenerator::setParams(const tracker_msgs::LissajousTrackerGoal::Con
   goal_reached_ = false;
 }
 
-void LissajousGenerator::setParams(const tracker_msgs::LissajousAdderGoal::ConstPtr &msg, int num)
+void LissajousGenerator::setParams(const kr_tracker_msgs::LissajousAdderGoal::ConstPtr &msg, int num)
 {
   x_amp_ = msg->x_amp[num];
   y_amp_ = msg->y_amp[num];
@@ -240,8 +240,8 @@ bool LissajousGenerator::goalIsSet(void)
 bool LissajousGenerator::status() const
 {
   return goal_reached_ ?
-          tracker_msgs::TrackerStatus::SUCCEEDED :
-          tracker_msgs::TrackerStatus::ACTIVE;
+          kr_tracker_msgs::TrackerStatus::SUCCEEDED :
+          kr_tracker_msgs::TrackerStatus::ACTIVE;
 }
 
 float LissajousGenerator::timeRemaining(void)

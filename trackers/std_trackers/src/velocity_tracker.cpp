@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <trackers_manager/Tracker.h>
-#include <tracker_msgs/VelocityGoal.h>
-#include <tracker_msgs/TrackerStatus.h>
+#include <kr_tracker_msgs/VelocityGoal.h>
+#include <kr_tracker_msgs/TrackerStatus.h>
 #include <tf/transform_datatypes.h>
 
 class VelocityTracker : public trackers_manager::Tracker
@@ -17,7 +17,7 @@ class VelocityTracker : public trackers_manager::Tracker
   uint8_t status() const;
 
  private:
-  void velocity_cmd_cb(const tracker_msgs::VelocityGoal::ConstPtr &msg);
+  void velocity_cmd_cb(const kr_tracker_msgs::VelocityGoal::ConstPtr &msg);
 
   ros::Subscriber sub_vel_cmd_, sub_position_vel_cmd_;
   kr_quadrotor_msgs::PositionCommand position_cmd_;
@@ -137,7 +137,7 @@ kr_quadrotor_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_m
   return kr_quadrotor_msgs::PositionCommand::ConstPtr(new kr_quadrotor_msgs::PositionCommand(position_cmd_));
 }
 
-void VelocityTracker::velocity_cmd_cb(const tracker_msgs::VelocityGoal::ConstPtr &msg)
+void VelocityTracker::velocity_cmd_cb(const kr_tracker_msgs::VelocityGoal::ConstPtr &msg)
 {
   //ROS_INFO("VelocityTracker goal (%2.2f, %2.2f, %2.2f, %2.2f)", msg->vx, msg->vy, msg->vz, msg->vyaw);
   position_cmd_.velocity.x = msg->vx;
@@ -153,8 +153,8 @@ void VelocityTracker::velocity_cmd_cb(const tracker_msgs::VelocityGoal::ConstPtr
 uint8_t VelocityTracker::status() const
 {
   return active_ ?
-             static_cast<uint8_t>(tracker_msgs::TrackerStatus::ACTIVE) :
-             static_cast<uint8_t>(tracker_msgs::TrackerStatus::SUCCEEDED);
+             static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE) :
+             static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED);
 }
 
 #include <pluginlib/class_list_macros.h>
