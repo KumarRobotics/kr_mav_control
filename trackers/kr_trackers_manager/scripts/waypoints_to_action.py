@@ -30,7 +30,7 @@ class WpToAction(object):
     rospy.wait_for_service('trackers_manager/transition')
     try:
       transition_tracker = rospy.ServiceProxy('trackers_manager/transition', Transition)
-      resp = transition_tracker('std_trackers/TrajectoryTracker')
+      resp = transition_tracker('kr_std_trackers/TrajectoryTracker')
       print(resp)
     except rospy.ServiceException as e:
       print("Service call failed: %s"%e)

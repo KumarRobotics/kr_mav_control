@@ -1,8 +1,8 @@
 #include <memory>
 #include <cmath>
 #include <Eigen/Geometry>
-#include <std_trackers/initial_conditions.h>
-#include <std_trackers/lissajous_generator.h>
+#include <kr_std_trackers/initial_conditions.h>
+#include <kr_std_trackers/lissajous_generator.h>
 #include <std_srvs/Trigger.h>
 #include <actionlib/server/simple_action_server.h>
 #include <kr_trackers_manager/Tracker.h>

@@ -2,7 +2,7 @@
 #include <cmath>
 #include <iostream>
 #include <kr_tracker_msgs/TrackerStatus.h>
-#include <std_trackers/lissajous_generator.h>
+#include <kr_std_trackers/lissajous_generator.h>
 
 LissajousGenerator::LissajousGenerator()
 {

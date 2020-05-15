@@ -40,11 +40,11 @@ class TwistToAction(object):
 
     # self.client.send_goal(goal)
 
-    if(self.current_tracker != "std_trackers/VelocityTracker"):
+    if(self.current_tracker != "kr_std_trackers/VelocityTracker"):
       rospy.wait_for_service('trackers_manager/transition')
       try:
         transition_tracker = rospy.ServiceProxy('trackers_manager/transition', Transition)
-        resp1 = transition_tracker('std_trackers/VelocityTracker')
+        resp1 = transition_tracker('kr_std_trackers/VelocityTracker')
         print(resp1)
       except rospy.ServiceException as e:
         print("Service call failed: %s"%e)

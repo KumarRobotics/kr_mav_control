@@ -54,7 +54,7 @@ class GoTo(smach.State):
 
     try:
       transition_tracker = rospy.ServiceProxy('/' + self.mav_name + '/trackers_manager/transition', Transition)
-      resp1 = transition_tracker('std_trackers/LineTrackerMinJerkAction')
+      resp1 = transition_tracker('kr_std_trackers/LineTrackerMinJerkAction')
       print(resp1)
     except rospy.ServiceException as e:
       print("Service call failed: %s"%e)
@@ -89,7 +89,7 @@ class Lissajous(smach.State):
 
     try:
       transition_tracker = rospy.ServiceProxy('/' + self.mav_name + '/trackers_manager/transition', Transition)
-      resp1 = transition_tracker('std_trackers/LissajousTrackerAction')
+      resp1 = transition_tracker('kr_std_trackers/LissajousTrackerAction')
       print(resp1)
     except rospy.ServiceException as e:
       print("Service call failed: %s"%e)

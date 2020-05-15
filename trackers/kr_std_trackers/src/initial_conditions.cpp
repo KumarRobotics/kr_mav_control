@@ -13,7 +13,7 @@
  */
 
 #include <tf/transform_datatypes.h>
-#include <std_trackers/initial_conditions.h>
+#include <kr_std_trackers/initial_conditions.h>
 
 InitialConditions::InitialConditions() :
   pos_(Eigen::Vector3f::Zero()),

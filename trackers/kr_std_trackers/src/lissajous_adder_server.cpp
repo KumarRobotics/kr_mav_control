@@ -3,8 +3,8 @@
 #include <cmath>
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-#include <std_trackers/initial_conditions.h>
-#include <std_trackers/lissajous_generator.h>
+#include <kr_std_trackers/initial_conditions.h>
+#include <kr_std_trackers/lissajous_generator.h>
 #include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_tracker_msgs/LissajousAdderAction.h>

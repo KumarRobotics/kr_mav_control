@@ -9,8 +9,8 @@
 #include <kr_tracker_msgs/TrajectoryTrackerAction.h>
 #include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
-#include <std_trackers/initial_conditions.h>
-#include <std_trackers/traj_gen.h>
+#include <kr_std_trackers/initial_conditions.h>
+#include <kr_std_trackers/traj_gen.h>
 
 class TrajectoryTracker : public kr_trackers_manager::Tracker
 {
