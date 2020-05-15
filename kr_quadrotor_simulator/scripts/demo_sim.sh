@@ -89,7 +89,7 @@ tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; roscore" Enter
 tmux split-window -t $SESSION_NAME
 tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; export DISPLAY=${CURRENT_DISPLAY}; rosrun rviz rviz -d ${RVIZ_CONFIG_FILE}" Enter
 tmux split-window -t $SESSION_NAME
-tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; export DISPLAY=${CURRENT_DISPLAY}; rqt --standalone ${RQT_GUI}" Enter
+tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; export DISPLAY=${CURRENT_DISPLAY}; rosparam set robot_name $MAV_NAME; rqt --standalone ${RQT_GUI}" Enter
 tmux split-window -t $SESSION_NAME
 tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch multi_mav_manager multi_mav_manager.launch odom_topic:=odom config_path:=$HOME/.ros/" Enter
 tmux select-layout -t $SESSION_NAME tiled

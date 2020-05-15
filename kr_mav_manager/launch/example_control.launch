@@ -48,7 +48,7 @@
       type="mav_services"
       name="mav_services"
       output="screen">
-      <rosparam file="$(find kr_mav_manager)/config/kr_mav_manager_params.yaml"/>
+      <rosparam file="$(find kr_mav_manager)/config/mav_manager_params.yaml"/>
       <remap from="odom" to="$(arg odom_topic)"/>
     </node>
 

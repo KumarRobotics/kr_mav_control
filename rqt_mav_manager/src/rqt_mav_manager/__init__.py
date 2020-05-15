@@ -199,12 +199,13 @@ class MavManagerUi(Plugin):
     instance_settings.set_value('node_name' , self._widget.node_name_line_edit.text())
 
   def restore_settings(self, plugin_settings, instance_settings):
+
+    #Override saved value with param value if set
     value = instance_settings.value('robot_name', "quadrotor")
-    #value = rospy.get_param("~robot_name", value)
-    self.robot_name = value
-    self._widget.robot_name_line_edit.setText(value)
+    param_value = rospy.get_param("robot_name", value)
+    self.robot_name = param_value
+    self._widget.robot_name_line_edit.setText(param_value)
 
     value = instance_settings.value('node_name', "mav_services")
-    #value = rospy.get_param("~robot_name", value)
     self.node_name = value
     self._widget.node_name_line_edit.setText(value)
