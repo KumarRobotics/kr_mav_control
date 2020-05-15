@@ -4,7 +4,7 @@
 #include <kr_quadrotor_msgs/TRPYCommand.h>
 #include <kr_quadrotor_msgs/PositionCommand.h>
 #include <std_msgs/Bool.h>
-#include <pid_control/PIDControl.hpp>
+#include <kr_pid_control/PIDControl.hpp>
 #include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
 

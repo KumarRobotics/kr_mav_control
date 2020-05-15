@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(pid_control)
+project(kr_pid_control)
 
 message(FATAL_ERROR "This package has not been updated for the the changes in \
 the PositionCommand message and does not work. Please use the controllers in \
@@ -23,13 +23,13 @@ catkin_package(
 
 add_library(PIDControl src/PIDControl.cpp)
 
-add_library(pid_control_nodelet src/pid_control_nodelet.cpp)
-add_dependencies(pid_control_nodelet ${catkin_EXPORTED_TARGETS})
-target_link_libraries(pid_control_nodelet PIDControl ${catkin_LIBRARIES})
+add_library(kr_pid_control_nodelet src/kr_pid_control_nodelet.cpp)
+add_dependencies(kr_pid_control_nodelet ${catkin_EXPORTED_TARGETS})
+target_link_libraries(kr_pid_control_nodelet PIDControl ${catkin_LIBRARIES})
 
 install(TARGETS
     PIDControl
-    pid_control_nodelet
+    kr_pid_control_nodelet
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
