@@ -9,6 +9,7 @@ Clone and build
 * [kr_ui](https://github.com/KumarRobotics/kr_ui)
 * [multi_mav_manager](https://github.com/KumarRobotics/multi_mav_manager)
 * [mrsl_quadrotor](https://github.com/KumarRobotics/mrsl_quadrotor)
+* [waypoint_navigation_tool](https://github.com/KumarRobotics/waypoint_navigation_plugin)
 
 ### Stacks include:
   - `kr_mav_manager`: A manager for the quadrotor_control stack
