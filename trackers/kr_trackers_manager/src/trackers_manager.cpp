@@ -24,7 +24,7 @@ class TrackersManager : public nodelet::Nodelet {
   pluginlib::ClassLoader<kr_trackers_manager::Tracker> *tracker_loader_;
   kr_trackers_manager::Tracker *active_tracker_;
   std::map<std::string, kr_trackers_manager::Tracker*> tracker_map_;
-  kr_quadrotor_msgs::PositionCommand::ConstPtr cmd_;
+  kr_mav_msgs::PositionCommand::ConstPtr cmd_;
 };
 
 TrackersManager::TrackersManager(void) :
@@ -69,7 +69,7 @@ void TrackersManager::onInit(void) {
     }
   }
 
-  pub_cmd_ = priv_nh.advertise<kr_quadrotor_msgs::PositionCommand>("cmd", 10);
+  pub_cmd_ = priv_nh.advertise<kr_mav_msgs::PositionCommand>("cmd", 10);
   pub_status_ = priv_nh.advertise<kr_tracker_msgs::TrackerStatus>("status", 10);
 
   sub_odom_ = priv_nh.subscribe("odom", 10, &TrackersManager::odom_callback, this, ros::TransportHints().tcpNoDelay());

@@ -8,7 +8,7 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 
-find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs nav_msgs kr_quadrotor_msgs std_msgs tf nodelet dynamic_reconfigure)
+find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs nav_msgs kr_mav_msgs std_msgs tf nodelet dynamic_reconfigure)
 find_package(Eigen3 REQUIRED)
 
 generate_dynamic_reconfigure_options(cfg/SO3.cfg)
@@ -18,7 +18,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
 catkin_package(
   INCLUDE_DIRS
   LIBRARIES
-  CATKIN_DEPENDS roscpp nav_msgs kr_quadrotor_msgs std_msgs tf nodelet dynamic_reconfigure
+  CATKIN_DEPENDS roscpp nav_msgs kr_mav_msgs std_msgs tf nodelet dynamic_reconfigure
   DEPENDS EIGEN3)
 
 add_library(SO3Control src/SO3Control.cpp)

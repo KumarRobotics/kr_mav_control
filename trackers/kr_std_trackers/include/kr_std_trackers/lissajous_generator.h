@@ -4,7 +4,7 @@
 #include <ros/ros.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/Point.h>
-#include <kr_quadrotor_msgs/PositionCommand.h>
+#include <kr_mav_msgs/PositionCommand.h>
 #include <kr_tracker_msgs/LissajousTrackerAction.h>
 #include <kr_tracker_msgs/LissajousAdderAction.h>
 
@@ -15,7 +15,7 @@ class LissajousGenerator
     void setParams(const kr_tracker_msgs::LissajousTrackerGoal::ConstPtr &msg);
     void setParams(const kr_tracker_msgs::LissajousAdderGoal::ConstPtr &msg, int num);
     void generatePath(nav_msgs::Path& path, geometry_msgs::Point& initial_pt, double dt);
-    const kr_quadrotor_msgs::PositionCommand::Ptr getPositionCmd(void);
+    const kr_mav_msgs::PositionCommand::Ptr getPositionCmd(void);
     bool activate(void);
     void deactivate(void);
     bool isActive(void);

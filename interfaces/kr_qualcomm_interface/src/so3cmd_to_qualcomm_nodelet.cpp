@@ -1,7 +1,7 @@
 #include <Eigen/Geometry>
 #include <nav_msgs/Odometry.h>
 #include <nodelet/nodelet.h>
-#include <kr_quadrotor_msgs/SO3Command.h>
+#include <kr_mav_msgs/SO3Command.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64.h>
@@ -14,10 +14,10 @@ class SO3CmdToQualcomm : public nodelet::Nodelet
   void onInit(void);
 
  private:
-  void so3_cmd_callback(const kr_quadrotor_msgs::SO3Command::ConstPtr &msg);
+  void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void imu_callback(const sensor_msgs::Imu::ConstPtr &pose);
-  void so3_cmd_to_qc_interface(const kr_quadrotor_msgs::SO3Command::ConstPtr &msg);
+  void so3_cmd_to_qc_interface(const kr_mav_msgs::SO3Command::ConstPtr &msg);
   void motors_on();
   void motors_off();
 
@@ -35,7 +35,7 @@ class SO3CmdToQualcomm : public nodelet::Nodelet
 
   double so3_cmd_timeout_;
   ros::Time last_so3_cmd_time_;
-  kr_quadrotor_msgs::SO3Command last_so3_cmd_;
+  kr_mav_msgs::SO3Command last_so3_cmd_;
 };
 
 void SO3CmdToQualcomm::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
@@ -51,7 +51,7 @@ void SO3CmdToQualcomm::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
     ROS_DEBUG("so3_cmd timeout. %f seconds since last command",
              (ros::Time::now() - last_so3_cmd_time_).toSec());
     const auto last_so3_cmd_ptr =
-        boost::make_shared<kr_quadrotor_msgs::SO3Command>(last_so3_cmd_);
+        boost::make_shared<kr_mav_msgs::SO3Command>(last_so3_cmd_);
 
     so3_cmd_callback(last_so3_cmd_ptr);
   }
@@ -71,7 +71,7 @@ void SO3CmdToQualcomm::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
     ROS_DEBUG("so3_cmd timeout. %f seconds since last command",
              (ros::Time::now() - last_so3_cmd_time_).toSec());
     const auto last_so3_cmd_ptr =
-        boost::make_shared<kr_quadrotor_msgs::SO3Command>(last_so3_cmd_);
+        boost::make_shared<kr_mav_msgs::SO3Command>(last_so3_cmd_);
 
     so3_cmd_callback(last_so3_cmd_ptr);
   }
@@ -146,7 +146,7 @@ void SO3CmdToQualcomm::motors_off()
   }
 }
 
-void SO3CmdToQualcomm::so3_cmd_to_qc_interface(const kr_quadrotor_msgs::SO3Command::ConstPtr &msg)
+void SO3CmdToQualcomm::so3_cmd_to_qc_interface(const kr_mav_msgs::SO3Command::ConstPtr &msg)
 {
   // grab desired forces and rotation from so3
   const Eigen::Vector3d f_des(msg->force.x, msg->force.y, msg->force.z);
@@ -180,7 +180,7 @@ void SO3CmdToQualcomm::so3_cmd_to_qc_interface(const kr_quadrotor_msgs::SO3Comma
     ROS_ERROR("Control command not send");
 }
 
-void SO3CmdToQualcomm::so3_cmd_callback(const kr_quadrotor_msgs::SO3Command::ConstPtr &msg)
+void SO3CmdToQualcomm::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg)
 {
   if(!so3_cmd_set_)
     so3_cmd_set_ = true;

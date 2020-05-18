@@ -1,6 +1,6 @@
 # kr_rosflight_interface
 
-This node translates `kr_quadrotor_msgs/SO3Command` to `rosflight_msgs/Command`.
+This node translates `kr_mav_msgs/SO3Command` to `rosflight_msgs/Command`.
 
 #### `rosflight_msgs` requirement
 

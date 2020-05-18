@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
-project(kr_quadrotor_msgs)
+project(kr_mav_msgs)
 
 add_compile_options(-std=c++11)
 

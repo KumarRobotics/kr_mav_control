@@ -17,9 +17,9 @@ Once installed follow the following instructions to generate custom messages use
 ```
 cd ~/ws_ros/src/quadrotor_control
 mkdir -p ~/matlab_msgs
-cp -r kr_quadrotor_msgs kr_mav_manager ~/matlab_msgs
+cp -r kr_mav_msgs kr_mav_manager ~/matlab_msgs
 cd ~/ws_ros/src/quadrotor_control/kr_matlab_interface
-cp kr_quadrotor_msgs.patch.package.xml ~/matlab_msgs/kr_quadrotor_msgs/package.xml
+cp kr_mav_msgs.patch.package.xml ~/matlab_msgs/kr_mav_msgs/package.xml
 cp kr_mav_manager.patch.package.xml ~/matlab_msgs/kr_mav_manager/package.xml
 cd ~/matlab_msgs
 git clone https://github.com/ros/ros_comm_msgs.git

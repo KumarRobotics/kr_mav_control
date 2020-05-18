@@ -1,5 +1,5 @@
 #include <Eigen/Geometry>
-#include <kr_quadrotor_msgs/TRPYCommand.h>
+#include <kr_mav_msgs/TRPYCommand.h>
 #include "quadrotor_simulator_base.hpp"
 
 namespace QuadrotorSimulator
@@ -15,7 +15,7 @@ typedef struct _TRPYCommand
 } TRPYCommand;
 
 class QuadrotorSimulatorTRPY
-    : public QuadrotorSimulatorBase<kr_quadrotor_msgs::TRPYCommand, TRPYCommand>
+    : public QuadrotorSimulatorBase<kr_mav_msgs::TRPYCommand, TRPYCommand>
 {
  public:
   QuadrotorSimulatorTRPY(ros::NodeHandle &nh)
@@ -24,12 +24,12 @@ class QuadrotorSimulatorTRPY
   }
 
  private:
-  virtual void cmd_callback(const kr_quadrotor_msgs::TRPYCommand::ConstPtr &cmd);
+  virtual void cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr &cmd);
   virtual ControlInput getControl(const Quadrotor &quad,
                                   const TRPYCommand &cmd) const;
 };
 void QuadrotorSimulatorTRPY::cmd_callback(
-    const kr_quadrotor_msgs::TRPYCommand::ConstPtr &cmd)
+    const kr_mav_msgs::TRPYCommand::ConstPtr &cmd)
 {
   command_.thrust = cmd->thrust;
   command_.roll = cmd->roll;

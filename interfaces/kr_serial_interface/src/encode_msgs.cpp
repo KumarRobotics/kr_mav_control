@@ -4,7 +4,7 @@
 #include <kr_serial_interface/encode_msgs.h>
 #include <kr_serial_interface/comm_types.h>
 
-namespace kr_quadrotor_msgs
+namespace kr_mav_msgs
 {
 namespace
 {
@@ -35,7 +35,7 @@ removeref<Target> saturation_cast(Source const src,
 // NOTE(Kartik): Macro needed in order to get the tgt variable name as a string
 #define SATURATE_CAST(tgt, src) tgt = saturation_cast<decltype(tgt)>(src, #tgt)
 
-void encodeSO3Command(const kr_quadrotor_msgs::SO3Command &so3_command,
+void encodeSO3Command(const kr_mav_msgs::SO3Command &so3_command,
                       std::vector<uint8_t> &output)
 {
   struct SO3_CMD_INPUT so3_cmd_input;
@@ -79,7 +79,7 @@ void encodeSO3Command(const kr_quadrotor_msgs::SO3Command &so3_command,
   memcpy(&output[0], &so3_cmd_input, sizeof(so3_cmd_input));
 }
 
-void encodeTRPYCommand(const kr_quadrotor_msgs::TRPYCommand &trpy_command,
+void encodeTRPYCommand(const kr_mav_msgs::TRPYCommand &trpy_command,
                        std::vector<uint8_t> &output)
 {
   struct TRPY_CMD trpy_cmd_input;
@@ -98,7 +98,7 @@ void encodeTRPYCommand(const kr_quadrotor_msgs::TRPYCommand &trpy_command,
   memcpy(&output[0], &trpy_cmd_input, sizeof(trpy_cmd_input));
 }
 
-void encodePWMCommand(const kr_quadrotor_msgs::PWMCommand &pwm_command,
+void encodePWMCommand(const kr_mav_msgs::PWMCommand &pwm_command,
                       std::vector<uint8_t> &output)
 {
   struct PWM_CMD_INPUT pwm_cmd_input;

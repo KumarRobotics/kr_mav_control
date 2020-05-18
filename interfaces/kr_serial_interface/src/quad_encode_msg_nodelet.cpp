@@ -1,9 +1,9 @@
 #include <ros/ros.h>
 #include <nodelet/nodelet.h>
-#include <kr_quadrotor_msgs/SO3Command.h>
-#include <kr_quadrotor_msgs/TRPYCommand.h>
-#include <kr_quadrotor_msgs/PWMCommand.h>
-#include <kr_quadrotor_msgs/Serial.h>
+#include <kr_mav_msgs/SO3Command.h>
+#include <kr_mav_msgs/TRPYCommand.h>
+#include <kr_mav_msgs/PWMCommand.h>
+#include <kr_mav_msgs/Serial.h>
 #include <kr_serial_interface/encode_msgs.h>
 
 class QuadEncodeMsg : public nodelet::Nodelet
@@ -12,9 +12,9 @@ class QuadEncodeMsg : public nodelet::Nodelet
   void onInit(void);
 
  private:
-  void so3_cmd_callback(const kr_quadrotor_msgs::SO3Command::ConstPtr &msg);
-  void trpy_cmd_callback(const kr_quadrotor_msgs::TRPYCommand::ConstPtr &msg);
-  void pwm_cmd_callback(const kr_quadrotor_msgs::PWMCommand::ConstPtr &msg);
+  void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg);
+  void trpy_cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr &msg);
+  void pwm_cmd_callback(const kr_mav_msgs::PWMCommand::ConstPtr &msg);
   ros::Publisher serial_msg_pub_;
   ros::Subscriber so3_cmd_sub_;
   ros::Subscriber trpy_cmd_sub_;
@@ -23,39 +23,39 @@ class QuadEncodeMsg : public nodelet::Nodelet
 
 };
 
-void QuadEncodeMsg::so3_cmd_callback(const kr_quadrotor_msgs::SO3Command::ConstPtr &msg)
+void QuadEncodeMsg::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg)
 {
-  kr_quadrotor_msgs::Serial::Ptr serial_msg(new kr_quadrotor_msgs::Serial);
+  kr_mav_msgs::Serial::Ptr serial_msg(new kr_mav_msgs::Serial);
   serial_msg->header.seq = msg->header.seq;
   serial_msg->channel = channel_;
-  serial_msg->type = kr_quadrotor_msgs::Serial::SO3_CMD;
+  serial_msg->type = kr_mav_msgs::Serial::SO3_CMD;
 
-  kr_quadrotor_msgs::encodeSO3Command(*msg, serial_msg->data);
+  kr_mav_msgs::encodeSO3Command(*msg, serial_msg->data);
 
   serial_msg->header.stamp = ros::Time::now();
   serial_msg_pub_.publish(serial_msg);
 }
 
-void QuadEncodeMsg::trpy_cmd_callback(const kr_quadrotor_msgs::TRPYCommand::ConstPtr &msg)
+void QuadEncodeMsg::trpy_cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr &msg)
 {
-  kr_quadrotor_msgs::Serial::Ptr serial_msg(new kr_quadrotor_msgs::Serial);
+  kr_mav_msgs::Serial::Ptr serial_msg(new kr_mav_msgs::Serial);
   serial_msg->header.seq = msg->header.seq;
   serial_msg->channel = channel_;
-  serial_msg->type = kr_quadrotor_msgs::Serial::TRPY_CMD;
+  serial_msg->type = kr_mav_msgs::Serial::TRPY_CMD;
 
-  kr_quadrotor_msgs::encodeTRPYCommand(*msg, serial_msg->data);
+  kr_mav_msgs::encodeTRPYCommand(*msg, serial_msg->data);
 
   serial_msg->header.stamp = ros::Time::now();
   serial_msg_pub_.publish(serial_msg);
 }
 
-void QuadEncodeMsg::pwm_cmd_callback(const kr_quadrotor_msgs::PWMCommand::ConstPtr &msg)
+void QuadEncodeMsg::pwm_cmd_callback(const kr_mav_msgs::PWMCommand::ConstPtr &msg)
 {
-  kr_quadrotor_msgs::Serial::Ptr serial_msg(new kr_quadrotor_msgs::Serial);
+  kr_mav_msgs::Serial::Ptr serial_msg(new kr_mav_msgs::Serial);
   serial_msg->header.seq = msg->header.seq;
   serial_msg->channel = channel_;
-  serial_msg->type = kr_quadrotor_msgs::Serial::PWM_CMD;
-  kr_quadrotor_msgs::encodePWMCommand(*msg, serial_msg->data);
+  serial_msg->type = kr_mav_msgs::Serial::PWM_CMD;
+  kr_mav_msgs::encodePWMCommand(*msg, serial_msg->data);
 
   serial_msg->header.stamp = ros::Time::now();
   serial_msg_pub_.publish(serial_msg);
@@ -67,7 +67,7 @@ void QuadEncodeMsg::onInit(void)
 
   priv_nh.param("channel", channel_, 0);
 
-  serial_msg_pub_ = priv_nh.advertise<kr_quadrotor_msgs::Serial>("serial_msg", 10);
+  serial_msg_pub_ = priv_nh.advertise<kr_mav_msgs::Serial>("serial_msg", 10);
 
   so3_cmd_sub_ = priv_nh.subscribe("so3_cmd", 10, &QuadEncodeMsg::so3_cmd_callback, this,
                                                   ros::TransportHints().tcpNoDelay());

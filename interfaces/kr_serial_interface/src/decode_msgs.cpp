@@ -2,11 +2,11 @@
 #include <kr_serial_interface/comm_types.h>
 #include <Eigen/Geometry>
 
-namespace kr_quadrotor_msgs
+namespace kr_mav_msgs
 {
 
 bool decodeOutputData(const std::vector<uint8_t> &data,
-                      kr_quadrotor_msgs::OutputData &output)
+                      kr_mav_msgs::OutputData &output)
 {
   struct OUTPUT_DATA output_data;
   if(data.size() != sizeof(output_data))
@@ -76,7 +76,7 @@ bool decodeOutputData(const std::vector<uint8_t> &data,
 }
 
 bool decodeStatusData(const std::vector<uint8_t> &data,
-                      kr_quadrotor_msgs::StatusData &status)
+                      kr_mav_msgs::StatusData &status)
 {
   struct STATUS_DATA status_data;
   if(data.size() != sizeof(status_data))

@@ -5,7 +5,7 @@
 //#include <tf/transform_datatypes.h>
 
 #include <actionlib/server/simple_action_server.h>
-#include <kr_quadrotor_msgs/PositionCommand.h>
+#include <kr_mav_msgs/PositionCommand.h>
 #include <kr_tracker_msgs/TrajectoryTrackerAction.h>
 #include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
@@ -18,10 +18,10 @@ class TrajectoryTracker : public kr_trackers_manager::Tracker
   TrajectoryTracker(void);
 
   void Initialize(const ros::NodeHandle &nh);
-  bool Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd);
+  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  kr_quadrotor_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
 
   uint8_t status() const;
 
@@ -80,7 +80,7 @@ void TrajectoryTracker::Initialize(const ros::NodeHandle &nh)
   tracker_server_->start();
 }
 
-bool TrajectoryTracker::Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd)
+bool TrajectoryTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
   if(goal_set_ && pos_set_)
@@ -111,14 +111,14 @@ void TrajectoryTracker::Deactivate(void)
   active_ = false;
 }
 
-kr_quadrotor_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
+kr_mav_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   pos_set_ = true;
   ICs_.set_from_odom(msg);
 
   if(!active_)
   {
-    return kr_quadrotor_msgs::PositionCommand::Ptr();
+    return kr_mav_msgs::PositionCommand::Ptr();
   }
 
   const ros::Time t_now = ros::Time::now();
@@ -135,7 +135,7 @@ kr_quadrotor_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav
 
   current_traj_length_ += dx;
 
-  auto cmd = boost::make_shared<kr_quadrotor_msgs::PositionCommand>();
+  auto cmd = boost::make_shared<kr_mav_msgs::PositionCommand>();
   cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
 

@@ -15,10 +15,10 @@ class SmoothVelTrackerAction : public kr_trackers_manager::Tracker
   SmoothVelTrackerAction(void);
 
   void Initialize(const ros::NodeHandle &nh);
-  bool Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd);
+  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  kr_quadrotor_msgs::PositionCommand::ConstPtr update(
+  kr_mav_msgs::PositionCommand::ConstPtr update(
       const nav_msgs::Odometry::ConstPtr &msg);
   uint8_t status() const;
 
@@ -69,7 +69,7 @@ void SmoothVelTrackerAction::Initialize(const ros::NodeHandle &nh)
   tracker_server_->start();
 }
 
-bool SmoothVelTrackerAction::Activate(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd)
+bool SmoothVelTrackerAction::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
   if(goal_set_)
@@ -91,13 +91,13 @@ void SmoothVelTrackerAction::Deactivate(void)
   active_ = false;
 }
 
-kr_quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTrackerAction::update(
+kr_mav_msgs::PositionCommand::ConstPtr SmoothVelTrackerAction::update(
     const nav_msgs::Odometry::ConstPtr &msg)
 {
   if(!active_)
   {
     ICs_.set_from_odom(msg);
-    return kr_quadrotor_msgs::PositionCommand::Ptr();
+    return kr_mav_msgs::PositionCommand::Ptr();
   }
 
   // Record distance between last position and current.
@@ -118,7 +118,7 @@ kr_quadrotor_msgs::PositionCommand::ConstPtr SmoothVelTrackerAction::update(
   }
 
   // Set gains
-  kr_quadrotor_msgs::PositionCommand::Ptr cmd(new kr_quadrotor_msgs::PositionCommand);
+  kr_mav_msgs::PositionCommand::Ptr cmd(new kr_mav_msgs::PositionCommand);
   cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
 

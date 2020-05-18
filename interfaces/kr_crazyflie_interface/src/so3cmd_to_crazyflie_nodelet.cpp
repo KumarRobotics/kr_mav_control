@@ -11,7 +11,7 @@
 #include <Eigen/Geometry>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
-#include <kr_quadrotor_msgs/SO3Command.h>
+#include <kr_mav_msgs/SO3Command.h>
 
 // TODO: Remove CLAMP as macro
 #define CLAMP(x,min,max) ((x) < (min)) ? (min) : ((x) > (max)) ? (max) : (x)
@@ -24,7 +24,7 @@ class SO3CmdToCrazyflie : public nodelet::Nodelet
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  private:
-  void so3_cmd_callback(const kr_quadrotor_msgs::SO3Command::ConstPtr &msg);
+  void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
 
   bool odom_set_, so3_cmd_set_;
@@ -38,7 +38,7 @@ class SO3CmdToCrazyflie : public nodelet::Nodelet
 
   double so3_cmd_timeout_;
   ros::Time last_so3_cmd_time_;
-  kr_quadrotor_msgs::SO3Command last_so3_cmd_;
+  kr_mav_msgs::SO3Command last_so3_cmd_;
 
   double c1_;
   double c2_;
@@ -67,14 +67,14 @@ void SO3CmdToCrazyflie::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
     //ROS_WARN("so3_cmd timeout. %f seconds since last command",
       //       (ros::Time::now() - last_so3_cmd_time_).toSec());
     const auto last_so3_cmd_ptr =
-        boost::make_shared<kr_quadrotor_msgs::SO3Command>(last_so3_cmd_);
+        boost::make_shared<kr_mav_msgs::SO3Command>(last_so3_cmd_);
 
     so3_cmd_callback(last_so3_cmd_ptr);
   }
 }
 
 void SO3CmdToCrazyflie::so3_cmd_callback(
-    const kr_quadrotor_msgs::SO3Command::ConstPtr &msg)
+    const kr_mav_msgs::SO3Command::ConstPtr &msg)
 {
   if(!so3_cmd_set_)
     so3_cmd_set_ = true;

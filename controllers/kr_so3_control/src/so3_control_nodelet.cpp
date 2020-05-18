@@ -2,9 +2,9 @@
 #include <nodelet/nodelet.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
-#include <kr_quadrotor_msgs/SO3Command.h>
-#include <kr_quadrotor_msgs/PositionCommand.h>
-#include <kr_quadrotor_msgs/Corrections.h>
+#include <kr_mav_msgs/SO3Command.h>
+#include <kr_mav_msgs/PositionCommand.h>
+#include <kr_mav_msgs/Corrections.h>
 #include <std_msgs/Bool.h>
 #include <Eigen/Geometry>
 #include <kr_so3_control/SO3Control.h>
@@ -36,10 +36,10 @@ class SO3ControlNodelet : public nodelet::Nodelet
 
  private:
   void publishSO3Command();
-  void position_cmd_callback(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd);
+  void position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void enable_motors_callback(const std_msgs::Bool::ConstPtr &msg);
-  void corrections_callback(const kr_quadrotor_msgs::Corrections::ConstPtr &msg);
+  void corrections_callback(const kr_mav_msgs::Corrections::ConstPtr &msg);
   void cfg_callback(kr_so3_control::SO3Config &config, uint32_t level);
 
   SO3Control controller_;
@@ -86,8 +86,8 @@ void SO3ControlNodelet::publishSO3Command()
   const Eigen::Quaternionf &orientation = controller_.getComputedOrientation();
   const Eigen::Vector3f &ang_vel = controller_.getComputedAngularVelocity();
 
-  kr_quadrotor_msgs::SO3Command::Ptr so3_command =
-      boost::make_shared<kr_quadrotor_msgs::SO3Command>();
+  kr_mav_msgs::SO3Command::Ptr so3_command =
+      boost::make_shared<kr_mav_msgs::SO3Command>();
   so3_command->header.stamp = ros::Time::now();
   so3_command->header.frame_id = frame_id_;
   so3_command->force.x = force(0);
@@ -126,7 +126,7 @@ void SO3ControlNodelet::publishSO3Command()
   command_viz_pub_.publish(cmd_viz_msg);
 }
 
-void SO3ControlNodelet::position_cmd_callback(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd)
+void SO3ControlNodelet::position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   des_pos_ = Eigen::Vector3f(cmd->position.x, cmd->position.y, cmd->position.z);
   des_vel_ = Eigen::Vector3f(cmd->velocity.x, cmd->velocity.y, cmd->velocity.z);
@@ -196,7 +196,7 @@ void SO3ControlNodelet::enable_motors_callback(const std_msgs::Bool::ConstPtr &m
   controller_.resetIntegrals();
 }
 
-void SO3ControlNodelet::corrections_callback(const kr_quadrotor_msgs::Corrections::ConstPtr &msg)
+void SO3ControlNodelet::corrections_callback(const kr_mav_msgs::Corrections::ConstPtr &msg)
 {
   corrections_[0] = msg->kf_correction;
   corrections_[1] = msg->angle_corrections[0];
@@ -349,7 +349,7 @@ void SO3ControlNodelet::onInit(void)
   reconfigure_server_->updateConfig(config);
   reconfigure_server_->setCallback(boost::bind(&SO3ControlNodelet::cfg_callback, this, _1, _2));
 
-  so3_command_pub_ = priv_nh.advertise<kr_quadrotor_msgs::SO3Command>("so3_cmd", 10);
+  so3_command_pub_ = priv_nh.advertise<kr_mav_msgs::SO3Command>("so3_cmd", 10);
   command_viz_pub_ = priv_nh.advertise<geometry_msgs::PoseStamped>("cmd_viz", 10);
 
   odom_sub_ = priv_nh.subscribe("odom", 10, &SO3ControlNodelet::odom_callback, this, ros::TransportHints().tcpNoDelay());

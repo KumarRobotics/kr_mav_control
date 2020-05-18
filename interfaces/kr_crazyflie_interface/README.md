@@ -1,6 +1,6 @@
 ## Crazyflie_interface
 
-This node translates kr_quadrotor_msgs/SO3Command to geometry_msgs/Twist.
+This node translates kr_mav_msgs/SO3Command to geometry_msgs/Twist.
 
 Note: To fly a crazyflie, you will also need:
 

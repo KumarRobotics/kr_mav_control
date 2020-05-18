@@ -1,5 +1,5 @@
 #include <Eigen/Geometry>
-#include <kr_quadrotor_msgs/SO3Command.h>
+#include <kr_mav_msgs/SO3Command.h>
 #include "quadrotor_simulator_base.hpp"
 
 namespace QuadrotorSimulator
@@ -17,19 +17,19 @@ typedef struct _SO3Command
 } SO3Command;
 
 class QuadrotorSimulatorSO3
-    : public QuadrotorSimulatorBase<kr_quadrotor_msgs::SO3Command, SO3Command>
+    : public QuadrotorSimulatorBase<kr_mav_msgs::SO3Command, SO3Command>
 {
  public:
   QuadrotorSimulatorSO3(ros::NodeHandle &nh) : QuadrotorSimulatorBase(nh) {}
 
  private:
-  virtual void cmd_callback(const kr_quadrotor_msgs::SO3Command::ConstPtr &cmd);
+  virtual void cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &cmd);
   virtual ControlInput getControl(const Quadrotor &quad,
                                   const SO3Command &cmd) const;
 };
 
 void QuadrotorSimulatorSO3::cmd_callback(
-    const kr_quadrotor_msgs::SO3Command::ConstPtr &cmd)
+    const kr_mav_msgs::SO3Command::ConstPtr &cmd)
 {
   command_.force[0] = cmd->force.x;
   command_.force[1] = cmd->force.y;

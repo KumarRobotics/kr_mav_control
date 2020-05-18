@@ -14,9 +14,9 @@ Clone and build
 ### Stacks include:
   - `kr_mav_manager`: A manager for the quadrotor_control stack
   - `rqt_mav_manager`: GUI interface for common kr_mav_manager functions
-  - `interfaces`: Translates `kr_quadrotor_msgs/SO3Command` to corresponding robots interface.
+  - `interfaces`: Translates `kr_mav_msgs/SO3Command` to corresponding robots interface.
   - `kr_quadrotor_simulator`: Simple quadrotor dynamics simulator
-  - `kr_quadrotor_msgs`: Common msgs used accross packages
+  - `kr_mav_msgs`: Common msgs used accross packages
   - `controllers/kr_so3_control`: The main controller
   - `trackers`: Different trackers under `kr_std_trackers`, and `kr_trackers_manager`
 

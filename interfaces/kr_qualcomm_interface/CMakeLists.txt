@@ -10,7 +10,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
-find_package(catkin REQUIRED COMPONENTS roscpp kr_quadrotor_msgs nav_msgs nodelet tf_conversions)
+find_package(catkin REQUIRED COMPONENTS roscpp kr_mav_msgs nav_msgs nodelet tf_conversions)
 find_package(Eigen3 REQUIRED)
 
 find_package(Snav)
@@ -23,7 +23,7 @@ else()
   catkin_package(
     INCLUDE_DIRS
     LIBRARIES
-    CATKIN_DEPENDS roscpp kr_quadrotor_msgs nav_msgs nodelet tf_conversions
+    CATKIN_DEPENDS roscpp kr_mav_msgs nav_msgs nodelet tf_conversions
     DEPENDS EIGEN3)
 
   add_executable(vio_odom_publisher src/vio_odom_publisher.cpp)

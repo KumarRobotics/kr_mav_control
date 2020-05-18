@@ -1,9 +1,9 @@
 #include <ros/ros.h>
 #include <nodelet/nodelet.h>
 #include <nav_msgs/Odometry.h>
-#include <kr_quadrotor_msgs/TRPYCommand.h>
-#include <kr_quadrotor_msgs/PositionCommand.h>
-#include <kr_quadrotor_msgs/Corrections.h>
+#include <kr_mav_msgs/TRPYCommand.h>
+#include <kr_mav_msgs/PositionCommand.h>
+#include <kr_mav_msgs/Corrections.h>
 #include <std_msgs/Bool.h>
 #include <Eigen/Geometry>
 #include <kr_so3_control/SO3Control.h>
@@ -35,10 +35,10 @@ class SO3TRPYControlNodelet : public nodelet::Nodelet
 
  private:
   void publishCommand();
-  void position_cmd_callback(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd);
+  void position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void enable_motors_callback(const std_msgs::Bool::ConstPtr &msg);
-  void corrections_callback(const kr_quadrotor_msgs::Corrections::ConstPtr &msg);
+  void corrections_callback(const kr_mav_msgs::Corrections::ConstPtr &msg);
   void cfg_callback(kr_so3_control::SO3Config &config, uint32_t level);
 
   SO3Control controller_;
@@ -123,7 +123,7 @@ void SO3TRPYControlNodelet::publishCommand()
   else if(yaw_cmd < -PI)
     yaw_cmd += 2*PI;
 
-  kr_quadrotor_msgs::TRPYCommand::Ptr trpy_command(new kr_quadrotor_msgs::TRPYCommand);
+  kr_mav_msgs::TRPYCommand::Ptr trpy_command(new kr_mav_msgs::TRPYCommand);
   trpy_command->header.stamp = ros::Time::now();
   trpy_command->header.frame_id = frame_id_;
   if(enable_motors_)
@@ -150,7 +150,7 @@ void SO3TRPYControlNodelet::publishCommand()
   trpy_command_pub_.publish(trpy_command);
 }
 
-void SO3TRPYControlNodelet::position_cmd_callback(const kr_quadrotor_msgs::PositionCommand::ConstPtr &cmd)
+void SO3TRPYControlNodelet::position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   des_pos_ = Eigen::Vector3f(cmd->position.x, cmd->position.y, cmd->position.z);
   des_vel_ = Eigen::Vector3f(cmd->velocity.x, cmd->velocity.y, cmd->velocity.z);
@@ -219,7 +219,7 @@ void SO3TRPYControlNodelet::enable_motors_callback(const std_msgs::Bool::ConstPt
   controller_.resetIntegrals();
 }
 
-void SO3TRPYControlNodelet::corrections_callback(const kr_quadrotor_msgs::Corrections::ConstPtr &msg)
+void SO3TRPYControlNodelet::corrections_callback(const kr_mav_msgs::Corrections::ConstPtr &msg)
 {
   corrections_[0] = msg->kf_correction;
   corrections_[1] = msg->angle_corrections[0];
@@ -376,7 +376,7 @@ void SO3TRPYControlNodelet::onInit()
   reconfigure_server_->updateConfig(config);
   reconfigure_server_->setCallback(boost::bind(&SO3TRPYControlNodelet::cfg_callback, this, _1, _2));
 
-  trpy_command_pub_ = n.advertise<kr_quadrotor_msgs::TRPYCommand>("trpy_cmd", 10);
+  trpy_command_pub_ = n.advertise<kr_mav_msgs::TRPYCommand>("trpy_cmd", 10);
 
   odom_sub_ = n.subscribe("odom", 10, &SO3TRPYControlNodelet::odom_callback, this, ros::TransportHints().tcpNoDelay());
   position_cmd_sub_ = n.subscribe("position_cmd", 10, &SO3TRPYControlNodelet::position_cmd_callback, this,

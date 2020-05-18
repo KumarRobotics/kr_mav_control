@@ -3,17 +3,17 @@
 
 #include <stdint.h>
 #include <vector>
-#include <kr_quadrotor_msgs/OutputData.h>
-#include <kr_quadrotor_msgs/StatusData.h>
+#include <kr_mav_msgs/OutputData.h>
+#include <kr_mav_msgs/StatusData.h>
 
-namespace kr_quadrotor_msgs
+namespace kr_mav_msgs
 {
 
 bool decodeOutputData(const std::vector<uint8_t> &data,
-                      kr_quadrotor_msgs::OutputData &output);
+                      kr_mav_msgs::OutputData &output);
 
 bool decodeStatusData(const std::vector<uint8_t> &data,
-                      kr_quadrotor_msgs::StatusData &status);
+                      kr_mav_msgs::StatusData &status);
 }
 
 #endif

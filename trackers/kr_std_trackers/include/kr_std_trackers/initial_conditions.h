@@ -3,14 +3,14 @@
 
 #include <Eigen/Core>
 #include <nav_msgs/Odometry.h>
-#include <kr_quadrotor_msgs/PositionCommand.h>
+#include <kr_mav_msgs/PositionCommand.h>
 
 class InitialConditions
 {
  public:
   InitialConditions();
    
-  void set_from_cmd(const kr_quadrotor_msgs::PositionCommand::ConstPtr &msg);
+  void set_from_cmd(const kr_mav_msgs::PositionCommand::ConstPtr &msg);
   void set_from_odom(const nav_msgs::Odometry::ConstPtr &msg);
   Eigen::Vector3f pos() const { return pos_; }
   Eigen::Vector3f vel() const { return vel_; }

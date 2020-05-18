@@ -14,7 +14,7 @@
   <depend>roscpp</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
-  <depend>kr_quadrotor_msgs</depend>
+  <depend>kr_mav_msgs</depend>
   <depend>std_msgs</depend>
   <depend>tf</depend>
   <depend>nodelet</depend>

@@ -14,10 +14,10 @@
 #include <actionlib/client/simple_action_client.h>
 
 // quadrotor_control
-#include <kr_quadrotor_msgs/OutputData.h>
-#include <kr_quadrotor_msgs/PositionCommand.h>
-#include <kr_quadrotor_msgs/SO3Command.h>
-#include <kr_quadrotor_msgs/TRPYCommand.h>
+#include <kr_mav_msgs/OutputData.h>
+#include <kr_mav_msgs/PositionCommand.h>
+#include <kr_mav_msgs/SO3Command.h>
+#include <kr_mav_msgs/TRPYCommand.h>
 #include <kr_tracker_msgs/CircleTrackerAction.h>
 #include <kr_tracker_msgs/LineTrackerAction.h>
 #include <kr_tracker_msgs/LissajousTrackerAction.h>
@@ -97,9 +97,9 @@ class MAVManager
                             float yaw_num_periods[2], float period[2], float num_cycles[2], float ramp_time[2]);
 
     // Direct low-level control
-    bool setPositionCommand(const kr_quadrotor_msgs::PositionCommand &cmd);
-    bool setSO3Command(const kr_quadrotor_msgs::SO3Command &cmd);
-    bool setTRPYCommand(const kr_quadrotor_msgs::TRPYCommand &cmd);
+    bool setPositionCommand(const kr_mav_msgs::PositionCommand &cmd);
+    bool setSO3Command(const kr_mav_msgs::SO3Command &cmd);
+    bool setTRPYCommand(const kr_mav_msgs::TRPYCommand &cmd);
     bool useNullTracker();
 
     // Monitoring
@@ -138,7 +138,7 @@ class MAVManager
 
     void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
-    void output_data_cb(const kr_quadrotor_msgs::OutputData::ConstPtr &msg);
+    void output_data_cb(const kr_mav_msgs::OutputData::ConstPtr &msg);
     void heartbeat_cb(const std_msgs::Empty::ConstPtr &msg);
     void tracker_status_cb(const kr_tracker_msgs::TrackerStatus::ConstPtr &msg);
     void heartbeat();

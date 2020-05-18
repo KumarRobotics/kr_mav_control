@@ -23,7 +23,7 @@ static const uint8_t kPacketStartString[] = {0x55, 0x55};
 static uint16_t crc16(const uint8_t *data, int count);
 static uint16_t crc_update(uint16_t crc, uint8_t data);
 
-void encode_serial_msg(const kr_quadrotor_msgs::Serial &msg,
+void encode_serial_msg(const kr_mav_msgs::Serial &msg,
                        std::vector<uint8_t> &serial_data)
 {
   const uint8_t data_length = msg.data.size();
@@ -54,9 +54,9 @@ void encode_serial_msg(const kr_quadrotor_msgs::Serial &msg,
 
 void process_serial_data(
     const uint8_t *data, const size_t count,
-    boost::function<void(kr_quadrotor_msgs::Serial &)> callback)
+    boost::function<void(kr_mav_msgs::Serial &)> callback)
 {
-  static kr_quadrotor_msgs::Serial serial_msg;
+  static kr_mav_msgs::Serial serial_msg;
   static enum PacketState state = kPacketStart1;
   static uint16_t received_length = 0, data_count = 0;;
   static uint16_t expected_crc = 0, received_crc = 0;

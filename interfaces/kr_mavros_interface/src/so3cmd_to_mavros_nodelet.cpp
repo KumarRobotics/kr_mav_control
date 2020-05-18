@@ -3,7 +3,7 @@
 #include <mavros_msgs/AttitudeTarget.h>
 #include <nav_msgs/Odometry.h>
 #include <nodelet/nodelet.h>
-#include <kr_quadrotor_msgs/SO3Command.h>
+#include <kr_mav_msgs/SO3Command.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64.h>
@@ -15,7 +15,7 @@ class SO3CmdToMavros : public nodelet::Nodelet
   void onInit(void);
 
  private:
-  void so3_cmd_callback(const kr_quadrotor_msgs::SO3Command::ConstPtr &msg);
+  void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void imu_callback(const sensor_msgs::Imu::ConstPtr &pose);
 
@@ -33,7 +33,7 @@ class SO3CmdToMavros : public nodelet::Nodelet
 
   double so3_cmd_timeout_;
   ros::Time last_so3_cmd_time_;
-  kr_quadrotor_msgs::SO3Command last_so3_cmd_;
+  kr_mav_msgs::SO3Command last_so3_cmd_;
 };
 
 void SO3CmdToMavros::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
@@ -66,14 +66,14 @@ void SO3CmdToMavros::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
     ROS_INFO("so3_cmd timeout. %f seconds since last command",
              (ros::Time::now() - last_so3_cmd_time_).toSec());
     const auto last_so3_cmd_ptr =
-        boost::make_shared<kr_quadrotor_msgs::SO3Command>(last_so3_cmd_);
+        boost::make_shared<kr_mav_msgs::SO3Command>(last_so3_cmd_);
 
     so3_cmd_callback(last_so3_cmd_ptr);
   }
 }
 
 void SO3CmdToMavros::so3_cmd_callback(
-    const kr_quadrotor_msgs::SO3Command::ConstPtr &msg)
+    const kr_mav_msgs::SO3Command::ConstPtr &msg)
 {
   if(!so3_cmd_set_)
     so3_cmd_set_ = true;
