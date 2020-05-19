@@ -4,7 +4,7 @@ Clone and build [kr_ui](https://github.com/KumarRobotics/kr_ui) and [multi_mav_m
 
 Helper bash scripts are added to launch multiple robots.
 ```
-roscd kr_quadrotor_simulator/scripts
+roscd kr_mav_launch/scripts
 ./demo_gazebo.sh 2
 ```
  * This will launch 2 robots in gazebo. Do not run more if your machine cannot support.

@@ -11,11 +11,11 @@ roslaunch mrsl_quadrotor_launch spawn.launch robot_type:=pelican
 This spawns a quadrotor with plugins for `odom` and `so3_cmd` under `juliett` namespace. quadrotor_control plugins have to be launched under this namespace.
 
 ```
-roslaunch kr_mav_manager example_control.launch model:=juliett odom_topic:=ground_truth/odom mass:=0.5
+roslaunch kr_mav_launch example_control.launch mav_name:=juliett odom_topic:=ground_truth/odom mass:=0.5
 
 ```
 
 Launch the GUI to control the robot. Change robot name to `juliett`
 ```
-rosrun rqt_kr_mav_manager rqt_kr_mav_manager
+rosrun rqt_mav_manager rqt_mav_manager
 ```

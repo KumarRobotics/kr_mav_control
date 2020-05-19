@@ -18,7 +18,7 @@ Once installed follow the following instructions to generate custom messages use
 cd ~/ws_ros/src/quadrotor_control
 mkdir -p ~/matlab_msgs
 cp -r kr_mav_msgs kr_mav_manager ~/matlab_msgs
-cd ~/ws_ros/src/quadrotor_control/kr_matlab_interface
+cd ~/ws_ros/src/quadrotor_control/interfaces/kr_matlab_interface
 cp kr_mav_msgs.patch.package.xml ~/matlab_msgs/kr_mav_msgs/package.xml
 cp kr_mav_manager.patch.package.xml ~/matlab_msgs/kr_mav_manager/package.xml
 cd ~/matlab_msgs
@@ -43,7 +43,7 @@ Clone and build [kr_ui](https://github.com/KumarRobotics/kr_ui) and [multi_kr_ma
 
 Helper bash scripts are added to launch multiple robots.
 ```
-roscd kr_quadrotor_simulator/scripts
+roscd kr_mav_launch/scripts
 ./demo_sim.sh 4
 ```
  * This will launch 4 robots in simulator
@@ -52,7 +52,7 @@ roscd kr_quadrotor_simulator/scripts
 
 In MATLAB
 ```
-cd ~/ws_ros/src/quadrotor_control/kr_matlab_interface
+cd ~/ws_ros/src/quadrotor_control/interfaces/kr_matlab_interface
 example_interface('localhost', 4)
 ```
  * This starts the motors, calls takeoff and moves all the 4 MAVs with random velocity.

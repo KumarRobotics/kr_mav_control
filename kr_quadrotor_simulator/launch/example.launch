@@ -1,6 +1,0 @@
-<launch>
-  <group ns="quadrotor">
-    <include file="$(find kr_quadrotor_simulator)/launch/sim.launch"/>
-    <include file="$(find kr_quadrotor_simulator)/launch/control.launch"/>
-  </group>
-</launch>

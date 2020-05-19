@@ -23,7 +23,7 @@
     type="kr_quadrotor_simulator_so3"
     name="quadrotor_simulator_so3"
     output="screen">
-    <rosparam file="$(find kr_quadrotor_simulator)/config/$(arg mav_type)_params.yaml"/>
+    <rosparam file="$(find kr_mav_launch)/config/$(arg mav_type)_params.yaml"/>
     <param name="world_frame_id" value="$(arg world_frame_id)"/>
     <param name="quadrotor_name" value="$(arg mav_name)"/>
     <param name="rate/odom" value="$(arg rate/odom)"/>
@@ -40,7 +40,7 @@
     <param name="initial_orientation/w" value="$(arg initial_orientation/w)"/>
   </node>
 
-  <include file="$(find kr_quadrotor_simulator)/launch/mesh_vis.launch">
+  <include file="$(find kr_mav_launch)/launch/mesh_vis.launch">
     <arg name="mav_name" value="$(arg mav_name)"/>
     <arg name="mav_type" value="$(arg mav_type)"/>
     <arg name="odom_topic" value="$(arg odom_topic)"/>
