@@ -12,3 +12,9 @@ roscd kr_mav_launch/scripts
  * `dragonfly$ID` namespace is used for each robot. Each vehicle can be interfaced with the quadrotor_control topics/services in this namespace.
  * Use the rqt_multi_mav_manager GUI to control all the robots. Wait until you see `==== Multi MAV Manager is ready for action ===` in one of the tmux pane.
  * You can also use the MATLAB interface to control the robots. Might have to update the `odom_topic` in the interface.
+
+If MAVs need to be loaded in pre-defined start locations, create a CSV file to input X,Y,Z,YAW on each new line per MAV. An example csv is provided.
+```
+roscd kr_mav_launch/scripts
+./demo_gazebo.sh start_locations.csv
+```

@@ -4,13 +4,37 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-NUM_MAV=$1
+CUR_INPUT=$1
+NUM_MAV=0
+CSV_INPUT=false
+let pos_cnt=0
 
-if echo $NUM_MAV | grep -Eq '^[+-]?[0-9]+$'
-then
-  echo "Running simulated $NUM_MAV MAVs"
+if echo $CUR_INPUT | grep -Eq '^[+-]?[0-9]+$'; then
+  NUM_MAV=$1
+  echo "Running simulated $CUR_INPUT MAVs"
+elif [[ $CUR_INPUT == *.csv ]]; then
+  declare -a pos_val
+  while read line
+  do
+    echo "Line is : $line"
+    for i in $(echo $line | sed "s/,/ /g")
+    do
+        # call your procedure/other scripts here below
+        #echo "$i"
+        pos_val+=("$i")
+    done
+    NUM_MAV=$[${NUM_MAV} + 1]
+  done < $CUR_INPUT
+  CSV_INPUT=true
+  # let pos_cnt=0
+  # for id in $(seq 1 $NUM_MAV)
+  # do
+  #   echo ${pos_val[${pos_cnt}]} ${pos_val[$(expr ${pos_cnt} + 1)]}
+  #   let pos_cnt+=3
+  #   #echo $pos_cnt
+  # done
 else
-  echo "Input number(integer) of MAVs as first argument"
+  echo "Input number(integer) of MAVs or CSV with start_locations as first argument"
   exit 1
 fi
 
@@ -123,8 +147,17 @@ do
   row_i=$(( ( ( $id - 1 ) % $n_rows ) + 1 ))
   col_i=$(( ( ( $id - $row_i ) / $n_rows ) + 1 ))
 
-  POS_X=$(( ( $col_i * $spacing ) + ( $spacing / 2 ) - $spacing ))
-  POS_Y=$(( ( $row_i * $spacing ) + ( $spacing / 2 ) - $spacing ))
+  if [ "$CSV_INPUT" = true ]; then
+    POS_X=${pos_val[${pos_cnt}]}
+    POS_Y=${pos_val[$(expr ${pos_cnt} + 1)]}
+    POS_Z=${pos_val[$(expr ${pos_cnt} + 2)]}
+    POS_YAW=${pos_val[$(expr ${pos_cnt} + 3)]}
+  else
+    POS_X=$(( ( $col_i * $spacing ) + ( $spacing / 2 ) - $spacing ))
+    POS_Y=$(( ( $row_i * $spacing ) + ( $spacing / 2 ) - $spacing ))
+    POS_Z=0.0
+    POS_YAW=0.0
+  fi
 
   # Generate random colors [0-1]
   v=$[100 + (RANDOM % 100)]$[1000 + (RANDOM % 1000)]
@@ -135,7 +168,7 @@ do
   COL_B=0.${v:1:2}${v:4:3}
   COL_A=0.85
 
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; roslaunch mrsl_quadrotor_launch spawn.launch mav_type:=${MAV_TYPE} mav_name:=${MAV_NAME} x:=${POS_X} y:=${POS_Y}" Enter
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; roslaunch mrsl_quadrotor_launch spawn.launch mav_type:=${MAV_TYPE} mav_name:=${MAV_NAME} x:=${POS_X} y:=${POS_Y} z:=${POS_Z} Y:=${POS_YAW}" Enter
   tmux split-window -t $SESSION_NAME
   tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; roslaunch mrsl_quadrotor_launch controller.launch mav_type:=${MAV_TYPE} mav_name:=${MAV_NAME} odom_topic:=${ODOM_TOPIC} mass:=0.5" Enter
   tmux split-window -t $SESSION_NAME
@@ -148,6 +181,8 @@ do
   tmux split-window -t $SESSION_NAME
   tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; cd $(rospack find kr_mav_launch)/scripts/; ./takeoff.sh ${MAV_NAME}"
   tmux select-layout -t $SESSION_NAME even-horizontal
+
+  let pos_cnt+=4
 done
 
 tmux select-window -t $SESSION_NAME:0
