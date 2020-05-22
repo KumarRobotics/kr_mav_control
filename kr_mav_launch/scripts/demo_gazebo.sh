@@ -135,9 +135,9 @@ do
   COL_B=0.${v:1:2}${v:4:3}
   COL_A=0.85
 
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; roslaunch mrsl_quadrotor_launch spawn.launch robot_type:=${MAV_TYPE} robot:=${MAV_NAME} x:=${POS_X} y:=${POS_Y}" Enter
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; roslaunch mrsl_quadrotor_launch spawn.launch mav_type:=${MAV_TYPE} mav_name:=${MAV_NAME} x:=${POS_X} y:=${POS_Y}" Enter
   tmux split-window -t $SESSION_NAME
-  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; roslaunch kr_mav_launch example_control.launch mav_name:=${MAV_NAME} odom_topic:=${ODOM_TOPIC} mass:=0.5" Enter
+  tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 5; roslaunch mrsl_quadrotor_launch controller.launch mav_type:=${MAV_TYPE} mav_name:=${MAV_NAME} odom_topic:=${ODOM_TOPIC} mass:=0.5" Enter
   tmux split-window -t $SESSION_NAME
   tmux send-keys -t $SESSION_NAME "$SETUP_ROS_STRING; sleep 3; roslaunch kr_mav_launch mesh_vis.launch __ns:=${MAV_NAME} mav_name:=${MAV_NAME} mav_type:=hummingbird odom_topic:=${ODOM_TOPIC} color/r:=${COL_R} color/g:=${COL_G} color/b:=${COL_B} color/a:=${COL_A}" Enter
   tmux select-layout -t $SESSION_NAME even-horizontal
