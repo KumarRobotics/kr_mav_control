@@ -3,7 +3,7 @@
 #include <kr_mav_msgs/TRPYCommand.h>
 #include <kr_mav_msgs/PWMCommand.h>
 #include <kr_mav_msgs/Serial.h>
-#include <kr_mav_msgs/encode_msgs.h>
+#include <kr_serial_interface/encode_msgs.h>
 
 static ros::Publisher serial_msg_pub;
 static int channel;

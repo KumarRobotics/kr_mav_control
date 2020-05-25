@@ -19,18 +19,18 @@ catkin_package(
   CATKIN_DEPENDS roscpp kr_mav_msgs nav_msgs sensor_msgs tf2_ros
   DEPENDS EIGEN3)
 
-add_library(quadrotor_dynamics src/dynamics/Quadrotor.cpp)
+add_library(kr_quadrotor_dynamics src/dynamics/Quadrotor.cpp)
 
 add_executable(kr_quadrotor_simulator_so3 src/quadrotor_simulator_so3.cpp)
-target_link_libraries(kr_quadrotor_simulator_so3 quadrotor_dynamics ${catkin_LIBRARIES})
+target_link_libraries(kr_quadrotor_simulator_so3 kr_quadrotor_dynamics ${catkin_LIBRARIES})
 add_dependencies(kr_quadrotor_simulator_so3 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(kr_quadrotor_simulator_trpy src/quadrotor_simulator_trpy.cpp)
-target_link_libraries(kr_quadrotor_simulator_trpy quadrotor_dynamics ${catkin_LIBRARIES})
+target_link_libraries(kr_quadrotor_simulator_trpy kr_quadrotor_dynamics ${catkin_LIBRARIES})
 add_dependencies(kr_quadrotor_simulator_trpy ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 install(TARGETS
-    quadrotor_dynamics
+    kr_quadrotor_dynamics
     kr_quadrotor_simulator_so3
     kr_quadrotor_simulator_trpy
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -39,5 +39,4 @@ install(TARGETS
 )
 
 install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
 install(DIRECTORY config/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config)

@@ -14,24 +14,23 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS
-  LIBRARIES
+  LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS nodelet kr_mav_msgs roscpp sensor_msgs
   DEPENDS)
 
-add_library(quad_encode_msg_nodelet src/encode_msgs.cpp src/quad_encode_msg_nodelet.cpp)
-add_dependencies(quad_encode_msg_nodelet ${catkin_EXPORTED_TARGETS})
-target_link_libraries(quad_encode_msg_nodelet ${catkin_LIBRARIES})
+add_library(${PROJECT_NAME}
+  src/ASIOSerialDevice.cc
+  src/asctec_serial_interface.cpp
+  src/decode_msgs.cpp
+  src/encode_msgs.cpp
+  src/quad_decode_msg_nodelet.cpp
+  src/quad_encode_msg.cpp
+  src/quad_encode_msg_nodelet.cpp
+  src/quad_serial_comm_nodelet.cpp)
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
-add_library(quad_decode_msg_nodelet src/decode_msgs.cpp src/quad_decode_msg_nodelet.cpp)
-add_dependencies(quad_decode_msg_nodelet ${catkin_EXPORTED_TARGETS})
-target_link_libraries(quad_decode_msg_nodelet ${catkin_LIBRARIES})
-
-add_library(quad_serial_comm_nodelet src/ASIOSerialDevice.cc src/asctec_serial_interface.cpp src/quad_serial_comm_nodelet.cpp)
-add_dependencies(quad_serial_comm_nodelet ${catkin_EXPORTED_TARGETS})
-target_link_libraries(quad_serial_comm_nodelet ${catkin_LIBRARIES})
-
-install(TARGETS
-    quad_decode_msg_nodelet quad_encode_msg_nodelet quad_serial_comm_nodelet
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

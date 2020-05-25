@@ -34,5 +34,3 @@ catkin_package(
   LIBRARIES
   CATKIN_DEPENDS message_runtime geometry_msgs std_msgs
   DEPENDS EIGEN3)
-
-install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})

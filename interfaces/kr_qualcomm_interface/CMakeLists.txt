@@ -22,31 +22,25 @@ else()
 
   catkin_package(
     INCLUDE_DIRS
-    LIBRARIES
+    LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS roscpp kr_mav_msgs nav_msgs nodelet tf_conversions
     DEPENDS EIGEN3)
 
+  add_library(${PROJECT_NAME}
+    src/so3cmd_to_qualcomm_nodelet.cpp
+    src/trpycmd_to_snav_nodelet.cpp
+    src/poscmd_to_snav_nodelet.cpp)
+  add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+  target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Snav_LIBRARY})
+
   add_executable(vio_odom_publisher src/vio_odom_publisher.cpp)
   target_link_libraries(vio_odom_publisher ${catkin_LIBRARIES} ${Snav_LIBRARY})
-
-  add_library(so3cmd_to_qualcomm_nodelet src/so3cmd_to_qualcomm_nodelet.cpp)
-  add_dependencies(so3cmd_to_qualcomm_nodelet ${catkin_EXPORTED_TARGETS})
-  target_link_libraries(so3cmd_to_qualcomm_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
-
-  add_library(trpycmd_to_qualcomm_nodelet src/trpycmd_to_snav_nodelet.cpp)
-  add_dependencies(trpycmd_to_qualcomm_nodelet ${catkin_EXPORTED_TARGETS})
-  target_link_libraries(trpycmd_to_qualcomm_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
-
-  add_library(poscmd_to_qualcomm_nodelet src/poscmd_to_snav_nodelet.cpp)
-  add_dependencies(poscmd_to_qualcomm_nodelet ${catkin_EXPORTED_TARGETS})
-  target_link_libraries(poscmd_to_qualcomm_nodelet ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
   add_executable(snav_publisher src/snav_publisher.cpp)
   add_dependencies(snav_publisher ${catkin_EXPORTED_TARGETS})
   target_link_libraries(snav_publisher ${catkin_LIBRARIES} ${Snav_LIBRARY})
 
-  install(TARGETS vio_odom_publisher so3cmd_to_qualcomm_nodelet trpycmd_to_qualcomm_nodelet
-      poscmd_to_qualcomm_nodelet snav_publisher
+  install(TARGETS ${PROJECT_NAME} vio_odom_publisher snav_publisher
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

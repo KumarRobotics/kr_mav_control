@@ -20,15 +20,15 @@ else()
 
   catkin_package(
     INCLUDE_DIRS
-    LIBRARIES
+    LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS roscpp nav_msgs geometry_msgs kr_mav_msgs mavros_msgs nodelet
     DEPENDS EIGEN3)
 
-  add_library(so3cmd_to_mavros_nodelet src/so3cmd_to_mavros_nodelet.cpp)
-  add_dependencies(so3cmd_to_mavros_nodelet ${catkin_EXPORTED_TARGETS})
-  target_link_libraries(so3cmd_to_mavros_nodelet ${catkin_LIBRARIES})
+  add_library(${PROJECT_NAME} src/so3cmd_to_mavros_nodelet.cpp)
+  add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+  target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
-  install(TARGETS so3cmd_to_mavros_nodelet
+  install(TARGETS ${PROJECT_NAME}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

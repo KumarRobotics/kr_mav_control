@@ -16,9 +16,9 @@ Clone and build
   - `rqt_mav_manager`: GUI interface for common kr_mav_manager functions
   - `interfaces`: Translates `kr_mav_msgs/SO3Command` to corresponding robots interface.
   - `kr_quadrotor_simulator`: Simple quadrotor dynamics simulator
-  - `kr_mav_msgs`: Common msgs used accross packages
-  - `controllers/kr_so3_control`: The main controller
-  - `trackers`: Different trackers under `kr_std_trackers`, and `kr_trackers_manager`
+  - `kr_mav_msgs`: Common msgs used across packages
+  - `kr_mav_controllers`: Position controllers
+  - `trackers`: Different trackers under `kr_trackers`, and `kr_trackers_manager`
 
 ### Example use cases
 

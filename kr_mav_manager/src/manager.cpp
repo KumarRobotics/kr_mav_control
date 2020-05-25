@@ -20,13 +20,13 @@
 namespace kr_mav_manager
 {
 // Strings
-static const std::string line_tracker_distance("kr_std_trackers/LineTrackerDistanceAction");
-static const std::string line_tracker_min_jerk("kr_std_trackers/LineTrackerMinJerkAction");
-static const std::string velocity_tracker_str("kr_std_trackers/VelocityTracker");
-static const std::string null_tracker_str("kr_std_trackers/NullTracker");
-static const std::string circle_tracker_str("kr_std_trackers/CircleTrackerAction");
-static const std::string lissajous_tracker_str("kr_std_trackers/LissajousTrackerAction");
-static const std::string lissajous_adder_str("kr_std_trackers/LissajousAdderAction");
+static const std::string line_tracker_distance("kr_trackers/LineTrackerDistanceAction");
+static const std::string line_tracker_min_jerk("kr_trackers/LineTrackerMinJerkAction");
+static const std::string velocity_tracker_str("kr_trackers/VelocityTracker");
+static const std::string null_tracker_str("kr_trackers/NullTracker");
+static const std::string circle_tracker_str("kr_trackers/CircleTrackerAction");
+static const std::string lissajous_tracker_str("kr_trackers/LissajousTrackerAction");
+static const std::string lissajous_adder_str("kr_trackers/LissajousAdderAction");
 
 MAVManager::MAVManager(std::string ns)
     : nh_(ns),
@@ -218,7 +218,7 @@ bool MAVManager::takeoff() {
 bool MAVManager::set_mass(float m) {
   if (m > 0)
   {
-    // TODO: This should update the mass in kr_so3_control and everywhere else that is necessary.
+    // TODO: This should update the mass in the controller and everywhere else that is necessary.
     mass_ = m;
     return true;
   }

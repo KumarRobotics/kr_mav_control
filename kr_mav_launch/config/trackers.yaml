@@ -1,12 +1,12 @@
 trackers:
-  - kr_std_trackers/LineTrackerMinJerkAction
-  - kr_std_trackers/LineTrackerDistanceAction
-#  - kr_std_trackers/LineTrackerTrapezoid
-#  - kr_std_trackers/LineTrackerYaw
-  - kr_std_trackers/VelocityTracker
-  - kr_std_trackers/NullTracker
-  - kr_std_trackers/CircleTrackerAction
-  - kr_std_trackers/TrajectoryTracker
-  - kr_std_trackers/SmoothVelTrackerAction
-  - kr_std_trackers/LissajousTrackerAction
-  - kr_std_trackers/LissajousAdderAction
+  - kr_trackers/LineTrackerMinJerkAction
+  - kr_trackers/LineTrackerDistanceAction
+#  - kr_trackers/LineTrackerTrapezoid
+#  - kr_trackers/LineTrackerYaw
+  - kr_trackers/VelocityTracker
+  - kr_trackers/NullTracker
+  - kr_trackers/CircleTrackerAction
+  - kr_trackers/TrajectoryTracker
+  - kr_trackers/SmoothVelTrackerAction
+  - kr_trackers/LissajousTrackerAction
+  - kr_trackers/LissajousAdderAction

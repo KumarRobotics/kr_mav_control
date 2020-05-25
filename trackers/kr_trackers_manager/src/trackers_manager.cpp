@@ -21,26 +21,31 @@ class TrackersManager : public nodelet::Nodelet {
   ros::Subscriber sub_odom_;
   ros::Publisher pub_cmd_, pub_status_;
   ros::ServiceServer srv_tracker_;
-  pluginlib::ClassLoader<kr_trackers_manager::Tracker> *tracker_loader_;
+  pluginlib::ClassLoader<kr_trackers_manager::Tracker> tracker_loader_;
   kr_trackers_manager::Tracker *active_tracker_;
   std::map<std::string, kr_trackers_manager::Tracker*> tracker_map_;
   kr_mav_msgs::PositionCommand::ConstPtr cmd_;
 };
 
 TrackersManager::TrackersManager(void) :
-    active_tracker_(NULL) {
-  tracker_loader_ = new pluginlib::ClassLoader<kr_trackers_manager::Tracker>("kr_trackers_manager", "kr_trackers_manager::Tracker");
+    tracker_loader_("kr_trackers_manager", "kr_trackers_manager::Tracker"),
+    active_tracker_(NULL)
+{
 }
 
 TrackersManager::~TrackersManager(void) {
-  std::map<std::string, kr_trackers_manager::Tracker*>::iterator it;
-  for(it = tracker_map_.begin(); it != tracker_map_.end(); it++) {
+  for(std::map<std::string, kr_trackers_manager::Tracker *>::iterator it = tracker_map_.begin();
+      it != tracker_map_.end(); it++) {
     delete it->second;
 #if ROS_VERSION_MINIMUM(1,8,0)
-    tracker_loader_->unloadLibraryForClass(it->first);
+    try {
+      tracker_loader_.unloadLibraryForClass(it->first);
+    }
+    catch(pluginlib::LibraryUnloadException &e) {
+      NODELET_ERROR_STREAM("Could not unload library for the tracker " << it->first << ": " << e.what());
+    }
 #endif
   }
-  delete tracker_loader_;
 }
 
 void TrackersManager::onInit(void) {
@@ -54,9 +59,9 @@ void TrackersManager::onInit(void) {
     const std::string tracker_name = static_cast<const std::string>(tracker_list[i]);
     try {
 #if ROS_VERSION_MINIMUM(1,8,0)
-      kr_trackers_manager::Tracker *c = tracker_loader_->createUnmanagedInstance(tracker_name);
+      kr_trackers_manager::Tracker *c = tracker_loader_.createUnmanagedInstance(tracker_name);
 #else
-      kr_trackers_manager::Tracker *c = tracker_loader_->createClassInstance(tracker_name);
+      kr_trackers_manager::Tracker *c = tracker_loader_.createClassInstance(tracker_name);
 #endif
       c->Initialize(priv_nh);
       tracker_map_.insert(std::make_pair(tracker_name, c));
