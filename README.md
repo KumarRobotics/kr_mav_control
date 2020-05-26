@@ -3,14 +3,6 @@ quadrotor_control
 
 ROS packages for quadrotor control
 
-### Dependencies
-Clone and build
-
-* [kr_ui](https://github.com/KumarRobotics/kr_ui)
-* [multi_mav_manager](https://github.com/KumarRobotics/multi_mav_manager)
-* [mrsl_quadrotor](https://github.com/KumarRobotics/mrsl_quadrotor)
-* [waypoint_navigation_tool](https://github.com/KumarRobotics/waypoint_navigation_plugin)
-
 ### Stacks include:
   - `kr_mav_manager`: A manager for the quadrotor_control stack
   - `rqt_mav_manager`: GUI interface for common kr_mav_manager functions
@@ -20,7 +12,14 @@ Clone and build
   - `kr_mav_controllers`: Position controllers
   - `trackers`: Different trackers under `kr_trackers`, and `kr_trackers_manager`
 
-### Example use cases
+### Example use cases:
+
+The multi robot examples uses following packages.
+
+* [kr_ui](https://github.com/KumarRobotics/kr_ui)
+* [multi_mav_manager](https://github.com/KumarRobotics/multi_mav_manager)
+* [mrsl_quadrotor](https://github.com/KumarRobotics/mrsl_quadrotor)
+* [waypoint_navigation_tool](https://github.com/KumarRobotics/waypoint_navigation_plugin)
 
 [Running single robot with the included simple simulator](doc/QuadSim.md)
 

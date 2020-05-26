@@ -15,7 +15,7 @@ class WpToAction(object):
     self.client.wait_for_server()
     rospy.loginfo("Connected!")
 
-    rospy.Subscriber("waypoints", Path, self.callback)
+    rospy.Subscriber("waypoints", Path, self.callback, queue_size=1)
 
   def callback(self, data):
 

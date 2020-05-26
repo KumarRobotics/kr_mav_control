@@ -4,7 +4,7 @@ Clone and build [kr_ui](https://github.com/KumarRobotics/kr_ui) and [multi_mav_m
 
 Helper bash scripts are added to launch multiple robots.
 ```
-roscd kr_mav_launch/scripts
+roscd multi_mav_manager/scripts
 ./demo_gazebo.sh 2
 ```
  * This will launch 2 robots in gazebo. Do not run more if your machine cannot support.
@@ -15,6 +15,6 @@ roscd kr_mav_launch/scripts
 
 If MAVs need to be loaded in pre-defined start locations, create a CSV file to input X,Y,Z,YAW on each new line per MAV. An example csv is provided.
 ```
-roscd kr_mav_launch/scripts
+roscd multi_mav_manager/scripts
 ./demo_gazebo.sh start_locations.csv
 ```

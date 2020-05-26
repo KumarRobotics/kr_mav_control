@@ -79,7 +79,7 @@ Visualization Manager:
       Radius: 0.029999999329447746
       Shaft Diameter: 0.10000000149011612
       Shaft Length: 0.10000000149011612
-      Topic: /waypoints
+      Topic: /quadrotor/waypoints
       Unreliable: false
       Value: true
     - Class: rviz/Marker
@@ -133,7 +133,7 @@ Visualization Manager:
       WaypointsTool:
         default_height: 0
         frame_id: /simulator
-        topic: /waypoints
+        topic: /quadrotor/waypoints
   Value: true
   Views:
     Current:

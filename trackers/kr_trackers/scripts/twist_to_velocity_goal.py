@@ -50,7 +50,7 @@ class TwistToAction(object):
         print("Service call failed: %s"%e)
 
 def main():
-  rospy.init_node('twist_to_action')
+  rospy.init_node('twist_to_velocity_goal')
 
   tta = TwistToAction()
 

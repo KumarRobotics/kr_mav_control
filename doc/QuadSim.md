@@ -1,13 +1,13 @@
 ## Example with GUI
 ```
 roslaunch kr_mav_launch rviz.launch
-roslaunch kr_mav_launch demo.launch sim:=true vicon:=false
+roslaunch kr_mav_launch demo.launch sim:=true vicon:=false mav_name:=quadrotor
 ```
 
 Run a simple example script
 ```
-cd quadrotor_control/kr_mav_launch/scripts
-./sample.bash
+roscd kr_mav_launch/scripts
+./sample.bash quadrotor
 ```
 
 There is also a GUI that can be used to send simple commands to the robot through the `rqt_mav_manager`. Launch it by running
@@ -22,8 +22,8 @@ Clone the [waypoint_navigation_tool](https://github.com/KumarRobotics/waypoint_n
 
 ```
 roslaunch kr_mav_launch wp_nav.launch
-roslaunch kr_mav_launch demo.launch sim:=true vicon:=false
-rosrun kr_trackers_manager waypoints_to_action.py __ns:=quadrotor
+roslaunch kr_mav_launch demo.launch sim:=true vicon:=false mav_name:=quadrotor
+rosrun kr_trackers waypoints_to_action.py __ns:=quadrotor
 ```
 
 Use rqt to start motors and takeoff.
