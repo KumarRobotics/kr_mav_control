@@ -50,3 +50,12 @@ period: [60.0, 60.0]
 num_cycles: [1.0, 1.0]
 ramp_time: [2.0, 2.0]"
 ```
+
+A demo with 2 MAVs:
+```
+roscd multi_mav_manager/scripts
+./demo_sim 2
+
+roscd kr_mav_launch/scripts
+./demo_lissajous.sh
+```
