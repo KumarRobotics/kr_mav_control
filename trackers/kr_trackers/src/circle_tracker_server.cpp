@@ -16,9 +16,9 @@
 #include <kr_mav_msgs/PositionCommand.h>
 #include <kr_tracker_msgs/CircleTrackerAction.h>
 
-class CircleTrackerAction : public kr_trackers_manager::Tracker {
+class CircleTracker : public kr_trackers_manager::Tracker {
 public:
-  CircleTrackerAction(void);
+  CircleTracker(void);
 
   void Initialize(const ros::NodeHandle &nh);
   bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
@@ -89,7 +89,7 @@ private:
   ros::Publisher pub_end_;
 };
 
-CircleTrackerAction::CircleTrackerAction(void) :
+CircleTracker::CircleTracker(void) :
   active_(false),
   have_odom_(false),
   traj_started_(false),
@@ -101,15 +101,15 @@ CircleTrackerAction::CircleTrackerAction(void) :
   circle_time_(-1.0) {}
 
 
-void CircleTrackerAction::Initialize(const ros::NodeHandle &nh) {
+void CircleTracker::Initialize(const ros::NodeHandle &nh) {
   ros::NodeHandle priv_nh(nh, "circle_tracker");
 
   priv_nh.param("alpha_des", alpha_des_, static_cast<float>(M_PI / 20.0));
 
   // Set up the action server.
-  tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "CircleTrackerAction", false));
-  tracker_server_->registerGoalCallback(boost::bind(&CircleTrackerAction::goal_callback, this));
-  tracker_server_->registerPreemptCallback(boost::bind(&CircleTrackerAction::preempt_callback, this));
+  tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "CircleTracker", false));
+  tracker_server_->registerGoalCallback(boost::bind(&CircleTracker::goal_callback, this));
+  tracker_server_->registerPreemptCallback(boost::bind(&CircleTracker::preempt_callback, this));
 
   tracker_server_->start();
 
@@ -117,21 +117,21 @@ void CircleTrackerAction::Initialize(const ros::NodeHandle &nh) {
   pub_end_ = priv_nh.advertise<std_msgs::Empty>("traj_end", 10);
 }
 
-bool CircleTrackerAction::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd) {
+bool CircleTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd) {
   if (!have_odom_) {
-    ROS_WARN("CircleTrackerAction::Activate: could not activate because no odom recieved - not activating.");
+    ROS_WARN("CircleTracker::Activate: could not activate because no odom recieved - not activating.");
     active_ = false;
     return active_;
   }
 
   if (!tracker_server_->isActive()) {
-    ROS_WARN("CircleTrackerAction::Activate: server has no active goal - not activating.");
+    ROS_WARN("CircleTracker::Activate: server has no active goal - not activating.");
     active_ = false;
     return active_;
   }
 
   if (omega_coeffs_.empty()) {
-    ROS_WARN("CircleTrackerAction::Activate: internal trajectory not initialized - not activating.");
+    ROS_WARN("CircleTracker::Activate: internal trajectory not initialized - not activating.");
     active_ = false;
     return active_;
   }
@@ -151,9 +151,9 @@ bool CircleTrackerAction::Activate(const kr_mav_msgs::PositionCommand::ConstPtr 
   return active_;
 }
 
-void CircleTrackerAction::Deactivate(void) {
+void CircleTracker::Deactivate(void) {
   if (tracker_server_->isActive()) {
-    ROS_WARN("CircleTrackerAction::Deactivate: deactivated tracker while still tracking position trajectory.");
+    ROS_WARN("CircleTracker::Deactivate: deactivated tracker while still tracking position trajectory.");
 
     kr_tracker_msgs::CircleTrackerResult result;
     result.duration = std::max(0.0f, static_cast<float>((ros::Time::now() - traj_start_time_).toSec()));
@@ -169,7 +169,7 @@ void CircleTrackerAction::Deactivate(void) {
 
 }
 
-kr_mav_msgs::PositionCommand::ConstPtr CircleTrackerAction::update(const nav_msgs::Odometry::ConstPtr &msg) {
+kr_mav_msgs::PositionCommand::ConstPtr CircleTracker::update(const nav_msgs::Odometry::ConstPtr &msg) {
   // Record distance between last position and current.
   const float dx = Eigen::Vector3f((current_pos_(0) - msg->pose.pose.position.x), (current_pos_(1) - msg->pose.pose.position.y), (current_pos_(2) - msg->pose.pose.position.z)).norm();
 
@@ -379,12 +379,12 @@ kr_mav_msgs::PositionCommand::ConstPtr CircleTrackerAction::update(const nav_msg
 
 }
 
-void CircleTrackerAction::goal_callback() {
+void CircleTracker::goal_callback() {
 
   // If another goal is already active, cancel that goal
   // and track this one instead.
   if (tracker_server_->isActive()) {
-    ROS_INFO("CircleTrackerAction trajectory aborted because new goal recieved.");
+    ROS_INFO("CircleTracker trajectory aborted because new goal recieved.");
     kr_tracker_msgs::CircleTrackerResult result;
     result.duration = std::max(0.0f, static_cast<float>((ros::Time::now() - traj_start_time_).toSec()));
     result.length = current_traj_length_;
@@ -398,7 +398,7 @@ void CircleTrackerAction::goal_callback() {
   // If preempt has been requested, then set this goal to preempted
   // and make no changes to the tracker state.
   if (tracker_server_->isPreemptRequested()) {
-    ROS_INFO("CircleTrackerAction trajectory preempted immediately after it was recieved.");
+    ROS_INFO("CircleTracker trajectory preempted immediately after it was recieved.");
     kr_tracker_msgs::CircleTrackerResult result;
     result.duration = 0.0;
     result.length = 0.0;
@@ -459,18 +459,18 @@ void CircleTrackerAction::goal_callback() {
 }
 
 
-void CircleTrackerAction::preempt_callback() {
+void CircleTracker::preempt_callback() {
   // Send a message reporting about the trajectory that was executed.
   kr_tracker_msgs::CircleTrackerResult result;
   result.duration = std::max(0.0f, static_cast<float>((ros::Time::now() - traj_start_time_).toSec()));
   result.length = current_traj_length_;
 
   if (tracker_server_->isActive()) {
-    ROS_INFO("CircleTrackerAction trajectory aborted by preempt command.");
+    ROS_INFO("CircleTracker trajectory aborted by preempt command.");
     tracker_server_->setAborted(result);
   }
   else {
-    ROS_INFO("CircleTrackerAction trajectory preempted by preempt command.");
+    ROS_INFO("CircleTracker trajectory preempted by preempt command.");
     tracker_server_->setPreempted(result);
   }
 
@@ -483,7 +483,7 @@ void CircleTrackerAction::preempt_callback() {
 
 }
 
-uint8_t CircleTrackerAction::status() const
+uint8_t CircleTracker::status() const
 {
   return tracker_server_->isActive() ?
              static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE) :
@@ -491,4 +491,4 @@ uint8_t CircleTrackerAction::status() const
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(CircleTrackerAction, kr_trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(CircleTracker, kr_trackers_manager::Tracker);

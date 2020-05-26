@@ -21,7 +21,7 @@ from kr_mav_manager.srv import Vec4, Vec4Request
 
 from multi_mav_manager.srv import RawPosFormation, RawPosFormationRequest
 
-from kr_tracker_msgs.msg import LissajousTrackerAction, LissajousTrackerGoal, LissajousTrackerResult
+from kr_tracker_msgs.msg import LissajousTracker, LissajousTrackerGoal, LissajousTrackerResult
 from kr_tracker_msgs.msg import LineTrackerAction, LineTrackerGoal, LineTrackerResult
 from kr_tracker_msgs.srv import Transition
 
@@ -54,7 +54,7 @@ class GoTo(smach.State):
 
     try:
       transition_tracker = rospy.ServiceProxy('/' + self.mav_name + '/trackers_manager/transition', Transition)
-      resp1 = transition_tracker('kr_std_trackers/LineTrackerMinJerkAction')
+      resp1 = transition_tracker('kr_std_trackers/LineTrackerMinJerk')
       print(resp1)
     except rospy.ServiceException as e:
       print("Service call failed: %s"%e)
@@ -67,7 +67,7 @@ class Lissajous(smach.State):
   def __init__(self, mav_name):
     smach.State.__init__(self, outcomes=['succeeded', 'aborted'])
     self.mav_name = mav_name
-    self.client = actionlib.SimpleActionClient('/' + self.mav_name + '/trackers_manager/lissajous_tracker/LissajousTrackerAction', LissajousTrackerAction)
+    self.client = actionlib.SimpleActionClient('/' + self.mav_name + '/trackers_manager/lissajous_tracker/LissajousTracker', LissajousTracker)
     rospy.sleep(0.5)
 
   def execute(self, userdata):
@@ -89,7 +89,7 @@ class Lissajous(smach.State):
 
     try:
       transition_tracker = rospy.ServiceProxy('/' + self.mav_name + '/trackers_manager/transition', Transition)
-      resp1 = transition_tracker('kr_std_trackers/LissajousTrackerAction')
+      resp1 = transition_tracker('kr_std_trackers/LissajousTracker')
       print(resp1)
     except rospy.ServiceException as e:
       print("Service call failed: %s"%e)

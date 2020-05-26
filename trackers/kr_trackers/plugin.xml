@@ -1,12 +1,12 @@
 <library path="lib/libkr_trackers">
 
-  <class name="kr_trackers/LineTrackerMinJerkAction" type="LineTrackerMinJerkAction" base_class_type="kr_trackers_manager::Tracker">
+  <class name="kr_trackers/LineTrackerMinJerk" type="LineTrackerMinJerk" base_class_type="kr_trackers_manager::Tracker">
     <description>
       This is a tracker which follows a line from the current position to a given goal position using min jerk trajectory.
     </description>
   </class>
 
-  <class name="kr_trackers/LineTrackerDistanceAction" type="LineTrackerDistanceAction" base_class_type="kr_trackers_manager::Tracker">
+  <class name="kr_trackers/LineTrackerDistance" type="LineTrackerDistance" base_class_type="kr_trackers_manager::Tracker">
     <description>
       This is a tracker which follows a line from the current position to a given goal position using a trapezoidal trajectory with distance along the trajectory as the parameter instead of time.
     </description>
@@ -24,13 +24,13 @@
     </description>
   </class>
 
-  <class name="kr_trackers/SmoothVelTrackerAction" type="SmoothVelTrackerAction" base_class_type="kr_trackers_manager::Tracker">
+  <class name="kr_trackers/SmoothVelTracker" type="SmoothVelTracker" base_class_type="kr_trackers_manager::Tracker">
     <description>
       This tracker goes from point A to point B trying to maintain constant velocity with a smooth ramp up.
     </description>
   </class>
 
-  <class name="kr_trackers/CircleTrackerAction" type="CircleTrackerAction" base_class_type="kr_trackers_manager::Tracker">
+  <class name="kr_trackers/CircleTracker" type="CircleTracker" base_class_type="kr_trackers_manager::Tracker">
     <description>
       This tracker commands the robot to fly in a circle of a given size and period.
     </description>
@@ -42,13 +42,13 @@
     </description>
   </class>
 
-  <class name="kr_trackers/LissajousTrackerAction" type="LissajousTrackerAction" base_class_type="kr_trackers_manager::Tracker">
+  <class name="kr_trackers/LissajousTracker" type="LissajousTracker" base_class_type="kr_trackers_manager::Tracker">
     <description>
       Follows a complex 3D Lissajous tracjectory
     </description>
   </class>
 
-  <class name="kr_trackers/LissajousAdderAction" type="LissajousAdderAction" base_class_type="kr_trackers_manager::Tracker">
+  <class name="kr_trackers/LissajousAdder" type="LissajousAdder" base_class_type="kr_trackers_manager::Tracker">
     <description>
       Follows a sum of two Lissajous trajectories
     </description>

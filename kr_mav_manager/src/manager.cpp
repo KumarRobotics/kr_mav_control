@@ -20,13 +20,13 @@
 namespace kr_mav_manager
 {
 // Strings
-static const std::string line_tracker_distance("kr_trackers/LineTrackerDistanceAction");
-static const std::string line_tracker_min_jerk("kr_trackers/LineTrackerMinJerkAction");
+static const std::string line_tracker_distance("kr_trackers/LineTrackerDistance");
+static const std::string line_tracker_min_jerk("kr_trackers/LineTrackerMinJerk");
 static const std::string velocity_tracker_str("kr_trackers/VelocityTracker");
 static const std::string null_tracker_str("kr_trackers/NullTracker");
-static const std::string circle_tracker_str("kr_trackers/CircleTrackerAction");
-static const std::string lissajous_tracker_str("kr_trackers/LissajousTrackerAction");
-static const std::string lissajous_adder_str("kr_trackers/LissajousAdderAction");
+static const std::string circle_tracker_str("kr_trackers/CircleTracker");
+static const std::string lissajous_tracker_str("kr_trackers/LissajousTracker");
+static const std::string lissajous_adder_str("kr_trackers/LissajousAdder");
 
 MAVManager::MAVManager(std::string ns)
     : nh_(ns),
@@ -45,35 +45,35 @@ MAVManager::MAVManager(std::string ns)
     need_output_data_(true),
     need_odom_(true),
     use_attitude_safety_catch_(true),
-    line_tracker_distance_client_(nh_, "trackers_manager/line_tracker_distance/LineTrackerAction", true),
-    line_tracker_min_jerk_client_(nh_, "trackers_manager/line_tracker_min_jerk/LineTrackerAction", true),
-    circle_tracker_client_(nh_, "trackers_manager/circle_tracker/CircleTrackerAction", true),
-    lissajous_tracker_client_(nh_, "trackers_manager/lissajous_tracker/LissajousTrackerAction", true),
-    lissajous_adder_client_(nh_, "trackers_manager/lissajous_adder/LissajousAdderAction", true)
+    line_tracker_distance_client_(nh_, "trackers_manager/line_tracker_distance/LineTracker", true),
+    line_tracker_min_jerk_client_(nh_, "trackers_manager/line_tracker_min_jerk/LineTracker", true),
+    circle_tracker_client_(nh_, "trackers_manager/circle_tracker/CircleTracker", true),
+    lissajous_tracker_client_(nh_, "trackers_manager/lissajous_tracker/LissajousTracker", true),
+    lissajous_adder_client_(nh_, "trackers_manager/lissajous_adder/LissajousAdder", true)
 {
   // Action servers.
   float server_wait_timeout;
   priv_nh_.param("server_wait_timeout", server_wait_timeout, 0.5f);
 
   if (!line_tracker_distance_client_.waitForServer(ros::Duration(server_wait_timeout))) {
-    ROS_ERROR("LineTrackerDistanceAction server not found.");
+    ROS_ERROR("LineTrackerDistance server not found.");
   }
 
   if (!line_tracker_min_jerk_client_.waitForServer(ros::Duration(server_wait_timeout))) {
-    ROS_ERROR("LineTrackerMinJerkAction server not found.");
+    ROS_ERROR("LineTrackerMinJerk server not found.");
   }
 
   // Optional trackers.
   if (!circle_tracker_client_.waitForServer(ros::Duration(server_wait_timeout))) {
-    ROS_WARN("CircleTrackerAction server not found.");
+    ROS_WARN("CircleTracker server not found.");
   }
 
   if (!lissajous_tracker_client_.waitForServer(ros::Duration(server_wait_timeout))) {
-    ROS_ERROR("LissajousTrackerAction server not found.");
+    ROS_ERROR("LissajousTracker server not found.");
   }
 
   if (!lissajous_adder_client_.waitForServer(ros::Duration(server_wait_timeout))) {
-    ROS_ERROR("LissajousAdderAction server not found.");
+    ROS_ERROR("LissajousAdder server not found.");
   }
 
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);

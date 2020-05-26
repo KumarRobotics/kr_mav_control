@@ -9,10 +9,10 @@
 #include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_tracker_msgs/LissajousTrackerAction.h>
 
-class LissajousTrackerAction : public kr_trackers_manager::Tracker
+class LissajousTracker : public kr_trackers_manager::Tracker
 {
   public:
-    LissajousTrackerAction(void);
+    LissajousTracker(void);
     void Initialize(const ros::NodeHandle &nh);
     bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
     void Deactivate(void);
@@ -36,29 +36,29 @@ class LissajousTrackerAction : public kr_trackers_manager::Tracker
     std::string frame_id_;
 };
 
-LissajousTrackerAction::LissajousTrackerAction(void)
+LissajousTracker::LissajousTracker(void)
   : traj_start_set_(false) {}
 
-void LissajousTrackerAction::Initialize(const ros::NodeHandle &nh)
+void LissajousTracker::Initialize(const ros::NodeHandle &nh)
 {
   ros::NodeHandle priv_nh(nh, "lissajous_tracker");
   priv_nh.param<std::string>("frame_id", frame_id_, "world");
   path_pub_ = priv_nh.advertise<nav_msgs::Path>("lissajous_path", 1);
 
-  tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LissajousTrackerAction", false));
-  tracker_server_->registerGoalCallback(boost::bind(&LissajousTrackerAction::goal_callback, this));
-  tracker_server_->registerPreemptCallback(boost::bind(&LissajousTrackerAction::preempt_callback, this));
+  tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LissajousTracker", false));
+  tracker_server_->registerGoalCallback(boost::bind(&LissajousTracker::goal_callback, this));
+  tracker_server_->registerPreemptCallback(boost::bind(&LissajousTracker::preempt_callback, this));
   tracker_server_->start();
 }
 
-bool LissajousTrackerAction::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
+bool LissajousTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
   if(generator_.goalIsSet())
   {
     if(!tracker_server_->isActive())
     {
-      ROS_WARN("LissajousTrackerAction::Activate: goal_set is true but action server has no active goal - not activating.");
+      ROS_WARN("LissajousTracker::Activate: goal_set is true but action server has no active goal - not activating.");
       return false;
     }
     return generator_.activate();
@@ -66,11 +66,11 @@ bool LissajousTrackerAction::Activate(const kr_mav_msgs::PositionCommand::ConstP
   return false;
 }
 
-void LissajousTrackerAction::Deactivate(void)
+void LissajousTracker::Deactivate(void)
 {
   if(tracker_server_->isActive())
   {
-    ROS_WARN("LissajousTrackerAction deactivated tracker prior to reaching goal");
+    ROS_WARN("LissajousTracker deactivated tracker prior to reaching goal");
     tracker_server_->setAborted();
   }
   ICs_.reset();
@@ -78,7 +78,7 @@ void LissajousTrackerAction::Deactivate(void)
   traj_start_set_ = false;
 }
 
-kr_mav_msgs::PositionCommand::ConstPtr LissajousTrackerAction::update(const nav_msgs::Odometry::ConstPtr &msg)
+kr_mav_msgs::PositionCommand::ConstPtr LissajousTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   if (!generator_.isActive()) {
     return kr_mav_msgs::PositionCommand::Ptr();
@@ -144,19 +144,19 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousTrackerAction::update(const nav_
   }
 }
 
-uint8_t LissajousTrackerAction::status() const
+uint8_t LissajousTracker::status() const
 {
   return tracker_server_->isActive() ?
              static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE) :
              static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED);
 }
 
-void LissajousTrackerAction::goal_callback(void)
+void LissajousTracker::goal_callback(void)
 {
   // If another goal is already active, cancel that goal
   // and track this one instead.
   if (tracker_server_->isActive()) {
-    ROS_INFO("Previous LissajousTrackerAction goal aborted.");
+    ROS_INFO("Previous LissajousTracker goal aborted.");
     tracker_server_->setAborted();
     generator_.deactivate();
   }
@@ -166,7 +166,7 @@ void LissajousTrackerAction::goal_callback(void)
   // If preempt has been requested, then set this goal to preempted
   // and make no changes to the tracker state.
   if (tracker_server_->isPreemptRequested()) {
-    ROS_INFO("LissajousTrackerAction going to goal preempted.");
+    ROS_INFO("LissajousTracker going to goal preempted.");
     tracker_server_->setPreempted();
     return;
   }
@@ -178,7 +178,7 @@ void LissajousTrackerAction::goal_callback(void)
   generator_.activate();
 }
 
-void LissajousTrackerAction::preempt_callback(void)
+void LissajousTracker::preempt_callback(void)
 {
   ICs_.reset();
   generator_.deactivate();
@@ -196,4 +196,4 @@ void LissajousTrackerAction::preempt_callback(void)
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(LissajousTrackerAction, kr_trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(LissajousTracker, kr_trackers_manager::Tracker);

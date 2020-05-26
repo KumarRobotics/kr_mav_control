@@ -12,9 +12,9 @@
 #include <kr_mav_msgs/PositionCommand.h>
 
 
-class LineTrackerMinJerkAction : public kr_trackers_manager::Tracker {
+class LineTrackerMinJerk : public kr_trackers_manager::Tracker {
 public:
-  LineTrackerMinJerkAction(void);
+  LineTrackerMinJerk(void);
 
   void Initialize(const ros::NodeHandle &nh);
   bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
@@ -63,11 +63,11 @@ private:
   float current_traj_length_;
 };
 
-LineTrackerMinJerkAction::LineTrackerMinJerkAction(void)
+LineTrackerMinJerk::LineTrackerMinJerk(void)
   : pos_set_(false), goal_set_(false), goal_reached_(true), active_(false),
     traj_start_(ros::Time::now()), traj_start_set_(false) {}
 
-void LineTrackerMinJerkAction::Initialize(const ros::NodeHandle &nh) {
+void LineTrackerMinJerk::Initialize(const ros::NodeHandle &nh) {
   ros::NodeHandle priv_nh(nh, "line_tracker_min_jerk");
 
   priv_nh.param("default_v_des", default_v_des_, 0.5);
@@ -81,20 +81,20 @@ void LineTrackerMinJerkAction::Initialize(const ros::NodeHandle &nh) {
   yaw_a_des_ = default_yaw_a_des_;
 
   // Set up the action server.
-  tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LineTrackerAction", false));
-  tracker_server_->registerGoalCallback(boost::bind(&LineTrackerMinJerkAction::goal_callback, this));
-  tracker_server_->registerPreemptCallback(boost::bind(&LineTrackerMinJerkAction::preempt_callback, this));
+  tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LineTracker", false));
+  tracker_server_->registerGoalCallback(boost::bind(&LineTrackerMinJerk::goal_callback, this));
+  tracker_server_->registerPreemptCallback(boost::bind(&LineTrackerMinJerk::preempt_callback, this));
 
   tracker_server_->start();
 }
 
-bool LineTrackerMinJerkAction::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
+bool LineTrackerMinJerk::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
 
   // Only allow activation if a goal has been set
   if (goal_set_ && pos_set_) {
     if (!tracker_server_->isActive()) {
-      ROS_WARN("LineTrackerMinJerkAction::Activate: goal_set_ is true but action server has no active goal - not activating.");
+      ROS_WARN("LineTrackerMinJerk::Activate: goal_set_ is true but action server has no active goal - not activating.");
       active_ = false;
       return false;
     }
@@ -106,9 +106,9 @@ bool LineTrackerMinJerkAction::Activate(const kr_mav_msgs::PositionCommand::Cons
   return active_;
 }
 
-void LineTrackerMinJerkAction::Deactivate(void) {
+void LineTrackerMinJerk::Deactivate(void) {
   if (tracker_server_->isActive()) {
-    ROS_WARN("LineTrackerMinJerkAction::Deactivate: deactivated tracker while still tracking the goal.");
+    ROS_WARN("LineTrackerMinJerk::Deactivate: deactivated tracker while still tracking the goal.");
     tracker_server_->setAborted();
   }
 
@@ -117,7 +117,7 @@ void LineTrackerMinJerkAction::Deactivate(void) {
   active_ = false;
 }
 
-kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerkAction::update(
+kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(
     const nav_msgs::Odometry::ConstPtr &msg) {
 
   // Record distance between last position and current.
@@ -250,7 +250,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerkAction::update(
   else if (goal_reached_)
   {
     if (tracker_server_->isActive()) {
-      ROS_ERROR("LineTrackerDistanceAction::update: Action server not completed.\n");
+      ROS_ERROR("LineTrackerDistance::update: Action server not completed.\n");
     }
 
     cmd->position.x = goal_(0), cmd->position.y = goal_(1),
@@ -340,11 +340,11 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerkAction::update(
   return cmd;
 }
 
-void LineTrackerMinJerkAction::goal_callback() {
+void LineTrackerMinJerk::goal_callback() {
   // If another goal is already active, cancel that goal
   // and track this one instead.
   if (tracker_server_->isActive()) {
-    ROS_INFO("LineTrackerMinJerkAction goal (%f, %f, %f) aborted.", goal_(0), goal_(1), goal_(2));
+    ROS_INFO("LineTrackerMinJerk goal (%f, %f, %f) aborted.", goal_(0), goal_(1), goal_(2));
     tracker_server_->setAborted();
   }
 
@@ -356,7 +356,7 @@ void LineTrackerMinJerkAction::goal_callback() {
   // If preempt has been requested, then set this goal to preempted
   // and make no changes to the tracker state.
   if (tracker_server_->isPreemptRequested()) {
-    ROS_INFO("LineTrackerMinJerkAction going to goal (%f, %f, %f, %f) preempted.", msg->x, msg->y, msg->z, msg->yaw);
+    ROS_INFO("LineTrackerMinJerk going to goal (%f, %f, %f, %f) preempted.", msg->x, msg->y, msg->z, msg->yaw);
     tracker_server_->setPreempted();
     return;
   }
@@ -388,13 +388,13 @@ void LineTrackerMinJerkAction::goal_callback() {
   goal_reached_ = false;
 }
 
-void LineTrackerMinJerkAction::preempt_callback() {
+void LineTrackerMinJerk::preempt_callback() {
   if (tracker_server_->isActive()) {
-    ROS_INFO("LineTrackerMinJerkAction going to goal (%f, %f, %f) aborted.", goal_(0), goal_(1), goal_(2));
+    ROS_INFO("LineTrackerMinJerk going to goal (%f, %f, %f) aborted.", goal_(0), goal_(1), goal_(2));
     tracker_server_->setAborted();
   }
   else {
-    ROS_INFO("LineTrackerMinJerkAction going to goal (%f, %f, %f) preempted.", goal_(0), goal_(1), goal_(2));
+    ROS_INFO("LineTrackerMinJerk going to goal (%f, %f, %f) preempted.", goal_(0), goal_(1), goal_(2));
     tracker_server_->setPreempted();
   }
 
@@ -405,7 +405,7 @@ void LineTrackerMinJerkAction::preempt_callback() {
   goal_reached_ = true;
 }
 
-void LineTrackerMinJerkAction::gen_trajectory(
+void LineTrackerMinJerk::gen_trajectory(
   const Eigen::Vector3f &xi, const Eigen::Vector3f &xf,
   const Eigen::Vector3f &vi, const Eigen::Vector3f &vf,
   const Eigen::Vector3f &ai, const Eigen::Vector3f &af, const float &yawi,
@@ -452,7 +452,7 @@ void LineTrackerMinJerkAction::gen_trajectory(
   }
 }
 
-uint8_t LineTrackerMinJerkAction::status() const
+uint8_t LineTrackerMinJerk::status() const
 {
   return tracker_server_->isActive() ?
              static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE) :
@@ -460,4 +460,4 @@ uint8_t LineTrackerMinJerkAction::status() const
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(LineTrackerMinJerkAction, kr_trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(LineTrackerMinJerk, kr_trackers_manager::Tracker);

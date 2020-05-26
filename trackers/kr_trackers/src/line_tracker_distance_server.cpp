@@ -11,10 +11,10 @@
 #include <kr_tracker_msgs/LineTrackerAction.h>
 #include <kr_mav_msgs/PositionCommand.h>
 
-class LineTrackerDistanceAction : public kr_trackers_manager::Tracker
+class LineTrackerDistance : public kr_trackers_manager::Tracker
 {
 public:
-  LineTrackerDistanceAction(void);
+  LineTrackerDistance(void);
 
   void Initialize(const ros::NodeHandle &nh);
   bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
@@ -51,13 +51,13 @@ private:
   float current_traj_length_;
 };
 
-LineTrackerDistanceAction::LineTrackerDistanceAction(void) :
+LineTrackerDistance::LineTrackerDistance(void) :
   pos_set_(false),
   goal_set_(false),
   goal_reached_(true),
   active_(false) {}
 
-void LineTrackerDistanceAction::Initialize(const ros::NodeHandle &nh)
+void LineTrackerDistance::Initialize(const ros::NodeHandle &nh)
 {
   ros::NodeHandle priv_nh(nh, "line_tracker_distance");
 
@@ -69,21 +69,21 @@ void LineTrackerDistanceAction::Initialize(const ros::NodeHandle &nh)
   a_des_ = default_a_des_;
 
   // Set up the action server.
-  tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LineTrackerAction", false));
-  tracker_server_->registerGoalCallback(boost::bind(&LineTrackerDistanceAction::goal_callback, this));
-  tracker_server_->registerPreemptCallback(boost::bind(&LineTrackerDistanceAction::preempt_callback, this));
+  tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LineTracker", false));
+  tracker_server_->registerGoalCallback(boost::bind(&LineTrackerDistance::goal_callback, this));
+  tracker_server_->registerPreemptCallback(boost::bind(&LineTrackerDistance::preempt_callback, this));
 
   tracker_server_->start();
 }
 
-bool LineTrackerDistanceAction::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
+bool LineTrackerDistance::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
   if (goal_set_ && pos_set_)
   {
     // Check that the action server has a goal.
     if (!tracker_server_->isActive()) {
-      ROS_WARN("LineTrackerDistanceAction::Activate: goal_set_ is true but action server has no active goal - not activating.");
+      ROS_WARN("LineTrackerDistance::Activate: goal_set_ is true but action server has no active goal - not activating.");
       active_ = false;
       return active_;
     }
@@ -101,10 +101,10 @@ bool LineTrackerDistanceAction::Activate(const kr_mav_msgs::PositionCommand::Con
   return active_;
 }
 
-void LineTrackerDistanceAction::Deactivate(void)
+void LineTrackerDistance::Deactivate(void)
 {
   if (tracker_server_->isActive()) {
-    ROS_WARN("LineTrackerDistanceAction::Deactivate: deactivated tracker while still tracking the goal.");
+    ROS_WARN("LineTrackerDistance::Deactivate: deactivated tracker while still tracking the goal.");
     tracker_server_->setAborted();
   }
 
@@ -113,7 +113,7 @@ void LineTrackerDistanceAction::Deactivate(void)
   active_ = false;
 }
 
-kr_mav_msgs::PositionCommand::ConstPtr LineTrackerDistanceAction::update(const nav_msgs::Odometry::ConstPtr &msg)
+kr_mav_msgs::PositionCommand::ConstPtr LineTrackerDistance::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   // Record distance between last position and current.
   const float dx = Eigen::Vector3f((pos_(0) - msg->pose.pose.position.x), (pos_(1) - msg->pose.pose.position.y), (pos_(2) - msg->pose.pose.position.z)).norm();
@@ -145,7 +145,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerDistanceAction::update(const n
   if (goal_reached_)
   {
     if (tracker_server_->isActive()) {
-      ROS_ERROR("LineTrackerDistanceAction::update: Action server not completed.\n");
+      ROS_ERROR("LineTrackerDistance::update: Action server not completed.\n");
     }
 
     cmd->position.x = goal_(0), cmd->position.y = goal_(1), cmd->position.z = goal_(2);
@@ -237,13 +237,13 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerDistanceAction::update(const n
   return cmd;
 }
 
-void LineTrackerDistanceAction::goal_callback()
+void LineTrackerDistance::goal_callback()
 {
 
   // If another goal is already active, cancel that goal
   // and track this one instead.
   if (tracker_server_->isActive()) {
-    ROS_INFO("LineTrackerDistanceAction goal (%2.2f, %2.2f, %2.2f) aborted.", goal_(0), goal_(1), goal_(2));
+    ROS_INFO("LineTrackerDistance goal (%2.2f, %2.2f, %2.2f) aborted.", goal_(0), goal_(1), goal_(2));
     tracker_server_->setAborted();
   }
 
@@ -256,7 +256,7 @@ void LineTrackerDistanceAction::goal_callback()
   // If preempt has been requested, then set this goal to preempted
   // and make no changes to the tracker state.
   if (tracker_server_->isPreemptRequested()) {
-    ROS_INFO("LineTrackerDistanceAction going to goal (%2.2f, %2.2f, %2.2f) preempted.", msg->x, msg->y, msg->z);
+    ROS_INFO("LineTrackerDistance going to goal (%2.2f, %2.2f, %2.2f) preempted.", msg->x, msg->y, msg->z);
     tracker_server_->setPreempted();
     return;
   }
@@ -288,13 +288,13 @@ void LineTrackerDistanceAction::goal_callback()
   goal_reached_ = false;
 }
 
-void LineTrackerDistanceAction::preempt_callback() {
+void LineTrackerDistance::preempt_callback() {
   if (tracker_server_->isActive()) {
-    ROS_INFO("LineTrackerDistanceAction going to goal (%2.2f, %2.2f, %2.2f) aborted.", goal_(0), goal_(1), goal_(2));
+    ROS_INFO("LineTrackerDistance going to goal (%2.2f, %2.2f, %2.2f) aborted.", goal_(0), goal_(1), goal_(2));
     tracker_server_->setAborted();
   }
   else {
-    ROS_INFO("LineTrackerDistanceAction going to goal (%2.2f, %2.2f, %2.2f) preempted.", goal_(0), goal_(1), goal_(2));
+    ROS_INFO("LineTrackerDistance going to goal (%2.2f, %2.2f, %2.2f) preempted.", goal_(0), goal_(1), goal_(2));
     tracker_server_->setPreempted();
   }
 
@@ -305,7 +305,7 @@ void LineTrackerDistanceAction::preempt_callback() {
   goal_reached_ = true;
 }
 
-uint8_t LineTrackerDistanceAction::status() const
+uint8_t LineTrackerDistance::status() const
 {
   return tracker_server_->isActive() ?
              static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE) :
@@ -313,4 +313,4 @@ uint8_t LineTrackerDistanceAction::status() const
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(LineTrackerDistanceAction, kr_trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(LineTrackerDistance, kr_trackers_manager::Tracker);

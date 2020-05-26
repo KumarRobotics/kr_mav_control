@@ -9,10 +9,10 @@
 #include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_trackers/initial_conditions.h>
 
-class SmoothVelTrackerAction : public kr_trackers_manager::Tracker
+class SmoothVelTracker : public kr_trackers_manager::Tracker
 {
  public:
-  SmoothVelTrackerAction(void);
+  SmoothVelTracker(void);
 
   void Initialize(const ros::NodeHandle &nh);
   bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
@@ -49,27 +49,27 @@ class SmoothVelTrackerAction : public kr_trackers_manager::Tracker
   Eigen::Vector3f prev_pos_;
 };
 
-SmoothVelTrackerAction::SmoothVelTrackerAction(void)
+SmoothVelTracker::SmoothVelTracker(void)
     : goal_set_(false), goal_reached_(true), active_(false)
 {
 }
 
-void SmoothVelTrackerAction::Initialize(const ros::NodeHandle &nh)
+void SmoothVelTracker::Initialize(const ros::NodeHandle &nh)
 {
   ros::NodeHandle priv_nh(nh, "smooth_vel_tracker");
 
   // Set up the action server.
   tracker_server_ = std::unique_ptr<ServerType>(
-      new ServerType(priv_nh, "SmoothVelTrackerAction", false));
+      new ServerType(priv_nh, "SmoothVelTracker", false));
   tracker_server_->registerGoalCallback(
-      boost::bind(&SmoothVelTrackerAction::goal_callback, this));
+      boost::bind(&SmoothVelTracker::goal_callback, this));
   tracker_server_->registerPreemptCallback(
-      boost::bind(&SmoothVelTrackerAction::preempt_callback, this));
+      boost::bind(&SmoothVelTracker::preempt_callback, this));
 
   tracker_server_->start();
 }
 
-bool SmoothVelTrackerAction::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
+bool SmoothVelTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
   if(goal_set_)
@@ -77,11 +77,11 @@ bool SmoothVelTrackerAction::Activate(const kr_mav_msgs::PositionCommand::ConstP
   return active_;
 }
 
-void SmoothVelTrackerAction::Deactivate(void)
+void SmoothVelTracker::Deactivate(void)
 {
   if(tracker_server_->isActive())
   {
-    ROS_WARN("SmoothVelTrackerAction::Deactivate: deactivated tracker while "
+    ROS_WARN("SmoothVelTracker::Deactivate: deactivated tracker while "
              "still tracking the goal.");
     tracker_server_->setAborted();
   }
@@ -91,7 +91,7 @@ void SmoothVelTrackerAction::Deactivate(void)
   active_ = false;
 }
 
-kr_mav_msgs::PositionCommand::ConstPtr SmoothVelTrackerAction::update(
+kr_mav_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(
     const nav_msgs::Odometry::ConstPtr &msg)
 {
   if(!active_)
@@ -239,9 +239,9 @@ kr_mav_msgs::PositionCommand::ConstPtr SmoothVelTrackerAction::update(
   return cmd;
 }
 
-void SmoothVelTrackerAction::preempt_callback()
+void SmoothVelTracker::preempt_callback()
 {
-  ROS_INFO("SmoothVelTrackerAction goal preempted.");
+  ROS_INFO("SmoothVelTracker goal preempted.");
   tracker_server_->setPreempted();
 
   // TODO: How much overshoot will this cause at high velocities?
@@ -252,7 +252,7 @@ void SmoothVelTrackerAction::preempt_callback()
   goal_reached_ = true;
 }
 
-void SmoothVelTrackerAction::goal_callback()
+void SmoothVelTracker::goal_callback()
 {
   // Pointer to the goal recieved.
   const auto msg = tracker_server_->acceptNewGoal();
@@ -260,7 +260,7 @@ void SmoothVelTrackerAction::goal_callback()
   // If preempt has been requested, then set this goal to preempted
   // and make no changes to the tracker state.
   if (tracker_server_->isPreemptRequested()) {
-    ROS_INFO("SmoothVelTrackerAction going to goal (%f, %f, %f, %f) preempted.", msg->x, msg->y, msg->z, msg->yaw);
+    ROS_INFO("SmoothVelTracker going to goal (%f, %f, %f, %f) preempted.", msg->x, msg->y, msg->z, msg->yaw);
     tracker_server_->setPreempted();
     return;
   }
@@ -340,7 +340,7 @@ void SmoothVelTrackerAction::goal_callback()
 }
 
 
-uint8_t SmoothVelTrackerAction::status() const
+uint8_t SmoothVelTracker::status() const
 {
   return goal_reached_ ?
           static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED) :
@@ -348,4 +348,4 @@ uint8_t SmoothVelTrackerAction::status() const
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(SmoothVelTrackerAction, kr_trackers_manager::Tracker);
+PLUGINLIB_EXPORT_CLASS(SmoothVelTracker, kr_trackers_manager::Tracker);
