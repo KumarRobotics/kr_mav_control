@@ -16,8 +16,7 @@ ROS packages for quadrotor control
 
 The multi robot examples uses following packages.
 
-* [kr_ui](https://github.com/KumarRobotics/kr_ui)
-* [multi_mav_manager](https://github.com/KumarRobotics/multi_mav_manager)
+* [kr_multi_mav_manager](https://github.com/KumarRobotics/multi_mav_manager)
 * [mrsl_quadrotor](https://github.com/KumarRobotics/mrsl_quadrotor)
 * [waypoint_navigation_tool](https://github.com/KumarRobotics/waypoint_navigation_plugin)
 

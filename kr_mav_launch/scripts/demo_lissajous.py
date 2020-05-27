@@ -19,7 +19,7 @@ from nav_msgs.msg import Path, Odometry
 from nav_msgs.srv import GetPlan, GetPlanRequest, GetPlanResponse
 from kr_mav_manager.srv import Vec4, Vec4Request
 
-from multi_mav_manager.srv import RawPosFormation, RawPosFormationRequest
+from kr_multi_mav_manager.srv import RawPosFormation, RawPosFormationRequest
 
 from kr_tracker_msgs.msg import LissajousTrackerAction, LissajousTrackerGoal, LissajousTrackerResult
 from kr_tracker_msgs.msg import LineTrackerAction, LineTrackerGoal, LineTrackerResult

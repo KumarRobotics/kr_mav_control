@@ -50,7 +50,7 @@ classdef QuadControlRos < handle
         goto_topic = sprintf('/%s%d/mav_services/goTo',obj.agent_namespace, obj.agent_ids(n_ag));
         obj.agent(n_ag).goto_srv = rossvcclient(goto_topic, 'Timeout', 10);
 
-        %TODO use multi_mav_manager interface? Will reduce number of
+        %TODO use kr_multi_mav_manager interface? Will reduce number of
         %subscribers in MATLAB
         motors_topic = sprintf('/%s%d/mav_services/motors',obj.agent_namespace, obj.agent_ids(n_ag));
         obj.agent(n_ag).motors_srv = rossvcclient(motors_topic, 'Timeout', 10);

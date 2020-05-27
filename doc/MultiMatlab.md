@@ -37,13 +37,13 @@ rosgenmsg('~/matlab_msgs')
 
  * Follow the instructions spilled out in MATLAB console, i.e edit `javaclasspath.txt` and `addpath` with necessary locations.
 
-Clone and build [kr_ui](https://github.com/KumarRobotics/kr_ui) and [multi_mav_manager](https://github.com/KumarRobotics/multi_mav_manager) in your workspace
+Clone and build [kr_multi_mav_manager](https://github.com/KumarRobotics/multi_mav_manager) in your workspace
 
 ## Running simple simulator with kr_matlab_interface
 
 Helper bash scripts are added to launch multiple robots.
 ```
-roscd multi_mav_manager/scripts
+roscd kr_multi_mav_manager/scripts
 ./demo_sim.sh 4
 ```
  * This will launch 4 robots in simulator

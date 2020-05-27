@@ -55,7 +55,7 @@ A demo with 2 MAVs:
 
 Dependency: `sudo apt install ros-$ROS_DISTRO-smach-ros`
 ```
-roscd multi_mav_manager/scripts
+roscd kr_multi_mav_manager/scripts
 ./demo_sim 2
 ```
 
