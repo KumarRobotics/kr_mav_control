@@ -28,7 +28,7 @@ rosrun kr_trackers waypoints_to_action.py __ns:=quadrotor
 
 Use rqt to start motors and takeoff.
 ```
-rosrun rqt_kr_mav_manager rqt_kr_mav_manager
+rosrun rqt_mav_manager rqt_mav_manager
 ```
  * then try Motors ON -> Take Off -> Go To (set z > 0)
 
