@@ -1,0 +1,11 @@
+trackers:
+  - kr_std_trackers/LineTrackerMinJerk
+  - kr_std_trackers/LineTrackerDistance
+#  - kr_std_trackers/LineTrackerTrapezoid
+#  - kr_std_trackers/LineTrackerYaw
+  - kr_std_trackers/VelocityTrackerAction
+  - kr_std_trackers/NullTracker
+  - kr_std_trackers/CircleTracker
+  - kr_std_trackers/TrajectoryTracker
+  - kr_std_trackers/SmoothVelTracker
+  - kr_std_trackers/LissajousTracker

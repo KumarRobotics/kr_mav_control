@@ -3,22 +3,22 @@ quadrotor_control
 
 ROS packages for quadrotor control
 
-**Note:** There are packages that require submodules, you need to initialize the submodules by running the following in the repository directory:
-```bash
-git submodule init
-git submodule update
-```
-
 ### Stacks include:
-  - `mav_manager`: A manager for the quadrotor_control stack
-  - `rqt_mav_manager`: GUI interface for common mav_manager functions
-  - `xyz_interface`: Translates `quadrotor_msgs/SO3Command` to corresponding `xyz` robots interface.
-  - `quadrotor_simulator`: Simple quadrotor dynamics simulator
-  - `quadrotor_msgs`: Common msgs used accross packages
-  - `so3_control`: The main controller
-  - `trackers`: Different trackers under `std_trackers`, and `trackers_manager`
+  - `kr_mav_manager`: A manager for the quadrotor_control stack
+  - `rqt_mav_manager`: GUI interface for common kr_mav_manager functions
+  - `interfaces`: Translates `kr_mav_msgs/SO3Command` to corresponding robots interface.
+  - `kr_quadrotor_simulator`: Simple quadrotor dynamics simulator
+  - `kr_mav_msgs`: Common msgs used across packages
+  - `kr_mav_controllers`: Position controllers
+  - `trackers`: Different trackers under `kr_trackers`, and `kr_trackers_manager`
 
-### Example use cases
+### Example use cases:
+
+The multi robot examples uses following packages.
+
+* [kr_multi_mav_manager](https://github.com/KumarRobotics/multi_mav_manager)
+* [mrsl_quadrotor](https://github.com/KumarRobotics/mrsl_quadrotor)
+* [waypoint_navigation_tool](https://github.com/KumarRobotics/waypoint_navigation_plugin)
 
 [Running single robot with the included simple simulator](doc/QuadSim.md)
 

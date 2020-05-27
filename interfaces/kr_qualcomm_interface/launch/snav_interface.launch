@@ -1,0 +1,88 @@
+<launch>
+  <arg name="model" default="$(env MAV_NAME)"/>
+  <arg name="mass" default="0.24"/>
+  <arg name="use_vicon" default="false"/>
+
+  <group ns="$(arg model)">
+
+    <param name="mass" value="$(arg mass)"/>
+
+    <node pkg="kr_mav_manager"
+      type="mav_services"
+      name="mav_services"
+      clear_params="true"
+      output="screen">
+      <rosparam file="$(find kr_qualcomm_interface)/config/kr_mav_manager_params.yaml" />
+    </node>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="snav_standalone_nodelet"
+      args="manager"
+      output="screen"/>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="trackers_manager"
+      args="load kr_trackers_manager/TrackersManager snav_standalone_nodelet"
+      clear_params="true"
+      output="screen">
+      <rosparam file="$(find kr_qualcomm_interface)/config/trackers.yaml"/>
+      <rosparam file="$(find kr_qualcomm_interface)/config/tracker_params.yaml"/>
+      <remap from="~odom" to="odom"/>
+      <remap from="~cmd" to="position_cmd"/>
+    </node>
+
+    <group if="$(arg use_vicon)">
+      <node pkg="nodelet"
+        type="nodelet"
+        args="load kr_mav_controllers/SO3TRPYControlNodelet snav_standalone_nodelet"
+        name="trpy_control"
+        required="true"
+        output="screen">
+        <rosparam file="$(find kr_qualcomm_interface)/config/gains.yaml"/>
+        <param name="mass" value="$(arg mass)"/>
+        <remap from="~odom" to="odom"/>
+        <remap from="~position_cmd" to="position_cmd"/>
+        <remap from="~trpy_cmd" to="trpy_cmd"/>
+        <remap from="~motors" to="motors"/>
+      </node>
+
+      <node pkg="nodelet"
+        type="nodelet"
+        name="kr_qualcomm_interface"
+        args="load kr_qualcomm_interface/TRPYCmdToSnav snav_standalone_nodelet"
+        required="true"
+        clear_params="true"
+        output="screen">
+
+        <remap from="~odom" to="odom"/>
+        <remap from="~trpy_cmd" to="trpy_cmd"/>
+        <remap from="~imu" to="imu" />
+      </node>
+    </group>
+
+    <group unless="$(arg use_vicon)">
+
+      <node pkg="nodelet"
+        type="nodelet"
+        name="kr_qualcomm_interface"
+        args="load kr_qualcomm_interface/PosCmdToSnav snav_standalone_nodelet"
+        required="true"
+        clear_params="true"
+        output="screen">
+
+        <remap from="~so3_cmd" to="so3_cmd"/>
+        <remap from="~odom" to="odom"/>
+        <remap from="~position_cmd" to="position_cmd"/>
+        <remap from="~imu" to="imu" />
+        <remap from="~motors" to="motors" />
+      </node>
+
+      <!-- Node that publishes snav pose as odom -->
+      <node pkg="kr_qualcomm_interface" type="vio_odom_publisher" name="vio_odom_publisher" output="screen"/>
+
+    </group>
+
+  </group>
+</launch>

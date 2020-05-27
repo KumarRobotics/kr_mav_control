@@ -8,7 +8,7 @@ from python_qt_binding import loadUi
 from python_qt_binding.QtWidgets import QWidget
 from rqt_gui_py.plugin import Plugin
 
-import mav_manager.srv
+import kr_mav_manager.srv
 import std_srvs.srv
 
 class MavManagerUi(Plugin):
@@ -162,7 +162,7 @@ class MavManagerUi(Plugin):
 
   def _on_goto_pressed(self):
 
-    req = mav_manager.srv.Vec4Request()
+    req = kr_mav_manager.srv.Vec4Request()
 
     req.goal[0] = self._widget.x_doubleSpinBox.value()
     req.goal[1] = self._widget.y_doubleSpinBox.value()
@@ -173,14 +173,14 @@ class MavManagerUi(Plugin):
 
     if(self._widget.relative_checkbox.isChecked()):
       try:
-        goto = rospy.ServiceProxy('/'+self.robot_name+'/'+self.mav_node_name+'/goToRelative', mav_manager.srv.Vec4)
+        goto = rospy.ServiceProxy('/'+self.robot_name+'/'+self.mav_node_name+'/goToRelative', kr_mav_manager.srv.Vec4)
         resp = goto(req)
         print(resp.success)
       except rospy.ServiceException as e:
           print("Service call failed: %s"%e)
     else:
       try:
-        goto_relative = rospy.ServiceProxy('/'+self.robot_name+'/'+self.mav_node_name+'/goTo', mav_manager.srv.Vec4)
+        goto_relative = rospy.ServiceProxy('/'+self.robot_name+'/'+self.mav_node_name+'/goTo', kr_mav_manager.srv.Vec4)
         resp = goto_relative(req)
         print(resp.success)
       except rospy.ServiceException as e:
@@ -199,12 +199,13 @@ class MavManagerUi(Plugin):
     instance_settings.set_value('node_name' , self._widget.node_name_line_edit.text())
 
   def restore_settings(self, plugin_settings, instance_settings):
+
+    #Override saved value with param value if set
     value = instance_settings.value('robot_name', "quadrotor")
-    #value = rospy.get_param("~robot_name", value)
-    self.robot_name = value
-    self._widget.robot_name_line_edit.setText(value)
+    param_value = rospy.get_param("robot_name", value)
+    self.robot_name = param_value
+    self._widget.robot_name_line_edit.setText(param_value)
 
     value = instance_settings.value('node_name', "mav_services")
-    #value = rospy.get_param("~robot_name", value)
     self.node_name = value
     self._widget.node_name_line_edit.setText(value)

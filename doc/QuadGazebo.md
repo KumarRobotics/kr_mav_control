@@ -5,13 +5,13 @@ We use our own simplified gazebo plugins/simulator (https://github.com/KumarRobo
 
 ```
 roslaunch mrsl_quadrotor_launch gazebo.launch world:=levine
-roslaunch mrsl_quadrotor_launch spawn.launch robot_type:=pelican
+roslaunch mrsl_quadrotor_launch spawn.launch mav_type:=pelican mav_name:=juliett
 ```
 
 This spawns a quadrotor with plugins for `odom` and `so3_cmd` under `juliett` namespace. quadrotor_control plugins have to be launched under this namespace.
 
 ```
-roslaunch mav_manager example_control.launch model:=juliett odom_topic:=ground_truth/odom mass:=0.5
+roslaunch mrsl_quadrotor_launch controller.launch odom_topic:=ground_truth/odom mav_type:=pelican mav_name:=juliett mass:=0.5
 
 ```
 

@@ -1,0 +1,27 @@
+<package format="2">
+  <name>kr_mav_controllers</name>
+  <version>1.0.0</version>
+  <description>kr_mav_controllers</description>
+  <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
+  <maintainer email="michael.f.watterson@gmail.com">Michael Watterson</maintainer>
+
+  <license>BSD</license>
+
+  <author>Kartik Mohta</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>kr_mav_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>tf</depend>
+  <depend>nodelet</depend>
+  <depend>dynamic_reconfigure</depend>
+
+<export>
+    <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
+</export>
+
+</package>

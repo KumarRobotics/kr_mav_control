@@ -1,0 +1,12 @@
+trackers:
+  - kr_trackers/LineTrackerMinJerk
+  - kr_trackers/LineTrackerDistance
+#  - kr_trackers/LineTrackerTrapezoid
+#  - kr_trackers/LineTrackerYaw
+  - kr_trackers/VelocityTracker
+  - kr_trackers/NullTracker
+  - kr_trackers/CircleTracker
+  - kr_trackers/TrajectoryTracker
+  - kr_trackers/SmoothVelTracker
+  - kr_trackers/LissajousTracker
+  - kr_trackers/LissajousAdder

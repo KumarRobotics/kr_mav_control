@@ -1,0 +1,36 @@
+<package>
+  <name>kr_mav_msgs</name>
+  <version>1.0.0</version>
+  <description>kr_mav_msgs</description>
+  <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
+  <maintainer email="michael.f.watterson@gmail.com">Michael Watterson</maintainer>
+  <maintainer email="justinthomas@jtwebs.net">Justin Thomas</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/kr_mav_msgs</url>
+  <!-- <url type="bugtracker"></url> -->
+
+  <author>Kartik Mohta</author>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed to compile this package. -->
+  <build_depend>message_generation</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+
+
+  <!-- Dependencies needed after this package is compiled. -->
+  <run_depend>message_runtime</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+
+  <!-- Dependencies needed only for running tests. -->
+  <!-- <test_depend>geometry_msgs</test_depend> -->
+  <!-- <test_depend>nav_msgs</test_depend> -->
+
+</package>

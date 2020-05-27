@@ -1,0 +1,42 @@
+<launch>
+  <arg name="device" default="/dev/ttyUSB0"/>
+  <arg name="slow_baud_rate" default="true"/>
+  <arg name="start_nodelet_manager" default="false"/>
+  <arg name="nodelet_manager_name" default="nodelet_manager"/>
+
+  <node pkg="nodelet"
+    type="nodelet"
+    name="$(arg nodelet_manager_name)"
+    args="manager"
+    output="screen"
+    if="$(arg start_nodelet_manager)"/>
+
+  <node pkg="nodelet"
+    type="nodelet"
+    name="quad_serial_comm"
+    args="load kr_serial_interface/QuadSerialComm $(arg nodelet_manager_name)"
+    output="screen">
+    <param name="device" value="$(arg device)"/>
+    <param name="baud_rate" value="57600" if="$(arg slow_baud_rate)"/>
+    <param name="baud_rate" value="230400" unless="$(arg slow_baud_rate)"/>
+    <remap from="~to_robot" to="to_robot"/>
+    <remap from="~from_robot" to="from_robot"/>
+  </node>
+
+  <node pkg="nodelet"
+    type="nodelet"
+    name="quad_encode_msg"
+    args="load kr_serial_interface/QuadEncodeMsg $(arg nodelet_manager_name)"
+    output="screen">
+    <remap from="~so3_cmd" to="so3_cmd"/>
+    <remap from="~serial_msg" to="to_robot"/>
+  </node>
+
+  <node pkg="nodelet"
+    type="nodelet"
+    name="quad_decode_msg"
+    args="load kr_serial_interface/QuadDecodeMsg $(arg nodelet_manager_name)"
+    output="screen">
+    <remap from="~serial" to="from_robot"/>
+  </node>
+</launch>

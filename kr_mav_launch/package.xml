@@ -1,0 +1,23 @@
+<package format="2">
+  <name>kr_mav_launch</name>
+  <version>1.0.0</version>
+  <description>kr_mav_launch</description>
+  <maintainer email="tdinesh@seas.upenn.edu">Dinesh Thakur</maintainer>
+
+  <license>BSD</license>
+
+  <author>Dinesh Thakur</author>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>kr_mav_manager</exec_depend>
+  <exec_depend>kr_mesh_visualization</exec_depend>
+  <exec_depend>kr_quadrotor_simulator</exec_depend>
+  <exec_depend>kr_mav_controllers</exec_depend>
+  <exec_depend>kr_trackers</exec_depend>
+  <exec_depend>kr_trackers_manager</exec_depend>
+  <exec_depend>nodelet</exec_depend>
+  <exec_depend>rviz</exec_depend>
+
+</package>

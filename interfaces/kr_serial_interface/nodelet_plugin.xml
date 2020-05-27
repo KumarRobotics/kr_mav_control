@@ -1,0 +1,19 @@
+<library path="lib/libkr_serial_interface">
+  <class name="kr_serial_interface/QuadEncodeMsg" type="QuadEncodeMsg" base_class_type="nodelet::Nodelet">
+    <description>
+      This packs the data being sent to the quad into a nice efficient byte-stream.
+    </description>
+  </class>
+
+  <class name="kr_serial_interface/QuadDecodeMsg" type="QuadDecodeMsg" base_class_type="nodelet::Nodelet">
+    <description>
+      This unpacks the data being sent from the quad into a ROS message.
+    </description>
+  </class>
+
+  <class name="kr_serial_interface/QuadSerialComm" type="QuadSerialComm" base_class_type="nodelet::Nodelet">
+    <description>
+      This sends the packed data over the serial port. It also receives data from the quad and unpacks the payload from the received packet.
+    </description>
+  </class>
+</library>

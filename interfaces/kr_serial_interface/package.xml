@@ -1,0 +1,26 @@
+<package format="2">
+  <name>kr_serial_interface</name>
+  <version>1.0.0</version>
+  <description>kr_serial_interface
+     GPL license since asio_serial_device is under GPL and we link to it.</description>
+  <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
+  <maintainer email="michael.f.watterson@gmail.com">Michael Watterson</maintainer>
+
+  <license>GPL-3.0</license>
+
+  <author>Kartik Mohta</author>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed to compile this package. -->
+  <depend>nodelet</depend>
+  <depend>kr_mav_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+
+<export>
+    <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
+</export>
+
+</package>

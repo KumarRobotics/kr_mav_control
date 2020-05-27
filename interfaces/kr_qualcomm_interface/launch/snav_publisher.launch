@@ -1,0 +1,13 @@
+<launch>
+  <arg name="model" default="$(env MAV_NAME)"/>
+  <group ns="$(arg model)">
+
+  <node pkg="kr_qualcomm_interface" type="snav_publisher" name="snav_publisher" output="screen">
+    <param name="rpm_rate" value="100" />
+    <param name="status_rate" value="0" />
+    <param name="attitude_rate" value="100" />
+  </node>
+
+  </group>
+</launch>
+

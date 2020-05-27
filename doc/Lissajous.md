@@ -50,3 +50,18 @@ period: [60.0, 60.0]
 num_cycles: [1.0, 1.0]
 ramp_time: [2.0, 2.0]"
 ```
+
+A demo with 2 MAVs:
+
+Dependency: `sudo apt install ros-$ROS_DISTRO-smach-ros`
+```
+roscd kr_multi_mav_manager/scripts
+./demo_sim 2
+```
+
+Motors ON -> Take Off
+
+```
+roscd kr_mav_launch/scripts
+./demo_lissajous.py
+```

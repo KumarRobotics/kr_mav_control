@@ -1,0 +1,24 @@
+<package format="2">
+  <name>kr_crazyflie_interface</name>
+  <version>1.0.0</version>
+  <description>kr_crazyflie_interface</description>
+  <maintainer email="JustinThomas@jtwebs.net">Justin Thomas</maintainer>
+  <maintainer email="adw106@gmail.com">Aaron Weinstein</maintainer>
+
+  <license>BSD</license>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed to compile and run this package. -->
+  <depend>roscpp</depend>
+  <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>kr_mav_msgs</depend>
+  <depend>nodelet</depend>
+
+  <export>
+    <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
+  </export>
+
+</package>

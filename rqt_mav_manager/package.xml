@@ -15,7 +15,7 @@
 
   <exec_depend>rospy</exec_depend>
   <exec_depend>rqt_gui_py</exec_depend>
-  <exec_depend>mav_manager</exec_depend>
+  <exec_depend>kr_mav_manager</exec_depend>
   <exec_depend>std_srvs</exec_depend>
   <exec_depend>rqt_gui</exec_depend>
 

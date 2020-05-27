@@ -1,0 +1,56 @@
+<launch>
+  <arg name="mav_name" default="quadrotor"/>
+  <arg name="mav_type" default="hummingbird"/>
+  <arg name="mass" default="0.5"/>
+  <arg name="odom_topic" default="odom"/>
+
+  <arg name="start_nodelet_manager" default="true"/>
+  <arg name="nodelet_manager_name" default="nodelet_manager_control"/>
+
+  <group ns="$(arg mav_name)">
+    <param name="mass" value="$(arg mass)"/>
+
+    <!-- Control stuff -->
+    <node pkg="nodelet"
+      type="nodelet"
+      name="$(arg nodelet_manager_name)"
+      args="manager"
+      output="screen"
+      if="$(arg start_nodelet_manager)"/>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      name="trackers_manager"
+      args="standalone kr_trackers_manager/TrackersManager $(arg nodelet_manager_name)"
+      output="screen">
+      <rosparam file="$(find kr_mav_launch)/config/trackers.yaml"/>
+      <rosparam file="$(find kr_mav_launch)/config/tracker_params.yaml"/>
+      <remap from="~odom" to="$(arg odom_topic)"/>
+      <remap from="~cmd" to="position_cmd"/>
+    </node>
+
+    <node pkg="nodelet"
+      type="nodelet"
+      args="load kr_mav_controllers/SO3ControlNodelet $(arg nodelet_manager_name)"
+      name="so3_control"
+      required="true"
+      output="screen">
+      <rosparam file="$(find kr_mav_launch)/config/gains.yaml"/>
+      <param name="mass" value="$(arg mass)"/>
+      <remap from="~odom" to="$(arg odom_topic)"/>
+      <remap from="~position_cmd" to="position_cmd"/>
+      <remap from="~so3_cmd" to="so3_cmd"/>
+      <remap from="~motors" to="motors"/>
+    </node>
+
+    <!-- MAV Manager -->
+    <node pkg="kr_mav_manager"
+      type="mav_services"
+      name="mav_services"
+      output="screen">
+      <rosparam file="$(find kr_mav_launch)/config/mav_manager_params.yaml"/>
+      <remap from="odom" to="$(arg odom_topic)"/>
+    </node>
+
+  </group>
+</launch>

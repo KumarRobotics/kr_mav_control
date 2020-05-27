@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>kr_trackers_manager</name>
+  <version>1.0.0</version>
+  <description>kr_trackers_manager</description>
+  <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
+  <maintainer email="michael.f.watterson@gmail.com">Michael Watterson</maintainer>
+  <maintainer email="justinthomas@jtwebs.net">Justin Thomas</maintainer>
+
+  <license>BSD</license>
+
+  <author>Kartik Mohta</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+  <depend>nodelet</depend>
+  <depend>pluginlib</depend>
+  <depend>kr_mav_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>kr_tracker_msgs</depend>
+
+  <export>
+    <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
+  </export>
+</package>

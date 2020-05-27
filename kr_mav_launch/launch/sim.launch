@@ -1,0 +1,52 @@
+<launch>
+  <arg name="mav_name" default="quadrotor"/>
+  <arg name="mav_type" default="hummingbird"/>
+  <arg name="mass" default="0.5"/>
+  <arg name="world_frame_id" default="simulator"/>
+  <arg name="odom_topic" default="odom"/>
+  <arg name="rate/odom" default="100"/>
+
+  <arg name="initial_position/x" default="0.0"/>
+  <arg name="initial_position/y" default="0.0"/>
+  <arg name="initial_position/z" default="0.0"/>
+  <arg name="initial_orientation/x" default="0.0"/>
+  <arg name="initial_orientation/y" default="0.0"/>
+  <arg name="initial_orientation/z" default="0.0"/>
+  <arg name="initial_orientation/w" default="1.0"/>
+
+  <arg name="color/r" default="0.0"/>
+  <arg name="color/g" default="0.0"/>
+  <arg name="color/b" default="1.0"/>
+  <arg name="color/a" default="0.7"/>
+
+  <node pkg="kr_quadrotor_simulator"
+    type="kr_quadrotor_simulator_so3"
+    name="quadrotor_simulator_so3"
+    output="screen">
+    <rosparam file="$(find kr_quadrotor_simulator)/config/$(arg mav_type)_params.yaml"/>
+    <param name="world_frame_id" value="$(arg world_frame_id)"/>
+    <param name="quadrotor_name" value="$(arg mav_name)"/>
+    <param name="rate/odom" value="$(arg rate/odom)"/>
+    <param name="mass" value="$(arg mass)"/>
+    <remap from="~odom" to="$(arg odom_topic)"/>
+    <remap from="~imu" to="imu"/>
+    <remap from="~cmd" to="so3_cmd"/>
+    <param name="initial_position/x" value="$(arg initial_position/x)"/>
+    <param name="initial_position/y" value="$(arg initial_position/y)"/>
+    <param name="initial_position/z" value="$(arg initial_position/z)"/>
+    <param name="initial_orientation/x" value="$(arg initial_orientation/x)"/>
+    <param name="initial_orientation/y" value="$(arg initial_orientation/y)"/>
+    <param name="initial_orientation/z" value="$(arg initial_orientation/z)"/>
+    <param name="initial_orientation/w" value="$(arg initial_orientation/w)"/>
+  </node>
+
+  <include file="$(find kr_mav_launch)/launch/mesh_vis.launch">
+    <arg name="mav_name" value="$(arg mav_name)"/>
+    <arg name="mav_type" value="$(arg mav_type)"/>
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="color/r" value="$(arg color/r)"/>
+    <arg name="color/g" value="$(arg color/g)"/>
+    <arg name="color/b" value="$(arg color/b)"/>
+    <arg name="color/a" value="$(arg color/a)"/>
+  </include>
+</launch>

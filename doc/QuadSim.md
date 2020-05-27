@@ -1,16 +1,16 @@
 ## Example with GUI
 ```
-roslaunch quadrotor_simulator rviz.launch
-roslaunch mav_manager demo.launch sim:=true vicon:=false
+roslaunch kr_mav_launch rviz.launch
+roslaunch kr_mav_launch demo.launch sim:=true vicon:=false mav_name:=quadrotor
 ```
 
 Run a simple example script
 ```
-cd quadrotor_control/mav_manager/scripts
-./sample.bash
+roscd kr_mav_launch/scripts
+./sample.bash quadrotor
 ```
 
-There is also a GUI that can be used to send simple commands to the robot through the `mav_manager`. Launch it by running
+There is also a GUI that can be used to send simple commands to the robot through the `rqt_mav_manager`. Launch it by running
 ```
 rosrun rqt_mav_manager rqt_mav_manager
 ```
@@ -21,9 +21,9 @@ then try Motors ON -> Take Off -> Go To (set z > 0)
 Clone the [waypoint_navigation_tool](https://github.com/KumarRobotics/waypoint_navigation_plugin) in your workspace.
 
 ```
-roslaunch quadrotor_simulator wp_nav.launch
-roslaunch mav_manager demo.launch sim:=true vicon:=false
-rosrun trackers_manager waypoints_to_action.py __ns:=quadrotor
+roslaunch kr_mav_launch rviz.launch
+roslaunch kr_mav_launch demo.launch sim:=true vicon:=false mav_name:=quadrotor
+rosrun kr_trackers waypoints_to_action.py __ns:=quadrotor
 ```
 
 Use rqt to start motors and takeoff.

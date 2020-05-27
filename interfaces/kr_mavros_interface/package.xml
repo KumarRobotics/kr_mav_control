@@ -1,0 +1,26 @@
+<package format="2">
+  <name>kr_mavros_interface</name>
+  <version>1.0.0</version>
+  <description>kr_mavros_interface</description>
+  <maintainer email="anurag.makineni@gmail.com">Anurag Makineni</maintainer>
+  <maintainer email="JustinThomas@jtwebs.net">Justin Thomas</maintainer>
+  <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
+
+  <license>BSD</license>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed to compile and run this package. -->
+  <depend>roscpp</depend>
+  <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>kr_mav_msgs</depend>
+  <depend>mavros_msgs</depend>
+  <depend>nodelet</depend>
+
+  <export>
+    <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
+  </export>
+
+</package>
