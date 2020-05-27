@@ -1,6 +1,6 @@
 ## Example with multiple simulated robots
 
-Clone and build [kr_ui](https://github.com/KumarRobotics/kr_ui) and [kr_multi_mav_manager](https://github.com/KumarRobotics/kr_multi_mav_manager) in your workspace
+Clone and build [kr_multi_mav_manager](https://github.com/KumarRobotics/multi_mav_manager) in your workspace
 
 Helper bash scripts are added to launch multiple robots. (Requires tmux installed)
 ```
