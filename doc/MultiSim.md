@@ -2,7 +2,7 @@
 
 Clone and build [kr_ui](https://github.com/KumarRobotics/kr_ui) and [multi_mav_manager](https://github.com/KumarRobotics/multi_mav_manager) in your workspace
 
-Helper bash scripts are added to launch multiple robots.
+Helper bash scripts are added to launch multiple robots. (Requires tmux installed)
 ```
 roscd multi_mav_manager/scripts
 ./demo_sim.sh 4
