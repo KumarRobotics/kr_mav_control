@@ -21,7 +21,7 @@ then try Motors ON -> Take Off -> Go To (set z > 0)
 Clone the [waypoint_navigation_tool](https://github.com/KumarRobotics/waypoint_navigation_plugin) in your workspace.
 
 ```
-roslaunch kr_mav_launch wp_nav.launch
+roslaunch kr_mav_launch rviz.launch
 roslaunch kr_mav_launch demo.launch sim:=true vicon:=false mav_name:=quadrotor
 rosrun kr_trackers waypoints_to_action.py __ns:=quadrotor
 ```
