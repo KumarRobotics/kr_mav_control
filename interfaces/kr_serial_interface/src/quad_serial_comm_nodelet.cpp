@@ -6,22 +6,21 @@
 
 class QuadSerialComm : public nodelet::Nodelet
 {
- public:
+public:
   void onInit(void);
   ~QuadSerialComm();
 
- private:
-  void serial_callback(const kr_mav_msgs::Serial::ConstPtr &msg);
-  void output_data_callback(kr_mav_msgs::Serial &msg);
-  void serial_read_callback(const unsigned char *data, size_t count);
+private:
+  void serial_callback(const kr_mav_msgs::Serial::ConstPtr& msg);
+  void output_data_callback(kr_mav_msgs::Serial& msg);
+  void serial_read_callback(const unsigned char* data, size_t count);
 
   ASIOSerialDevice sd_;
   ros::Publisher output_data_pub_;
   ros::Subscriber serial_sub_;
 };
 
-
-void QuadSerialComm::serial_callback(const kr_mav_msgs::Serial::ConstPtr &msg)
+void QuadSerialComm::serial_callback(const kr_mav_msgs::Serial::ConstPtr& msg)
 {
   std::vector<unsigned char> serial_msg;
 
@@ -30,13 +29,13 @@ void QuadSerialComm::serial_callback(const kr_mav_msgs::Serial::ConstPtr &msg)
   sd_.Write(serial_msg);
 }
 
-void QuadSerialComm::output_data_callback(kr_mav_msgs::Serial &msg)
+void QuadSerialComm::output_data_callback(kr_mav_msgs::Serial& msg)
 {
   msg.header.stamp = ros::Time::now();
   output_data_pub_.publish(msg);
 }
 
-void QuadSerialComm::serial_read_callback(const unsigned char *data, size_t count)
+void QuadSerialComm::serial_read_callback(const unsigned char* data, size_t count)
 {
   process_serial_data(data, count, boost::bind(&QuadSerialComm::output_data_callback, this, _1));
 }
@@ -55,8 +54,7 @@ void QuadSerialComm::onInit(void)
 
   output_data_pub_ = n.advertise<kr_mav_msgs::Serial>("from_robot", 10);
 
-  serial_sub_ = n.subscribe("to_robot", 10, &QuadSerialComm::serial_callback, this,
-                            ros::TransportHints().tcpNoDelay());
+  serial_sub_ = n.subscribe("to_robot", 10, &QuadSerialComm::serial_callback, this, ros::TransportHints().tcpNoDelay());
 
   sd_.SetReadCallback(boost::bind(&QuadSerialComm::serial_read_callback, this, _1, _2));
   sd_.Start();

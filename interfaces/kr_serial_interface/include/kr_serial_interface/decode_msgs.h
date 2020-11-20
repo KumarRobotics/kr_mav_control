@@ -8,12 +8,9 @@
 
 namespace kr_mav_msgs
 {
+bool decodeOutputData(const std::vector<uint8_t>& data, kr_mav_msgs::OutputData& output);
 
-bool decodeOutputData(const std::vector<uint8_t> &data,
-                      kr_mav_msgs::OutputData &output);
-
-bool decodeStatusData(const std::vector<uint8_t> &data,
-                      kr_mav_msgs::StatusData &status);
-}
+bool decodeStatusData(const std::vector<uint8_t>& data, kr_mav_msgs::StatusData& status);
+}  // namespace kr_mav_msgs
 
 #endif

@@ -6,23 +6,23 @@
 
 class QuadDecodeMsg : public nodelet::Nodelet
 {
- public:
+public:
   void onInit(void);
 
- private:
-  void serial_callback(const kr_mav_msgs::Serial::ConstPtr &msg);
+private:
+  void serial_callback(const kr_mav_msgs::Serial::ConstPtr& msg);
   ros::Publisher output_data_pub_, imu_output_pub_, status_pub_;
   ros::Subscriber serial_sub_;
 };
 
-void QuadDecodeMsg::serial_callback(const kr_mav_msgs::Serial::ConstPtr &msg)
+void QuadDecodeMsg::serial_callback(const kr_mav_msgs::Serial::ConstPtr& msg)
 {
-  if(msg->type == kr_mav_msgs::Serial::OUTPUT_DATA)
+  if (msg->type == kr_mav_msgs::Serial::OUTPUT_DATA)
   {
     kr_mav_msgs::OutputData::Ptr output_msg(new kr_mav_msgs::OutputData);
     sensor_msgs::Imu::Ptr imu_msg(new sensor_msgs::Imu);
 
-    if(kr_mav_msgs::decodeOutputData(msg->data, *output_msg))
+    if (kr_mav_msgs::decodeOutputData(msg->data, *output_msg))
     {
       output_msg->header.stamp = msg->header.stamp;
       output_msg->header.frame_id = "/quadrotor";
@@ -35,10 +35,10 @@ void QuadDecodeMsg::serial_callback(const kr_mav_msgs::Serial::ConstPtr &msg)
       imu_output_pub_.publish(imu_msg);
     }
   }
-  else if(msg->type == kr_mav_msgs::Serial::STATUS_DATA)
+  else if (msg->type == kr_mav_msgs::Serial::STATUS_DATA)
   {
     kr_mav_msgs::StatusData::Ptr status_msg(new kr_mav_msgs::StatusData);
-    if(kr_mav_msgs::decodeStatusData(msg->data, *status_msg))
+    if (kr_mav_msgs::decodeStatusData(msg->data, *status_msg))
     {
       status_msg->header.stamp = msg->header.stamp;
       status_msg->header.frame_id = "/quadrotor";
@@ -55,8 +55,8 @@ void QuadDecodeMsg::onInit(void)
   imu_output_pub_ = priv_nh.advertise<sensor_msgs::Imu>("imu", 10);
   status_pub_ = priv_nh.advertise<kr_mav_msgs::StatusData>("status", 10);
 
-  serial_sub_ = priv_nh.subscribe("serial", 10, &QuadDecodeMsg::serial_callback, this,
-                                  ros::TransportHints().tcpNoDelay());
+  serial_sub_ =
+      priv_nh.subscribe("serial", 10, &QuadDecodeMsg::serial_callback, this, ros::TransportHints().tcpNoDelay());
 }
 
 #include <pluginlib/class_list_macros.h>

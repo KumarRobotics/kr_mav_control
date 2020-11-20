@@ -11,35 +11,36 @@
 
 class LissajousTracker : public kr_trackers_manager::Tracker
 {
-  public:
-    LissajousTracker(void);
-    void Initialize(const ros::NodeHandle &nh);
-    bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
-    void Deactivate(void);
+public:
+  LissajousTracker(void);
+  void Initialize(const ros::NodeHandle& nh);
+  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd);
+  void Deactivate(void);
 
-    kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
-    uint8_t status() const;
+  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr& msg);
+  uint8_t status() const;
 
-  private:
-    void goal_callback(void);
-    void preempt_callback(void);
+private:
+  void goal_callback(void);
+  void preempt_callback(void);
 
-    typedef actionlib::SimpleActionServer<kr_tracker_msgs::LissajousTrackerAction> ServerType;
-    std::shared_ptr<ServerType> tracker_server_;
-    ros::Publisher path_pub_;
+  typedef actionlib::SimpleActionServer<kr_tracker_msgs::LissajousTrackerAction> ServerType;
+  std::shared_ptr<ServerType> tracker_server_;
+  ros::Publisher path_pub_;
 
-    InitialConditions ICs_;
-    LissajousGenerator generator_;
-    double distance_traveled_;
-    Eigen::Vector3d position_last_;
-    bool traj_start_set_;
-    std::string frame_id_;
+  InitialConditions ICs_;
+  LissajousGenerator generator_;
+  double distance_traveled_;
+  Eigen::Vector3d position_last_;
+  bool traj_start_set_;
+  std::string frame_id_;
 };
 
-LissajousTracker::LissajousTracker(void)
-  : traj_start_set_(false) {}
+LissajousTracker::LissajousTracker(void) : traj_start_set_(false)
+{
+}
 
-void LissajousTracker::Initialize(const ros::NodeHandle &nh)
+void LissajousTracker::Initialize(const ros::NodeHandle& nh)
 {
   ros::NodeHandle priv_nh(nh, "lissajous_tracker");
   priv_nh.param<std::string>("frame_id", frame_id_, "world");
@@ -51,12 +52,12 @@ void LissajousTracker::Initialize(const ros::NodeHandle &nh)
   tracker_server_->start();
 }
 
-bool LissajousTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
+bool LissajousTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd)
 {
   // Only allow activation if a goal has been set
-  if(generator_.goalIsSet())
+  if (generator_.goalIsSet())
   {
-    if(!tracker_server_->isActive())
+    if (!tracker_server_->isActive())
     {
       ROS_WARN("LissajousTracker::Activate: goal_set is true but action server has no active goal - not activating.");
       return false;
@@ -68,7 +69,7 @@ bool LissajousTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cm
 
 void LissajousTracker::Deactivate(void)
 {
-  if(tracker_server_->isActive())
+  if (tracker_server_->isActive())
   {
     ROS_WARN("LissajousTracker deactivated tracker prior to reaching goal");
     tracker_server_->setAborted();
@@ -78,19 +79,20 @@ void LissajousTracker::Deactivate(void)
   traj_start_set_ = false;
 }
 
-kr_mav_msgs::PositionCommand::ConstPtr LissajousTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
+kr_mav_msgs::PositionCommand::ConstPtr LissajousTracker::update(const nav_msgs::Odometry::ConstPtr& msg)
 {
-  if (!generator_.isActive()) {
+  if (!generator_.isActive())
+  {
     return kr_mav_msgs::PositionCommand::Ptr();
   }
 
-  if(!traj_start_set_)
+  if (!traj_start_set_)
   {
     traj_start_set_ = true;
     ICs_.set_from_odom(msg);
     position_last_ = Eigen::Vector3d(ICs_.pos()(0), ICs_.pos()(1), ICs_.pos()(2));
 
-    //Generate path for visualizing
+    // Generate path for visualizing
     geometry_msgs::Point initial_pt;
     initial_pt.x = ICs_.pos()(0);
     initial_pt.y = ICs_.pos()(1);
@@ -105,7 +107,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousTracker::update(const nav_msgs::
 
   // Set gains
   kr_mav_msgs::PositionCommand::Ptr cmd = generator_.getPositionCmd();
-  if(cmd == NULL)
+  if (cmd == NULL)
   {
     return cmd;
   }
@@ -119,23 +121,24 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousTracker::update(const nav_msgs::
     cmd->yaw += ICs_.yaw();
 
     // Publish feedback and compute distance traveled
-    if(!generator_.status())
+    if (!generator_.status())
     {
       kr_tracker_msgs::LissajousTrackerFeedback feedback;
       feedback.time_to_completion = generator_.timeRemaining();
       tracker_server_->publishFeedback(feedback);
 
-      Eigen::Vector3d position_current = Eigen::Vector3d(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
+      Eigen::Vector3d position_current =
+          Eigen::Vector3d(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
       distance_traveled_ += (position_current - position_last_).norm();
       position_last_ = position_current;
     }
-    else if(tracker_server_->isActive())
+    else if (tracker_server_->isActive())
     {
       kr_tracker_msgs::LissajousTrackerResult result;
       result.x = msg->pose.pose.position.x;
       result.y = msg->pose.pose.position.y;
       result.z = msg->pose.pose.position.z;
-      result.yaw = ICs_.yaw(); // TODO: Change this to the yaw from msg
+      result.yaw = ICs_.yaw();  // TODO: Change this to the yaw from msg
       result.duration = generator_.timeElapsed();
       result.length = distance_traveled_;
       tracker_server_->setSucceeded(result);
@@ -146,16 +149,16 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousTracker::update(const nav_msgs::
 
 uint8_t LissajousTracker::status() const
 {
-  return tracker_server_->isActive() ?
-             static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE) :
-             static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED);
+  return tracker_server_->isActive() ? static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE) :
+                                       static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED);
 }
 
 void LissajousTracker::goal_callback(void)
 {
   // If another goal is already active, cancel that goal
   // and track this one instead.
-  if (tracker_server_->isActive()) {
+  if (tracker_server_->isActive())
+  {
     ROS_INFO("Previous LissajousTracker goal aborted.");
     tracker_server_->setAborted();
     generator_.deactivate();
@@ -165,7 +168,8 @@ void LissajousTracker::goal_callback(void)
 
   // If preempt has been requested, then set this goal to preempted
   // and make no changes to the tracker state.
-  if (tracker_server_->isPreemptRequested()) {
+  if (tracker_server_->isPreemptRequested())
+  {
     ROS_INFO("LissajousTracker going to goal preempted.");
     tracker_server_->setPreempted();
     return;
@@ -192,7 +196,6 @@ void LissajousTracker::preempt_callback(void)
   {
     tracker_server_->setPreempted();
   }
-
 }
 
 #include <pluginlib/class_list_macros.h>

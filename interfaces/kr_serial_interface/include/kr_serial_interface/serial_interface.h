@@ -5,10 +5,7 @@
 #include <kr_mav_msgs/Serial.h>
 #include <boost/function.hpp>
 
-void encode_serial_msg(const kr_mav_msgs::Serial &msg,
-                       std::vector<uint8_t> &serial_data);
+void encode_serial_msg(const kr_mav_msgs::Serial& msg, std::vector<uint8_t>& serial_data);
 
-void process_serial_data(
-    const uint8_t *data, const size_t count,
-    boost::function<void(kr_mav_msgs::Serial &)> callback);
+void process_serial_data(const uint8_t* data, const size_t count, boost::function<void(kr_mav_msgs::Serial&)> callback);
 #endif

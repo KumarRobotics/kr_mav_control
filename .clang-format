@@ -62,4 +62,3 @@ BraceWrapping: {
     BeforeElse : 'true'
     IndentBraces : 'false'
 }
-...

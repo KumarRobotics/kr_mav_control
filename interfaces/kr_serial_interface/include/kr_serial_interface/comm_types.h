@@ -5,16 +5,16 @@
 struct SO3_CMD_INPUT
 {
   // Scaling factors when decoding
-  int16_t force[3]; // /500 (range: +-65 N on each axis)
-  int8_t des_qx, des_qy, des_qz, des_qw; // /125
-  int16_t angvel_x, angvel_y, angvel_z; // /1000 (range: +-32 rad/s)
-  uint8_t kR[3]; // /50 (range: 0-5.1)
-  uint8_t kOm[3]; // /100 (range: 0-2.5)
-  int16_t cur_yaw; // /1e4
-  int16_t kf_correction; // /1e11 (range: +-3.2e-7)
-  int8_t angle_corrections[2]; // roll,pitch /2500 (range: +-0.05 rad)
-  uint8_t enable_motors:1;
-  uint8_t use_external_yaw:1;
+  int16_t force[3];                       // /500 (range: +-65 N on each axis)
+  int8_t des_qx, des_qy, des_qz, des_qw;  // /125
+  int16_t angvel_x, angvel_y, angvel_z;   // /1000 (range: +-32 rad/s)
+  uint8_t kR[3];                          // /50 (range: 0-5.1)
+  uint8_t kOm[3];                         // /100 (range: 0-2.5)
+  int16_t cur_yaw;                        // /1e4
+  int16_t kf_correction;                  // /1e11 (range: +-3.2e-7)
+  int8_t angle_corrections[2];            // roll,pitch /2500 (range: +-0.05 rad)
+  uint8_t enable_motors : 1;
+  uint8_t use_external_yaw : 1;
   uint8_t seq;
 };
 
@@ -50,15 +50,15 @@ struct TRPY_CMD
   int16_t pitch;
   int16_t yaw;
   int16_t current_yaw;
-  uint8_t enable_motors:1;
-  uint8_t use_external_yaw:1;
+  uint8_t enable_motors : 1;
+  uint8_t use_external_yaw : 1;
 };
 
 #define TYPE_PWM_CMD 'w'
 struct PWM_CMD_INPUT
 {
   // Scaling factors when decoding
-  uint8_t pwm[2]; // /255
+  uint8_t pwm[2];  // /255
 };
 
 #endif
