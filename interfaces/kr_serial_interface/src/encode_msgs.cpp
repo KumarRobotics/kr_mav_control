@@ -1,43 +1,33 @@
 #include <boost/numeric/conversion/cast.hpp>
+#include <kr_serial_interface/comm_types.h>
+#include <kr_serial_interface/encode_msgs.h>
 #include <limits>
 #include <ros/console.h>
-#include <kr_serial_interface/encode_msgs.h>
-#include <kr_serial_interface/comm_types.h>
 
-namespace kr_mav_msgs
-{
-namespace
-{
-template <typename T>
-using removeref = typename std::remove_reference<T>::type;
+namespace kr_mav_msgs {
+namespace {
+template <typename T> using removeref = typename std::remove_reference<T>::type;
 
 template <typename Target, typename Source>
 removeref<Target> saturation_cast(Source const src,
-                                  char const *variable_name = "")
-{
-  try
-  {
+                                  char const* variable_name = "") {
+  try {
     return boost::numeric_cast<removeref<Target>>(src);
-  }
-  catch(const boost::numeric::negative_overflow &e)
-  {
+  } catch (const boost::numeric::negative_overflow& e) {
     ROS_WARN("Negative overflow when setting %s", variable_name);
     return std::numeric_limits<removeref<Target>>::lowest();
-  }
-  catch(const boost::numeric::positive_overflow &e)
-  {
+  } catch (const boost::numeric::positive_overflow& e) {
     ROS_WARN("Positive overflow when setting %s", variable_name);
     return std::numeric_limits<removeref<Target>>::max();
   }
 }
-}
+} // namespace
 
 // NOTE(Kartik): Macro needed in order to get the tgt variable name as a string
 #define SATURATE_CAST(tgt, src) tgt = saturation_cast<decltype(tgt)>(src, #tgt)
 
-void encodeSO3Command(const kr_mav_msgs::SO3Command &so3_command,
-                      std::vector<uint8_t> &output)
-{
+void encodeSO3Command(const kr_mav_msgs::SO3Command& so3_command,
+                      std::vector<uint8_t>& output) {
   struct SO3_CMD_INPUT so3_cmd_input;
 
   SATURATE_CAST(so3_cmd_input.force[0], so3_command.force.x * 500);
@@ -79,9 +69,8 @@ void encodeSO3Command(const kr_mav_msgs::SO3Command &so3_command,
   memcpy(&output[0], &so3_cmd_input, sizeof(so3_cmd_input));
 }
 
-void encodeTRPYCommand(const kr_mav_msgs::TRPYCommand &trpy_command,
-                       std::vector<uint8_t> &output)
-{
+void encodeTRPYCommand(const kr_mav_msgs::TRPYCommand& trpy_command,
+                       std::vector<uint8_t>& output) {
   struct TRPY_CMD trpy_cmd_input;
 
   SATURATE_CAST(trpy_cmd_input.thrust, trpy_command.thrust * 1e4f);
@@ -98,9 +87,8 @@ void encodeTRPYCommand(const kr_mav_msgs::TRPYCommand &trpy_command,
   memcpy(&output[0], &trpy_cmd_input, sizeof(trpy_cmd_input));
 }
 
-void encodePWMCommand(const kr_mav_msgs::PWMCommand &pwm_command,
-                      std::vector<uint8_t> &output)
-{
+void encodePWMCommand(const kr_mav_msgs::PWMCommand& pwm_command,
+                      std::vector<uint8_t>& output) {
   struct PWM_CMD_INPUT pwm_cmd_input;
 
   SATURATE_CAST(pwm_cmd_input.pwm[0], pwm_command.pwm[0] * 255);
@@ -109,4 +97,4 @@ void encodePWMCommand(const kr_mav_msgs::PWMCommand &pwm_command,
   output.resize(sizeof(pwm_cmd_input));
   memcpy(&output[0], &pwm_cmd_input, sizeof(pwm_cmd_input));
 }
-}
+} // namespace kr_mav_msgs

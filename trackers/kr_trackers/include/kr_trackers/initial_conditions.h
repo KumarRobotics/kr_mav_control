@@ -2,16 +2,15 @@
 #define STD_TRACKERS_INITIAL_CONDITIONS_H
 
 #include <Eigen/Core>
-#include <nav_msgs/Odometry.h>
 #include <kr_mav_msgs/PositionCommand.h>
+#include <nav_msgs/Odometry.h>
 
-class InitialConditions
-{
- public:
+class InitialConditions {
+public:
   InitialConditions();
-   
-  void set_from_cmd(const kr_mav_msgs::PositionCommand::ConstPtr &msg);
-  void set_from_odom(const nav_msgs::Odometry::ConstPtr &msg);
+
+  void set_from_cmd(const kr_mav_msgs::PositionCommand::ConstPtr& msg);
+  void set_from_odom(const nav_msgs::Odometry::ConstPtr& msg);
   Eigen::Vector3f pos() const { return pos_; }
   Eigen::Vector3f vel() const { return vel_; }
   Eigen::Vector3f acc() const { return acc_; }
@@ -20,7 +19,7 @@ class InitialConditions
   float yaw_dot() const { return yaw_dot_; }
   void reset();
 
- private:
+private:
   Eigen::Vector3f pos_, vel_, acc_, jrk_;
   float yaw_, yaw_dot_;
   bool cmd_valid_;

@@ -1,7 +1,6 @@
 #include <kr_mav_manager/mav_manager_services.h>
 
-int main(int argc, char **argv)
-{
+int main(int argc, char** argv) {
   ros::init(argc, argv, "manager");
   ros::NodeHandle nh;
 

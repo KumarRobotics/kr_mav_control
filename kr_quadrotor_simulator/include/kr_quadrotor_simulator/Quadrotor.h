@@ -1,17 +1,14 @@
 #ifndef QUADROTOR_SIMULATOR_QUADROTOR_H
 #define QUADROTOR_SIMULATOR_QUADROTOR_H
 
-#include <boost/array.hpp>
 #include <Eigen/Core>
+#include <boost/array.hpp>
 
-namespace QuadrotorSimulator
-{
+namespace QuadrotorSimulator {
 
-class Quadrotor
-{
- public:
-  struct State
-  {
+class Quadrotor {
+public:
+  struct State {
     Eigen::Vector3d x;
     Eigen::Vector3d v;
     Eigen::Matrix3d R;
@@ -22,8 +19,8 @@ class Quadrotor
 
   Quadrotor();
 
-  const Quadrotor::State &getState() const;
-  void setState(const Quadrotor::State &state);
+  const Quadrotor::State& getState() const;
+  void setState(const Quadrotor::State& state);
 
   double getMass() const;
   void setMass(double mass);
@@ -34,8 +31,8 @@ class Quadrotor
   double getGravity() const;
   void setGravity(double g);
 
-  const Eigen::Matrix3d &getInertia() const;
-  void setInertia(const Eigen::Matrix3d &inertia);
+  const Eigen::Matrix3d& getInertia() const;
+  void setInertia(const Eigen::Matrix3d& inertia);
 
   double getArmLength() const;
   void setArmLength(double d);
@@ -52,11 +49,11 @@ class Quadrotor
   double getMotorTimeConstant() const;
   void setMotorTimeConstant(double k);
 
-  const Eigen::Vector3d &getExternalForce() const;
-  void setExternalForce(const Eigen::Vector3d &force);
+  const Eigen::Vector3d& getExternalForce() const;
+  void setExternalForce(const Eigen::Vector3d& force);
 
-  const Eigen::Vector3d &getExternalMoment() const;
-  void setExternalMoment(const Eigen::Vector3d &moment);
+  const Eigen::Vector3d& getExternalMoment() const;
+  void setExternalMoment(const Eigen::Vector3d& moment);
 
   double getMaxRPM() const;
   void setMaxRPM(double max_rpm);
@@ -77,9 +74,11 @@ class Quadrotor
 
   // For internal use, but needs to be public for odeint
   typedef boost::array<double, 22> InternalState;
-  void operator()(const Quadrotor::InternalState &x, Quadrotor::InternalState &dxdt, const double /* t */);
+  void operator()(const Quadrotor::InternalState& x,
+                  Quadrotor::InternalState& dxdt,
+                  const double /* t */);
 
- private:
+private:
   void updateInternalState();
 
   double g_; // gravity
@@ -101,5 +100,5 @@ class Quadrotor
   InternalState internal_state_;
 };
 
-}
+} // namespace QuadrotorSimulator
 #endif
