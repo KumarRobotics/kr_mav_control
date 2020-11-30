@@ -1,6 +1,8 @@
 #ifndef QUADROTOR_MSGS_COMM_TYPES_H
 #define QUADROTOR_MSGS_COMM_TYPES_H
 
+#include <stdint.h>
+
 #define TYPE_SO3_CMD 's'
 struct SO3_CMD_INPUT
 {
