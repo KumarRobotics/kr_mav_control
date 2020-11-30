@@ -1,7 +1,7 @@
-#include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
+#include <ros/ros.h>
 #include <topic_tools/shape_shifter.h>
 #include <visualization_msgs/Marker.h>
 
@@ -10,7 +10,7 @@ static ros::Publisher pub_vis;
 static double color_r, color_g, color_b, color_a;
 static double scale_x, scale_y, scale_z;
 
-static void publishMarker(const std::string& frame_id, const geometry_msgs::Pose& pose)
+static void publishMarker(const std::string &frame_id, const geometry_msgs::Pose &pose)
 {
   visualization_msgs::Marker marker;
   marker.header.frame_id = (new_frame_id == "") ? frame_id : new_frame_id;
@@ -32,21 +32,21 @@ static void publishMarker(const std::string& frame_id, const geometry_msgs::Pose
   pub_vis.publish(marker);
 }
 
-static void any_callback(const topic_tools::ShapeShifter::ConstPtr& msg)
+static void any_callback(const topic_tools::ShapeShifter::ConstPtr &msg)
 {
   // ROS_INFO_STREAM("Type: " << msg->getDataType());
 
-  if (msg->getDataType() == "geometry_msgs/PoseStamped")
+  if(msg->getDataType() == "geometry_msgs/PoseStamped")
   {
     auto pose_msg = msg->instantiate<geometry_msgs::PoseStamped>();
     publishMarker(pose_msg->header.frame_id, pose_msg->pose);
   }
-  else if (msg->getDataType() == "geometry_msgs/PoseWithCovarianceStamped")
+  else if(msg->getDataType() == "geometry_msgs/PoseWithCovarianceStamped")
   {
     auto pose_msg = msg->instantiate<geometry_msgs::PoseWithCovarianceStamped>();
     publishMarker(pose_msg->header.frame_id, pose_msg->pose.pose);
   }
-  else if (msg->getDataType() == "nav_msgs/Odometry")
+  else if(msg->getDataType() == "nav_msgs/Odometry")
   {
     auto odom_msg = msg->instantiate<nav_msgs::Odometry>();
     publishMarker(odom_msg->header.frame_id, odom_msg->pose.pose);
@@ -57,7 +57,7 @@ static void any_callback(const topic_tools::ShapeShifter::ConstPtr& msg)
   }
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   ros::init(argc, argv, "kr_mesh_visualization");
 

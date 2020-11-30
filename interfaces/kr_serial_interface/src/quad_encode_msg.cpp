@@ -1,14 +1,14 @@
-#include <ros/ros.h>
-#include <kr_mav_msgs/SO3Command.h>
-#include <kr_mav_msgs/TRPYCommand.h>
 #include <kr_mav_msgs/PWMCommand.h>
+#include <kr_mav_msgs/SO3Command.h>
 #include <kr_mav_msgs/Serial.h>
+#include <kr_mav_msgs/TRPYCommand.h>
 #include <kr_serial_interface/encode_msgs.h>
+#include <ros/ros.h>
 
 static ros::Publisher serial_msg_pub;
 static int channel;
 
-static void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr& msg)
+static void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg)
 {
   kr_mav_msgs::Serial serial_msg;
   serial_msg.header.seq = msg->header.seq;
@@ -21,7 +21,7 @@ static void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr& msg)
   serial_msg_pub.publish(serial_msg);
 }
 
-static void trpy_cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr& msg)
+static void trpy_cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr &msg)
 {
   kr_mav_msgs::Serial serial_msg;
   serial_msg.header.seq = msg->header.seq;
@@ -34,7 +34,7 @@ static void trpy_cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr& msg)
   serial_msg_pub.publish(serial_msg);
 }
 
-static void pwm_cmd_callback(const kr_mav_msgs::PWMCommand::ConstPtr& msg)
+static void pwm_cmd_callback(const kr_mav_msgs::PWMCommand::ConstPtr &msg)
 {
   kr_mav_msgs::Serial serial_msg;
   serial_msg.header.seq = msg->header.seq;
@@ -47,7 +47,7 @@ static void pwm_cmd_callback(const kr_mav_msgs::PWMCommand::ConstPtr& msg)
   serial_msg_pub.publish(serial_msg);
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   ros::init(argc, argv, "quad_encode_msg");
 

@@ -1,9 +1,9 @@
-#include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
-#include <tf/transform_broadcaster.h>
+#include <ros/ros.h>
 #include <snav/snapdragon_navigator.h>
+#include <tf/transform_broadcaster.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
   ros::init(argc, argv, "vio_odom_publisher");
   ros::NodeHandle nh;
@@ -12,17 +12,17 @@ int main(int argc, char* argv[])
 
   int update_ret;
   float roll, pitch, yaw;
-  while (ros::ok())
+  while(ros::ok())
   {
     // read the flight data
-    SnavCachedData* snav_data = NULL;
-    if (sn_get_flight_data_ptr(sizeof(SnavCachedData), &snav_data) != 0)
+    SnavCachedData *snav_data = NULL;
+    if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &snav_data) != 0)
     {
       ROS_ERROR("failed to get flight data ptr");
       continue;
     }
     update_ret = sn_update_data();
-    if (update_ret != 0)
+    if(update_ret != 0)
     {
       ROS_ERROR("detected likely failure in snav, ensure it is running");
       continue;

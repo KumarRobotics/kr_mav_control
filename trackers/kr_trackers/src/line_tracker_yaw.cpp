@@ -1,27 +1,28 @@
 // TODO: make into actionlib
 
-#include <ros/ros.h>
-#include <kr_trackers_manager/Tracker.h>
-#include <kr_tracker_msgs/TrackerStatus.h>
-#include <kr_tracker_msgs/LineTrackerGoal.h>
-#include <Eigen/Geometry>
-#include <tf/transform_datatypes.h>
 #include <initial_conditions.h>
+#include <kr_tracker_msgs/LineTrackerGoal.h>
+#include <kr_tracker_msgs/TrackerStatus.h>
+#include <kr_trackers_manager/Tracker.h>
+#include <ros/ros.h>
+#include <tf/transform_datatypes.h>
+
+#include <Eigen/Geometry>
 
 class LineTrackerYaw : public kr_trackers_manager::Tracker
 {
-public:
+ public:
   LineTrackerYaw(void);
 
-  void Initialize(const ros::NodeHandle& nh);
-  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd);
+  void Initialize(const ros::NodeHandle &nh);
+  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr& msg);
+  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
   uint8_t status() const;
 
-private:
-  void goal_callback(const kr_tracker_msgs::LineTrackerGoal::ConstPtr& msg);
+ private:
+  void goal_callback(const kr_tracker_msgs::LineTrackerGoal::ConstPtr &msg);
 
   ros::Subscriber sub_goal_;
   bool pos_set_, goal_set_, goal_reached_;
@@ -40,11 +41,9 @@ private:
   float t_yaw_accel_, t_yaw_constant_;
 };
 
-LineTrackerYaw::LineTrackerYaw(void) : pos_set_(false), goal_set_(false), goal_reached_(true), active_(false)
-{
-}
+LineTrackerYaw::LineTrackerYaw(void) : pos_set_(false), goal_set_(false), goal_reached_(true), active_(false) {}
 
-void LineTrackerYaw::Initialize(const ros::NodeHandle& nh)
+void LineTrackerYaw::Initialize(const ros::NodeHandle &nh)
 {
   ros::NodeHandle priv_nh(nh, "line_tracker_yaw");
 
@@ -62,10 +61,10 @@ void LineTrackerYaw::Initialize(const ros::NodeHandle& nh)
   sub_goal_ = priv_nh.subscribe("goal", 10, &LineTrackerYaw::goal_callback, this, ros::TransportHints().tcpNoDelay());
 }
 
-bool LineTrackerYaw::Activate(const kr_tracker_msgs::PositionCommand::ConstPtr& cmd)
+bool LineTrackerYaw::Activate(const kr_tracker_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
-  if (goal_set_ && pos_set_)
+  if(goal_set_ && pos_set_)
   {
     // Set start and start_yaw here so that even if the goal was sent at a
     // different position, we still use the current position as start
@@ -86,7 +85,7 @@ void LineTrackerYaw::Deactivate(void)
   active_ = false;
 }
 
-kr_mav_msgs::PositionCommand::ConstPtr LineTrackerYaw::update(const nav_msgs::Odometry::ConstPtr& msg)
+kr_mav_msgs::PositionCommand::ConstPtr LineTrackerYaw::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   pos_(0) = msg->pose.pose.position.x;
   pos_(1) = msg->pose.pose.position.y;
@@ -101,7 +100,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerYaw::update(const nav_msgs::Od
   double dT = (t_now - t_prev).toSec();
   t_prev = t_now;  // msg->header.stamp;
 
-  if (!active_)
+  if(!active_)
     return kr_mav_msgs::PositionCommand::Ptr();
 
   bool goal_pos_reached(false), goal_yaw_reached(false);
@@ -110,7 +109,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerYaw::update(const nav_msgs::Od
   cmd->header.stamp = ros::Time::now();
   cmd->header.frame_id = msg->header.frame_id;
 
-  if (goal_reached_)
+  if(goal_reached_)
   {
     cmd->position.x = goal_pos_(0), cmd->position.y = goal_pos_(1), cmd->position.z = goal_pos_(2);
     cmd->velocity.x = 0, cmd->velocity.y = 0, cmd->velocity.z = 0;
@@ -124,21 +123,21 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerYaw::update(const nav_msgs::Od
   // ===========
   const float traj_time = (t_now - traj_start_).toSec();
   float yaw, yaw_dot;
-  if (traj_time <= t_yaw_accel_)
+  if(traj_time <= t_yaw_accel_)
   {
     // Accelerate
     const float dT_yaw = traj_time;
     yaw_dot = yaw_a_des_ * yaw_dir_ * dT_yaw;
     yaw = start_yaw_ + 0.5f * yaw_a_des_ * yaw_dir_ * dT_yaw * dT_yaw;
   }
-  else if (traj_time <= (t_yaw_accel_ + t_yaw_constant_))
+  else if(traj_time <= (t_yaw_accel_ + t_yaw_constant_))
   {
     // Constant speed
     const float dT_yaw = traj_time - t_yaw_accel_;
     yaw_dot = yaw_a_des_ * yaw_dir_ * t_yaw_accel_;
     yaw = start_yaw_ + (0.5f * yaw_a_des_ * yaw_dir_ * t_yaw_accel_ * t_yaw_accel_) + yaw_dot * dT_yaw;
   }
-  else if (traj_time <= (t_yaw_accel_ + t_yaw_constant_ + t_yaw_accel_))
+  else if(traj_time <= (t_yaw_accel_ + t_yaw_constant_ + t_yaw_accel_))
   {
     // Decelerate
     const float dT_yaw = traj_time - (t_yaw_accel_ + t_yaw_constant_);
@@ -169,38 +168,38 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerYaw::update(const nav_msgs::Od
   v = Eigen::Vector3f::Zero();
   a = Eigen::Vector3f::Zero();
 
-  if ((pos_ - goal_pos_).norm() <= epsilon_)  // Reached goal
+  if((pos_ - goal_pos_).norm() <= epsilon_)  // Reached goal
   {
     a = Eigen::Vector3f::Zero();
     v = Eigen::Vector3f::Zero();
     x = goal_pos_;
     goal_pos_reached = true;
   }
-  else if (d > translation_dist_)  // Overshoot
+  else if(d > translation_dist_)  // Overshoot
   {
     a = -a_des_ * translation_dir_;
     v = Eigen::Vector3f::Zero();
     x = goal_pos_;
   }
-  else if (d >= (translation_dist_ - ramp_dist) && d <= translation_dist_)  // Decelerate
+  else if(d >= (translation_dist_ - ramp_dist) && d <= translation_dist_)  // Decelerate
   {
     a = -a_des_ * translation_dir_;
     v = std::sqrt(2 * a_des_ * (translation_dist_ - d)) * translation_dir_;
     x = proj + v * dT + 0.5f * a * dT * dT;
   }
-  else if (d > ramp_dist && d < translation_dist_ - ramp_dist)  // Constant velocity
+  else if(d > ramp_dist && d < translation_dist_ - ramp_dist)  // Constant velocity
   {
     a = Eigen::Vector3f::Zero();
     v = v_max * translation_dir_;
     x = proj + v * dT;
   }
-  else if (d >= 0 && d <= ramp_dist)  // Accelerate
+  else if(d >= 0 && d <= ramp_dist)  // Accelerate
   {
     a = a_des_ * translation_dir_;
     v = std::sqrt(2 * a_des_ * d) * translation_dir_;
     x = proj + v * dT + 0.5f * a * dT * dT;
   }
-  else if (d < 0)  // Undershoot
+  else if(d < 0)  // Undershoot
   {
     a = a_des_ * translation_dir_;
     v = Eigen::Vector3f::Zero();
@@ -216,26 +215,26 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerYaw::update(const nav_msgs::Od
   return cmd;
 }
 
-void LineTrackerYaw::goal_callback(const kr_tracker_msgs::LineTrackerGoal::ConstPtr& msg)
+void LineTrackerYaw::goal_callback(const kr_tracker_msgs::LineTrackerGoal::ConstPtr &msg)
 {
   goal_pos_(0) = msg->x;
   goal_pos_(1) = msg->y;
   goal_pos_(2) = msg->z;
   goal_yaw_ = msg->yaw;
 
-  if (msg->relative)
+  if(msg->relative)
   {
     goal_pos_ += ICs_.pos();
     goal_yaw_ += ICs_.yaw();
     ROS_INFO("line_tracker_yaw using relative command");
   }
 
-  if (msg->v_des > 0)
+  if(msg->v_des > 0)
     v_des_ = msg->v_des;
   else
     v_des_ = default_v_des_;
 
-  if (msg->a_des > 0)
+  if(msg->a_des > 0)
     a_des_ = msg->a_des;
   else
     a_des_ = default_a_des_;
@@ -252,15 +251,15 @@ void LineTrackerYaw::goal_callback(const kr_tracker_msgs::LineTrackerGoal::Const
   yaw_dist_ = goal_yaw_ - start_yaw_;
   const float pi(M_PI);  // Defined so as to force float type
   yaw_dist_ = std::fmod(yaw_dist_, 2 * pi);
-  if (yaw_dist_ > pi)
+  if(yaw_dist_ > pi)
     yaw_dist_ -= 2 * pi;
-  else if (yaw_dist_ < -pi)
+  else if(yaw_dist_ < -pi)
     yaw_dist_ += 2 * pi;
   yaw_dir_ = (yaw_dist_ >= 0) ? 1 : -1;
   yaw_dist_ = std::abs(yaw_dist_);
 
   // Compute times for accel and constant vel stages of trapezoidal yaw velocity profile
-  if (yaw_dist_ > yaw_v_des_ * yaw_v_des_ / yaw_a_des_)
+  if(yaw_dist_ > yaw_v_des_ * yaw_v_des_ / yaw_a_des_)
   {
     t_yaw_accel_ = yaw_v_des_ / yaw_a_des_;
     t_yaw_constant_ = yaw_dist_ / yaw_v_des_ - yaw_v_des_ / yaw_a_des_;

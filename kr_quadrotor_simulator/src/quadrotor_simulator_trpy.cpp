@@ -1,5 +1,7 @@
-#include <Eigen/Geometry>
 #include <kr_mav_msgs/TRPYCommand.h>
+
+#include <Eigen/Geometry>
+
 #include "quadrotor_simulator_base.hpp"
 
 namespace QuadrotorSimulator
@@ -16,16 +18,14 @@ typedef struct _TRPYCommand
 
 class QuadrotorSimulatorTRPY : public QuadrotorSimulatorBase<kr_mav_msgs::TRPYCommand, TRPYCommand>
 {
-public:
-  QuadrotorSimulatorTRPY(ros::NodeHandle& nh) : QuadrotorSimulatorBase(nh)
-  {
-  }
+ public:
+  QuadrotorSimulatorTRPY(ros::NodeHandle &nh) : QuadrotorSimulatorBase(nh) {}
 
-private:
-  virtual void cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr& cmd);
-  virtual ControlInput getControl(const Quadrotor& quad, const TRPYCommand& cmd) const;
+ private:
+  virtual void cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr &cmd);
+  virtual ControlInput getControl(const Quadrotor &quad, const TRPYCommand &cmd) const;
 };
-void QuadrotorSimulatorTRPY::cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr& cmd)
+void QuadrotorSimulatorTRPY::cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr &cmd)
 {
   command_.thrust = cmd->thrust;
   command_.roll = cmd->roll;
@@ -43,8 +43,8 @@ void QuadrotorSimulatorTRPY::cmd_callback(const kr_mav_msgs::TRPYCommand::ConstP
   command_.enable_motors = cmd->aux.enable_motors;
 }
 
-QuadrotorSimulatorTRPY::ControlInput QuadrotorSimulatorTRPY::getControl(const Quadrotor& quad,
-                                                                        const TRPYCommand& cmd) const
+QuadrotorSimulatorTRPY::ControlInput QuadrotorSimulatorTRPY::getControl(const Quadrotor &quad,
+                                                                        const TRPYCommand &cmd) const
 {
   const double _kf = quad.getPropellerThrustCoefficient();
   const double _km = quad.getPropellerMomentCoefficient();
@@ -53,8 +53,8 @@ QuadrotorSimulatorTRPY::ControlInput QuadrotorSimulatorTRPY::getControl(const Qu
 
   const double d = quad.getArmLength();
   const Eigen::Matrix3f J = quad.getInertia().cast<float>();
-  const float I[3][3] = { { J(0, 0), J(0, 1), J(0, 2) }, { J(1, 0), J(1, 1), J(1, 2) }, { J(2, 0), J(2, 1), J(2, 2) } };
-  const Quadrotor::State& state = quad.getState();
+  const float I[3][3] = {{J(0, 0), J(0, 1), J(0, 2)}, {J(1, 0), J(1, 1), J(1, 2)}, {J(2, 0), J(2, 1), J(2, 2)}};
+  const Quadrotor::State &state = quad.getState();
 
   float R11 = state.R(0, 0);
   float R12 = state.R(0, 1);
@@ -84,7 +84,7 @@ QuadrotorSimulatorTRPY::ControlInput QuadrotorSimulatorTRPY::getControl(const Qu
                               Rd23 * R23 + Rd33 * R33));
 
   float force = 0;
-  if (Psi < 1.0f)  // Position control stability guaranteed only when Psi < 1
+  if(Psi < 1.0f)  // Position control stability guaranteed only when Psi < 1
     force = cmd.thrust;
 
   float eR1 = 0.5f * (R12 * Rd13 - R13 * Rd12 + R22 * Rd23 - R23 * Rd22 + R32 * Rd33 - R33 * Rd32);
@@ -132,11 +132,11 @@ QuadrotorSimulatorTRPY::ControlInput QuadrotorSimulatorTRPY::getControl(const Qu
   w_sq[3] = force / (4 * kf) - M1 / (2 * d * kf) - M3 / (4 * km);
 
   ControlInput control;
-  for (int i = 0; i < 4; i++)
+  for(int i = 0; i < 4; i++)
   {
-    if (cmd.enable_motors)
+    if(cmd.enable_motors)
     {
-      if (w_sq[i] < 0)
+      if(w_sq[i] < 0)
         w_sq[i] = 0;
 
       control.rpm[i] = sqrtf(w_sq[i]);
@@ -150,7 +150,7 @@ QuadrotorSimulatorTRPY::ControlInput QuadrotorSimulatorTRPY::getControl(const Qu
 }
 }  // namespace QuadrotorSimulator
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   ros::init(argc, argv, "kr_quadrotor_simulator_trpy");
 

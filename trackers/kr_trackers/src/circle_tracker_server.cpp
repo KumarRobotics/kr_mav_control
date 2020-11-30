@@ -3,33 +3,32 @@
  * x(t) = [Ax*cos(2*pi*t/T); Ay*sin(2*pi*t/T); 0] + init_pos.
  * Yaw is constant. */
 
-#include <cmath>
-#include <Eigen/Dense>
-
-#include <ros/ros.h>
-#include <tf/transform_datatypes.h>
 #include <actionlib/server/simple_action_server.h>
-#include <std_msgs/Empty.h>
-
-#include <kr_trackers_manager/Tracker.h>
-#include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_mav_msgs/PositionCommand.h>
 #include <kr_tracker_msgs/CircleTrackerAction.h>
+#include <kr_tracker_msgs/TrackerStatus.h>
+#include <kr_trackers_manager/Tracker.h>
+#include <ros/ros.h>
+#include <std_msgs/Empty.h>
+#include <tf/transform_datatypes.h>
+
+#include <Eigen/Dense>
+#include <cmath>
 
 class CircleTracker : public kr_trackers_manager::Tracker
 {
-public:
+ public:
   CircleTracker(void);
 
-  void Initialize(const ros::NodeHandle& nh);
-  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd);
+  void Initialize(const ros::NodeHandle &nh);
+  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate();
 
-  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr& msg);
+  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
 
   uint8_t status() const;
 
-private:
+ private:
   void goal_callback();
   void preempt_callback();
 
@@ -91,21 +90,21 @@ private:
 };
 
 CircleTracker::CircleTracker(void)
-  : active_(false)
-  , have_odom_(false)
-  , traj_started_(false)
-  , current_traj_length_(0.0)
-  , Ax_(0.0)
-  , Ay_(0.0)
-  , omega_des_(0.0)
-  , traj_completed_(false)
-  , traj_duration_(-1.0)
-  , ramp_time_(-1.0)
-  , circle_time_(-1.0)
+    : active_(false),
+      have_odom_(false),
+      traj_started_(false),
+      current_traj_length_(0.0),
+      Ax_(0.0),
+      Ay_(0.0),
+      omega_des_(0.0),
+      traj_completed_(false),
+      traj_duration_(-1.0),
+      ramp_time_(-1.0),
+      circle_time_(-1.0)
 {
 }
 
-void CircleTracker::Initialize(const ros::NodeHandle& nh)
+void CircleTracker::Initialize(const ros::NodeHandle &nh)
 {
   ros::NodeHandle priv_nh(nh, "circle_tracker");
 
@@ -122,23 +121,23 @@ void CircleTracker::Initialize(const ros::NodeHandle& nh)
   pub_end_ = priv_nh.advertise<std_msgs::Empty>("traj_end", 10);
 }
 
-bool CircleTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd)
+bool CircleTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
-  if (!have_odom_)
+  if(!have_odom_)
   {
     ROS_WARN("CircleTracker::Activate: could not activate because no odom recieved - not activating.");
     active_ = false;
     return active_;
   }
 
-  if (!tracker_server_->isActive())
+  if(!tracker_server_->isActive())
   {
     ROS_WARN("CircleTracker::Activate: server has no active goal - not activating.");
     active_ = false;
     return active_;
   }
 
-  if (omega_coeffs_.empty())
+  if(omega_coeffs_.empty())
   {
     ROS_WARN("CircleTracker::Activate: internal trajectory not initialized - not activating.");
     active_ = false;
@@ -163,7 +162,7 @@ bool CircleTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd)
 
 void CircleTracker::Deactivate(void)
 {
-  if (tracker_server_->isActive())
+  if(tracker_server_->isActive())
   {
     ROS_WARN("CircleTracker::Deactivate: deactivated tracker while still tracking position trajectory.");
 
@@ -180,7 +179,7 @@ void CircleTracker::Deactivate(void)
   traj_completed_ = false;
 }
 
-kr_mav_msgs::PositionCommand::ConstPtr CircleTracker::update(const nav_msgs::Odometry::ConstPtr& msg)
+kr_mav_msgs::PositionCommand::ConstPtr CircleTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   // Record distance between last position and current.
   const float dx =
@@ -195,7 +194,7 @@ kr_mav_msgs::PositionCommand::ConstPtr CircleTracker::update(const nav_msgs::Odo
 
   have_odom_ = true;
 
-  if (!active_)
+  if(!active_)
   {
     return kr_mav_msgs::PositionCommand::Ptr();
   }
@@ -207,7 +206,7 @@ kr_mav_msgs::PositionCommand::ConstPtr CircleTracker::update(const nav_msgs::Odo
   cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
 
-  if (!traj_started_)
+  if(!traj_started_)
   {
     // Start the trajectory.
     traj_start_time_ = ros::Time::now();
@@ -221,7 +220,7 @@ kr_mav_msgs::PositionCommand::ConstPtr CircleTracker::update(const nav_msgs::Odo
   constexpr float kEps = 1e-6;
 
   // Process position trajectory.
-  if (traj_completed_)
+  if(traj_completed_)
   {
     cmd->position.x = final_pos_(0);
     cmd->position.y = final_pos_(1);
@@ -254,7 +253,7 @@ kr_mav_msgs::PositionCommand::ConstPtr CircleTracker::update(const nav_msgs::Odo
     // theta_d6dot = 0.0;
 
     // Ramping up the angular velocity.
-    if (traj_time < ramp_time_)
+    if(traj_time < ramp_time_)
     {
       // ROS_INFO("Circle Tracker: Accelerating...");
 
@@ -281,7 +280,7 @@ kr_mav_msgs::PositionCommand::ConstPtr CircleTracker::update(const nav_msgs::Odo
       theta_dddot /= (ramp_time_3);
     }
     // Constant segment.
-    else if (traj_time < circle_time_)
+    else if(traj_time < circle_time_)
     {
       // ROS_INFO("Circle Tracker: Coasting...");
       std_msgs::Empty empty_msg;
@@ -379,7 +378,7 @@ kr_mav_msgs::PositionCommand::ConstPtr CircleTracker::update(const nav_msgs::Odo
     cmd->jerk.z = jerk_z;
 
     // Check if we completed the trajectory.
-    if (traj_time >= traj_duration_ - kEps)
+    if(traj_time >= traj_duration_ - kEps)
     {
       traj_completed_ = true;
       final_pos_ = Eigen::Vector3f(pos_x, pos_y, pos_z);
@@ -391,7 +390,7 @@ kr_mav_msgs::PositionCommand::ConstPtr CircleTracker::update(const nav_msgs::Odo
   cmd->position.z += offset_pos_(2);
 
   // If trajectory is completed, indicate this in the action.
-  if (tracker_server_->isActive() && traj_completed_)
+  if(tracker_server_->isActive() && traj_completed_)
   {
     kr_tracker_msgs::CircleTrackerResult result;
     result.duration = traj_time;
@@ -414,7 +413,7 @@ void CircleTracker::goal_callback()
 {
   // If another goal is already active, cancel that goal
   // and track this one instead.
-  if (tracker_server_->isActive())
+  if(tracker_server_->isActive())
   {
     ROS_INFO("CircleTracker trajectory aborted because new goal recieved.");
     kr_tracker_msgs::CircleTrackerResult result;
@@ -429,7 +428,7 @@ void CircleTracker::goal_callback()
 
   // If preempt has been requested, then set this goal to preempted
   // and make no changes to the tracker state.
-  if (tracker_server_->isPreemptRequested())
+  if(tracker_server_->isPreemptRequested())
   {
     ROS_INFO("CircleTracker trajectory preempted immediately after it was recieved.");
     kr_tracker_msgs::CircleTrackerResult result;
@@ -462,7 +461,7 @@ void CircleTracker::goal_callback()
   ramp_dist_ = 0.0;
   // Scale the trajectory back.
   // const std::vector<float> T_powers = {1, dT, dT * dT, dT*dT * dT, dT*dT*dT * dT, dT*dT*dT*dT * dT};
-  for (int ii = 0; ii < 6; ++ii)
+  for(int ii = 0; ii < 6; ++ii)
   {
     //  std::cout << " the condition here is " << b(ii) << "\n";
     omega_coeffs_.at(ii) = omega_coeffs_vec(ii);  // omega_coeffs_vec(ii) / T_powers.at(ii);
@@ -498,7 +497,7 @@ void CircleTracker::preempt_callback()
   result.duration = std::max(0.0f, static_cast<float>((ros::Time::now() - traj_start_time_).toSec()));
   result.length = current_traj_length_;
 
-  if (tracker_server_->isActive())
+  if(tracker_server_->isActive())
   {
     ROS_INFO("CircleTracker trajectory aborted by preempt command.");
     tracker_server_->setAborted(result);

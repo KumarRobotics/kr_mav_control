@@ -33,7 +33,7 @@ ASIOSerialDevice::ASIOSerialDevice()
   serial_port = 0;
 }
 
-ASIOSerialDevice::ASIOSerialDevice(const string& device, unsigned int baud)
+ASIOSerialDevice::ASIOSerialDevice(const string &device, unsigned int baud)
 {
   async_active = false;
   open = false;
@@ -44,36 +44,36 @@ ASIOSerialDevice::ASIOSerialDevice(const string& device, unsigned int baud)
 
 ASIOSerialDevice::~ASIOSerialDevice()
 {
-  if (open)
+  if(open)
     Close();
 
-  if (async_active)
+  if(async_active)
     Stop();
 
-  if (serial_port != 0)
+  if(serial_port != 0)
     delete serial_port;
 }
 
-void ASIOSerialDevice::Open(const string& device_, unsigned int baud_, ba::serial_port_base::parity parity,
+void ASIOSerialDevice::Open(const string &device_, unsigned int baud_, ba::serial_port_base::parity parity,
                             ba::serial_port_base::character_size csize, ba::serial_port_base::flow_control flow,
                             ba::serial_port_base::stop_bits stop)
 {
   device = device_;
   baud = baud_;
 
-  if (!open)
+  if(!open)
   {
     try
     {
       serial_port = new ba::serial_port(io_service, device);
     }
-    catch (const std::exception& e)
+    catch(const std::exception &e)
     {
       cerr << "Unable to open device: " << device << endl;
       throw;
     }
 
-    if (!serial_port->is_open())
+    if(!serial_port->is_open())
       throw runtime_error("Failed to open serial port");
 
     ba::serial_port_base::baud_rate baud(baud_);
@@ -114,9 +114,9 @@ void ASIOSerialDevice::Open(const string& device_, unsigned int baud_, ba::seria
 
 void ASIOSerialDevice::Close()
 {
-  if (open)
+  if(open)
   {
-    if (async_active)
+    if(async_active)
       io_service.post(boost::bind(&ASIOSerialDevice::CloseCallback, this, boost::system::error_code()));
     else
       CloseCallback(boost::system::error_code());
@@ -125,7 +125,7 @@ void ASIOSerialDevice::Close()
 
 void ASIOSerialDevice::Start()
 {
-  if (!open)
+  if(!open)
     throw runtime_error("Serial port interface not open");
 
   ReadStart();
@@ -139,17 +139,17 @@ void ASIOSerialDevice::Start()
 
 void ASIOSerialDevice::ReadStart()
 {
-  if (open)
+  if(open)
     serial_port->async_read_some(ba::buffer(read_msg, MAX_READ_LENGTH),
                                  boost::bind(&ASIOSerialDevice::ReadComplete, this, ba::placeholders::error,
                                              ba::placeholders::bytes_transferred));
 }
 
-void ASIOSerialDevice::ReadComplete(const boost::system::error_code& error, size_t bytes_transferred)
+void ASIOSerialDevice::ReadComplete(const boost::system::error_code &error, size_t bytes_transferred)
 {
-  if (!error)
+  if(!error)
   {
-    if (!read_callback.empty())
+    if(!read_callback.empty())
       read_callback(read_msg, bytes_transferred);
     ReadStart();
   }
@@ -157,7 +157,7 @@ void ASIOSerialDevice::ReadComplete(const boost::system::error_code& error, size
     CloseCallback(error);
 }
 
-void ASIOSerialDevice::SetReadCallback(const boost::function<void(const unsigned char*, size_t)>& handler)
+void ASIOSerialDevice::SetReadCallback(const boost::function<void(const unsigned char *, size_t)> &handler)
 {
   read_callback = handler;
 }
@@ -168,21 +168,21 @@ void ASIOSerialDevice::Stop()
   async_active = false;
 }
 
-void ASIOSerialDevice::CloseCallback(const boost::system::error_code& error)
+void ASIOSerialDevice::CloseCallback(const boost::system::error_code &error)
 {
-  if (error && (error != ba::error::operation_aborted))
+  if(error && (error != ba::error::operation_aborted))
     cerr << "Error: " << error.message() << endl;
 
   serial_port->close();
   open = false;
 }
 
-bool ASIOSerialDevice::Write(const vector<unsigned char>& msg)
+bool ASIOSerialDevice::Write(const vector<unsigned char> &msg)
 {
-  if (!open)
+  if(!open)
     return false;
 
-  if (async_active)
+  if(async_active)
     // Post for an asynchronous write
     io_service.post(boost::bind(&ASIOSerialDevice::WriteCallback, this, msg));
   else
@@ -192,11 +192,11 @@ bool ASIOSerialDevice::Write(const vector<unsigned char>& msg)
   return true;
 }
 
-void ASIOSerialDevice::WriteCallback(const vector<unsigned char>& msg)
+void ASIOSerialDevice::WriteCallback(const vector<unsigned char> &msg)
 {
   bool write_in_progress = !write_msgs.empty();
   write_msgs.push_back(msg);
-  if (!write_in_progress)
+  if(!write_in_progress)
     WriteStart();
 }
 
@@ -206,12 +206,12 @@ void ASIOSerialDevice::WriteStart()
                   boost::bind(&ASIOSerialDevice::WriteComplete, this, ba::placeholders::error));
 }
 
-void ASIOSerialDevice::WriteComplete(const boost::system::error_code& error)
+void ASIOSerialDevice::WriteComplete(const boost::system::error_code &error)
 {
-  if (!error)
+  if(!error)
   {
     write_msgs.pop_front();
-    if (!write_msgs.empty())
+    if(!write_msgs.empty())
       WriteStart();
   }
   else
@@ -225,7 +225,7 @@ bool ASIOSerialDevice::Active()
 
 void ASIOSerialDevice::Read()
 {
-  if (async_active)
+  if(async_active)
   {
     cerr << "ASIOSerialDevice can operate in async or sync modes, not both" << endl;
     return;
@@ -233,6 +233,6 @@ void ASIOSerialDevice::Read()
 
   size_t bytes_transferred = serial_port->read_some(ba::buffer(read_msg, MAX_READ_LENGTH));
 
-  if (!read_callback.empty() && (bytes_transferred > 0))
+  if(!read_callback.empty() && (bytes_transferred > 0))
     read_callback(read_msg, bytes_transferred);
 }

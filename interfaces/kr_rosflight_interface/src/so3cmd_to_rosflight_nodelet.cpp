@@ -1,23 +1,24 @@
-#include <Eigen/Geometry>
 #include <geometry_msgs/PoseStamped.h>
-#include <rosflight_msgs/Command.h>
+#include <kr_mav_msgs/SO3Command.h>
 #include <nav_msgs/Odometry.h>
 #include <nodelet/nodelet.h>
-#include <kr_mav_msgs/SO3Command.h>
 #include <ros/ros.h>
+#include <rosflight_msgs/Command.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64.h>
 #include <tf/transform_datatypes.h>
 
+#include <Eigen/Geometry>
+
 class SO3CmdToRosflight : public nodelet::Nodelet
 {
-public:
+ public:
   void onInit(void);
 
-private:
-  void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr& msg);
-  void odom_callback(const nav_msgs::Odometry::ConstPtr& odom);
-  void imu_callback(const sensor_msgs::Imu::ConstPtr& pose);
+ private:
+  void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg);
+  void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
+  void imu_callback(const sensor_msgs::Imu::ConstPtr &pose);
 
   bool odom_set_, imu_set_, so3_cmd_set_;
   Eigen::Quaterniond odom_q_, imu_q_;
@@ -35,23 +36,23 @@ private:
   kr_mav_msgs::SO3Command last_so3_cmd_;
 };
 
-void SO3CmdToRosflight::odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
+void SO3CmdToRosflight::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
-  if (!odom_set_)
+  if(!odom_set_)
     odom_set_ = true;
 
   odom_q_ = Eigen::Quaterniond(odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
                                odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
 }
 
-void SO3CmdToRosflight::imu_callback(const sensor_msgs::Imu::ConstPtr& pose)
+void SO3CmdToRosflight::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
 {
-  if (!imu_set_)
+  if(!imu_set_)
     imu_set_ = true;
 
   imu_q_ = Eigen::Quaterniond(pose->orientation.w, pose->orientation.x, pose->orientation.y, pose->orientation.z);
 
-  if (so3_cmd_set_ && ((ros::Time::now() - last_so3_cmd_time_).toSec() >= so3_cmd_timeout_))
+  if(so3_cmd_set_ && ((ros::Time::now() - last_so3_cmd_time_).toSec() >= so3_cmd_timeout_))
   {
     ROS_INFO("so3_cmd timeout. %f seconds since last command", (ros::Time::now() - last_so3_cmd_time_).toSec());
     const auto last_so3_cmd_ptr = boost::make_shared<kr_mav_msgs::SO3Command>(last_so3_cmd_);
@@ -60,9 +61,9 @@ void SO3CmdToRosflight::imu_callback(const sensor_msgs::Imu::ConstPtr& pose)
   }
 }
 
-void SO3CmdToRosflight::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr& msg)
+void SO3CmdToRosflight::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg)
 {
-  if (!so3_cmd_set_)
+  if(!so3_cmd_set_)
     so3_cmd_set_ = true;
 
   // grab desired forces and rotation from so3
@@ -81,7 +82,7 @@ void SO3CmdToRosflight::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr
                                     R_des(0, 1) * R_cur(0, 1) + R_des(1, 1) * R_cur(1, 1) + R_des(2, 1) * R_cur(2, 1) +
                                     R_des(0, 2) * R_cur(0, 2) + R_des(1, 2) * R_cur(1, 2) + R_des(2, 2) * R_cur(2, 2)));
 
-  if (Psi > 1.0f)  // Position control stability guaranteed only when Psi < 1
+  if(Psi > 1.0f)  // Position control stability guaranteed only when Psi < 1
   {
     ROS_WARN_THROTTLE(1, "Psi %2.2f > 1.0, orientation error is too large!", Psi);
   }
@@ -94,7 +95,7 @@ void SO3CmdToRosflight::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr
   throttle = std::min(1.0, throttle);
   throttle = std::max(0.0, throttle);
 
-  if (!msg->aux.enable_motors)
+  if(!msg->aux.enable_motors)
     throttle = 0;
 
   // publish messages
@@ -131,12 +132,12 @@ void SO3CmdToRosflight::onInit(void)
   ros::NodeHandle priv_nh(getPrivateNodeHandle());
 
   // get thrust scaling parameters
-  if (priv_nh.getParam("num_props", num_props_))
+  if(priv_nh.getParam("num_props", num_props_))
     ROS_INFO("Got number of props: %d", num_props_);
   else
     ROS_ERROR("Must set num_props param");
 
-  if (priv_nh.getParam("max_prop_force", max_prop_force_))
+  if(priv_nh.getParam("max_prop_force", max_prop_force_))
     ROS_INFO("Using max_prop_force=%g ", max_prop_force_);
   else
     ROS_ERROR("Must set max_prop_force param for thrust scaling");

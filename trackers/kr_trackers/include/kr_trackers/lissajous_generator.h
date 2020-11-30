@@ -1,20 +1,20 @@
 #ifndef _LISSAJOUS_GENERATOR_H_
 #define _LISSAJOUS_GENERATOR_H_
 
-#include <ros/ros.h>
-#include <nav_msgs/Path.h>
 #include <geometry_msgs/Point.h>
 #include <kr_mav_msgs/PositionCommand.h>
-#include <kr_tracker_msgs/LissajousTrackerAction.h>
 #include <kr_tracker_msgs/LissajousAdderAction.h>
+#include <kr_tracker_msgs/LissajousTrackerAction.h>
+#include <nav_msgs/Path.h>
+#include <ros/ros.h>
 
 class LissajousGenerator
 {
-public:
+ public:
   LissajousGenerator(void);
-  void setParams(const kr_tracker_msgs::LissajousTrackerGoal::ConstPtr& msg);
-  void setParams(const kr_tracker_msgs::LissajousAdderGoal::ConstPtr& msg, int num);
-  void generatePath(nav_msgs::Path& path, geometry_msgs::Point& initial_pt, double dt);
+  void setParams(const kr_tracker_msgs::LissajousTrackerGoal::ConstPtr &msg);
+  void setParams(const kr_tracker_msgs::LissajousAdderGoal::ConstPtr &msg, int num);
+  void generatePath(nav_msgs::Path &path, geometry_msgs::Point &initial_pt, double dt);
   const kr_mav_msgs::PositionCommand::Ptr getPositionCmd(void);
   bool activate(void);
   void deactivate(void);
@@ -24,7 +24,7 @@ public:
   float timeRemaining(void);
   float timeElapsed(void);
 
-private:
+ private:
   double lissajous_period_, ramp_time_, total_time_, ramp_s_, total_s_, const_time_, period_;
   double x_amp_, y_amp_, z_amp_, yaw_amp_;
   double x_num_periods_, y_num_periods_, z_num_periods_, yaw_num_periods_;

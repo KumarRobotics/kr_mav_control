@@ -3,15 +3,16 @@
 
 // Standard C++
 #include <math.h>
+
 #include <string>
 
 // ROS Related
+#include <actionlib/client/simple_action_client.h>
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/UInt8.h>
 #include <tf/transform_datatypes.h>
-#include <actionlib/client/simple_action_client.h>
 
 // quadrotor_control
 #include <kr_tracker_msgs/Transition.h>
@@ -29,54 +30,54 @@ static const std::string lissajous_tracker_str("kr_trackers/LissajousTracker");
 static const std::string lissajous_adder_str("kr_trackers/LissajousAdder");
 
 MAVManager::MAVManager(std::string ns)
-  : nh_(ns)
-  , priv_nh_("~")
-  , active_tracker_("")
-  , status_(INIT)
-  , last_odom_t_(0.0)
-  , last_imu_t_(0.0)
-  , last_output_data_t_(0.0)
-  , last_heartbeat_t_(0.0)
-  , mass_(-1.0)
-  , odom_q_(1.0, 0.0, 0.0, 0.0)
-  , imu_q_(1.0, 0.0, 0.0, 0.0)
-  , max_attitude_angle_(45.0 / 180.0 * M_PI)
-  , need_imu_(false)
-  , need_output_data_(true)
-  , need_odom_(true)
-  , use_attitude_safety_catch_(true)
-  , line_tracker_distance_client_(nh_, "trackers_manager/line_tracker_distance/LineTracker", true)
-  , line_tracker_min_jerk_client_(nh_, "trackers_manager/line_tracker_min_jerk/LineTracker", true)
-  , circle_tracker_client_(nh_, "trackers_manager/circle_tracker/CircleTracker", true)
-  , lissajous_tracker_client_(nh_, "trackers_manager/lissajous_tracker/LissajousTracker", true)
-  , lissajous_adder_client_(nh_, "trackers_manager/lissajous_adder/LissajousAdder", true)
+    : nh_(ns),
+      priv_nh_("~"),
+      active_tracker_(""),
+      status_(INIT),
+      last_odom_t_(0.0),
+      last_imu_t_(0.0),
+      last_output_data_t_(0.0),
+      last_heartbeat_t_(0.0),
+      mass_(-1.0),
+      odom_q_(1.0, 0.0, 0.0, 0.0),
+      imu_q_(1.0, 0.0, 0.0, 0.0),
+      max_attitude_angle_(45.0 / 180.0 * M_PI),
+      need_imu_(false),
+      need_output_data_(true),
+      need_odom_(true),
+      use_attitude_safety_catch_(true),
+      line_tracker_distance_client_(nh_, "trackers_manager/line_tracker_distance/LineTracker", true),
+      line_tracker_min_jerk_client_(nh_, "trackers_manager/line_tracker_min_jerk/LineTracker", true),
+      circle_tracker_client_(nh_, "trackers_manager/circle_tracker/CircleTracker", true),
+      lissajous_tracker_client_(nh_, "trackers_manager/lissajous_tracker/LissajousTracker", true),
+      lissajous_adder_client_(nh_, "trackers_manager/lissajous_adder/LissajousAdder", true)
 {
   // Action servers.
   float server_wait_timeout;
   priv_nh_.param("server_wait_timeout", server_wait_timeout, 0.5f);
 
-  if (!line_tracker_distance_client_.waitForServer(ros::Duration(server_wait_timeout)))
+  if(!line_tracker_distance_client_.waitForServer(ros::Duration(server_wait_timeout)))
   {
     ROS_ERROR("LineTrackerDistance server not found.");
   }
 
-  if (!line_tracker_min_jerk_client_.waitForServer(ros::Duration(server_wait_timeout)))
+  if(!line_tracker_min_jerk_client_.waitForServer(ros::Duration(server_wait_timeout)))
   {
     ROS_ERROR("LineTrackerMinJerk server not found.");
   }
 
   // Optional trackers.
-  if (!circle_tracker_client_.waitForServer(ros::Duration(server_wait_timeout)))
+  if(!circle_tracker_client_.waitForServer(ros::Duration(server_wait_timeout)))
   {
     ROS_WARN("CircleTracker server not found.");
   }
 
-  if (!lissajous_tracker_client_.waitForServer(ros::Duration(server_wait_timeout)))
+  if(!lissajous_tracker_client_.waitForServer(ros::Duration(server_wait_timeout)))
   {
     ROS_ERROR("LissajousTracker server not found.");
   }
 
-  if (!lissajous_adder_client_.waitForServer(ros::Duration(server_wait_timeout)))
+  if(!lissajous_adder_client_.waitForServer(ros::Duration(server_wait_timeout)))
   {
     ROS_ERROR("LissajousAdder server not found.");
   }
@@ -101,30 +102,30 @@ MAVManager::MAVManager(std::string ns)
   srv_transition_ = nh_.serviceClient<kr_tracker_msgs::Transition>("trackers_manager/transition");
 
   srv_transition_.waitForExistence();
-  if (!this->transition(null_tracker_str))
+  if(!this->transition(null_tracker_str))
     ROS_FATAL("Activation of NullTracker failed.");
 
   // Load params after we are sure that we have stuff loaded
-  if (!priv_nh_.getParam("need_imu", need_imu_))
+  if(!priv_nh_.getParam("need_imu", need_imu_))
     ROS_WARN("Couldn't find need_imu param");
-  if (need_imu_)
+  if(need_imu_)
     imu_sub_ = nh_.subscribe("quad_decode_msg/imu", 10, &MAVManager::imu_cb, this);
 
-  if (!priv_nh_.getParam("need_output_data", need_output_data_))
+  if(!priv_nh_.getParam("need_output_data", need_output_data_))
     ROS_WARN("Couldn't find need_output_data param");
-  if (need_output_data_)
+  if(need_output_data_)
     output_data_sub_ = nh_.subscribe("quad_decode_msg/output_data", 10, &MAVManager::output_data_cb, this);
 
-  if (!priv_nh_.getParam("use_attitude_safety_catch", use_attitude_safety_catch_))
+  if(!priv_nh_.getParam("use_attitude_safety_catch", use_attitude_safety_catch_))
     ROS_WARN("Couldn't find use_attitude_safety_catch param");
 
-  if (!priv_nh_.getParam("max_attitude_angle", max_attitude_angle_))
+  if(!priv_nh_.getParam("max_attitude_angle", max_attitude_angle_))
     ROS_WARN("Couldn't find max_attitude_angle param");
 
   double m;
-  if (!nh_.getParam("mass", m))
+  if(!nh_.getParam("mass", m))
     ROS_ERROR("MAV Manager requires mass to be set as a param.");
-  else if (this->set_mass(m))
+  else if(this->set_mass(m))
     ROS_INFO("MAVManager using mass = %2.2f.", mass_);
   else
     ROS_ERROR("Mass failed to set. Perhaps mass <= 0?");
@@ -132,40 +133,40 @@ MAVManager::MAVManager(std::string ns)
   priv_nh_.param("odom_timeout", odom_timeout_, 0.1f);
 
   // Disable motors
-  if (!this->set_motors(false))
+  if(!this->set_motors(false))
     ROS_ERROR("Could not disable motors");
 }
 
-void MAVManager::tracker_done_callback(const actionlib::SimpleClientGoalState& state,
-                                       const kr_tracker_msgs::LineTrackerResultConstPtr& result)
+void MAVManager::tracker_done_callback(const actionlib::SimpleClientGoalState &state,
+                                       const kr_tracker_msgs::LineTrackerResultConstPtr &result)
 {
   ROS_INFO("Goal (%2.2f, %2.2f, %2.2f, %2.2f) finished with state %s after %2.2f s. and %2.2f m.", result->x, result->y,
            result->z, result->yaw, state.toString().c_str(), result->duration, result->length);
 }
 
-void MAVManager::circle_tracker_done_callback(const actionlib::SimpleClientGoalState& state,
-                                              const kr_tracker_msgs::CircleTrackerResultConstPtr& result)
+void MAVManager::circle_tracker_done_callback(const actionlib::SimpleClientGoalState &state,
+                                              const kr_tracker_msgs::CircleTrackerResultConstPtr &result)
 {
   ROS_INFO("Circle tracking completed after %2.2f seconds.", result->duration);
 }
 
-void MAVManager::lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState& state,
-                                                 const kr_tracker_msgs::LissajousTrackerResultConstPtr& result)
+void MAVManager::lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState &state,
+                                                 const kr_tracker_msgs::LissajousTrackerResultConstPtr &result)
 {
   ROS_INFO("Lissajous tracking completed. Duration: %2.2f seconds, distance: %2.2f m, now located at (%2.2f, %2.2f, "
            "%2.2f, %2.2f).",
            result->duration, result->length, result->x, result->y, result->z, result->yaw);
 }
 
-void MAVManager::lissajous_adder_done_callback(const actionlib::SimpleClientGoalState& state,
-                                               const kr_tracker_msgs::LissajousAdderResultConstPtr& result)
+void MAVManager::lissajous_adder_done_callback(const actionlib::SimpleClientGoalState &state,
+                                               const kr_tracker_msgs::LissajousAdderResultConstPtr &result)
 {
   ROS_INFO("Lissajous tracking completed. Duration: %2.2f seconds, distance: %2.2f m, now located at (%2.2f, %2.2f, "
            "%2.2f, %2.2f).",
            result->duration, result->length, result->x, result->y, result->z, result->yaw);
 }
 
-void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
+void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr &msg)
 {
   pos_(0) = msg->pose.pose.position.x;
   pos_(1) = msg->pose.pose.position.y;
@@ -188,23 +189,23 @@ void MAVManager::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
 
 bool MAVManager::takeoff()
 {
-  if (!this->have_recent_odom())
+  if(!this->have_recent_odom())
   {
     ROS_WARN("Cannot takeoff without odometry.");
     return false;
   }
 
-  if (!this->setHome())
+  if(!this->setHome())
     return false;
 
-  if (!this->motors() || status_ != IDLE)
+  if(!this->motors() || status_ != IDLE)
   {
     ROS_WARN("Cannot takeoff unless motors are idling.");
     return false;
   }
 
   // Only takeoff if currently under NULL_TRACKER
-  if (active_tracker_.compare(null_tracker_str) != 0)
+  if(active_tracker_.compare(null_tracker_str) != 0)
   {
     ROS_WARN("The Null Tracker must be active before taking off");
     return false;
@@ -215,7 +216,7 @@ bool MAVManager::takeoff()
   priv_nh_.param("takeoff_height", takeoff_height, 0.1);
   takeoff_height_ = takeoff_height;
 
-  if (takeoff_height_ > 3.0f)
+  if(takeoff_height_ > 3.0f)
   {
     ROS_ERROR("Takeoff Height is Dangerously High");
     return false;
@@ -229,7 +230,7 @@ bool MAVManager::takeoff()
   line_tracker_distance_client_.sendGoal(goal, boost::bind(&MAVManager::tracker_done_callback, this, _1, _2),
                                          ClientType::SimpleActiveCallback(), ClientType::SimpleFeedbackCallback());
 
-  if (this->transition(line_tracker_distance))
+  if(this->transition(line_tracker_distance))
   {
     status_ = FLYING;
     return true;
@@ -240,7 +241,7 @@ bool MAVManager::takeoff()
 
 bool MAVManager::set_mass(float m)
 {
-  if (m > 0)
+  if(m > 0)
   {
     // TODO: This should update the mass in the controller and everywhere else that is necessary.
     mass_ = m;
@@ -255,7 +256,7 @@ bool MAVManager::set_mass(float m)
 
 bool MAVManager::setHome()
 {
-  if (this->have_recent_odom())
+  if(this->have_recent_odom())
   {
     home_ = pos_;
     home_yaw_ = yaw_;
@@ -271,7 +272,7 @@ bool MAVManager::setHome()
 
 bool MAVManager::goHome()
 {
-  if (home_set_)
+  if(home_set_)
     return this->goTo(home_ + Vec3(0, 0, 0.15), home_yaw_);
   else
   {
@@ -282,7 +283,7 @@ bool MAVManager::goHome()
 
 bool MAVManager::land()
 {
-  if (!this->motors() || status_ != FLYING)
+  if(!this->motors() || status_ != FLYING)
   {
     ROS_WARN("Not landing since the robot is not already flying.");
     return false;
@@ -301,7 +302,7 @@ bool MAVManager::land()
 
 bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a_des, bool relative)
 {
-  if (!this->motors() || status_ != FLYING)
+  if(!this->motors() || status_ != FLYING)
   {
     ROS_WARN("The robot must be flying before using the goTo method.");
     return false;
@@ -313,7 +314,7 @@ bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a
 
   goal.relative = relative;
   // Convert relative translation in body frame to global frame
-  if (relative)
+  if(relative)
   {
     goal.x = x * std::cos(yaw_) - y * std::sin(yaw_);
     goal.y = x * std::sin(yaw_) + y * std::cos(yaw_);
@@ -339,7 +340,7 @@ bool MAVManager::goToTimed(float x, float y, float z, float yaw, float v_des, fl
 
   goal.relative = relative;
   // Convert relative translation in body frame to global frame
-  if (relative)
+  if(relative)
   {
     goal.x = x * std::cos(yaw_) - y * std::sin(yaw_);
     goal.y = x * std::sin(yaw_) + y * std::cos(yaw_);
@@ -379,7 +380,7 @@ bool MAVManager::goToYaw(float yaw)
 
 bool MAVManager::circle(float Ax, float Ay, float T, float duration)
 {
-  if (!this->motors() || status_ != FLYING)
+  if(!this->motors() || status_ != FLYING)
   {
     ROS_WARN("The robot must be flying before using the circle method.");
     return false;
@@ -401,7 +402,7 @@ bool MAVManager::lissajous(float x_amp, float y_amp, float z_amp, float yaw_amp,
                            float y_num_periods, float z_num_periods, float yaw_num_periods, float period,
                            float num_cycles, float ramp_time)
 {
-  if (!this->motors() || status_ != FLYING)
+  if(!this->motors() || status_ != FLYING)
   {
     ROS_WARN("The robot must be flying to execute a Lissajous.");
     return false;
@@ -431,7 +432,7 @@ bool MAVManager::compound_lissajous(float x_amp[2], float y_amp[2], float z_amp[
                                     float x_num_periods[2], float y_num_periods[2], float z_num_periods[2],
                                     float yaw_num_periods[2], float period[2], float num_cycles[2], float ramp_time[2])
 {
-  if (!this->motors() || status_ != FLYING)
+  if(!this->motors() || status_ != FLYING)
   {
     ROS_WARN("The robot must be flying to execute a Lissajous.");
     return false;
@@ -471,7 +472,7 @@ bool MAVManager::compound_lissajous(float x_amp[2], float y_amp[2], float z_amp[
 // World Velocity commands
 bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw, bool use_position_feedback)
 {
-  if (!this->motors() || status_ != FLYING)
+  if(!this->motors() || status_ != FLYING)
   {
     ROS_WARN("The robot must be flying with motors on before setting a desired velocity.");
     return false;
@@ -491,7 +492,7 @@ bool MAVManager::setDesVelInWorldFrame(float x, float y, float z, float yaw, boo
 
   // Since this could be called quite often,
   // only try to transition if it is not the active tracker.
-  if (active_tracker_.compare(velocity_tracker_str) != 0)
+  if(active_tracker_.compare(velocity_tracker_str) != 0)
   {
     return this->transition(velocity_tracker_str);
   }
@@ -507,21 +508,21 @@ bool MAVManager::setDesVelInBodyFrame(float x, float y, float z, float yaw, bool
   return this->setDesVelInWorldFrame(vel(0), vel(1), vel(2), yaw, use_position_feedback);
 }
 
-bool MAVManager::setPositionCommand(const kr_mav_msgs::PositionCommand& msg)
+bool MAVManager::setPositionCommand(const kr_mav_msgs::PositionCommand &msg)
 {
   // TODO: Need to keep publishing a position command if there is no update.
   // Otherwise, no so3_command will be published.
 
-  if (this->motors() && status_ != ESTOP)
+  if(this->motors() && status_ != ESTOP)
   {
     bool flag(true);
 
     // Since this could be called quite often,
     // only try to transition if it is not the active tracker.
-    if (active_tracker_.compare(null_tracker_str) != 0)
+    if(active_tracker_.compare(null_tracker_str) != 0)
       flag = this->transition(null_tracker_str);
 
-    if (flag)
+    if(flag)
       pub_position_command_.publish(msg);
 
     return flag;
@@ -533,10 +534,10 @@ bool MAVManager::setPositionCommand(const kr_mav_msgs::PositionCommand& msg)
   }
 }
 
-bool MAVManager::setSO3Command(const kr_mav_msgs::SO3Command& msg)
+bool MAVManager::setSO3Command(const kr_mav_msgs::SO3Command &msg)
 {
   // Note: To enable motors, the motors method must be used
-  if (!this->motors())
+  if(!this->motors())
   {
     ROS_WARN("Refusing to publish an SO3Command until motors have been enabled using the motors method.");
     return false;
@@ -545,19 +546,19 @@ bool MAVManager::setSO3Command(const kr_mav_msgs::SO3Command& msg)
   // Since this could be called quite often,
   // only try to transition if it is not the active tracker.
   bool flag(true);
-  if (active_tracker_.compare(null_tracker_str) != 0)
+  if(active_tracker_.compare(null_tracker_str) != 0)
     flag = this->transition(null_tracker_str);
 
-  if (flag)
+  if(flag)
     pub_so3_command_.publish(msg);
 
   return flag;
 }
 
-bool MAVManager::setTRPYCommand(const kr_mav_msgs::TRPYCommand& msg)
+bool MAVManager::setTRPYCommand(const kr_mav_msgs::TRPYCommand &msg)
 {
   // Note: To enable motors, the motors method must be used
-  if (!this->motors())
+  if(!this->motors())
   {
     ROS_WARN("Refusing to publish an SO3Command until motors have been enabled using the motors method.");
     return false;
@@ -566,10 +567,10 @@ bool MAVManager::setTRPYCommand(const kr_mav_msgs::TRPYCommand& msg)
   // Since this could be called quite often,
   // only try to transition if it is not the active tracker.
   bool flag(true);
-  if (active_tracker_.compare(null_tracker_str) != 0)
+  if(active_tracker_.compare(null_tracker_str) != 0)
     flag = this->transition(null_tracker_str);
 
-  if (flag)
+  if(flag)
     pub_trpy_command_.publish(msg);
 
   return flag;
@@ -577,7 +578,7 @@ bool MAVManager::setTRPYCommand(const kr_mav_msgs::TRPYCommand& msg)
 
 bool MAVManager::useNullTracker()
 {
-  if (active_tracker_.compare(null_tracker_str) != 0)
+  if(active_tracker_.compare(null_tracker_str) != 0)
     return this->transition(null_tracker_str);
 
   return true;
@@ -586,21 +587,21 @@ bool MAVManager::useNullTracker()
 bool MAVManager::set_motors(bool motors)
 {
   // Do nothing if we ask for motors to be turned on when they already are on
-  if (motors && this->motors())
+  if(motors && this->motors())
     return true;
 
   bool null_tkr = this->transition(null_tracker_str);
 
   // Make sure null_tracker is active before starting motors. If turning motors
   // off, continue anyway.
-  if (motors && !null_tkr)
+  if(motors && !null_tkr)
   {
     ROS_WARN("Could not transition to null_tracker before starting motors");
     return false;
   }
 
   // Enable/Disable motors
-  if (motors)
+  if(motors)
     ROS_INFO("Motors starting...");
   else
     ROS_INFO("Motors stopping...");
@@ -623,7 +624,7 @@ bool MAVManager::set_motors(bool motors)
   // Queue a few to make sure the signal gets through.
   // Also, the crazyflie interface throttles commands to 30 Hz, so this needs
   // to have a sufficent duration.
-  for (int i = 0; i < 10; i++)
+  for(int i = 0; i < 10; i++)
   {
     pub_so3_command_.publish(so3_cmd);
     pub_trpy_command_.publish(trpy_cmd);
@@ -635,7 +636,7 @@ bool MAVManager::set_motors(bool motors)
   return true;
 }
 
-void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr& msg)
+void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr &msg)
 {
   last_imu_t_ = ros::Time::now();
 
@@ -644,7 +645,7 @@ void MAVManager::imu_cb(const sensor_msgs::Imu::ConstPtr& msg)
   this->heartbeat();
 }
 
-void MAVManager::output_data_cb(const kr_mav_msgs::OutputData::ConstPtr& msg)
+void MAVManager::output_data_cb(const kr_mav_msgs::OutputData::ConstPtr &msg)
 {
   last_output_data_t_ = ros::Time::now();
   last_imu_t_ = ros::Time::now();
@@ -657,18 +658,18 @@ void MAVManager::output_data_cb(const kr_mav_msgs::OutputData::ConstPtr& msg)
   magnetic_field_[0] = msg->magnetic_field.x;
   magnetic_field_[1] = msg->magnetic_field.y;
   magnetic_field_[2] = msg->magnetic_field.z;
-  for (uint8_t i = 0; i < radio_.size(); i++)
+  for(uint8_t i = 0; i < radio_.size(); i++)
     radio_[i] = msg->radio_channel[i];
 
   this->heartbeat();
 }
 
-void MAVManager::tracker_status_cb(const kr_tracker_msgs::TrackerStatus::ConstPtr& msg)
+void MAVManager::tracker_status_cb(const kr_tracker_msgs::TrackerStatus::ConstPtr &msg)
 {
   active_tracker_ = msg->tracker;
 }
 
-void MAVManager::heartbeat_cb(const std_msgs::Empty::ConstPtr& msg)
+void MAVManager::heartbeat_cb(const std_msgs::Empty::ConstPtr &msg)
 {
   this->heartbeat();
 }
@@ -681,7 +682,7 @@ void MAVManager::heartbeat()
   // Only need to do monitoring at the specified frequency
   ros::Time t = ros::Time::now();
   float dt = (t - last_heartbeat_t_).toSec();
-  if (dt < 1 / freq)
+  if(dt < 1 / freq)
     return;
   else
     last_heartbeat_t_ = t;
@@ -692,20 +693,20 @@ void MAVManager::heartbeat()
   pub_status_.publish(status_msg);
 
   // Checking for odom
-  if (this->motors() && need_odom_ && !this->have_recent_odom())
+  if(this->motors() && need_odom_ && !this->have_recent_odom())
   {
     ROS_WARN("No recent odometry!");
     this->eland();
   }
 
   // Checking for imu
-  if (this->motors() && need_imu_ && !this->have_recent_imu())
+  if(this->motors() && need_imu_ && !this->have_recent_imu())
   {
     ROS_WARN("No recent imu!");
     this->eland();
   }
 
-  if (use_attitude_safety_catch_)
+  if(use_attitude_safety_catch_)
   {
     // TODO: Currently this can be overridden if client is continually updating
     // position commands. Maybe put a timeout, but it could be dangerous? Maybe
@@ -733,12 +734,12 @@ void MAVManager::heartbeat()
     float geodesic = std::max(imu_geodesic, odom_geodesic);
 
     static float attitude_limit_timer = 0;
-    if (geodesic > max_attitude_angle_)
+    if(geodesic > max_attitude_angle_)
       attitude_limit_timer += dt;
     else
       attitude_limit_timer = 0;
 
-    if (attitude_limit_timer > 0.5f)
+    if(attitude_limit_timer > 0.5f)
     {
       // Reset the timer so we don't keep calling ehover
       attitude_limit_timer = 0;
@@ -748,9 +749,9 @@ void MAVManager::heartbeat()
     }
   }
 
-  if (this->have_recent_output_data())
+  if(this->have_recent_output_data())
   {
-    if (voltage_ < 10.0f)  // Note: Asctec firmware uses 9V
+    if(voltage_ < 10.0f)  // Note: Asctec firmware uses 9V
       ROS_WARN_THROTTLE(10, "Battery voltage = %2.2f V", voltage_);
   }
 
@@ -780,7 +781,7 @@ bool MAVManager::eland()
   // TODO: This should also check a height threshold or something along those
   // lines. For example, if the rotors are idle and the robot hasn't even
   // left the ground, we don't want them to spin up faster.
-  if (this->motors() && (status_ == FLYING || status_ == ELAND))
+  if(this->motors() && (status_ == FLYING || status_ == ELAND))
   {
     ROS_WARN("Emergency Land");
 
@@ -788,7 +789,7 @@ bool MAVManager::eland()
     goal.acceleration.z = -0.45f;
     goal.yaw = yaw_;
 
-    if (this->setPositionCommand(goal))
+    if(this->setPositionCommand(goal))
     {
       status_ = ELAND;
       return true;
@@ -807,7 +808,7 @@ bool MAVManager::estop()
   pub_estop_.publish(estop_cmd);
 
   // Disarm motors
-  if (this->set_motors(false))
+  if(this->set_motors(false))
   {
     status_ = ESTOP;
     return true;
@@ -822,7 +823,7 @@ bool MAVManager::hover()
 
   const float v_norm = vel_.norm();
 
-  if (v_norm > 1e-2)
+  if(v_norm > 1e-2)
   {
     Vec3 dir = vel_ / v_norm;
 
@@ -852,7 +853,7 @@ bool MAVManager::hover()
 
 bool MAVManager::ehover()
 {
-  if (!this->motors() || status_ != FLYING)
+  if(!this->motors() || status_ != FLYING)
   {
     ROS_WARN("Will not call emergency hover unless the robot is already flying.");
     return false;
@@ -868,13 +869,13 @@ bool MAVManager::ehover()
   return this->transition(line_tracker_distance);
 }
 
-bool MAVManager::transition(const std::string& tracker_str)
+bool MAVManager::transition(const std::string &tracker_str)
 {
   // usleep(100000);
   kr_tracker_msgs::Transition transition_cmd;
   transition_cmd.request.tracker = tracker_str;
 
-  if (srv_transition_.call(transition_cmd) && transition_cmd.response.success)
+  if(srv_transition_.call(transition_cmd) && transition_cmd.response.success)
   {
     active_tracker_ = tracker_str;
     ROS_INFO("Current tracker: %s", tracker_str.c_str());

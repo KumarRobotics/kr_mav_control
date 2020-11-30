@@ -1,28 +1,29 @@
-#include <iostream>
-#include <ros/ros.h>
-#include <snav/snapdragon_navigator.h>
+#include <geometry_msgs/QuaternionStamped.h>
+#include <geometry_msgs/Vector3.h>
 #include <kr_mav_msgs/MotorRPM.h>
-#include <std_msgs/String.h>
-#include <std_msgs/Bool.h>
+#include <ros/ros.h>
 #include <sensor_msgs/BatteryState.h>
 #include <sensor_msgs/Joy.h>
-#include <geometry_msgs/Vector3.h>
-#include <geometry_msgs/QuaternionStamped.h>
+#include <snav/snapdragon_navigator.h>
+#include <std_msgs/Bool.h>
+#include <std_msgs/String.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 
+#include <iostream>
+
 class SnavSampler
 {
-public:
-  SnavSampler(ros::NodeHandle& nh, ros::NodeHandle& pnh);
-  void rpmTimerCallback(const ros::TimerEvent& event);
-  void statusTimerCallback(const ros::TimerEvent& event);
-  void attitudeTimerCallback(const ros::TimerEvent& event);
+ public:
+  SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh);
+  void rpmTimerCallback(const ros::TimerEvent &event);
+  void statusTimerCallback(const ros::TimerEvent &event);
+  void attitudeTimerCallback(const ros::TimerEvent &event);
 
-private:
+ private:
   bool get_snav_offset();
 
-  SnavCachedData* sn_struct_;
+  SnavCachedData *sn_struct_;
   ros::Duration snav_offset_;
 
   ros::Publisher motor_speeds_pub_;
@@ -38,11 +39,11 @@ private:
   ros::Timer attitude_estimate_timer_;
 };
 
-SnavSampler::SnavSampler(ros::NodeHandle& nh, ros::NodeHandle& pnh) : sn_struct_(NULL)
+SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh) : sn_struct_(NULL)
 {
-  if (sn_get_flight_data_ptr(sizeof(SnavCachedData), &sn_struct_) != 0)
+  if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &sn_struct_) != 0)
     throw "failed to get flight data ptr";
-  if (!get_snav_offset())
+  if(!get_snav_offset())
     throw "unable to obtain snav offset due to update failure";
 
   float rpm_rate;
@@ -52,13 +53,13 @@ SnavSampler::SnavSampler(ros::NodeHandle& nh, ros::NodeHandle& pnh) : sn_struct_
   pnh.param<float>("status_rate", status_rate, 5.0);
   pnh.param<float>("attitude_rate", attitude_rate, 100.0);
 
-  if (rpm_rate > 1e-3)
+  if(rpm_rate > 1e-3)
   {
     ROS_INFO("Publish motor_rpm at %4.2fHz", rpm_rate);
     motor_speeds_pub_ = nh.advertise<kr_mav_msgs::MotorRPM>("motor_rpm", 2);
     rpm_timer_ = nh.createTimer(ros::Duration(1.0 / rpm_rate), &SnavSampler::rpmTimerCallback, this);
   }
-  if (status_rate > 1e-3)
+  if(status_rate > 1e-3)
   {
     ROS_INFO("Publish status (battery, spektrum_joy, on_ground, props_state) at %4.2fHz", status_rate);
     battery_pub_ = nh.advertise<sensor_msgs::BatteryState>("battery", 2);
@@ -67,7 +68,7 @@ SnavSampler::SnavSampler(ros::NodeHandle& nh, ros::NodeHandle& pnh) : sn_struct_
     props_state_pub_ = nh.advertise<std_msgs::String>("props_state", 2);
     status_timer_ = nh.createTimer(ros::Duration(1.0 / status_rate), &SnavSampler::statusTimerCallback, this);
   }
-  if (attitude_rate > 1e-3)
+  if(attitude_rate > 1e-3)
   {
     ROS_INFO("Publish attitude estimates at %4.2fHz", attitude_rate);
     attitude_estimate_pub_ = nh.advertise<geometry_msgs::QuaternionStamped>("attitude_estimate", 2);
@@ -78,7 +79,7 @@ SnavSampler::SnavSampler(ros::NodeHandle& nh, ros::NodeHandle& pnh) : sn_struct_
 
 bool SnavSampler::get_snav_offset()
 {
-  if (sn_update_data() != 0)
+  if(sn_update_data() != 0)
   {
     ROS_ERROR("snav data retrieval failure");
     return false;
@@ -92,15 +93,15 @@ bool SnavSampler::get_snav_offset()
   sntime.fromNSec(gen_timestamp_ns);
   snav_offset_ = realtime - sntime;
 
-  if (realtime < sntime)
+  if(realtime < sntime)
     ROS_WARN("snavtime larger than realtime, potential overflow");
 
   return true;
 }
 
-void SnavSampler::attitudeTimerCallback(const ros::TimerEvent& event)
+void SnavSampler::attitudeTimerCallback(const ros::TimerEvent &event)
 {
-  if (sn_update_data() != 0)
+  if(sn_update_data() != 0)
     ROS_ERROR("snav data retrieval failure");
   else
   {
@@ -126,9 +127,9 @@ void SnavSampler::attitudeTimerCallback(const ros::TimerEvent& event)
   }
 }
 
-void SnavSampler::rpmTimerCallback(const ros::TimerEvent& event)
+void SnavSampler::rpmTimerCallback(const ros::TimerEvent &event)
 {
-  if (sn_update_data() != 0)
+  if(sn_update_data() != 0)
     ROS_ERROR("snav data retrieval failure");
   else
   {
@@ -139,7 +140,7 @@ void SnavSampler::rpmTimerCallback(const ros::TimerEvent& event)
 
     kr_mav_msgs::MotorRPM speed;
     speed.header.stamp = esc_time;
-    int16_t* rpm = sn_struct_->esc_raw.rpm;
+    int16_t *rpm = sn_struct_->esc_raw.rpm;
     speed.motor_count = 4;
     speed.rpm[0] = rpm[0];
     speed.rpm[1] = rpm[1];
@@ -149,9 +150,9 @@ void SnavSampler::rpmTimerCallback(const ros::TimerEvent& event)
   }
 }
 
-void SnavSampler::statusTimerCallback(const ros::TimerEvent& event)
+void SnavSampler::statusTimerCallback(const ros::TimerEvent &event)
 {
-  if (sn_update_data() != 0)
+  if(sn_update_data() != 0)
     ROS_ERROR("snav data retrieval failure");
   else
   {
@@ -177,7 +178,7 @@ void SnavSampler::statusTimerCallback(const ros::TimerEvent& event)
     uint8_t num_channels = sn_struct_->spektrum_rc_0_raw.num_channels;
 
     uint8_t max_channels = 16;
-    if (rc_status == SN_DATA_VALID && num_channels < max_channels)
+    if(rc_status == SN_DATA_VALID && num_channels < max_channels)
     {
       sensor_msgs::Joy joy;
       joy.header.frame_id = "spektrum";
@@ -202,15 +203,15 @@ void SnavSampler::statusTimerCallback(const ros::TimerEvent& event)
 
     // Prop status
     std_msgs::String props_state_msg;
-    if ((SnPropsState)sn_struct_->general_status.props_state == SN_PROPS_STATE_NOT_SPINNING)
+    if((SnPropsState)sn_struct_->general_status.props_state == SN_PROPS_STATE_NOT_SPINNING)
     {
       props_state_msg.data = "NOT_SPINNING";
     }
-    else if ((SnPropsState)sn_struct_->general_status.props_state == SN_PROPS_STATE_STARTING)
+    else if((SnPropsState)sn_struct_->general_status.props_state == SN_PROPS_STATE_STARTING)
     {
       props_state_msg.data = "STARTING";
     }
-    else if ((SnPropsState)sn_struct_->general_status.props_state == SN_PROPS_STATE_SPINNING)
+    else if((SnPropsState)sn_struct_->general_status.props_state == SN_PROPS_STATE_SPINNING)
     {
       props_state_msg.data = "SPINNING";
     }
@@ -222,7 +223,7 @@ void SnavSampler::statusTimerCallback(const ros::TimerEvent& event)
   }
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
   ros::init(argc, argv, "snav_publisher");
   ros::NodeHandle nh;
@@ -233,7 +234,7 @@ int main(int argc, char* argv[])
     SnavSampler snav_sampler(nh, pnh);
     ros::spin();
   }
-  catch (const char* e)
+  catch(const char *e)
   {
     ROS_ERROR("%s", e);
   }

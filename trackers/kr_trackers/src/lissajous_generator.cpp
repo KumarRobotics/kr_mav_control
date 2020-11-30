@@ -1,8 +1,9 @@
+#include <kr_tracker_msgs/TrackerStatus.h>
+#include <kr_trackers/lissajous_generator.h>
+
 #include <Eigen/Geometry>
 #include <cmath>
 #include <iostream>
-#include <kr_tracker_msgs/TrackerStatus.h>
-#include <kr_trackers/lissajous_generator.h>
 
 LissajousGenerator::LissajousGenerator()
 {
@@ -11,7 +12,7 @@ LissajousGenerator::LissajousGenerator()
   goal_set_ = false;
 }
 
-void LissajousGenerator::setParams(const kr_tracker_msgs::LissajousTrackerGoal::ConstPtr& msg)
+void LissajousGenerator::setParams(const kr_tracker_msgs::LissajousTrackerGoal::ConstPtr &msg)
 {
   x_amp_ = msg->x_amp;
   y_amp_ = msg->y_amp;
@@ -53,7 +54,7 @@ void LissajousGenerator::setParams(const kr_tracker_msgs::LissajousTrackerGoal::
   goal_reached_ = false;
 }
 
-void LissajousGenerator::setParams(const kr_tracker_msgs::LissajousAdderGoal::ConstPtr& msg, int num)
+void LissajousGenerator::setParams(const kr_tracker_msgs::LissajousAdderGoal::ConstPtr &msg, int num)
 {
   x_amp_ = msg->x_amp[num];
   y_amp_ = msg->y_amp[num];
@@ -97,7 +98,7 @@ void LissajousGenerator::setParams(const kr_tracker_msgs::LissajousAdderGoal::Co
 
 const kr_mav_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(void)
 {
-  if (!active_)
+  if(!active_)
   {
     return kr_mav_msgs::PositionCommand::Ptr();
   }
@@ -120,7 +121,7 @@ const kr_mav_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(void)
 
   Eigen::Vector3f pos, vel, acc, jrk;
   double yaw, yaw_dot;
-  if (t > total_time_)
+  if(t > total_time_)
   {
     pos = Eigen::Vector3f::Zero();
     yaw = 0;
@@ -135,14 +136,14 @@ const kr_mav_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(void)
   }
   else
   {
-    if (t < ramp_time_)
+    if(t < ramp_time_)
     {
       s = a7_ * t8 / 8.0 + a6_ * t7 / 7.0 + a5_ * t6 / 6.0 + a4_ * t5 / 5.0;
       sdot = a7_ * t7 + a6_ * t6 + a5_ * t5 + a4_ * t4;
       sddot = 7.0 * a7_ * t6 + 6.0 * a6_ * t5 + 5.0 * a5_ * t4 + 4.0 * a4_ * t3;
       sdddot = 42.0 * a7_ * t5 + 30.0 * a6_ * t4 + 20.0 * a5_ * t3 + 12.0 * a4_ * t2;
     }
-    else if (t < total_time_ - ramp_time_)
+    else if(t < total_time_ - ramp_time_)
     {
       s = ramp_s_ + t - ramp_time_;
       sdot = 1;
@@ -210,14 +211,14 @@ const kr_mav_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(void)
   return cmd;
 }
 
-void LissajousGenerator::generatePath(nav_msgs::Path& path, geometry_msgs::Point& initial_pt, double dt)
+void LissajousGenerator::generatePath(nav_msgs::Path &path, geometry_msgs::Point &initial_pt, double dt)
 {
-  if (goal_set_)
+  if(goal_set_)
   {
     double s = 0.0;
     double T = period_;
 
-    while (s < period_)
+    while(s < period_)
     {
       geometry_msgs::PoseStamped ps;
       ps.pose.position.x = x_amp_ * (1 - std::cos(2 * M_PI * x_num_periods_ * s / T)) + initial_pt.x;
@@ -232,7 +233,7 @@ void LissajousGenerator::generatePath(nav_msgs::Path& path, geometry_msgs::Point
 
 bool LissajousGenerator::activate(void)
 {
-  if (goal_set_)
+  if(goal_set_)
   {
     active_ = true;
     start_time_ = ros::Time::now();

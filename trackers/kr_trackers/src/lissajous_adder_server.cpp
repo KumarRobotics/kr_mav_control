@@ -1,26 +1,27 @@
-#include <memory>
-#include <Eigen/Geometry>
-#include <cmath>
-#include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
+#include <kr_tracker_msgs/LissajousAdderAction.h>
+#include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_trackers/initial_conditions.h>
 #include <kr_trackers/lissajous_generator.h>
 #include <kr_trackers_manager/Tracker.h>
-#include <kr_tracker_msgs/TrackerStatus.h>
-#include <kr_tracker_msgs/LissajousAdderAction.h>
+#include <ros/ros.h>
+
+#include <Eigen/Geometry>
+#include <cmath>
+#include <memory>
 
 class LissajousAdder : public kr_trackers_manager::Tracker
 {
-public:
+ public:
   LissajousAdder(void);
-  void Initialize(const ros::NodeHandle& nh);
-  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd);
+  void Initialize(const ros::NodeHandle &nh);
+  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr& msg);
+  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
   uint8_t status() const;
 
-private:
+ private:
   void goal_callback(void);
   void preempt_callback(void);
 
@@ -36,11 +37,9 @@ private:
   std::string frame_id_;
 };
 
-LissajousAdder::LissajousAdder(void) : traj_start_set_(false)
-{
-}
+LissajousAdder::LissajousAdder(void) : traj_start_set_(false) {}
 
-void LissajousAdder::Initialize(const ros::NodeHandle& nh)
+void LissajousAdder::Initialize(const ros::NodeHandle &nh)
 {
   ros::NodeHandle priv_nh(nh, "lissajous_adder");
   priv_nh.param<std::string>("frame_id", frame_id_, "world");
@@ -52,12 +51,12 @@ void LissajousAdder::Initialize(const ros::NodeHandle& nh)
   tracker_server_->start();
 }
 
-bool LissajousAdder::Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd)
+bool LissajousAdder::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
-  if (generator_1_.goalIsSet() && generator_2_.goalIsSet())
+  if(generator_1_.goalIsSet() && generator_2_.goalIsSet())
   {
-    if (!tracker_server_->isActive())
+    if(!tracker_server_->isActive())
     {
       ROS_WARN("LissajousAdder::Activate: goal_set is true but action server has no active goal - not activating.");
       return false;
@@ -69,7 +68,7 @@ bool LissajousAdder::Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd)
 
 void LissajousAdder::Deactivate(void)
 {
-  if (tracker_server_->isActive())
+  if(tracker_server_->isActive())
   {
     ROS_WARN("Deactivated tracker prior to reaching goal");
     tracker_server_->setAborted();
@@ -80,14 +79,14 @@ void LissajousAdder::Deactivate(void)
   traj_start_set_ = false;
 }
 
-kr_mav_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs::Odometry::ConstPtr& msg)
+kr_mav_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  if (!(generator_1_.isActive() & generator_2_.isActive()))
+  if(!(generator_1_.isActive() & generator_2_.isActive()))
   {
     return kr_mav_msgs::PositionCommand::Ptr();
   }
 
-  if (!traj_start_set_)
+  if(!traj_start_set_)
   {
     traj_start_set_ = true;
     ICs_.set_from_odom(msg);
@@ -104,7 +103,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs::Od
     path1.header.stamp = ros::Time::now();
     generator_1_.generatePath(path1, initial_pt, dt);
     generator_2_.generatePath(path2, initial_pt2, dt);
-    for (unsigned int i = 0; i < path1.poses.size(); i++)
+    for(unsigned int i = 0; i < path1.poses.size(); i++)
     {
       path1.poses[i].pose.position.x += path2.poses[i].pose.position.x;
       path1.poses[i].pose.position.y += path2.poses[i].pose.position.y;
@@ -116,7 +115,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs::Od
   // Set gains
   kr_mav_msgs::PositionCommand::Ptr cmd1 = generator_1_.getPositionCmd();
   kr_mav_msgs::PositionCommand::Ptr cmd2 = generator_2_.getPositionCmd();
-  if (cmd1 == NULL && cmd2 == NULL)
+  if(cmd1 == NULL && cmd2 == NULL)
   {
     return cmd1;
   }
@@ -139,7 +138,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs::Od
     cmd1->yaw += ICs_.yaw() + cmd2->yaw;
 
     // Publish feedback and compute distance traveled
-    if (!generator_1_.status() || !generator_2_.status())
+    if(!generator_1_.status() || !generator_2_.status())
     {
       kr_tracker_msgs::LissajousAdderFeedback feedback;
       feedback.time_to_completion = std::max(generator_1_.timeRemaining(), generator_2_.timeRemaining());
@@ -150,7 +149,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs::Od
       distance_traveled_ += (position_current - position_last_).norm();
       position_last_ = position_current;
     }
-    else if (tracker_server_->isActive())
+    else if(tracker_server_->isActive())
     {
       kr_tracker_msgs::LissajousAdderResult result;
       result.x = msg->pose.pose.position.x;
@@ -173,14 +172,14 @@ uint8_t LissajousAdder::status() const
 
 void LissajousAdder::goal_callback(void)
 {
-  if (generator_1_.goalIsSet() || generator_2_.goalIsSet())
+  if(generator_1_.goalIsSet() || generator_2_.goalIsSet())
   {
     return;
   }
 
   kr_tracker_msgs::LissajousAdderGoal::ConstPtr msg = tracker_server_->acceptNewGoal();
 
-  if (tracker_server_->isPreemptRequested())
+  if(tracker_server_->isPreemptRequested())
   {
     tracker_server_->setPreempted();
     return;
@@ -196,7 +195,7 @@ void LissajousAdder::goal_callback(void)
 
 void LissajousAdder::preempt_callback(void)
 {
-  if (tracker_server_->isActive())
+  if(tracker_server_->isActive())
   {
     tracker_server_->setAborted();
   }

@@ -1,35 +1,36 @@
-#include <ros/ros.h>
-#include <nodelet/nodelet.h>
-#include <nav_msgs/Odometry.h>
-#include <kr_mav_msgs/TRPYCommand.h>
 #include <kr_mav_msgs/PositionCommand.h>
+#include <kr_mav_msgs/TRPYCommand.h>
+#include <nav_msgs/Odometry.h>
+#include <nodelet/nodelet.h>
+#include <ros/ros.h>
 #include <std_msgs/Bool.h>
-#include <kr_pid_control/PIDControl.hpp>
-#include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
+
+#include <Eigen/Geometry>
+#include <kr_pid_control/PIDControl.hpp>
 
 #define CLAMP(x, min, max) ((x) < (min)) ? (min) : ((x) > (max)) ? (max) : (x)
 
 class PIDControlNodelet : public nodelet::Nodelet
 {
-public:
+ public:
   PIDControlNodelet()
-    : position_cmd_updated_(false)
-    , position_cmd_init_(false)
-    , des_yaw_(0)
-    , current_yaw_(0)
-    , enable_motors_(false)
-    , use_external_yaw_(false)
+      : position_cmd_updated_(false),
+        position_cmd_init_(false),
+        des_yaw_(0),
+        current_yaw_(0),
+        enable_motors_(false),
+        use_external_yaw_(false)
   {
   }
 
   void onInit(void);
 
-private:
+ private:
   void publishTRPYCommand(void);
-  void position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr& cmd);
-  void odom_callback(const nav_msgs::Odometry::ConstPtr& odom);
-  void enable_motors_callback(const std_msgs::Bool::ConstPtr& msg);
+  void position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
+  void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
+  void enable_motors_callback(const std_msgs::Bool::ConstPtr &msg);
 
   PIDControl controller_;
   ros::Publisher trpy_command_pub_;
@@ -54,19 +55,19 @@ void PIDControlNodelet::publishTRPYCommand(void)
   float ki_yaw = 0;
   Eigen::Vector3f ki = Eigen::Vector3f::Zero();
   // Only enable integral terms when motors are on
-  if (enable_motors_)
+  if(enable_motors_)
   {
     ki_yaw = ki_yaw_;
     ki = ki_;
   }
   controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_yaw_, kx_, kv_, ki, ki_yaw);
 
-  const Eigen::Vector4f& trpy = controller_.getControls();
+  const Eigen::Vector4f &trpy = controller_.getControls();
 
   kr_mav_msgs::TRPYCommand::Ptr trpy_command(new kr_mav_msgs::TRPYCommand);
   trpy_command->header.stamp = ros::Time::now();
   trpy_command->header.frame_id = frame_id_;
-  if (enable_motors_)
+  if(enable_motors_)
   {
     trpy_command->thrust = trpy(0);
     trpy_command->roll = CLAMP(trpy(1), -max_roll_pitch_, max_roll_pitch_);
@@ -79,7 +80,7 @@ void PIDControlNodelet::publishTRPYCommand(void)
   trpy_command_pub_.publish(trpy_command);
 }
 
-void PIDControlNodelet::position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr& cmd)
+void PIDControlNodelet::position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   des_pos_ = Eigen::Vector3f(cmd->position.x, cmd->position.y, cmd->position.z);
   des_vel_ = Eigen::Vector3f(cmd->velocity.x, cmd->velocity.y, cmd->velocity.z);
@@ -94,7 +95,7 @@ void PIDControlNodelet::position_cmd_callback(const kr_mav_msgs::PositionCommand
   publishTRPYCommand();
 }
 
-void PIDControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
+void PIDControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
   const Eigen::Vector3f position(odom->pose.pose.position.x, odom->pose.pose.position.y, odom->pose.pose.position.z);
   const Eigen::Vector3f velocity(odom->twist.twist.linear.x, odom->twist.twist.linear.y, odom->twist.twist.linear.z);
@@ -105,22 +106,22 @@ void PIDControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
   controller_.setVelocity(velocity);
   controller_.setYaw(current_yaw_);
 
-  if (position_cmd_init_)
+  if(position_cmd_init_)
   {
     // We set position_cmd_updated_ = false and expect that the
     // position_cmd_callback would set it to true since typically a position_cmd
     // message would follow an odom message. If not, the position_cmd_callback
     // hasn't been called and we publish the so3 command ourselves
     // TODO: Fallback to hover if position_cmd hasn't been received for some time
-    if (!position_cmd_updated_)
+    if(!position_cmd_updated_)
       publishTRPYCommand();
     position_cmd_updated_ = false;
   }
 }
 
-void PIDControlNodelet::enable_motors_callback(const std_msgs::Bool::ConstPtr& msg)
+void PIDControlNodelet::enable_motors_callback(const std_msgs::Bool::ConstPtr &msg)
 {
-  if (msg->data)
+  if(msg->data)
     ROS_INFO("Enabling motors");
   else
     ROS_INFO("Disabling motors");

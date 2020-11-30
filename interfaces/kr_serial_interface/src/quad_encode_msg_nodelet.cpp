@@ -1,20 +1,20 @@
-#include <ros/ros.h>
-#include <nodelet/nodelet.h>
-#include <kr_mav_msgs/SO3Command.h>
-#include <kr_mav_msgs/TRPYCommand.h>
 #include <kr_mav_msgs/PWMCommand.h>
+#include <kr_mav_msgs/SO3Command.h>
 #include <kr_mav_msgs/Serial.h>
+#include <kr_mav_msgs/TRPYCommand.h>
 #include <kr_serial_interface/encode_msgs.h>
+#include <nodelet/nodelet.h>
+#include <ros/ros.h>
 
 class QuadEncodeMsg : public nodelet::Nodelet
 {
-public:
+ public:
   void onInit(void);
 
-private:
-  void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr& msg);
-  void trpy_cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr& msg);
-  void pwm_cmd_callback(const kr_mav_msgs::PWMCommand::ConstPtr& msg);
+ private:
+  void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg);
+  void trpy_cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr &msg);
+  void pwm_cmd_callback(const kr_mav_msgs::PWMCommand::ConstPtr &msg);
   ros::Publisher serial_msg_pub_;
   ros::Subscriber so3_cmd_sub_;
   ros::Subscriber trpy_cmd_sub_;
@@ -22,7 +22,7 @@ private:
   int channel_;
 };
 
-void QuadEncodeMsg::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr& msg)
+void QuadEncodeMsg::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg)
 {
   kr_mav_msgs::Serial::Ptr serial_msg(new kr_mav_msgs::Serial);
   serial_msg->header.seq = msg->header.seq;
@@ -35,7 +35,7 @@ void QuadEncodeMsg::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr& ms
   serial_msg_pub_.publish(serial_msg);
 }
 
-void QuadEncodeMsg::trpy_cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr& msg)
+void QuadEncodeMsg::trpy_cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr &msg)
 {
   kr_mav_msgs::Serial::Ptr serial_msg(new kr_mav_msgs::Serial);
   serial_msg->header.seq = msg->header.seq;
@@ -48,7 +48,7 @@ void QuadEncodeMsg::trpy_cmd_callback(const kr_mav_msgs::TRPYCommand::ConstPtr& 
   serial_msg_pub_.publish(serial_msg);
 }
 
-void QuadEncodeMsg::pwm_cmd_callback(const kr_mav_msgs::PWMCommand::ConstPtr& msg)
+void QuadEncodeMsg::pwm_cmd_callback(const kr_mav_msgs::PWMCommand::ConstPtr &msg)
 {
   kr_mav_msgs::Serial::Ptr serial_msg(new kr_mav_msgs::Serial);
   serial_msg->header.seq = msg->header.seq;

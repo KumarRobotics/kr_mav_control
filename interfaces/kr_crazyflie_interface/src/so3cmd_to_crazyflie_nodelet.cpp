@@ -6,26 +6,27 @@
 //  linear.z = thrust   [0 to 60,000]               (motors stiction around 2000)
 //  angular.z = yawrate [-200 to 200 degrees/second] (note this is not yaw!)
 
-#include <ros/ros.h>
-#include <nodelet/nodelet.h>
-#include <Eigen/Geometry>
 #include <geometry_msgs/Twist.h>
-#include <nav_msgs/Odometry.h>
 #include <kr_mav_msgs/SO3Command.h>
+#include <nav_msgs/Odometry.h>
+#include <nodelet/nodelet.h>
+#include <ros/ros.h>
+
+#include <Eigen/Geometry>
 
 // TODO: Remove CLAMP as macro
 #define CLAMP(x, min, max) ((x) < (min)) ? (min) : ((x) > (max)) ? (max) : (x)
 
 class SO3CmdToCrazyflie : public nodelet::Nodelet
 {
-public:
+ public:
   void onInit(void);
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-private:
-  void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr& msg);
-  void odom_callback(const nav_msgs::Odometry::ConstPtr& odom);
+ private:
+  void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg);
+  void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
 
   bool odom_set_, so3_cmd_set_;
   Eigen::Quaterniond q_odom_;
@@ -53,15 +54,15 @@ private:
   int motor_status_;
 };
 
-void SO3CmdToCrazyflie::odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
+void SO3CmdToCrazyflie::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
-  if (!odom_set_)
+  if(!odom_set_)
     odom_set_ = true;
 
   q_odom_ = Eigen::Quaterniond(odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
                                odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
 
-  if (so3_cmd_set_ && ((ros::Time::now() - last_so3_cmd_time_).toSec() >= so3_cmd_timeout_))
+  if(so3_cmd_set_ && ((ros::Time::now() - last_so3_cmd_time_).toSec() >= so3_cmd_timeout_))
   {
     // ROS_WARN("so3_cmd timeout. %f seconds since last command",
     //       (ros::Time::now() - last_so3_cmd_time_).toSec());
@@ -71,16 +72,16 @@ void SO3CmdToCrazyflie::odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
   }
 }
 
-void SO3CmdToCrazyflie::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr& msg)
+void SO3CmdToCrazyflie::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg)
 {
-  if (!so3_cmd_set_)
+  if(!so3_cmd_set_)
     so3_cmd_set_ = true;
 
   // switch on motors
-  if (msg->aux.enable_motors)
+  if(msg->aux.enable_motors)
   {
     // If the crazyflie motors are timed out, we need to send a zero message in order to get them to start
-    if (motor_status_ < 3)
+    if(motor_status_ < 3)
     {
       geometry_msgs::Twist::Ptr motors_vel_cmd(new geometry_msgs::Twist);
       crazy_cmd_vel_pub_.publish(motors_vel_cmd);
@@ -90,7 +91,7 @@ void SO3CmdToCrazyflie::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr
       return;
     }
     // After sending zero message send min thrust
-    if (motor_status_ < 10)
+    if(motor_status_ < 10)
     {
       geometry_msgs::Twist::Ptr motors_vel_cmd(new geometry_msgs::Twist);
       motors_vel_cmd->linear.z = thrust_pwm_min_;
@@ -98,7 +99,7 @@ void SO3CmdToCrazyflie::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr
     }
     motor_status_ += 1;
   }
-  else if (!msg->aux.enable_motors)
+  else if(!msg->aux.enable_motors)
   {
     motor_status_ = 0;
     geometry_msgs::Twist::Ptr motors_vel_cmd(new geometry_msgs::Twist);
@@ -154,9 +155,9 @@ void SO3CmdToCrazyflie::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr
   geometry_msgs::Twist::Ptr crazy_vel_cmd(new geometry_msgs::Twist);
 
   float e_yaw = yaw_des - yaw_cur;
-  if (e_yaw > M_PI)
+  if(e_yaw > M_PI)
     e_yaw -= 2 * M_PI;
-  else if (e_yaw < -M_PI)
+  else if(e_yaw < -M_PI)
     e_yaw += 2 * M_PI;
 
   float yaw_rate_des = ((-msg->kR[2] * e_yaw) - msg->angular_velocity.z) * (180 / M_PI);
@@ -193,13 +194,13 @@ void SO3CmdToCrazyflie::onInit(void)
   // is captured with the lin_cof_a variable later.
   //
   // TODO this is where we load thrust scaling stuff
-  if (priv_nh.getParam("kp_yaw_rate", kp_yaw_rate_))
+  if(priv_nh.getParam("kp_yaw_rate", kp_yaw_rate_))
     ROS_INFO("kp yaw rate is %2.2f", kp_yaw_rate_);
   else
     ROS_FATAL("kp yaw rate not found");
 
   // get thrust scaling parameters
-  if (priv_nh.getParam("c1", c1_) && priv_nh.getParam("c2", c2_) && priv_nh.getParam("c3", c3_))
+  if(priv_nh.getParam("c1", c1_) && priv_nh.getParam("c2", c2_) && priv_nh.getParam("c3", c3_))
     ROS_INFO("Using %2.2f, %2.2f, %2.2f for thrust mapping", c1_, c2_, c3_);
   else
     ROS_FATAL("Must set coefficients for thrust scaling");

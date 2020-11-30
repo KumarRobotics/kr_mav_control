@@ -1,27 +1,26 @@
-#include <memory>
-
-#include <Eigen/Core>
-#include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-
 #include <kr_tracker_msgs/LineTrackerAction.h>
-#include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_trackers/initial_conditions.h>
+#include <kr_trackers_manager/Tracker.h>
+#include <ros/ros.h>
+
+#include <Eigen/Core>
+#include <memory>
 
 class SmoothVelTracker : public kr_trackers_manager::Tracker
 {
-public:
+ public:
   SmoothVelTracker(void);
 
-  void Initialize(const ros::NodeHandle& nh);
-  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd);
+  void Initialize(const ros::NodeHandle &nh);
+  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr& msg);
+  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
   uint8_t status() const;
 
-private:
+ private:
   void goal_callback();
   void preempt_callback();
 
@@ -47,11 +46,9 @@ private:
   Eigen::Vector3f prev_pos_;
 };
 
-SmoothVelTracker::SmoothVelTracker(void) : goal_set_(false), goal_reached_(true), active_(false)
-{
-}
+SmoothVelTracker::SmoothVelTracker(void) : goal_set_(false), goal_reached_(true), active_(false) {}
 
-void SmoothVelTracker::Initialize(const ros::NodeHandle& nh)
+void SmoothVelTracker::Initialize(const ros::NodeHandle &nh)
 {
   ros::NodeHandle priv_nh(nh, "smooth_vel_tracker");
 
@@ -63,17 +60,17 @@ void SmoothVelTracker::Initialize(const ros::NodeHandle& nh)
   tracker_server_->start();
 }
 
-bool SmoothVelTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd)
+bool SmoothVelTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
-  if (goal_set_)
+  if(goal_set_)
     active_ = true;
   return active_;
 }
 
 void SmoothVelTracker::Deactivate(void)
 {
-  if (tracker_server_->isActive())
+  if(tracker_server_->isActive())
   {
     ROS_WARN("SmoothVelTracker::Deactivate: deactivated tracker while "
              "still tracking the goal.");
@@ -85,9 +82,9 @@ void SmoothVelTracker::Deactivate(void)
   active_ = false;
 }
 
-kr_mav_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(const nav_msgs::Odometry::ConstPtr& msg)
+kr_mav_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  if (!active_)
+  if(!active_)
   {
     ICs_.set_from_odom(msg);
     return kr_mav_msgs::PositionCommand::Ptr();
@@ -102,7 +99,7 @@ kr_mav_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(const nav_msgs::
 
   const ros::Time t_now = ros::Time::now();
 
-  if (goal_set_)
+  if(goal_set_)
   {
     start_time_ = t_now;
     goal_set_ = false;
@@ -127,7 +124,7 @@ kr_mav_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(const nav_msgs::
 
   // Test each case to generate trajectory
   Eigen::Vector3f pos, vel, acc, jrk;
-  if (t > total_time_)
+  if(t > total_time_)
   {
     pos = start_pos_ + total_dist_ * dir_;
     cmd->position.x = pos(0), cmd->position.y = pos(1), cmd->position.z = pos(2);
@@ -137,7 +134,7 @@ kr_mav_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(const nav_msgs::
     cmd->yaw = goal_yaw_;
     cmd->yaw_dot = 0;
     goal_reached_ = true;
-    if (tracker_server_->isActive())
+    if(tracker_server_->isActive())
     {
       // Send a success message and reset the length and duration variables.
       kr_tracker_msgs::LineTrackerResult result;
@@ -152,7 +149,7 @@ kr_mav_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(const nav_msgs::
       current_traj_length_ = 0.0;
     }
   }
-  else if (t < ramp_time_)
+  else if(t < ramp_time_)
   {
     float dist = ramp_time_ * (vel_coeffs_(0) / 2 * ts2 + vel_coeffs_(1) / 3 * ts3 + vel_coeffs_(2) / 4 * ts4 +
                                vel_coeffs_(3) / 5 * ts5 + vel_coeffs_(4) / 6 * ts6 + vel_coeffs_(5) / 7 * ts7 +
@@ -176,7 +173,7 @@ kr_mav_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(const nav_msgs::
     cmd->yaw = start_yaw_ + yaw_dot_max_ / (2 * ramp_time_) * t * t;
     cmd->yaw_dot = yaw_dot_max_ / ramp_time_ * t;
   }
-  else if (t < total_time_ - ramp_time_)
+  else if(t < total_time_ - ramp_time_)
   {
     float dist = ramp_dist_ + target_speed_ * (t - ramp_time_);
     pos = start_pos_ + dist * dir_;
@@ -226,7 +223,7 @@ kr_mav_msgs::PositionCommand::ConstPtr SmoothVelTracker::update(const nav_msgs::
   }
   ICs_.set_from_cmd(cmd);
 
-  if (!goal_reached_)
+  if(!goal_reached_)
   {
     kr_tracker_msgs::LineTrackerFeedback feedback;
     Eigen::Vector3f goal = start_pos_ + total_dist_ * dir_;
@@ -257,7 +254,7 @@ void SmoothVelTracker::goal_callback()
 
   // If preempt has been requested, then set this goal to preempted
   // and make no changes to the tracker state.
-  if (tracker_server_->isPreemptRequested())
+  if(tracker_server_->isPreemptRequested())
   {
     ROS_INFO("SmoothVelTracker going to goal (%f, %f, %f, %f) preempted.", msg->x, msg->y, msg->z, msg->yaw);
     tracker_server_->setPreempted();
@@ -267,7 +264,7 @@ void SmoothVelTracker::goal_callback()
   current_traj_length_ = 0.0;
 
   // Make sure user specifies desired velocity
-  if (msg->v_des > 0 && msg->a_des > 0)
+  if(msg->v_des > 0 && msg->a_des > 0)
   {
     // Set the start position
     Eigen::Vector3f start_pos = ICs_.pos();
@@ -280,7 +277,7 @@ void SmoothVelTracker::goal_callback()
     // Find goal position
     Eigen::Vector3f goal_pos;
     goal_pos(0) = msg->x, goal_pos(1) = msg->y, goal_pos(2) = msg->z;
-    if (msg->relative)
+    if(msg->relative)
       goal_pos += start_pos;
 
     // Find distance and direction to goal
@@ -303,7 +300,7 @@ void SmoothVelTracker::goal_callback()
                  ramp_time_;
 
     // Check to make sure that twice the ramp distance is less than the entire distance
-    if (2 * ramp_dist_ < total_dist)
+    if(2 * ramp_dist_ < total_dist)
     {
       // Set the parameters for the trajectory
       start_pos_ = start_pos;

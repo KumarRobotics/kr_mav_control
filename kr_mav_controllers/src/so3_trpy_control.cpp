@@ -1,30 +1,31 @@
-#include <ros/ros.h>
-#include <nodelet/nodelet.h>
-#include <nav_msgs/Odometry.h>
-#include <kr_mav_msgs/TRPYCommand.h>
-#include <kr_mav_msgs/PositionCommand.h>
-#include <kr_mav_msgs/Corrections.h>
-#include <std_msgs/Bool.h>
-#include <Eigen/Geometry>
-#include <kr_mav_controllers/SO3Control.h>
 #include <dynamic_reconfigure/server.h>
 #include <kr_mav_controllers/SO3Config.h>
+#include <kr_mav_controllers/SO3Control.h>
+#include <kr_mav_msgs/Corrections.h>
+#include <kr_mav_msgs/PositionCommand.h>
+#include <kr_mav_msgs/TRPYCommand.h>
+#include <nav_msgs/Odometry.h>
+#include <nodelet/nodelet.h>
+#include <ros/ros.h>
+#include <std_msgs/Bool.h>
+
+#include <Eigen/Geometry>
 
 #define CLAMP(x, min, max) ((x) < (min)) ? (min) : ((x) > (max)) ? (max) : (x)
 
 class SO3TRPYControlNodelet : public nodelet::Nodelet
 {
-public:
+ public:
   SO3TRPYControlNodelet()
-    : odom_set_(false)
-    , position_cmd_updated_(false)
-    , position_cmd_init_(false)
-    , des_yaw_(0)
-    , des_yaw_dot_(0)
-    , yaw_int_(0)
-    , enable_motors_(false)
-    , use_external_yaw_(false)
-    , g_(9.81)
+      : odom_set_(false),
+        position_cmd_updated_(false),
+        position_cmd_init_(false),
+        des_yaw_(0),
+        des_yaw_dot_(0),
+        yaw_int_(0),
+        enable_motors_(false),
+        use_external_yaw_(false),
+        g_(9.81)
   {
     controller_.resetIntegrals();
   }
@@ -33,13 +34,13 @@ public:
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;  // Need this since we have SO3Control which needs aligned pointer
 
-private:
+ private:
   void publishCommand();
-  void position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr& cmd);
-  void odom_callback(const nav_msgs::Odometry::ConstPtr& odom);
-  void enable_motors_callback(const std_msgs::Bool::ConstPtr& msg);
-  void corrections_callback(const kr_mav_msgs::Corrections::ConstPtr& msg);
-  void cfg_callback(kr_mav_controllers::SO3Config& config, uint32_t level);
+  void position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
+  void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
+  void enable_motors_callback(const std_msgs::Bool::ConstPtr &msg);
+  void corrections_callback(const kr_mav_msgs::Corrections::ConstPtr &msg);
+  void cfg_callback(kr_mav_controllers::SO3Config &config, uint32_t level);
 
   SO3Control controller_;
   ros::Publisher trpy_command_pub_;
@@ -64,7 +65,7 @@ private:
 
 void SO3TRPYControlNodelet::publishCommand()
 {
-  if (!odom_set_)
+  if(!odom_set_)
   {
     NODELET_INFO_THROTTLE(1, "Odom not set, not publishing command!");
     return;
@@ -73,7 +74,7 @@ void SO3TRPYControlNodelet::publishCommand()
   float ki_yaw = 0;
   Eigen::Vector3f ki = Eigen::Vector3f::Zero();
   Eigen::Vector3f kib = Eigen::Vector3f::Zero();
-  if (enable_motors_)
+  if(enable_motors_)
   {
     ki_yaw = ki_yaw_;
     ki = config_ki_;
@@ -81,9 +82,9 @@ void SO3TRPYControlNodelet::publishCommand()
   }
   controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki, kib);
 
-  const Eigen::Vector3f& force = controller_.getComputedForce();
-  const Eigen::Quaternionf& q_des = controller_.getComputedOrientation();
-  const Eigen::Vector3f& ang_vel = controller_.getComputedAngularVelocity();
+  const Eigen::Vector3f &force = controller_.getComputedForce();
+  const Eigen::Quaternionf &q_des = controller_.getComputedOrientation();
+  const Eigen::Vector3f &ang_vel = controller_.getComputedAngularVelocity();
 
   const Eigen::Matrix3f R_des(q_des);
   const Eigen::Matrix3f R_cur(current_orientation_);
@@ -98,34 +99,34 @@ void SO3TRPYControlNodelet::publishCommand()
                                     R_des(0, 2) * R_cur(0, 2) + R_des(1, 2) * R_cur(1, 2) + R_des(2, 2) * R_cur(2, 2)));
 
   float thrust = 0.0f;
-  if (Psi < 1.0f)  // Position control stability guaranteed only when Psi < 1
+  if(Psi < 1.0f)  // Position control stability guaranteed only when Psi < 1
     thrust = force(0) * R_cur(0, 2) + force(1) * R_cur(1, 2) + force(2) * R_cur(2, 2);
 
   float e_yaw = yaw_des - yaw_cur;
 
   const float PI = static_cast<float>(M_PI);
-  if (e_yaw > PI)
+  if(e_yaw > PI)
     e_yaw -= 2 * PI;
-  else if (e_yaw < -PI)
+  else if(e_yaw < -PI)
     e_yaw += 2 * PI;
 
   // Yaw integral
   yaw_int_ += ki_yaw * e_yaw;
-  if (yaw_int_ > PI)
+  if(yaw_int_ > PI)
     yaw_int_ = PI;
-  else if (yaw_int_ < -PI)
+  else if(yaw_int_ < -PI)
     yaw_int_ = -PI;
 
   float yaw_cmd = yaw_des + yaw_int_;
-  if (yaw_cmd > PI)
+  if(yaw_cmd > PI)
     yaw_cmd -= 2 * PI;
-  else if (yaw_cmd < -PI)
+  else if(yaw_cmd < -PI)
     yaw_cmd += 2 * PI;
 
   kr_mav_msgs::TRPYCommand::Ptr trpy_command(new kr_mav_msgs::TRPYCommand);
   trpy_command->header.stamp = ros::Time::now();
   trpy_command->header.frame_id = frame_id_;
-  if (enable_motors_)
+  if(enable_motors_)
   {
     trpy_command->thrust = CLAMP(thrust, 0.01f * 9.81f, 10.0f * 9.81f);
     trpy_command->roll = roll_des;
@@ -134,7 +135,7 @@ void SO3TRPYControlNodelet::publishCommand()
     trpy_command->angular_velocity.x = ang_vel(0);
     trpy_command->angular_velocity.y = ang_vel(1);
     trpy_command->angular_velocity.z = ang_vel(2);
-    for (int i = 0; i < 3; i++)
+    for(int i = 0; i < 3; i++)
     {
       trpy_command->kR[i] = kR_[i];
       trpy_command->kOm[i] = kOm_[i];
@@ -149,7 +150,7 @@ void SO3TRPYControlNodelet::publishCommand()
   trpy_command_pub_.publish(trpy_command);
 }
 
-void SO3TRPYControlNodelet::position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr& cmd)
+void SO3TRPYControlNodelet::position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   des_pos_ = Eigen::Vector3f(cmd->position.x, cmd->position.y, cmd->position.z);
   des_vel_ = Eigen::Vector3f(cmd->velocity.x, cmd->velocity.y, cmd->velocity.z);
@@ -172,9 +173,9 @@ void SO3TRPYControlNodelet::position_cmd_callback(const kr_mav_msgs::PositionCom
   publishCommand();
 }
 
-void SO3TRPYControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
+void SO3TRPYControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
-  if (!odom_set_)
+  if(!odom_set_)
     odom_set_ = true;
 
   const Eigen::Vector3f position(odom->pose.pose.position.x, odom->pose.pose.position.y, odom->pose.pose.position.z);
@@ -187,22 +188,22 @@ void SO3TRPYControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr& od
   controller_.setVelocity(velocity);
   controller_.setCurrentOrientation(current_orientation_);
 
-  if (position_cmd_init_)
+  if(position_cmd_init_)
   {
     // We set position_cmd_updated_ = false and expect that the
     // position_cmd_callback would set it to true since typically a position_cmd
     // message would follow an odom message. If not, the position_cmd_callback
     // hasn't been called and we publish the so3 command ourselves
     // TODO: Fallback to hover if position_cmd hasn't been received for some time
-    if (!position_cmd_updated_)
+    if(!position_cmd_updated_)
       publishCommand();
     position_cmd_updated_ = false;
   }
 }
 
-void SO3TRPYControlNodelet::enable_motors_callback(const std_msgs::Bool::ConstPtr& msg)
+void SO3TRPYControlNodelet::enable_motors_callback(const std_msgs::Bool::ConstPtr &msg)
 {
-  if (msg->data)
+  if(msg->data)
     ROS_INFO("Enabling motors");
   else
     ROS_INFO("Disabling motors");
@@ -214,22 +215,22 @@ void SO3TRPYControlNodelet::enable_motors_callback(const std_msgs::Bool::ConstPt
   controller_.resetIntegrals();
 }
 
-void SO3TRPYControlNodelet::corrections_callback(const kr_mav_msgs::Corrections::ConstPtr& msg)
+void SO3TRPYControlNodelet::corrections_callback(const kr_mav_msgs::Corrections::ConstPtr &msg)
 {
   corrections_[0] = msg->kf_correction;
   corrections_[1] = msg->angle_corrections[0];
   corrections_[2] = msg->angle_corrections[1];
 }
 
-void SO3TRPYControlNodelet::cfg_callback(kr_mav_controllers::SO3Config& config, uint32_t level)
+void SO3TRPYControlNodelet::cfg_callback(kr_mav_controllers::SO3Config &config, uint32_t level)
 {
-  if (level == 0)
+  if(level == 0)
   {
     NODELET_DEBUG_STREAM("Nothing changed. level: " << level);
     return;
   }
 
-  if (level & (1 << 0))
+  if(level & (1 << 0))
   {
     config_kx_[0] = config.kp_x;
     config_kx_[1] = config.kp_y;
@@ -243,7 +244,7 @@ void SO3TRPYControlNodelet::cfg_callback(kr_mav_controllers::SO3Config& config, 
                  config_kx_[1], config_kx_[2], config_kv_[0], config_kv_[1], config_kv_[2]);
   }
 
-  if (level & (1 << 1))
+  if(level & (1 << 1))
   {
     config_ki_[0] = config.ki_x;
     config_ki_[1] = config.ki_y;
@@ -257,7 +258,7 @@ void SO3TRPYControlNodelet::cfg_callback(kr_mav_controllers::SO3Config& config, 
                  config_ki_[1], config_ki_[2], config_kib_[0], config_kib_[1], config_kib_[2]);
   }
 
-  if (level & (1 << 2))
+  if(level & (1 << 2))
   {
     kR_[0] = config.rot_x;
     kR_[1] = config.rot_y;
@@ -271,7 +272,7 @@ void SO3TRPYControlNodelet::cfg_callback(kr_mav_controllers::SO3Config& config, 
                  kOm_[0], kOm_[1], kOm_[2]);
   }
 
-  if (level & (1 << 3))
+  if(level & (1 << 3))
   {
     corrections_[0] = config.kf_correction;
     corrections_[1] = config.roll_correction;
@@ -280,7 +281,7 @@ void SO3TRPYControlNodelet::cfg_callback(kr_mav_controllers::SO3Config& config, 
                  corrections_[2]);
   }
 
-  if (level & (1 << 4))
+  if(level & (1 << 4))
   {
     controller_.setMaxIntegral(config.max_pos_int);
     controller_.setMaxIntegralBody(config.max_pos_int_b);

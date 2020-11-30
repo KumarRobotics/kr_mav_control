@@ -1,13 +1,14 @@
-#include <kr_serial_interface/decode_msgs.h>
 #include <kr_serial_interface/comm_types.h>
+#include <kr_serial_interface/decode_msgs.h>
+
 #include <Eigen/Geometry>
 
 namespace kr_mav_msgs
 {
-bool decodeOutputData(const std::vector<uint8_t>& data, kr_mav_msgs::OutputData& output)
+bool decodeOutputData(const std::vector<uint8_t> &data, kr_mav_msgs::OutputData &output)
 {
   struct OUTPUT_DATA output_data;
-  if (data.size() != sizeof(output_data))
+  if(data.size() != sizeof(output_data))
     return false;
 
   memcpy(&output_data, &data[0], sizeof(output_data));
@@ -41,7 +42,7 @@ bool decodeOutputData(const std::vector<uint8_t>& data, kr_mav_msgs::OutputData&
   output.magnetic_field.y = output_data.mag[1] / 2500.0f;
   output.magnetic_field.z = output_data.mag[2] / 2500.0f;
 
-  for (int i = 0; i < 8; i++)
+  for(int i = 0; i < 8; i++)
   {
     output.radio_channel[i] = output_data.radio[i];
   }
@@ -55,8 +56,8 @@ bool decodeOutputData(const std::vector<uint8_t>& data, kr_mav_msgs::OutputData&
   //   *1*    Front
   // 2     4
   //    3
-  const int motors_map[] = { 0, 2, 1, 3 };
-  for (int i = 0; i < 4; i++)
+  const int motors_map[] = {0, 2, 1, 3};
+  for(int i = 0; i < 4; i++)
   {
     // The following conversion is from
     // http://wiki.asctec.de/display/AR/List+of+all+predefined+variables%2C+commands+and+parameters
@@ -73,10 +74,10 @@ bool decodeOutputData(const std::vector<uint8_t>& data, kr_mav_msgs::OutputData&
   return true;
 }
 
-bool decodeStatusData(const std::vector<uint8_t>& data, kr_mav_msgs::StatusData& status)
+bool decodeStatusData(const std::vector<uint8_t> &data, kr_mav_msgs::StatusData &status)
 {
   struct STATUS_DATA status_data;
-  if (data.size() != sizeof(status_data))
+  if(data.size() != sizeof(status_data))
     return false;
   memcpy(&status_data, &data[0], sizeof(status_data));
 

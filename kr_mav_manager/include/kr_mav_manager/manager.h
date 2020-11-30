@@ -2,16 +2,16 @@
 #define MANAGER_H
 
 // Standard C++
-#include <string>
 #include <Eigen/Geometry>
 #include <array>
+#include <string>
 
 // ROS related
-#include <ros/ros.h>
+#include <actionlib/client/simple_action_client.h>
 #include <nav_msgs/Odometry.h>
+#include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Empty.h>
-#include <actionlib/client/simple_action_client.h>
 
 // quadrotor_control
 #include <kr_mav_msgs/OutputData.h>
@@ -20,15 +20,15 @@
 #include <kr_mav_msgs/TRPYCommand.h>
 #include <kr_tracker_msgs/CircleTrackerAction.h>
 #include <kr_tracker_msgs/LineTrackerAction.h>
-#include <kr_tracker_msgs/LissajousTrackerAction.h>
 #include <kr_tracker_msgs/LissajousAdderAction.h>
+#include <kr_tracker_msgs/LissajousTrackerAction.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
 
 namespace kr_mav_manager
 {
 class MAVManager
 {
-public:
+ public:
   // Typedefs
   typedef Eigen::Vector2f Vec2;
   typedef Eigen::Vector3f Vec3;
@@ -48,61 +48,22 @@ public:
   MAVManager(std::string ns = "");
 
   // Accessors
-  Vec3 pos()
-  {
-    return pos_;
-  }
-  Vec3 vel()
-  {
-    return vel_;
-  }
-  Vec3 home()
-  {
-    return home_;
-  }
-  float yaw()
-  {
-    return yaw_;
-  }
-  float home_yaw()
-  {
-    return home_yaw_;
-  }
-  float mass()
-  {
-    return mass_;
-  }
-  std::string active_tracker()
-  {
-    return active_tracker_;
-  }
-  bool need_imu()
-  {
-    return need_imu_;
-  }
-  bool need_odom()
-  {
-    return need_odom_;
-  }
-  Status status()
-  {
-    return status_;
-  }
+  Vec3 pos() { return pos_; }
+  Vec3 vel() { return vel_; }
+  Vec3 home() { return home_; }
+  float yaw() { return yaw_; }
+  float home_yaw() { return home_yaw_; }
+  float mass() { return mass_; }
+  std::string active_tracker() { return active_tracker_; }
+  bool need_imu() { return need_imu_; }
+  bool need_odom() { return need_odom_; }
+  Status status() { return status_; }
 
   // Mutators
   bool set_mass(float m);
-  void set_need_imu(bool flag)
-  {
-    need_imu_ = flag;
-  }  // TODO: Consider not allowing this to be toggled after takeoff
-  void set_need_odom(bool flag)
-  {
-    need_odom_ = flag;
-  }  // TODO: Consider not allowing this to be toggled after takeoff
-  void set_use_attitude_safety_catch(bool flag)
-  {
-    use_attitude_safety_catch_ = flag;
-  }
+  void set_need_imu(bool flag) { need_imu_ = flag; }    // TODO: Consider not allowing this to be toggled after takeoff
+  void set_need_odom(bool flag) { need_odom_ = flag; }  // TODO: Consider not allowing this to be toggled after takeoff
+  void set_use_attitude_safety_catch(bool flag) { use_attitude_safety_catch_ = flag; }
 
   // Home Methods
   bool setHome();  // Uses the current position and yaw
@@ -138,50 +99,32 @@ public:
                           float num_cycles[2], float ramp_time[2]);
 
   // Direct low-level control
-  bool setPositionCommand(const kr_mav_msgs::PositionCommand& cmd);
-  bool setSO3Command(const kr_mav_msgs::SO3Command& cmd);
-  bool setTRPYCommand(const kr_mav_msgs::TRPYCommand& cmd);
+  bool setPositionCommand(const kr_mav_msgs::PositionCommand &cmd);
+  bool setSO3Command(const kr_mav_msgs::SO3Command &cmd);
+  bool setTRPYCommand(const kr_mav_msgs::TRPYCommand &cmd);
   bool useNullTracker();
 
   // Monitoring
   bool have_recent_odom(), have_recent_imu(), have_recent_output_data();
-  float voltage()
-  {
-    return voltage_;
-  }
-  float pressure_height()
-  {
-    return pressure_height_;
-  }
-  float pressure_dheight()
-  {
-    return pressure_dheight_;
-  }
-  std::array<float, 3> magnetic_field()
-  {
-    return magnetic_field_;
-  }
-  std::array<uint8_t, 8> radio()
-  {
-    return radio_;
-  }
+  float voltage() { return voltage_; }
+  float pressure_height() { return pressure_height_; }
+  float pressure_dheight() { return pressure_dheight_; }
+  std::array<float, 3> magnetic_field() { return magnetic_field_; }
+  std::array<uint8_t, 8> radio() { return radio_; }
 
   // Safety
   bool hover();
   bool ehover();
   bool set_motors(bool);
-  bool motors()
-  {
-    return motors_;
-  }
+  bool motors() { return motors_; }
   bool eland();
   bool estop();
 
-  bool transition(const std::string& tracker_str);
+  bool transition(const std::string &tracker_str);
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
-private:
+ private:
   typedef actionlib::SimpleActionClient<kr_tracker_msgs::LineTrackerAction> ClientType;
   typedef actionlib::SimpleActionClient<kr_tracker_msgs::CircleTrackerAction> CircleClientType;
   typedef actionlib::SimpleActionClient<kr_tracker_msgs::LissajousTrackerAction> LissajousClientType;
@@ -190,20 +133,20 @@ private:
   ros::NodeHandle nh_;
   ros::NodeHandle priv_nh_;
 
-  void tracker_done_callback(const actionlib::SimpleClientGoalState& state,
-                             const kr_tracker_msgs::LineTrackerResultConstPtr& result);
-  void circle_tracker_done_callback(const actionlib::SimpleClientGoalState& state,
-                                    const kr_tracker_msgs::CircleTrackerResultConstPtr& result);
-  void lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState& state,
-                                       const kr_tracker_msgs::LissajousTrackerResultConstPtr& result);
-  void lissajous_adder_done_callback(const actionlib::SimpleClientGoalState& state,
-                                     const kr_tracker_msgs::LissajousAdderResultConstPtr& result);
+  void tracker_done_callback(const actionlib::SimpleClientGoalState &state,
+                             const kr_tracker_msgs::LineTrackerResultConstPtr &result);
+  void circle_tracker_done_callback(const actionlib::SimpleClientGoalState &state,
+                                    const kr_tracker_msgs::CircleTrackerResultConstPtr &result);
+  void lissajous_tracker_done_callback(const actionlib::SimpleClientGoalState &state,
+                                       const kr_tracker_msgs::LissajousTrackerResultConstPtr &result);
+  void lissajous_adder_done_callback(const actionlib::SimpleClientGoalState &state,
+                                     const kr_tracker_msgs::LissajousAdderResultConstPtr &result);
 
-  void odometry_cb(const nav_msgs::Odometry::ConstPtr& msg);
-  void imu_cb(const sensor_msgs::Imu::ConstPtr& msg);
-  void output_data_cb(const kr_mav_msgs::OutputData::ConstPtr& msg);
-  void heartbeat_cb(const std_msgs::Empty::ConstPtr& msg);
-  void tracker_status_cb(const kr_tracker_msgs::TrackerStatus::ConstPtr& msg);
+  void odometry_cb(const nav_msgs::Odometry::ConstPtr &msg);
+  void imu_cb(const sensor_msgs::Imu::ConstPtr &msg);
+  void output_data_cb(const kr_mav_msgs::OutputData::ConstPtr &msg);
+  void heartbeat_cb(const std_msgs::Empty::ConstPtr &msg);
+  void tracker_status_cb(const kr_tracker_msgs::TrackerStatus::ConstPtr &msg);
   void heartbeat();
 
   std::string active_tracker_;

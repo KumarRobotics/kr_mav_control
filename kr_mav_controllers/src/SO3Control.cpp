@@ -1,14 +1,15 @@
-#include <ros/console.h>
-#include <tf/transform_datatypes.h>
 #include "kr_mav_controllers/SO3Control.h"
 
+#include <ros/console.h>
+#include <tf/transform_datatypes.h>
+
 SO3Control::SO3Control()
-  : mass_(0.5)
-  , g_(9.81)
-  , max_pos_int_(0.5)
-  , max_pos_int_b_(0.5)
-  , current_orientation_(Eigen::Quaternionf::Identity())
-  , cos_max_tilt_angle_(-1.0)
+    : mass_(0.5),
+      g_(9.81),
+      max_pos_int_(0.5),
+      max_pos_int_b_(0.5),
+      current_orientation_(Eigen::Quaternionf::Identity()),
+      cos_max_tilt_angle_(-1.0)
 {
 }
 
@@ -22,12 +23,12 @@ void SO3Control::setGravity(const float g)
   g_ = g;
 }
 
-void SO3Control::setPosition(const Eigen::Vector3f& position)
+void SO3Control::setPosition(const Eigen::Vector3f &position)
 {
   pos_ = position;
 }
 
-void SO3Control::setVelocity(const Eigen::Vector3f& velocity)
+void SO3Control::setVelocity(const Eigen::Vector3f &velocity)
 {
   vel_ = velocity;
 }
@@ -42,34 +43,34 @@ void SO3Control::setMaxIntegralBody(const float max_integral_b)
   max_pos_int_b_ = max_integral_b;
 }
 
-void SO3Control::setCurrentOrientation(const Eigen::Quaternionf& current_orientation)
+void SO3Control::setCurrentOrientation(const Eigen::Quaternionf &current_orientation)
 {
   current_orientation_ = current_orientation;
 }
 
 void SO3Control::setMaxTiltAngle(const float max_tilt_angle)
 {
-  if (max_tilt_angle > 0.0f && max_tilt_angle <= static_cast<float>(M_PI))
+  if(max_tilt_angle > 0.0f && max_tilt_angle <= static_cast<float>(M_PI))
     cos_max_tilt_angle_ = std::cos(max_tilt_angle);
 }
 
-void SO3Control::calculateControl(const Eigen::Vector3f& des_pos, const Eigen::Vector3f& des_vel,
-                                  const Eigen::Vector3f& des_acc, const Eigen::Vector3f& des_jerk, const float des_yaw,
-                                  const float des_yaw_dot, const Eigen::Vector3f& kx, const Eigen::Vector3f& kv,
-                                  const Eigen::Vector3f& ki, const Eigen::Vector3f& ki_b)
+void SO3Control::calculateControl(const Eigen::Vector3f &des_pos, const Eigen::Vector3f &des_vel,
+                                  const Eigen::Vector3f &des_acc, const Eigen::Vector3f &des_jerk, const float des_yaw,
+                                  const float des_yaw_dot, const Eigen::Vector3f &kx, const Eigen::Vector3f &kv,
+                                  const Eigen::Vector3f &ki, const Eigen::Vector3f &ki_b)
 {
   const Eigen::Vector3f e_pos = des_pos - pos_;
   const Eigen::Vector3f e_vel = des_vel - vel_;
 
-  for (int i = 0; i < 3; i++)
+  for(int i = 0; i < 3; i++)
   {
-    if (kx(i) != 0)
+    if(kx(i) != 0)
       pos_int_(i) += ki(i) * e_pos(i);
 
     // Limit integral term
-    if (pos_int_(i) > max_pos_int_)
+    if(pos_int_(i) > max_pos_int_)
       pos_int_(i) = max_pos_int_;
-    else if (pos_int_(i) < -max_pos_int_)
+    else if(pos_int_(i) < -max_pos_int_)
       pos_int_(i) = -max_pos_int_;
   }
   // ROS_DEBUG_THROTTLE(2, "Integrated world disturbance compensation [N]: {x: %2.2f, y: %2.2f, z: %2.2f}", pos_int_(0),
@@ -77,15 +78,15 @@ void SO3Control::calculateControl(const Eigen::Vector3f& des_pos, const Eigen::V
 
   Eigen::Quaternionf q(current_orientation_);
   const Eigen::Vector3f e_pos_b = q.inverse() * e_pos;
-  for (int i = 0; i < 3; i++)
+  for(int i = 0; i < 3; i++)
   {
-    if (kx(i) != 0)
+    if(kx(i) != 0)
       pos_int_b_(i) += ki_b(i) * e_pos_b(i);
 
     // Limit integral term in the body
-    if (pos_int_b_(i) > max_pos_int_b_)
+    if(pos_int_b_(i) > max_pos_int_b_)
       pos_int_b_(i) = max_pos_int_b_;
-    else if (pos_int_b_(i) < -max_pos_int_b_)
+    else if(pos_int_b_(i) < -max_pos_int_b_)
       pos_int_b_(i) = -max_pos_int_b_;
   }
   // ROS_DEBUG_THROTTLE(2, "Integrated body disturbance compensation [N]: {x: %2.2f, y: %2.2f, z: %2.2f}",
@@ -97,12 +98,12 @@ void SO3Control::calculateControl(const Eigen::Vector3f& des_pos, const Eigen::V
 
   // Check and limit tilt angle
   float lambda = 1.0f;
-  if (Eigen::Vector3f::UnitZ().dot(acc_total.normalized()) < cos_max_tilt_angle_)
+  if(Eigen::Vector3f::UnitZ().dot(acc_total.normalized()) < cos_max_tilt_angle_)
   {
     const float x = acc_control.x(), y = acc_control.y(), z = acc_control.z();
     const float cot_max_tilt_angle = cos_max_tilt_angle_ / std::sqrt(1 - cos_max_tilt_angle_ * cos_max_tilt_angle_);
     lambda = -g_ / (z - std::sqrt(x * x + y * y) * cot_max_tilt_angle);
-    if (lambda > 0 && lambda <= 1)
+    if(lambda > 0 && lambda <= 1)
       acc_total = lambda * acc_control + acc_grav;
   }
 
@@ -113,7 +114,7 @@ void SO3Control::calculateControl(const Eigen::Vector3f& des_pos, const Eigen::V
   Eigen::Vector3f b1c, b2c, b3c;
   const Eigen::Vector3f b2d(-std::sin(des_yaw), std::cos(des_yaw), 0);
 
-  if (force_.norm() > 1e-6f)
+  if(force_.norm() > 1e-6f)
     b3c.noalias() = force_.normalized();
   else
     b3c.noalias() = Eigen::Vector3f::UnitZ();
@@ -140,17 +141,17 @@ void SO3Control::calculateControl(const Eigen::Vector3f& des_pos, const Eigen::V
   angular_velocity_ = Eigen::Vector3f(omega_hat(2, 1), omega_hat(0, 2), omega_hat(1, 0));
 }
 
-const Eigen::Vector3f& SO3Control::getComputedForce()
+const Eigen::Vector3f &SO3Control::getComputedForce()
 {
   return force_;
 }
 
-const Eigen::Quaternionf& SO3Control::getComputedOrientation()
+const Eigen::Quaternionf &SO3Control::getComputedOrientation()
 {
   return orientation_;
 }
 
-const Eigen::Vector3f& SO3Control::getComputedAngularVelocity()
+const Eigen::Vector3f &SO3Control::getComputedAngularVelocity()
 {
   return angular_velocity_;
 }

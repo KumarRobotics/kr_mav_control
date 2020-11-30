@@ -1,14 +1,14 @@
 #ifndef QUADROTOR_SIMULATOR_QUADROTOR_H
 #define QUADROTOR_SIMULATOR_QUADROTOR_H
 
-#include <boost/array.hpp>
 #include <Eigen/Core>
+#include <boost/array.hpp>
 
 namespace QuadrotorSimulator
 {
 class Quadrotor
 {
-public:
+ public:
   struct State
   {
     Eigen::Vector3d x;
@@ -21,8 +21,8 @@ public:
 
   Quadrotor();
 
-  const Quadrotor::State& getState() const;
-  void setState(const Quadrotor::State& state);
+  const Quadrotor::State &getState() const;
+  void setState(const Quadrotor::State &state);
 
   double getMass() const;
   void setMass(double mass);
@@ -33,8 +33,8 @@ public:
   double getGravity() const;
   void setGravity(double g);
 
-  const Eigen::Matrix3d& getInertia() const;
-  void setInertia(const Eigen::Matrix3d& inertia);
+  const Eigen::Matrix3d &getInertia() const;
+  void setInertia(const Eigen::Matrix3d &inertia);
 
   double getArmLength() const;
   void setArmLength(double d);
@@ -51,11 +51,11 @@ public:
   double getMotorTimeConstant() const;
   void setMotorTimeConstant(double k);
 
-  const Eigen::Vector3d& getExternalForce() const;
-  void setExternalForce(const Eigen::Vector3d& force);
+  const Eigen::Vector3d &getExternalForce() const;
+  void setExternalForce(const Eigen::Vector3d &force);
 
-  const Eigen::Vector3d& getExternalMoment() const;
-  void setExternalMoment(const Eigen::Vector3d& moment);
+  const Eigen::Vector3d &getExternalMoment() const;
+  void setExternalMoment(const Eigen::Vector3d &moment);
 
   double getMaxRPM() const;
   void setMaxRPM(double max_rpm);
@@ -76,9 +76,9 @@ public:
 
   // For internal use, but needs to be public for odeint
   typedef boost::array<double, 22> InternalState;
-  void operator()(const Quadrotor::InternalState& x, Quadrotor::InternalState& dxdt, const double /* t */);
+  void operator()(const Quadrotor::InternalState &x, Quadrotor::InternalState &dxdt, const double /* t */);
 
-private:
+ private:
   void updateInternalState();
 
   double g_;  // gravity

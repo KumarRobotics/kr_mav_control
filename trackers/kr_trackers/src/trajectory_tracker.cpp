@@ -1,31 +1,31 @@
+#include <ros/ros.h>
+
 #include <iostream>
 #include <memory>
-
-#include <ros/ros.h>
 //#include <tf/transform_datatypes.h>
 
 #include <actionlib/server/simple_action_server.h>
 #include <kr_mav_msgs/PositionCommand.h>
-#include <kr_tracker_msgs/TrajectoryTrackerAction.h>
-#include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
+#include <kr_tracker_msgs/TrajectoryTrackerAction.h>
 #include <kr_trackers/initial_conditions.h>
 #include <kr_trackers/traj_gen.h>
+#include <kr_trackers_manager/Tracker.h>
 
 class TrajectoryTracker : public kr_trackers_manager::Tracker
 {
-public:
+ public:
   TrajectoryTracker(void);
 
-  void Initialize(const ros::NodeHandle& nh);
-  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd);
+  void Initialize(const ros::NodeHandle &nh);
+  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr& msg);
+  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
 
   uint8_t status() const;
 
-private:
+ private:
   void goal_callback();
 
   void preempt_callback();
@@ -54,11 +54,9 @@ private:
   float current_traj_length_;
 };
 
-TrajectoryTracker::TrajectoryTracker(void) : pos_set_(false), goal_set_(false), goal_reached_(true), active_(false)
-{
-}
+TrajectoryTracker::TrajectoryTracker(void) : pos_set_(false), goal_set_(false), goal_reached_(true), active_(false) {}
 
-void TrajectoryTracker::Initialize(const ros::NodeHandle& nh)
+void TrajectoryTracker::Initialize(const ros::NodeHandle &nh)
 {
   ros::NodeHandle priv_nh(nh, "trajectory_tracker");
 
@@ -82,12 +80,12 @@ void TrajectoryTracker::Initialize(const ros::NodeHandle& nh)
   tracker_server_->start();
 }
 
-bool TrajectoryTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd)
+bool TrajectoryTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
-  if (goal_set_ && pos_set_)
+  if(goal_set_ && pos_set_)
   {
-    if (!tracker_server_->isActive())
+    if(!tracker_server_->isActive())
     {
       ROS_WARN("TrajectoryTracker::Activate: goal_set_ is true but action server has no active goal - not activating.");
       active_ = false;
@@ -102,7 +100,7 @@ bool TrajectoryTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr& c
 
 void TrajectoryTracker::Deactivate(void)
 {
-  if (tracker_server_->isActive())
+  if(tracker_server_->isActive())
   {
     ROS_WARN("TrajectoryTracker::Deactivate: deactivated tracker while still tracking the goal.");
     tracker_server_->setAborted();
@@ -113,12 +111,12 @@ void TrajectoryTracker::Deactivate(void)
   active_ = false;
 }
 
-kr_mav_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_msgs::Odometry::ConstPtr& msg)
+kr_mav_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   pos_set_ = true;
   ICs_.set_from_odom(msg);
 
-  if (!active_)
+  if(!active_)
   {
     return kr_mav_msgs::PositionCommand::Ptr();
   }
@@ -141,7 +139,7 @@ kr_mav_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_msgs:
   cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
 
-  if (goal_set_)
+  if(goal_set_)
   {
     traj_start_ = t_now;
 
@@ -151,20 +149,20 @@ kr_mav_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_msgs:
     ic.push_back(ICs_.jrk());
 
     traj_gen_->setInitialConditions(ICs_.pos(), ic);
-    for (const auto& p : goal_.waypoints)
+    for(const auto &p : goal_.waypoints)
     {
       traj_gen_->addWaypoint(Eigen::Vector3f(p.position.x, p.position.y, p.position.z));
     }
     std::vector<float> waypoint_times;
     waypoint_times.reserve(goal_.waypoints.size());
-    if (goal_.waypoint_times.size() == 0)
+    if(goal_.waypoint_times.size() == 0)
     {
       waypoint_times = traj_gen_->computeTimesTrapezoidSpeed(max_v_des_ / 2, max_a_des_ / 2);
     }
     else
     {
       waypoint_times.push_back(0);  // Time for the current state
-      for (const auto& t : goal_.waypoint_times)
+      for(const auto &t : goal_.waypoint_times)
         waypoint_times.push_back(t);
     }
 
@@ -176,9 +174,9 @@ kr_mav_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_msgs:
 
     goal_set_ = false;
   }
-  else if (goal_reached_)
+  else if(goal_reached_)
   {
-    if (tracker_server_->isActive())
+    if(tracker_server_->isActive())
       ROS_ERROR("TrajectoryTracker::update: Action server not completed");
 
     cmd->position = goal_.waypoints.back().position;
@@ -196,7 +194,7 @@ kr_mav_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_msgs:
 
   const float traj_time = (t_now - traj_start_).toSec();
 
-  if (traj_time >= traj_total_time_)  // Reached goal
+  if(traj_time >= traj_total_time_)  // Reached goal
   {
     // Send a success message and reset the length variable
     kr_tracker_msgs::TrajectoryTrackerResult result;
@@ -217,7 +215,7 @@ kr_mav_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_msgs:
     yaw_dot_des = 0;
     goal_reached_ = true;
   }
-  else if (traj_time >= 0)
+  else if(traj_time >= 0)
   {
     traj_gen_->getCommand(traj_time, x, v, a, j);
     yaw_des = ICs_.yaw();
@@ -233,7 +231,7 @@ kr_mav_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_msgs:
 
   ICs_.set_from_cmd(cmd);
 
-  if (!goal_reached_)
+  if(!goal_reached_)
   {
     kr_tracker_msgs::TrajectoryTrackerFeedback feedback;
     feedback.remaining_time = traj_total_time_ - traj_time;
@@ -246,7 +244,7 @@ kr_mav_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_msgs:
 void TrajectoryTracker::goal_callback()
 {
   // If another goal is already active, cancel that goal and track this one instead.
-  if (tracker_server_->isActive())
+  if(tracker_server_->isActive())
   {
     ROS_INFO("TrajectoryTracker goal aborted");
     tracker_server_->setAborted();
@@ -258,15 +256,15 @@ void TrajectoryTracker::goal_callback()
   current_traj_length_ = 0.0;
 
   // If preempt has been requested, then set this goal to preempted and make no changes to the tracker state.
-  if (tracker_server_->isPreemptRequested())
+  if(tracker_server_->isPreemptRequested())
   {
     ROS_INFO("TrajectoryTracker preempted");
     tracker_server_->setPreempted();
     return;
   }
 
-  if (msg->waypoints.size() > 0 &&
-      (msg->waypoint_times.size() == 0 || msg->waypoint_times.size() == msg->waypoints.size()))
+  if(msg->waypoints.size() > 0 &&
+     (msg->waypoint_times.size() == 0 || msg->waypoint_times.size() == msg->waypoints.size()))
   {
     goal_ = *msg;
     goal_set_ = true;
@@ -280,7 +278,7 @@ void TrajectoryTracker::goal_callback()
 
 void TrajectoryTracker::preempt_callback()
 {
-  if (tracker_server_->isActive())
+  if(tracker_server_->isActive())
   {
     ROS_INFO("TrajectoryTracker aborted");
     tracker_server_->setAborted();

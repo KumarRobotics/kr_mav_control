@@ -1,25 +1,23 @@
 #ifndef TRACKERS_MANAGER_TRACKER_H_
 #define TRACKERS_MANAGER_TRACKER_H_
 
-#include <ros/ros.h>
-#include <nav_msgs/Odometry.h>
 #include <kr_mav_msgs/PositionCommand.h>
+#include <nav_msgs/Odometry.h>
+#include <ros/ros.h>
 
 namespace kr_trackers_manager
 {
 class Tracker
 {
-public:
-  virtual ~Tracker(void)
-  {
-  }
+ public:
+  virtual ~Tracker(void) {}
 
   /**
    * @brief Initialize the tracker. Should be used to get the params, construct the publishers and subscribers.
    *
    * @param nh The NodeHandle with the kr_trackers_manager's namespace, can be used to read common params such as gains.
    */
-  virtual void Initialize(const ros::NodeHandle& nh) = 0;
+  virtual void Initialize(const ros::NodeHandle &nh) = 0;
 
   /**
    * @brief Activate the tracker. This indicates that the tracker should get ready to publish commands.
@@ -29,7 +27,7 @@ public:
    *
    * @return Should return true if the tracker is ready to publish commands, else return false.
    */
-  virtual bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd) = 0;
+  virtual bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd) = 0;
 
   /**
    * @brief Deactivate the tracker. This is called when the kr_trackers_manager switches to another tracker.
@@ -46,7 +44,7 @@ public:
    * @return The PositionCommand message which would be published. If an uninitialized ConstPtr is returned, then no
    * PositionCommand message would be published.
    */
-  virtual kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr& msg) = 0;
+  virtual kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg) = 0;
 
   /**
    * @brief Get status of the tracker. Only called when the tracker has been activated.

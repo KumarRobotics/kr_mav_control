@@ -1,37 +1,36 @@
-#include <memory>
-#include <Eigen/Core>
-
-#include <ros/ros.h>
-#include <tf/transform_datatypes.h>
 #include <actionlib/server/simple_action_server.h>
-
+#include <kr_mav_msgs/PositionCommand.h>
+#include <kr_tracker_msgs/LineTrackerAction.h>
+#include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_trackers/initial_conditions.h>
 #include <kr_trackers_manager/Tracker.h>
-#include <kr_tracker_msgs/TrackerStatus.h>
-#include <kr_tracker_msgs/LineTrackerAction.h>
-#include <kr_mav_msgs/PositionCommand.h>
+#include <ros/ros.h>
+#include <tf/transform_datatypes.h>
+
+#include <Eigen/Core>
+#include <memory>
 
 class LineTrackerMinJerk : public kr_trackers_manager::Tracker
 {
-public:
+ public:
   LineTrackerMinJerk(void);
 
-  void Initialize(const ros::NodeHandle& nh);
-  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd);
+  void Initialize(const ros::NodeHandle &nh);
+  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
   void Deactivate(void);
 
-  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr& msg);
+  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
 
   uint8_t status() const;
 
-private:
+ private:
   void goal_callback();
 
   void preempt_callback();
 
-  void gen_trajectory(const Eigen::Vector3f& xi, const Eigen::Vector3f& xf, const Eigen::Vector3f& vi,
-                      const Eigen::Vector3f& vf, const Eigen::Vector3f& ai, const Eigen::Vector3f& af,
-                      const float& yawi, const float& yawf, const float& yaw_dot_i, const float& yaw_dot_f, float dt,
+  void gen_trajectory(const Eigen::Vector3f &xi, const Eigen::Vector3f &xf, const Eigen::Vector3f &vi,
+                      const Eigen::Vector3f &vf, const Eigen::Vector3f &ai, const Eigen::Vector3f &af,
+                      const float &yawi, const float &yawf, const float &yaw_dot_i, const float &yaw_dot_f, float dt,
                       Eigen::Vector3f coeffs[6], float yaw_coeffs[4]);
 
   typedef actionlib::SimpleActionServer<kr_tracker_msgs::LineTrackerAction> ServerType;
@@ -61,16 +60,16 @@ private:
 };
 
 LineTrackerMinJerk::LineTrackerMinJerk(void)
-  : pos_set_(false)
-  , goal_set_(false)
-  , goal_reached_(true)
-  , active_(false)
-  , traj_start_(ros::Time::now())
-  , traj_start_set_(false)
+    : pos_set_(false),
+      goal_set_(false),
+      goal_reached_(true),
+      active_(false),
+      traj_start_(ros::Time::now()),
+      traj_start_set_(false)
 {
 }
 
-void LineTrackerMinJerk::Initialize(const ros::NodeHandle& nh)
+void LineTrackerMinJerk::Initialize(const ros::NodeHandle &nh)
 {
   ros::NodeHandle priv_nh(nh, "line_tracker_min_jerk");
 
@@ -92,12 +91,12 @@ void LineTrackerMinJerk::Initialize(const ros::NodeHandle& nh)
   tracker_server_->start();
 }
 
-bool LineTrackerMinJerk::Activate(const kr_mav_msgs::PositionCommand::ConstPtr& cmd)
+bool LineTrackerMinJerk::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   // Only allow activation if a goal has been set
-  if (goal_set_ && pos_set_)
+  if(goal_set_ && pos_set_)
   {
-    if (!tracker_server_->isActive())
+    if(!tracker_server_->isActive())
     {
       ROS_WARN("LineTrackerMinJerk::Activate: goal_set_ is true but action server has no active goal - not "
                "activating.");
@@ -113,7 +112,7 @@ bool LineTrackerMinJerk::Activate(const kr_mav_msgs::PositionCommand::ConstPtr& 
 
 void LineTrackerMinJerk::Deactivate(void)
 {
-  if (tracker_server_->isActive())
+  if(tracker_server_->isActive())
   {
     ROS_WARN("LineTrackerMinJerk::Deactivate: deactivated tracker while still tracking the goal.");
     tracker_server_->setAborted();
@@ -124,7 +123,7 @@ void LineTrackerMinJerk::Deactivate(void)
   active_ = false;
 }
 
-kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs::Odometry::ConstPtr& msg)
+kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
   // Record distance between last position and current.
   const float dx =
@@ -141,7 +140,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs
 
   const ros::Time t_now = ros::Time::now();
 
-  if (!active_)
+  if(!active_)
   {
     return kr_mav_msgs::PositionCommand::Ptr();
   }
@@ -152,16 +151,16 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs
   cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
 
-  if (goal_set_)
+  if(goal_set_)
   {
-    if (!traj_start_set_)
+    if(!traj_start_set_)
       traj_start_ = t_now;
 
     bool duration_set = false;
     traj_duration_ = 0.5f;
 
     // TODO: This should probably be after traj_duration_ is determined
-    if (goal_duration_.toSec() > traj_duration_)
+    if(goal_duration_.toSec() > traj_duration_)
     {
       traj_duration_ = goal_duration_.toSec();
       duration_set = true;
@@ -179,9 +178,9 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs
 
     const float ramping_distance = distance_to_v_des + distance_v_des_to_stop;
 
-    if (!duration_set)  // If duration is not set by the goal callback
+    if(!duration_set)  // If duration is not set by the goal callback
     {
-      if (total_dist > ramping_distance)
+      if(total_dist > ramping_distance)
       {
         float t = (v_des_ - vel_proj) / a_des_                // Ramp up
                   + (total_dist - ramping_distance) / v_des_  // Constant velocity
@@ -197,7 +196,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs
         float distance_to_stop = 0.5f * vo * vo / a_des_;
 
         float t_dir;  // The time required for the component along dir
-        if (vo > 0.0f && total_dist < distance_to_stop)
+        if(vo > 0.0f && total_dist < distance_to_stop)
         {
           // Currently traveling towards the goal and need to overshoot
 
@@ -225,18 +224,18 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs
     yaw_dist = goal_yaw_ - ICs_.yaw();
     const float pi(M_PI);  // Defined so as to force float type
     yaw_dist = std::fmod(yaw_dist, 2 * pi);
-    if (yaw_dist > pi)
+    if(yaw_dist > pi)
       yaw_dist -= 2 * pi;
-    else if (yaw_dist < -pi)
+    else if(yaw_dist < -pi)
       yaw_dist += 2 * pi;
     yaw_dir = (yaw_dist >= 0) ? 1 : -1;
     yaw_dist = std::abs(yaw_dist);
     goal_yaw_ = ICs_.yaw() + yaw_dir * yaw_dist;
 
     // Consider yaw in the trajectory duration
-    if (!duration_set)  // Only if duration is not set from goal
+    if(!duration_set)  // Only if duration is not set from goal
     {
-      if (yaw_dist > yaw_v_des_ * yaw_v_des_ / yaw_a_des_)
+      if(yaw_dist > yaw_v_des_ * yaw_v_des_ / yaw_a_des_)
         traj_duration_ = std::max(traj_duration_, yaw_dist / yaw_v_des_ + yaw_v_des_ / yaw_a_des_);
       else
         traj_duration_ = std::max(traj_duration_, 2 * std::sqrt(yaw_dist / yaw_a_des_));
@@ -249,9 +248,9 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs
 
     goal_set_ = false;
   }
-  else if (goal_reached_)
+  else if(goal_reached_)
   {
-    if (tracker_server_->isActive())
+    if(tracker_server_->isActive())
     {
       ROS_ERROR("LineTrackerDistance::update: Action server not completed.\n");
     }
@@ -271,7 +270,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs
 
   const float traj_time = (t_now - traj_start_).toSec();
 
-  if (traj_time >= traj_duration_)  // Reached goal
+  if(traj_time >= traj_duration_)  // Reached goal
   {
     // Send a success message and reset the length and duration variables.
     kr_tracker_msgs::LineTrackerResult result;
@@ -295,7 +294,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs
     yaw_dot_des = 0;
     goal_reached_ = true;
   }
-  else if (traj_time >= 0)
+  else if(traj_time >= 0)
   {
     float t = traj_time / traj_duration_, t2 = t * t, t3 = t2 * t, t4 = t3 * t, t5 = t4 * t;
 
@@ -325,7 +324,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs
 
   ICs_.set_from_cmd(cmd);
 
-  if (!goal_reached_)
+  if(!goal_reached_)
   {
     kr_tracker_msgs::LineTrackerFeedback feedback;
     feedback.distance_from_goal = (current_pos_ - goal_).norm();
@@ -339,7 +338,7 @@ void LineTrackerMinJerk::goal_callback()
 {
   // If another goal is already active, cancel that goal
   // and track this one instead.
-  if (tracker_server_->isActive())
+  if(tracker_server_->isActive())
   {
     ROS_INFO("LineTrackerMinJerk goal (%f, %f, %f) aborted.", goal_(0), goal_(1), goal_(2));
     tracker_server_->setAborted();
@@ -352,7 +351,7 @@ void LineTrackerMinJerk::goal_callback()
 
   // If preempt has been requested, then set this goal to preempted
   // and make no changes to the tracker state.
-  if (tracker_server_->isPreemptRequested())
+  if(tracker_server_->isPreemptRequested())
   {
     ROS_INFO("LineTrackerMinJerk going to goal (%f, %f, %f, %f) preempted.", msg->x, msg->y, msg->z, msg->yaw);
     tracker_server_->setPreempted();
@@ -364,7 +363,7 @@ void LineTrackerMinJerk::goal_callback()
   goal_(2) = msg->z;
   goal_yaw_ = msg->yaw;
   goal_duration_ = msg->duration;
-  if (msg->t_start != ros::Time(0))
+  if(msg->t_start != ros::Time(0))
   {
     traj_start_ = msg->t_start;
     traj_start_set_ = true;
@@ -372,7 +371,7 @@ void LineTrackerMinJerk::goal_callback()
   else
     traj_start_set_ = false;
 
-  if (msg->relative)
+  if(msg->relative)
   {
     goal_ += ICs_.pos();
     goal_yaw_ += ICs_.yaw();
@@ -390,7 +389,7 @@ void LineTrackerMinJerk::goal_callback()
 
 void LineTrackerMinJerk::preempt_callback()
 {
-  if (tracker_server_->isActive())
+  if(tracker_server_->isActive())
   {
     ROS_INFO("LineTrackerMinJerk going to goal (%f, %f, %f) aborted.", goal_(0), goal_(1), goal_(2));
     tracker_server_->setAborted();
@@ -408,10 +407,10 @@ void LineTrackerMinJerk::preempt_callback()
   goal_reached_ = true;
 }
 
-void LineTrackerMinJerk::gen_trajectory(const Eigen::Vector3f& xi, const Eigen::Vector3f& xf, const Eigen::Vector3f& vi,
-                                        const Eigen::Vector3f& vf, const Eigen::Vector3f& ai, const Eigen::Vector3f& af,
-                                        const float& yawi, const float& yawf, const float& yaw_dot_i,
-                                        const float& yaw_dot_f, float dt, Eigen::Vector3f coeffs[6],
+void LineTrackerMinJerk::gen_trajectory(const Eigen::Vector3f &xi, const Eigen::Vector3f &xf, const Eigen::Vector3f &vi,
+                                        const Eigen::Vector3f &vf, const Eigen::Vector3f &ai, const Eigen::Vector3f &af,
+                                        const float &yawi, const float &yawf, const float &yaw_dot_i,
+                                        const float &yaw_dot_f, float dt, Eigen::Vector3f coeffs[6],
                                         float yaw_coeffs[4])
 {
   // We can use a dt of 1 to ensure that our system will be numerically conditioned.
@@ -427,7 +426,7 @@ void LineTrackerMinJerk::gen_trajectory(const Eigen::Vector3f& xi, const Eigen::
 
   Eigen::Matrix<float, 6, 3> x;
   x = Ainv * b;
-  for (int i = 0; i < 6; i++)
+  for(int i = 0; i < 6; i++)
   {
     coeffs[i] = x.row(i).transpose();
   }
@@ -441,7 +440,7 @@ void LineTrackerMinJerk::gen_trajectory(const Eigen::Vector3f& xi, const Eigen::
 
   Eigen::Vector4f x_yaw;
   x_yaw = A_yaw_inv * b_yaw;
-  for (int i = 0; i < 4; i++)
+  for(int i = 0; i < 4; i++)
   {
     yaw_coeffs[i] = x_yaw(i);
   }

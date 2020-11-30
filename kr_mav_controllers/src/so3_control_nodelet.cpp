@@ -1,31 +1,32 @@
-#include <ros/ros.h>
-#include <nodelet/nodelet.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <nav_msgs/Odometry.h>
-#include <kr_mav_msgs/SO3Command.h>
-#include <kr_mav_msgs/PositionCommand.h>
-#include <kr_mav_msgs/Corrections.h>
-#include <std_msgs/Bool.h>
-#include <Eigen/Geometry>
-#include <kr_mav_controllers/SO3Control.h>
-#include <tf/transform_datatypes.h>
 #include <dynamic_reconfigure/server.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <kr_mav_controllers/SO3Config.h>
+#include <kr_mav_controllers/SO3Control.h>
+#include <kr_mav_msgs/Corrections.h>
+#include <kr_mav_msgs/PositionCommand.h>
+#include <kr_mav_msgs/SO3Command.h>
+#include <nav_msgs/Odometry.h>
+#include <nodelet/nodelet.h>
+#include <ros/ros.h>
+#include <std_msgs/Bool.h>
+#include <tf/transform_datatypes.h>
+
+#include <Eigen/Geometry>
 
 class SO3ControlNodelet : public nodelet::Nodelet
 {
-public:
+ public:
   SO3ControlNodelet()
-    : position_cmd_updated_(false)
-    , position_cmd_init_(false)
-    , des_yaw_(0)
-    , des_yaw_dot_(0)
-    , current_yaw_(0)
-    , enable_motors_(false)
-    , use_external_yaw_(false)
-    , have_odom_(false)
-    , g_(9.81)
-    , current_orientation_(Eigen::Quaternionf::Identity())
+      : position_cmd_updated_(false),
+        position_cmd_init_(false),
+        des_yaw_(0),
+        des_yaw_dot_(0),
+        current_yaw_(0),
+        enable_motors_(false),
+        use_external_yaw_(false),
+        have_odom_(false),
+        g_(9.81),
+        current_orientation_(Eigen::Quaternionf::Identity())
   {
     controller_.resetIntegrals();
   }
@@ -34,13 +35,13 @@ public:
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;  // Need this since we have SO3Control which needs aligned pointer
 
-private:
+ private:
   void publishSO3Command();
-  void position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr& cmd);
-  void odom_callback(const nav_msgs::Odometry::ConstPtr& odom);
-  void enable_motors_callback(const std_msgs::Bool::ConstPtr& msg);
-  void corrections_callback(const kr_mav_msgs::Corrections::ConstPtr& msg);
-  void cfg_callback(kr_mav_controllers::SO3Config& config, uint32_t level);
+  void position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
+  void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
+  void enable_motors_callback(const std_msgs::Bool::ConstPtr &msg);
+  void corrections_callback(const kr_mav_msgs::Corrections::ConstPtr &msg);
+  void cfg_callback(kr_mav_controllers::SO3Config &config, uint32_t level);
 
   SO3Control controller_;
   ros::Publisher so3_command_pub_, command_viz_pub_;
@@ -65,7 +66,7 @@ private:
 
 void SO3ControlNodelet::publishSO3Command()
 {
-  if (!have_odom_)
+  if(!have_odom_)
   {
     ROS_WARN("No odometry! Not publishing SO3Command.");
     return;
@@ -73,7 +74,7 @@ void SO3ControlNodelet::publishSO3Command()
 
   Eigen::Vector3f ki = Eigen::Vector3f::Zero();
   Eigen::Vector3f kib = Eigen::Vector3f::Zero();
-  if (enable_motors_)
+  if(enable_motors_)
   {
     ki = config_ki_;
     kib = config_kib_;
@@ -81,9 +82,9 @@ void SO3ControlNodelet::publishSO3Command()
 
   controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki, kib);
 
-  const Eigen::Vector3f& force = controller_.getComputedForce();
-  const Eigen::Quaternionf& orientation = controller_.getComputedOrientation();
-  const Eigen::Vector3f& ang_vel = controller_.getComputedAngularVelocity();
+  const Eigen::Vector3f &force = controller_.getComputedForce();
+  const Eigen::Quaternionf &orientation = controller_.getComputedOrientation();
+  const Eigen::Vector3f &ang_vel = controller_.getComputedAngularVelocity();
 
   kr_mav_msgs::SO3Command::Ptr so3_command = boost::make_shared<kr_mav_msgs::SO3Command>();
   so3_command->header.stamp = ros::Time::now();
@@ -98,7 +99,7 @@ void SO3ControlNodelet::publishSO3Command()
   so3_command->angular_velocity.x = ang_vel(0);
   so3_command->angular_velocity.y = ang_vel(1);
   so3_command->angular_velocity.z = ang_vel(2);
-  for (int i = 0; i < 3; i++)
+  for(int i = 0; i < 3; i++)
   {
     so3_command->kR[i] = kR_[i];
     so3_command->kOm[i] = kOm_[i];
@@ -123,7 +124,7 @@ void SO3ControlNodelet::publishSO3Command()
   command_viz_pub_.publish(cmd_viz_msg);
 }
 
-void SO3ControlNodelet::position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr& cmd)
+void SO3ControlNodelet::position_cmd_callback(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   des_pos_ = Eigen::Vector3f(cmd->position.x, cmd->position.y, cmd->position.z);
   des_vel_ = Eigen::Vector3f(cmd->velocity.x, cmd->velocity.y, cmd->velocity.z);
@@ -146,7 +147,7 @@ void SO3ControlNodelet::position_cmd_callback(const kr_mav_msgs::PositionCommand
   publishSO3Command();
 }
 
-void SO3ControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
+void SO3ControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
   have_odom_ = true;
 
@@ -164,22 +165,22 @@ void SO3ControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr& odom)
   controller_.setVelocity(velocity);
   controller_.setCurrentOrientation(current_orientation_);
 
-  if (position_cmd_init_)
+  if(position_cmd_init_)
   {
     // We set position_cmd_updated_ = false and expect that the
     // position_cmd_callback would set it to true since typically a position_cmd
     // message would follow an odom message. If not, the position_cmd_callback
     // hasn't been called and we publish the so3 command ourselves
     // TODO: Fallback to hover if position_cmd hasn't been received for some time
-    if (!position_cmd_updated_)
+    if(!position_cmd_updated_)
       publishSO3Command();
     position_cmd_updated_ = false;
   }
 }
 
-void SO3ControlNodelet::enable_motors_callback(const std_msgs::Bool::ConstPtr& msg)
+void SO3ControlNodelet::enable_motors_callback(const std_msgs::Bool::ConstPtr &msg)
 {
-  if (msg->data)
+  if(msg->data)
     ROS_INFO("Enabling motors");
   else
     ROS_INFO("Disabling motors");
@@ -189,22 +190,22 @@ void SO3ControlNodelet::enable_motors_callback(const std_msgs::Bool::ConstPtr& m
   controller_.resetIntegrals();
 }
 
-void SO3ControlNodelet::corrections_callback(const kr_mav_msgs::Corrections::ConstPtr& msg)
+void SO3ControlNodelet::corrections_callback(const kr_mav_msgs::Corrections::ConstPtr &msg)
 {
   corrections_[0] = msg->kf_correction;
   corrections_[1] = msg->angle_corrections[0];
   corrections_[2] = msg->angle_corrections[1];
 }
 
-void SO3ControlNodelet::cfg_callback(kr_mav_controllers::SO3Config& config, uint32_t level)
+void SO3ControlNodelet::cfg_callback(kr_mav_controllers::SO3Config &config, uint32_t level)
 {
-  if (level == 0)
+  if(level == 0)
   {
     NODELET_DEBUG_STREAM("Nothing changed. level: " << level);
     return;
   }
 
-  if (level & (1 << 0))
+  if(level & (1 << 0))
   {
     config_kx_[0] = config.kp_x;
     config_kx_[1] = config.kp_y;
@@ -218,7 +219,7 @@ void SO3ControlNodelet::cfg_callback(kr_mav_controllers::SO3Config& config, uint
                  config_kx_[1], config_kx_[2], config_kv_[0], config_kv_[1], config_kv_[2]);
   }
 
-  if (level & (1 << 1))
+  if(level & (1 << 1))
   {
     config_ki_[0] = config.ki_x;
     config_ki_[1] = config.ki_y;
@@ -232,7 +233,7 @@ void SO3ControlNodelet::cfg_callback(kr_mav_controllers::SO3Config& config, uint
                  config_ki_[1], config_ki_[2], config_kib_[0], config_kib_[1], config_kib_[2]);
   }
 
-  if (level & (1 << 2))
+  if(level & (1 << 2))
   {
     kR_[0] = config.rot_x;
     kR_[1] = config.rot_y;
@@ -246,7 +247,7 @@ void SO3ControlNodelet::cfg_callback(kr_mav_controllers::SO3Config& config, uint
                  kOm_[0], kOm_[1], kOm_[2]);
   }
 
-  if (level & (1 << 3))
+  if(level & (1 << 3))
   {
     corrections_[0] = config.kf_correction;
     corrections_[1] = config.roll_correction;
@@ -255,7 +256,7 @@ void SO3ControlNodelet::cfg_callback(kr_mav_controllers::SO3Config& config, uint
                  corrections_[2]);
   }
 
-  if (level & (1 << 4))
+  if(level & (1 << 4))
   {
     controller_.setMaxIntegral(config.max_pos_int);
     controller_.setMaxIntegralBody(config.max_pos_int_b);

@@ -12,23 +12,23 @@
  * in the desired, which we want to avoid.
  */
 
-#include <tf/transform_datatypes.h>
 #include <kr_trackers/initial_conditions.h>
+#include <tf/transform_datatypes.h>
 
 InitialConditions::InitialConditions()
-  : pos_(Eigen::Vector3f::Zero())
-  , vel_(Eigen::Vector3f::Zero())
-  , acc_(Eigen::Vector3f::Zero())
-  , jrk_(Eigen::Vector3f::Zero())
-  , yaw_(0.0f)
-  , yaw_dot_(0.0f)
-  , cmd_valid_(false)
+    : pos_(Eigen::Vector3f::Zero()),
+      vel_(Eigen::Vector3f::Zero()),
+      acc_(Eigen::Vector3f::Zero()),
+      jrk_(Eigen::Vector3f::Zero()),
+      yaw_(0.0f),
+      yaw_dot_(0.0f),
+      cmd_valid_(false)
 {
 }
 
-void InitialConditions::set_from_cmd(const kr_mav_msgs::PositionCommand::ConstPtr& msg)
+void InitialConditions::set_from_cmd(const kr_mav_msgs::PositionCommand::ConstPtr &msg)
 {
-  if (msg == NULL)
+  if(msg == NULL)
   {
     ROS_WARN("Null PositionCommand recieved. Not setting initial condition.");
     return;
@@ -44,9 +44,9 @@ void InitialConditions::set_from_cmd(const kr_mav_msgs::PositionCommand::ConstPt
   cmd_valid_ = true;
 }
 
-void InitialConditions::set_from_odom(const nav_msgs::Odometry::ConstPtr& msg)
+void InitialConditions::set_from_odom(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  if (!cmd_valid_)
+  if(!cmd_valid_)
   {
     pos_ = Eigen::Vector3f(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
     vel_ = Eigen::Vector3f(msg->twist.twist.linear.x, msg->twist.twist.linear.y, msg->twist.twist.linear.z);
