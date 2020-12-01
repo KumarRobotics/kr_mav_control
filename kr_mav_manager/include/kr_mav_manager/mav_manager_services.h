@@ -1,21 +1,20 @@
 #ifndef MAV_MANAGER_SERVICES_H
 #define MAV_MANAGER_SERVICES_H
 
+#include <kr_mav_manager/Circle.h>
+#include <kr_mav_manager/CompoundLissajous.h>
+#include <kr_mav_manager/GoalTimed.h>
+#include <kr_mav_manager/Lissajous.h>
+#include <kr_mav_manager/Vec4.h>
 #include <kr_mav_manager/manager.h>
 #include <std_srvs/SetBool.h>
 #include <std_srvs/Trigger.h>
-#include <kr_mav_manager/Vec4.h>
-#include <kr_mav_manager/GoalTimed.h>
-#include <kr_mav_manager/Circle.h>
-#include <kr_mav_manager/Lissajous.h>
-#include <kr_mav_manager/CompoundLissajous.h>
 
 namespace kr_mav_manager
 {
 class MAVManagerServices
 {
-public:
-
+ public:
   std::vector<ros::ServiceServer> srvs_;
 
   bool motors_cb(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
@@ -23,7 +22,7 @@ public:
     res.success = mav->set_motors(req.data);
     res.message = "Motors ";
     res.message += req.data ? "on" : "off";
-    if (res.success)
+    if(res.success)
       last_cb_ = "motors";
     return true;
   }
@@ -31,7 +30,7 @@ public:
   {
     res.success = mav->takeoff();
     res.message = "Takeoff";
-    if (res.success)
+    if(res.success)
       last_cb_ = "takeoff";
     return true;
   }
@@ -39,7 +38,7 @@ public:
   {
     res.success = mav->goHome();
     res.message = "Going home";
-    if (res.success)
+    if(res.success)
       last_cb_ = "goHome";
     return true;
   }
@@ -47,7 +46,7 @@ public:
   {
     res.success = mav->goTo(req.goal[0], req.goal[1], req.goal[2], req.goal[3]);
     res.message = "Going To...";
-    if (res.success)
+    if(res.success)
       last_cb_ = "goTo";
     return true;
   }
@@ -64,7 +63,7 @@ public:
   {
     res.success = mav->goTo(req.goal[0], req.goal[1], req.goal[2], req.goal[3], 0.0f, 0.0f, true);
     res.message = "Going To Relative Position...";
-    if (res.success)
+    if(res.success)
       last_cb_ = "goToRelative";
     return res.success;
   }
@@ -72,7 +71,7 @@ public:
   {
     res.success = mav->setDesVelInWorldFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3], true);
     res.message = "World Velocity";
-    if (res.success)
+    if(res.success)
       last_cb_ = "setDesVelInWorldFrmae";
     return true;
   }
@@ -80,28 +79,29 @@ public:
   {
     res.success = mav->setDesVelInBodyFrame(req.goal[0], req.goal[1], req.goal[2], req.goal[3], true);
     res.message = "Body Velocity";
-    if (res.success)
+    if(res.success)
       last_cb_ = "setDesVelInBodyFrame";
     return true;
   }
-  bool circle_cb(kr_mav_manager::Circle::Request &req, kr_mav_manager::Circle::Response &res) 
+  bool circle_cb(kr_mav_manager::Circle::Request &req, kr_mav_manager::Circle::Response &res)
   {
     res.success = mav->circle(req.Ax, req.Ay, req.T, req.duration);
     res.message = "Circling motion";
-    if (res.success)
+    if(res.success)
       last_cb_ = "circle";
     return true;
   }
-  bool lissajous_cb(kr_mav_manager::Lissajous::Request &req, kr_mav_manager::Lissajous::Response &res) 
+  bool lissajous_cb(kr_mav_manager::Lissajous::Request &req, kr_mav_manager::Lissajous::Response &res)
   {
-    res.success = mav->lissajous(req.x_amp, req.y_amp, req.z_amp, req.yaw_amp, req.x_num_periods, req.y_num_periods, 
+    res.success = mav->lissajous(req.x_amp, req.y_amp, req.z_amp, req.yaw_amp, req.x_num_periods, req.y_num_periods,
                                  req.z_num_periods, req.yaw_num_periods, req.period, req.num_cycles, req.ramp_time);
     res.message = "Lissajous motion";
-    if (res.success)
+    if(res.success)
       last_cb_ = "lissajous";
     return true;
   }
-  bool compound_lissajous_cb(kr_mav_manager::CompoundLissajous::Request &req, kr_mav_manager::CompoundLissajous::Response &res) 
+  bool compound_lissajous_cb(kr_mav_manager::CompoundLissajous::Request &req,
+                             kr_mav_manager::CompoundLissajous::Response &res)
   {
     float x_amp[2] = {req.x_amp[0], req.x_amp[1]};
     float y_amp[2] = {req.y_amp[0], req.y_amp[1]};
@@ -114,10 +114,10 @@ public:
     float period[2] = {req.period[0], req.period[1]};
     float num_cycles[2] = {req.num_cycles[0], req.num_cycles[1]};
     float ramp_time[2] = {req.ramp_time[0], req.ramp_time[1]};
-    res.success = mav->compound_lissajous(x_amp, y_amp, z_amp, yaw_amp, x_num_periods, y_num_periods, 
-                                          z_num_periods, yaw_num_periods, period, num_cycles, ramp_time);
+    res.success = mav->compound_lissajous(x_amp, y_amp, z_amp, yaw_amp, x_num_periods, y_num_periods, z_num_periods,
+                                          yaw_num_periods, period, num_cycles, ramp_time);
     res.message = "Compound Lissajous motion";
-    if (res.success)
+    if(res.success)
       last_cb_ = "compound_lissajous";
     return true;
   }
@@ -125,7 +125,7 @@ public:
   {
     res.success = mav->hover();
     res.message = "Hover";
-    if (res.success)
+    if(res.success)
       last_cb_ = "hover";
     return true;
   }
@@ -133,7 +133,7 @@ public:
   {
     res.success = mav->ehover();
     res.message = "Emergency Hover";
-    if (res.success)
+    if(res.success)
       last_cb_ = "ehover";
     return true;
   }
@@ -141,7 +141,7 @@ public:
   {
     res.success = mav->land();
     res.message = "Landing";
-    if (res.success)
+    if(res.success)
       last_cb_ = "land";
     return true;
   }
@@ -149,7 +149,7 @@ public:
   {
     res.success = mav->eland();
     res.message = "Emergency Landing";
-    if (res.success)
+    if(res.success)
       last_cb_ = "eland";
     return true;
   }
@@ -157,7 +157,7 @@ public:
   {
     res.success = mav->estop();
     res.message = "Emergency Stop";
-    if (res.success)
+    if(res.success)
       last_cb_ = "estop";
     return true;
   }
@@ -183,8 +183,7 @@ public:
     srvs_.push_back(nh_.advertiseService("estop", &MAVManagerServices::estop_cb, this));
   }
 
-protected:
-
+ protected:
   ros::NodeHandle nh_;
 
   // Let's make an MAV pointer
@@ -192,5 +191,5 @@ protected:
 
   std::string last_cb_;
 };
-} // namespace kr_mav_manager
+}  // namespace kr_mav_manager
 #endif /* MAV_MANAGER_SERVICES_H */

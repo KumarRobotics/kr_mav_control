@@ -1,5 +1,7 @@
-#include <Eigen/Geometry>
 #include <kr_mav_msgs/SO3Command.h>
+
+#include <Eigen/Geometry>
+
 #include "quadrotor_simulator_base.hpp"
 
 namespace QuadrotorSimulator
@@ -16,20 +18,17 @@ typedef struct _SO3Command
   bool enable_motors;
 } SO3Command;
 
-class QuadrotorSimulatorSO3
-    : public QuadrotorSimulatorBase<kr_mav_msgs::SO3Command, SO3Command>
+class QuadrotorSimulatorSO3 : public QuadrotorSimulatorBase<kr_mav_msgs::SO3Command, SO3Command>
 {
  public:
   QuadrotorSimulatorSO3(ros::NodeHandle &nh) : QuadrotorSimulatorBase(nh) {}
 
  private:
   virtual void cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &cmd);
-  virtual ControlInput getControl(const Quadrotor &quad,
-                                  const SO3Command &cmd) const;
+  virtual ControlInput getControl(const Quadrotor &quad, const SO3Command &cmd) const;
 };
 
-void QuadrotorSimulatorSO3::cmd_callback(
-    const kr_mav_msgs::SO3Command::ConstPtr &cmd)
+void QuadrotorSimulatorSO3::cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &cmd)
 {
   command_.force[0] = cmd->force.x;
   command_.force[1] = cmd->force.y;
@@ -48,13 +47,13 @@ void QuadrotorSimulatorSO3::cmd_callback(
   command_.kOm[1] = cmd->kOm[1];
   command_.kOm[2] = cmd->kOm[2];
   command_.kf_correction = cmd->aux.kf_correction;
-  command_.angle_corrections[0] = cmd->aux.angle_corrections[0]; // Not used yet
-  command_.angle_corrections[1] = cmd->aux.angle_corrections[1]; // Not used yet
+  command_.angle_corrections[0] = cmd->aux.angle_corrections[0];  // Not used yet
+  command_.angle_corrections[1] = cmd->aux.angle_corrections[1];  // Not used yet
   command_.enable_motors = cmd->aux.enable_motors;
 }
 
-QuadrotorSimulatorSO3::ControlInput QuadrotorSimulatorSO3::getControl(
-    const Quadrotor &quad, const SO3Command &cmd) const
+QuadrotorSimulatorSO3::ControlInput QuadrotorSimulatorSO3::getControl(const Quadrotor &quad,
+                                                                      const SO3Command &cmd) const
 {
   const double _kf = quad.getPropellerThrustCoefficient();
   const double _km = quad.getPropellerMomentCoefficient();
@@ -63,9 +62,7 @@ QuadrotorSimulatorSO3::ControlInput QuadrotorSimulatorSO3::getControl(
 
   const double d = quad.getArmLength();
   const Eigen::Matrix3f J = quad.getInertia().cast<float>();
-  const float I[3][3] = {{J(0, 0), J(0, 1), J(0, 2)},
-                         {J(1, 0), J(1, 1), J(1, 2)},
-                         {J(2, 0), J(2, 1), J(2, 2)}};
+  const float I[3][3] = {{J(0, 0), J(0, 1), J(0, 2)}, {J(1, 0), J(1, 1), J(1, 2)}, {J(2, 0), J(2, 1), J(2, 2)}};
   const Quadrotor::State &state = quad.getState();
 
   float R11 = state.R(0, 0);
@@ -82,47 +79,37 @@ QuadrotorSimulatorSO3::ControlInput QuadrotorSimulatorSO3::getControl(
   float Om2 = state.omega(1);
   float Om3 = state.omega(2);
 
-  float Rd11 =
-      cmd.qw * cmd.qw + cmd.qx * cmd.qx - cmd.qy * cmd.qy - cmd.qz * cmd.qz;
+  float Rd11 = cmd.qw * cmd.qw + cmd.qx * cmd.qx - cmd.qy * cmd.qy - cmd.qz * cmd.qz;
   float Rd12 = 2 * (cmd.qx * cmd.qy - cmd.qw * cmd.qz);
   float Rd13 = 2 * (cmd.qx * cmd.qz + cmd.qw * cmd.qy);
   float Rd21 = 2 * (cmd.qx * cmd.qy + cmd.qw * cmd.qz);
-  float Rd22 =
-      cmd.qw * cmd.qw - cmd.qx * cmd.qx + cmd.qy * cmd.qy - cmd.qz * cmd.qz;
+  float Rd22 = cmd.qw * cmd.qw - cmd.qx * cmd.qx + cmd.qy * cmd.qy - cmd.qz * cmd.qz;
   float Rd23 = 2 * (cmd.qy * cmd.qz - cmd.qw * cmd.qx);
   float Rd31 = 2 * (cmd.qx * cmd.qz - cmd.qw * cmd.qy);
   float Rd32 = 2 * (cmd.qy * cmd.qz + cmd.qw * cmd.qx);
-  float Rd33 =
-      cmd.qw * cmd.qw - cmd.qx * cmd.qx - cmd.qy * cmd.qy + cmd.qz * cmd.qz;
+  float Rd33 = cmd.qw * cmd.qw - cmd.qx * cmd.qx - cmd.qy * cmd.qy + cmd.qz * cmd.qz;
 
-  float Psi = 0.5f * (3.0f - (Rd11 * R11 + Rd21 * R21 + Rd31 * R31 +
-                              Rd12 * R12 + Rd22 * R22 + Rd32 * R32 +
-                              Rd13 * R13 + Rd23 * R23 + Rd33 * R33));
+  float Psi = 0.5f * (3.0f - (Rd11 * R11 + Rd21 * R21 + Rd31 * R31 + Rd12 * R12 + Rd22 * R22 + Rd32 * R32 + Rd13 * R13 +
+                              Rd23 * R23 + Rd33 * R33));
 
-  if(Psi > 1.0f) // Position control stability guaranteed only when Psi < 1
+  if(Psi > 1.0f)  // Position control stability guaranteed only when Psi < 1
     ROS_WARN_THROTTLE(1, "Warning Psi = %f > 1", Psi);
 
   float force = cmd.force[0] * R13 + cmd.force[1] * R23 + cmd.force[2] * R33;
 
-  float eR1 = 0.5f * (R12 * Rd13 - R13 * Rd12 + R22 * Rd23 - R23 * Rd22 +
-                      R32 * Rd33 - R33 * Rd32);
-  float eR2 = 0.5f * (R13 * Rd11 - R11 * Rd13 - R21 * Rd23 + R23 * Rd21 -
-                      R31 * Rd33 + R33 * Rd31);
-  float eR3 = 0.5f * (R11 * Rd12 - R12 * Rd11 + R21 * Rd22 - R22 * Rd21 +
-                      R31 * Rd32 - R32 * Rd31);
+  float eR1 = 0.5f * (R12 * Rd13 - R13 * Rd12 + R22 * Rd23 - R23 * Rd22 + R32 * Rd33 - R33 * Rd32);
+  float eR2 = 0.5f * (R13 * Rd11 - R11 * Rd13 - R21 * Rd23 + R23 * Rd21 - R31 * Rd33 + R33 * Rd31);
+  float eR3 = 0.5f * (R11 * Rd12 - R12 * Rd11 + R21 * Rd22 - R22 * Rd21 + R31 * Rd32 - R32 * Rd31);
 
-  float Omd1 =
-      cmd.angular_velocity[0] * (R11 * Rd11 + R21 * Rd21 + R31 * Rd31) +
-      cmd.angular_velocity[1] * (R11 * Rd12 + R21 * Rd22 + R31 * Rd32) +
-      cmd.angular_velocity[2] * (R11 * Rd13 + R21 * Rd23 + R31 * Rd33);
-  float Omd2 =
-      cmd.angular_velocity[0] * (R12 * Rd11 + R22 * Rd21 + R32 * Rd31) +
-      cmd.angular_velocity[1] * (R12 * Rd12 + R22 * Rd22 + R32 * Rd32) +
-      cmd.angular_velocity[2] * (R12 * Rd13 + R22 * Rd23 + R32 * Rd33);
-  float Omd3 =
-      cmd.angular_velocity[0] * (R13 * Rd11 + R23 * Rd21 + R33 * Rd31) +
-      cmd.angular_velocity[1] * (R13 * Rd12 + R23 * Rd22 + R33 * Rd32) +
-      cmd.angular_velocity[2] * (R13 * Rd13 + R23 * Rd23 + R33 * Rd33);
+  float Omd1 = cmd.angular_velocity[0] * (R11 * Rd11 + R21 * Rd21 + R31 * Rd31) +
+               cmd.angular_velocity[1] * (R11 * Rd12 + R21 * Rd22 + R31 * Rd32) +
+               cmd.angular_velocity[2] * (R11 * Rd13 + R21 * Rd23 + R31 * Rd33);
+  float Omd2 = cmd.angular_velocity[0] * (R12 * Rd11 + R22 * Rd21 + R32 * Rd31) +
+               cmd.angular_velocity[1] * (R12 * Rd12 + R22 * Rd22 + R32 * Rd32) +
+               cmd.angular_velocity[2] * (R12 * Rd13 + R22 * Rd23 + R32 * Rd33);
+  float Omd3 = cmd.angular_velocity[0] * (R13 * Rd11 + R23 * Rd21 + R33 * Rd31) +
+               cmd.angular_velocity[1] * (R13 * Rd12 + R23 * Rd22 + R33 * Rd32) +
+               cmd.angular_velocity[2] * (R13 * Rd13 + R23 * Rd23 + R33 * Rd33);
 
   float eOm1 = Om1 - Omd1;
   float eOm2 = Om2 - Omd2;
@@ -130,12 +117,12 @@ QuadrotorSimulatorSO3::ControlInput QuadrotorSimulatorSO3::getControl(
 
   // TODO: Change this to the new term as in http://arxiv.org/abs/1304.6765:
   // Omd^ * J * Omd
-  float in1 = Om2 * (I[2][0] * Om1 + I[2][1] * Om2 + I[2][2] * Om3) -
-              Om3 * (I[1][0] * Om1 + I[1][1] * Om2 + I[1][2] * Om3);
-  float in2 = Om3 * (I[0][0] * Om1 + I[0][1] * Om2 + I[0][2] * Om3) -
-              Om1 * (I[2][0] * Om1 + I[2][1] * Om2 + I[2][2] * Om3);
-  float in3 = Om1 * (I[1][0] * Om1 + I[1][1] * Om2 + I[1][2] * Om3) -
-              Om2 * (I[0][0] * Om1 + I[0][1] * Om2 + I[0][2] * Om3);
+  float in1 =
+      Om2 * (I[2][0] * Om1 + I[2][1] * Om2 + I[2][2] * Om3) - Om3 * (I[1][0] * Om1 + I[1][1] * Om2 + I[1][2] * Om3);
+  float in2 =
+      Om3 * (I[0][0] * Om1 + I[0][1] * Om2 + I[0][2] * Om3) - Om1 * (I[2][0] * Om1 + I[2][1] * Om2 + I[2][2] * Om3);
+  float in3 =
+      Om1 * (I[1][0] * Om1 + I[1][1] * Om2 + I[1][2] * Om3) - Om2 * (I[0][0] * Om1 + I[0][1] * Om2 + I[0][2] * Om3);
 
   float M1 = -cmd.kR[0] * eR1 - cmd.kOm[0] * eOm1 + in1;
   float M2 = -cmd.kR[1] * eR2 - cmd.kOm[1] * eOm2 + in2;
@@ -164,7 +151,7 @@ QuadrotorSimulatorSO3::ControlInput QuadrotorSimulatorSO3::getControl(
   }
   return control;
 }
-}
+}  // namespace QuadrotorSimulator
 
 int main(int argc, char **argv)
 {

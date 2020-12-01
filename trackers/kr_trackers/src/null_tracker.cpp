@@ -1,6 +1,6 @@
-#include <ros/ros.h>
-#include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
+#include <kr_trackers_manager/Tracker.h>
+#include <ros/ros.h>
 
 class NullTracker : public kr_trackers_manager::Tracker
 {
@@ -13,18 +13,14 @@ class NullTracker : public kr_trackers_manager::Tracker
   uint8_t status() const;
 };
 
-void NullTracker::Initialize(const ros::NodeHandle &nh)
-{
-}
+void NullTracker::Initialize(const ros::NodeHandle &nh) {}
 
 bool NullTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
 {
   return true;
 }
 
-void NullTracker::Deactivate(void)
-{
-}
+void NullTracker::Deactivate(void) {}
 
 kr_mav_msgs::PositionCommand::ConstPtr NullTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
 {

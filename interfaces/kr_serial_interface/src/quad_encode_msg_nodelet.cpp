@@ -1,10 +1,10 @@
-#include <ros/ros.h>
-#include <nodelet/nodelet.h>
-#include <kr_mav_msgs/SO3Command.h>
-#include <kr_mav_msgs/TRPYCommand.h>
 #include <kr_mav_msgs/PWMCommand.h>
+#include <kr_mav_msgs/SO3Command.h>
 #include <kr_mav_msgs/Serial.h>
+#include <kr_mav_msgs/TRPYCommand.h>
 #include <kr_serial_interface/encode_msgs.h>
+#include <nodelet/nodelet.h>
+#include <ros/ros.h>
 
 class QuadEncodeMsg : public nodelet::Nodelet
 {
@@ -20,7 +20,6 @@ class QuadEncodeMsg : public nodelet::Nodelet
   ros::Subscriber trpy_cmd_sub_;
   ros::Subscriber pwm_cmd_sub_;
   int channel_;
-
 };
 
 void QuadEncodeMsg::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg)
@@ -69,12 +68,12 @@ void QuadEncodeMsg::onInit(void)
 
   serial_msg_pub_ = priv_nh.advertise<kr_mav_msgs::Serial>("serial_msg", 10);
 
-  so3_cmd_sub_ = priv_nh.subscribe("so3_cmd", 10, &QuadEncodeMsg::so3_cmd_callback, this,
-                                                  ros::TransportHints().tcpNoDelay());
-  trpy_cmd_sub_ = priv_nh.subscribe("trpy_cmd", 10, &QuadEncodeMsg::trpy_cmd_callback, this,
-                                    ros::TransportHints().tcpNoDelay());
-  pwm_cmd_sub_ = priv_nh.subscribe("pwm_cmd", 10, &QuadEncodeMsg::pwm_cmd_callback, this,
-                                                  ros::TransportHints().tcpNoDelay());
+  so3_cmd_sub_ =
+      priv_nh.subscribe("so3_cmd", 10, &QuadEncodeMsg::so3_cmd_callback, this, ros::TransportHints().tcpNoDelay());
+  trpy_cmd_sub_ =
+      priv_nh.subscribe("trpy_cmd", 10, &QuadEncodeMsg::trpy_cmd_callback, this, ros::TransportHints().tcpNoDelay());
+  pwm_cmd_sub_ =
+      priv_nh.subscribe("pwm_cmd", 10, &QuadEncodeMsg::pwm_cmd_callback, this, ros::TransportHints().tcpNoDelay());
 }
 
 #include <pluginlib/class_list_macros.h>

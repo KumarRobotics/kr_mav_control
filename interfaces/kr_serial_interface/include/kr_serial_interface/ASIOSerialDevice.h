@@ -21,12 +21,12 @@
 #ifndef ASIOSERIALDEVICE_H
 #define ASIOSERIALDEVICE_H
 
-#include <deque>
-#include <iostream>
-#include <boost/bind.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/serial_port.hpp>
+#include <boost/bind.hpp>
 #include <boost/thread.hpp>
+#include <deque>
+#include <iostream>
 
 // Class version of example ASIO over serial with boost::asio:
 // http://groups.google.com/group/boost-list/browse_thread/thread/5cc7dcc7b90d41fc
@@ -42,46 +42,43 @@ class ASIOSerialDevice
   ASIOSerialDevice(const std::string &device, unsigned int baud);
   ~ASIOSerialDevice();
 
-  void SetReadCallback(const boost::function<void (const unsigned char*, size_t)>& handler);
+  void SetReadCallback(const boost::function<void(const unsigned char *, size_t)> &handler);
 
   void Start();
   void Stop();
   void Close();
 
   void Read();
-  bool Write(const std::vector<unsigned char>& msg);
-  void Open(const std::string &device_, unsigned int baud_,
-            ba::serial_port_base::parity parity =
-            ba::serial_port_base::parity(ba::serial_port_base::parity::none),
-            ba::serial_port_base::character_size csize =
-            ba::serial_port_base::character_size(8),
-            ba::serial_port_base::flow_control flow =
-            ba::serial_port_base::flow_control(ba::serial_port_base::flow_control::none),
-            ba::serial_port_base::stop_bits stop =
-            ba::serial_port_base::stop_bits(ba::serial_port_base::stop_bits::one));
+  bool Write(const std::vector<unsigned char> &msg);
+  void Open(
+      const std::string &device_, unsigned int baud_,
+      ba::serial_port_base::parity parity = ba::serial_port_base::parity(ba::serial_port_base::parity::none),
+      ba::serial_port_base::character_size csize = ba::serial_port_base::character_size(8),
+      ba::serial_port_base::flow_control flow =
+          ba::serial_port_base::flow_control(ba::serial_port_base::flow_control::none),
+      ba::serial_port_base::stop_bits stop = ba::serial_port_base::stop_bits(ba::serial_port_base::stop_bits::one));
 
   bool Active();
 
  private:
-  void CloseCallback(const boost::system::error_code& error);
+  void CloseCallback(const boost::system::error_code &error);
 
   void ReadStart();
-  void ReadComplete(const boost::system::error_code& error,
-                    size_t bytes_transferred);
+  void ReadComplete(const boost::system::error_code &error, size_t bytes_transferred);
 
-  void WriteCallback(const std::vector<unsigned char>& msg);
+  void WriteCallback(const std::vector<unsigned char> &msg);
   void WriteStart();
-  void WriteComplete(const boost::system::error_code& error);
+  void WriteComplete(const boost::system::error_code &error);
 
   std::string device;
   unsigned int baud;
   bool async_active, open;
-  std::deque< std::vector<unsigned char> > write_msgs;
+  std::deque<std::vector<unsigned char> > write_msgs;
 
   boost::thread thread;
   ba::io_service io_service;
-  ba::serial_port* serial_port;
-  boost::function<void (const unsigned char*, size_t)> read_callback;
+  ba::serial_port *serial_port;
+  boost::function<void(const unsigned char *, size_t)> read_callback;
 
   unsigned char read_msg[MAX_READ_LENGTH];
 };

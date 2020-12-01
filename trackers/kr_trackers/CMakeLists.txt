@@ -15,7 +15,7 @@ include_directories(include ${EIGEN3_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES initial_conditions
+  LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS actionlib std_msgs geometry_msgs nav_msgs tf kr_mav_msgs kr_tracker_msgs kr_trackers_manager
   DEPENDS EIGEN3)
 

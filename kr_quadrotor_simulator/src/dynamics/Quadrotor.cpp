@@ -1,14 +1,14 @@
 #include "kr_quadrotor_simulator/Quadrotor.h"
-#include <iostream>
+
+#include <Eigen/Geometry>
 #include <boost/bind.hpp>
 #include <boost/numeric/odeint.hpp>
-#include <Eigen/Geometry>
+#include <iostream>
 
 namespace odeint = boost::numeric::odeint;
 
 namespace QuadrotorSimulator
 {
-
 Quadrotor::Quadrotor()
 {
   g_ = 9.81;
@@ -21,10 +21,10 @@ Quadrotor::Quadrotor()
   // km_ = 2.5e-9; // from Nate
   // km = (Cq/Ct)*Dia*kf
   // Cq/Ct for 8 inch props from UIUC prop db ~ 0.07
-  km_ = 0.07*(2*prop_radius_)*kf_;
+  km_ = 0.07 * (2 * prop_radius_) * kf_;
 
   arm_length_ = 0.17;
-  motor_time_constant_ = 1.0/20;
+  motor_time_constant_ = 1.0 / 20;
   min_rpm_ = 1500;
   max_rpm_ = 7500;
 
@@ -46,12 +46,12 @@ void Quadrotor::step(double dt)
 
   for(int i = 0; i < 3; i++)
   {
-    state_.x(i) = internal_state_[0+i];
-    state_.v(i) = internal_state_[3+i];
-    state_.R(i,0) = internal_state_[6+i];
-    state_.R(i,1) = internal_state_[9+i];
-    state_.R(i,2) = internal_state_[12+i];
-    state_.omega(i) = internal_state_[15+i];
+    state_.x(i) = internal_state_[0 + i];
+    state_.v(i) = internal_state_[3 + i];
+    state_.R(i, 0) = internal_state_[6 + i];
+    state_.R(i, 1) = internal_state_[9 + i];
+    state_.R(i, 2) = internal_state_[12 + i];
+    state_.omega(i) = internal_state_[15 + i];
   }
   state_.motor_rpm(0) = internal_state_[18];
   state_.motor_rpm(1) = internal_state_[19];
@@ -59,9 +59,9 @@ void Quadrotor::step(double dt)
   state_.motor_rpm(3) = internal_state_[21];
 
   // Re-orthonormalize R (polar decomposition)
-  Eigen::LLT<Eigen::Matrix3d> llt(state_.R.transpose()*state_.R);
+  Eigen::LLT<Eigen::Matrix3d> llt(state_.R.transpose() * state_.R);
   Eigen::Matrix3d P = llt.matrixL();
-  Eigen::Matrix3d R = state_.R*P.inverse();
+  Eigen::Matrix3d R = state_.R * P.inverse();
   state_.R = R;
 
   // Don't go below zero, simulate floor
@@ -78,12 +78,12 @@ void Quadrotor::operator()(const Quadrotor::InternalState &x, Quadrotor::Interna
   State cur_state;
   for(int i = 0; i < 3; i++)
   {
-    cur_state.x(i) = x[0+i];
-    cur_state.v(i) = x[3+i];
-    cur_state.R(i,0) = x[6+i];
-    cur_state.R(i,1) = x[9+i];
-    cur_state.R(i,2) = x[12+i];
-    cur_state.omega(i) = x[15+i];
+    cur_state.x(i) = x[0 + i];
+    cur_state.v(i) = x[3 + i];
+    cur_state.R(i, 0) = x[6 + i];
+    cur_state.R(i, 1) = x[9 + i];
+    cur_state.R(i, 2) = x[12 + i];
+    cur_state.omega(i) = x[15 + i];
   }
   for(int i = 0; i < 4; i++)
   {
@@ -91,9 +91,9 @@ void Quadrotor::operator()(const Quadrotor::InternalState &x, Quadrotor::Interna
   }
 
   // Re-orthonormalize R (polar decomposition)
-  Eigen::LLT<Eigen::Matrix3d> llt(cur_state.R.transpose()*cur_state.R);
+  Eigen::LLT<Eigen::Matrix3d> llt(cur_state.R.transpose() * cur_state.R);
   Eigen::Matrix3d P = llt.matrixL();
-  Eigen::Matrix3d R = cur_state.R*P.inverse();
+  Eigen::Matrix3d R = cur_state.R * P.inverse();
 
   Eigen::Vector3d x_dot, v_dot, omega_dot;
   Eigen::Matrix3d R_dot;
@@ -101,12 +101,12 @@ void Quadrotor::operator()(const Quadrotor::InternalState &x, Quadrotor::Interna
   Eigen::Array4d motor_rpm_sq;
   Eigen::Matrix3d omega_hat(Eigen::Matrix3d::Zero());
 
-  omega_hat(2,1) = cur_state.omega(0);
-  omega_hat(1,2) = -cur_state.omega(0);
-  omega_hat(0,2) = cur_state.omega(1);
-  omega_hat(2,0) = -cur_state.omega(1);
-  omega_hat(1,0) = cur_state.omega(2);
-  omega_hat(0,1) = -cur_state.omega(2);
+  omega_hat(2, 1) = cur_state.omega(0);
+  omega_hat(1, 2) = -cur_state.omega(0);
+  omega_hat(0, 2) = cur_state.omega(1);
+  omega_hat(2, 0) = -cur_state.omega(1);
+  omega_hat(1, 0) = cur_state.omega(2);
+  omega_hat(0, 1) = -cur_state.omega(2);
 
   if(motor_time_constant_ == 0)
   {
@@ -119,37 +119,35 @@ void Quadrotor::operator()(const Quadrotor::InternalState &x, Quadrotor::Interna
     cur_state.motor_rpm = input_;
   }
   else
-    motor_rpm_dot = (input_ - cur_state.motor_rpm)/motor_time_constant_;
+    motor_rpm_dot = (input_ - cur_state.motor_rpm) / motor_time_constant_;
 
   motor_rpm_sq = cur_state.motor_rpm.square();
 
-  double thrust = kf_*motor_rpm_sq.sum();
+  double thrust = kf_ * motor_rpm_sq.sum();
   Eigen::Vector3d moments;
-  moments(0) = kf_*(motor_rpm_sq(2) - motor_rpm_sq(3)) * arm_length_;
-  moments(1) = kf_*(motor_rpm_sq(1) - motor_rpm_sq(0)) * arm_length_;
-  moments(2) = km_*(motor_rpm_sq(0) + motor_rpm_sq(1) - motor_rpm_sq(2) - motor_rpm_sq(3));
+  moments(0) = kf_ * (motor_rpm_sq(2) - motor_rpm_sq(3)) * arm_length_;
+  moments(1) = kf_ * (motor_rpm_sq(1) - motor_rpm_sq(0)) * arm_length_;
+  moments(2) = km_ * (motor_rpm_sq(0) + motor_rpm_sq(1) - motor_rpm_sq(2) - motor_rpm_sq(3));
 
   x_dot = cur_state.v;
-  v_dot = -Eigen::Vector3d(0,0,g_) + thrust*R.col(2)/mass_ + external_force_/mass_;
+  v_dot = -Eigen::Vector3d(0, 0, g_) + thrust * R.col(2) / mass_ + external_force_ / mass_;
   if(drag_coefficient_ != 0)
   {
     Eigen::Matrix3d P;
-    P << 1, 0, 0,
-         0, 1, 0,
-         0, 0, 0;
+    P << 1, 0, 0, 0, 1, 0, 0, 0, 0;
     v_dot -= drag_coefficient_ / mass_ * R * P * R.transpose() * cur_state.v;
   }
-  R_dot = R*omega_hat;
-  omega_dot = J_.inverse()*(moments - cur_state.omega.cross(J_*cur_state.omega) + external_moment_);
+  R_dot = R * omega_hat;
+  omega_dot = J_.inverse() * (moments - cur_state.omega.cross(J_ * cur_state.omega) + external_moment_);
 
   for(int i = 0; i < 3; i++)
   {
-    dxdt[0+i] = x_dot(i);
-    dxdt[3+i] = v_dot(i);
-    dxdt[6+i] = R_dot(i,0);
-    dxdt[9+i] = R_dot(i,1);
-    dxdt[12+i] = R_dot(i,2);
-    dxdt[15+i] = omega_dot(i);
+    dxdt[0 + i] = x_dot(i);
+    dxdt[3 + i] = v_dot(i);
+    dxdt[6 + i] = R_dot(i, 0);
+    dxdt[9 + i] = R_dot(i, 1);
+    dxdt[12 + i] = R_dot(i, 2);
+    dxdt[15 + i] = omega_dot(i);
   }
   for(int i = 0; i < 4; i++)
   {
@@ -163,7 +161,7 @@ void Quadrotor::setInput(double u1, double u2, double u3, double u4)
   input_(1) = u2;
   input_(2) = u3;
   input_(3) = u4;
-  if(u1 != 0 || u2 != 0 || u3 != 0 || u4 != 0) // Limit to min/max RPM if any of the RPMs are non-zero
+  if(u1 != 0 || u2 != 0 || u3 != 0 || u4 != 0)  // Limit to min/max RPM if any of the RPMs are non-zero
   {
     for(int i = 0; i < 4; i++)
     {
@@ -356,12 +354,12 @@ void Quadrotor::updateInternalState()
 {
   for(int i = 0; i < 3; i++)
   {
-    internal_state_[0+i] = state_.x(i);
-    internal_state_[3+i] = state_.v(i);
-    internal_state_[6+i] = state_.R(i,0);
-    internal_state_[9+i] = state_.R(i,1);
-    internal_state_[12+i] = state_.R(i,2);
-    internal_state_[15+i] = state_.omega(i);
+    internal_state_[0 + i] = state_.x(i);
+    internal_state_[3 + i] = state_.v(i);
+    internal_state_[6 + i] = state_.R(i, 0);
+    internal_state_[9 + i] = state_.R(i, 1);
+    internal_state_[12 + i] = state_.R(i, 2);
+    internal_state_[15 + i] = state_.omega(i);
   }
   internal_state_[18] = state_.motor_rpm(0);
   internal_state_[19] = state_.motor_rpm(1);
@@ -369,4 +367,4 @@ void Quadrotor::updateInternalState()
   internal_state_[21] = state_.motor_rpm(3);
 }
 
-}
+}  // namespace QuadrotorSimulator

@@ -1,9 +1,9 @@
-#include <ros/ros.h>
-#include <kr_mav_msgs/SO3Command.h>
-#include <kr_mav_msgs/TRPYCommand.h>
 #include <kr_mav_msgs/PWMCommand.h>
+#include <kr_mav_msgs/SO3Command.h>
 #include <kr_mav_msgs/Serial.h>
+#include <kr_mav_msgs/TRPYCommand.h>
 #include <kr_serial_interface/encode_msgs.h>
+#include <ros/ros.h>
 
 static ros::Publisher serial_msg_pub;
 static int channel;
@@ -55,14 +55,11 @@ int main(int argc, char **argv)
 
   n.param("channel", channel, 0);
 
-  ros::Subscriber so3_cmd_sub = n.subscribe("so3_cmd", 10, &so3_cmd_callback,
-                                            ros::TransportHints().tcpNoDelay());
+  ros::Subscriber so3_cmd_sub = n.subscribe("so3_cmd", 10, &so3_cmd_callback, ros::TransportHints().tcpNoDelay());
 
-  ros::Subscriber trpy_cmd_sub = n.subscribe("trpy_cmd", 10, &so3_cmd_callback,
-                                             ros::TransportHints().tcpNoDelay());
+  ros::Subscriber trpy_cmd_sub = n.subscribe("trpy_cmd", 10, &so3_cmd_callback, ros::TransportHints().tcpNoDelay());
 
-  ros::Subscriber pwm_cmd_sub = n.subscribe("pwm_cmd", 10, &pwm_cmd_callback,
-                                             ros::TransportHints().tcpNoDelay());
+  ros::Subscriber pwm_cmd_sub = n.subscribe("pwm_cmd", 10, &pwm_cmd_callback, ros::TransportHints().tcpNoDelay());
 
   serial_msg_pub = n.advertise<kr_mav_msgs::Serial>("serial_msg", 10);
 

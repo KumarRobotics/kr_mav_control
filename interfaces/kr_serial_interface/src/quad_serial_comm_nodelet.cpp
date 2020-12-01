@@ -1,8 +1,8 @@
-#include <ros/ros.h>
-#include <nodelet/nodelet.h>
 #include <kr_mav_msgs/Serial.h>
 #include <kr_serial_interface/ASIOSerialDevice.h>
 #include <kr_serial_interface/serial_interface.h>
+#include <nodelet/nodelet.h>
+#include <ros/ros.h>
 
 class QuadSerialComm : public nodelet::Nodelet
 {
@@ -19,7 +19,6 @@ class QuadSerialComm : public nodelet::Nodelet
   ros::Publisher output_data_pub_;
   ros::Subscriber serial_sub_;
 };
-
 
 void QuadSerialComm::serial_callback(const kr_mav_msgs::Serial::ConstPtr &msg)
 {
@@ -55,8 +54,7 @@ void QuadSerialComm::onInit(void)
 
   output_data_pub_ = n.advertise<kr_mav_msgs::Serial>("from_robot", 10);
 
-  serial_sub_ = n.subscribe("to_robot", 10, &QuadSerialComm::serial_callback, this,
-                            ros::TransportHints().tcpNoDelay());
+  serial_sub_ = n.subscribe("to_robot", 10, &QuadSerialComm::serial_callback, this, ros::TransportHints().tcpNoDelay());
 
   sd_.SetReadCallback(boost::bind(&QuadSerialComm::serial_read_callback, this, _1, _2));
   sd_.Start();

@@ -2,22 +2,19 @@
 
 #include <Eigen/LU>
 
-TrajectoryGenerator::TrajectoryGenerator(
-    unsigned int continuous_derivative_order, unsigned int minimize_derivative)
+TrajectoryGenerator::TrajectoryGenerator(unsigned int continuous_derivative_order, unsigned int minimize_derivative)
     : N_(2 * (continuous_derivative_order + 1)), R_(minimize_derivative)
 {
 }
 
-void TrajectoryGenerator::setInitialConditions(const Vec3f &pos,
-                                               const vec_Vec3f &derivatives)
+void TrajectoryGenerator::setInitialConditions(const Vec3f &pos, const vec_Vec3f &derivatives)
 {
   clearWaypoints();
   waypoints_.push_back(pos);
 
   initial_derivatives_.clear();
   initial_derivatives_.resize(N_ / 2);
-  for(size_t i = 0;
-      i < std::min(initial_derivatives_.size(), derivatives.size()); ++i)
+  for(size_t i = 0; i < std::min(initial_derivatives_.size(), derivatives.size()); ++i)
   {
     initial_derivatives_[i] = derivatives[i];
   }
@@ -39,20 +36,18 @@ void TrajectoryGenerator::clearWaypoints(void)
   initial_derivatives_.clear();
 }
 
-std::vector<float> TrajectoryGenerator::computeTimesTrapezoidSpeed(
-    float v_des, float a_des) const
+std::vector<float> TrajectoryGenerator::computeTimesTrapezoidSpeed(float v_des, float a_des) const
 {
   std::vector<float> waypoint_times;
   waypoint_times.reserve(waypoints_.size());
 
-  waypoint_times.push_back(0); // First waypoint, t = 0
+  waypoint_times.push_back(0);  // First waypoint, t = 0
 
   if(waypoints_.size() < 2)
     return waypoint_times;
 
   const Vec3f &initial_vel_ = initial_derivatives_[0];
-  const int initial_vel_sign =
-      (initial_vel_.dot(waypoints_[1] - waypoints_[0]) >= 0) ? 1 : -1;
+  const int initial_vel_sign = (initial_vel_.dot(waypoints_[1] - waypoints_[0]) >= 0) ? 1 : -1;
   const float v_initial = initial_vel_sign * initial_vel_.norm();
 
   std::vector<float> accumulated_dist;
@@ -74,49 +69,41 @@ std::vector<float> TrajectoryGenerator::computeTimesTrapezoidSpeed(
     d_accel = total_dist / 2 - v_initial * v_initial / 4 / a_des;
     d_decel = total_dist - d_accel;
   }
-  const float t_accel =
-      std::sqrt(v_initial * v_initial + 2 * a_des * d_accel) / a_des;
+  const float t_accel = std::sqrt(v_initial * v_initial + 2 * a_des * d_accel) / a_des;
   const float t_constant = d_constant / v_des;
   const float t_decel = std::sqrt(2 * a_des * d_decel) / a_des;
 
   for(unsigned int i = 1; i < waypoints_.size(); ++i)
   {
-    if(accumulated_dist[i] <= d_accel) // Accel
+    if(accumulated_dist[i] <= d_accel)  // Accel
     {
-      waypoint_times.push_back(
-          (std::sqrt(v_initial * v_initial + 2 * a_des * accumulated_dist[i]) -
-           v_initial) /
-          a_des);
+      waypoint_times.push_back((std::sqrt(v_initial * v_initial + 2 * a_des * accumulated_dist[i]) - v_initial) /
+                               a_des);
     }
-    else if(accumulated_dist[i] <= d_accel + d_constant) // Constant
+    else if(accumulated_dist[i] <= d_accel + d_constant)  // Constant
     {
-      waypoint_times.push_back(t_accel +
-                               (accumulated_dist[i] - d_accel) / v_des);
+      waypoint_times.push_back(t_accel + (accumulated_dist[i] - d_accel) / v_des);
     }
-    else // Decel
+    else  // Decel
     {
-      waypoint_times.push_back(
-          t_accel + t_constant + t_decel -
-          std::sqrt(2 * (total_dist - accumulated_dist[i]) / a_des));
+      waypoint_times.push_back(t_accel + t_constant + t_decel -
+                               std::sqrt(2 * (total_dist - accumulated_dist[i]) / a_des));
     }
   }
 
   return waypoint_times;
 }
 
-std::vector<float> TrajectoryGenerator::computeTimesConstantSpeed(
-    float avg_speed) const
+std::vector<float> TrajectoryGenerator::computeTimesConstantSpeed(float avg_speed) const
 {
   std::vector<float> waypoint_times;
   waypoint_times.reserve(waypoints_.size());
 
-  waypoint_times.push_back(0); // First waypoint, t = 0
+  waypoint_times.push_back(0);  // First waypoint, t = 0
 
   for(unsigned int i = 1; i < waypoints_.size(); ++i)
   {
-    waypoint_times.push_back(
-        waypoint_times[i - 1] +
-        std::sqrt((waypoints_[i] - waypoints_[i - 1]).norm()) / avg_speed);
+    waypoint_times.push_back(waypoint_times[i - 1] + std::sqrt((waypoints_[i] - waypoints_[i - 1]).norm()) / avg_speed);
   }
   return waypoint_times;
 }
@@ -164,10 +151,8 @@ bool TrajectoryGenerator::calculate(const std::vector<float> &waypoint_times)
   const unsigned int num_segments = num_waypoints - 1;
   // printf("num_segments: %d\n", num_segments);
 
-  Eigen::MatrixXf A = Eigen::MatrixXf::Zero(
-      num_segments * N_, num_segments * N_); // Linear constraints
-  Eigen::MatrixXf Q = Eigen::MatrixXf::Zero(
-      num_segments * N_, num_segments * N_); // Quadratic cost matrix
+  Eigen::MatrixXf A = Eigen::MatrixXf::Zero(num_segments * N_, num_segments * N_);  // Linear constraints
+  Eigen::MatrixXf Q = Eigen::MatrixXf::Zero(num_segments * N_, num_segments * N_);  // Quadratic cost matrix
   for(unsigned int i = 0; i < num_segments; i++)
   {
     float seg_time = waypoint_times[i + 1] - waypoint_times[i];
@@ -200,35 +185,29 @@ bool TrajectoryGenerator::calculate(const std::vector<float> &waypoint_times)
           int val = 1;
           for(unsigned int m = 0; m < R_; m++)
             val *= (r - m) * (n - m);
-          Q(i * N_ + r, i * N_ + n) = 2 * val *
-                                      powInt(seg_time, r + n - 2 * R_ + 1) /
-                                      (r + n - 2 * R_ + 1);
+          Q(i * N_ + r, i * N_ + n) = 2 * val * powInt(seg_time, r + n - 2 * R_ + 1) / (r + n - 2 * R_ + 1);
         }
       }
     }
   }
   const unsigned int num_fixed_derivatives = num_waypoints - 2 + N_;
-  const unsigned int num_free_derivatives =
-      num_waypoints * N_ / 2 - num_fixed_derivatives;
+  const unsigned int num_free_derivatives = num_waypoints * N_ / 2 - num_fixed_derivatives;
   // printf("num_fixed_derivatives: %d, num_free_derivatives: %d\n",
   //        num_fixed_derivatives, num_free_derivatives);
 
   // M
-  Eigen::MatrixXf M =
-      Eigen::MatrixXf::Zero(num_segments * N_, num_waypoints * N_ / 2);
+  Eigen::MatrixXf M = Eigen::MatrixXf::Zero(num_segments * N_, num_waypoints * N_ / 2);
   M.block(0, 0, N_ / 2, N_ / 2) = Eigen::MatrixXf::Identity(N_ / 2, N_ / 2);
-  M.block(num_segments * N_ - N_ / 2, N_ / 2 + num_waypoints - 2, N_ / 2,
-          N_ / 2) = Eigen::MatrixXf::Identity(N_ / 2, N_ / 2);
+  M.block(num_segments * N_ - N_ / 2, N_ / 2 + num_waypoints - 2, N_ / 2, N_ / 2) =
+      Eigen::MatrixXf::Identity(N_ / 2, N_ / 2);
   for(unsigned int i = 0; i < num_waypoints - 2; i++)
   {
     M((2 * i + 1) * N_ / 2, N_ / 2 + i) = 1;
     M((2 * i + 2) * N_ / 2, N_ / 2 + i) = 1;
     for(unsigned int j = 1; j < N_ / 2; j++)
     {
-      M((2 * i + 1) * N_ / 2 + j,
-        num_fixed_derivatives - 1 + i * (N_ / 2 - 1) + j) = 1;
-      M((2 * i + 2) * N_ / 2 + j,
-        num_fixed_derivatives - 1 + i * (N_ / 2 - 1) + j) = 1;
+      M((2 * i + 1) * N_ / 2 + j, num_fixed_derivatives - 1 + i * (N_ / 2 - 1) + j) = 1;
+      M((2 * i + 2) * N_ / 2 + j, num_fixed_derivatives - 1 + i * (N_ / 2 - 1) + j) = 1;
     }
   }
   // Eigen::MatrixXf A_inv = A.inverse();
@@ -241,10 +220,9 @@ bool TrajectoryGenerator::calculate(const std::vector<float> &waypoint_times)
   //std::cout << "A_inv_M:\n" << A_inv_M << std::endl;
   std::cout << "R:\n" << R << std::endl;
 #endif
-  Eigen::MatrixXf Rpp = R.block(num_fixed_derivatives, num_fixed_derivatives,
-                                num_free_derivatives, num_free_derivatives);
-  Eigen::MatrixXf Rpf = R.block(num_fixed_derivatives, 0, num_free_derivatives,
-                                num_fixed_derivatives);
+  Eigen::MatrixXf Rpp =
+      R.block(num_fixed_derivatives, num_fixed_derivatives, num_free_derivatives, num_free_derivatives);
+  Eigen::MatrixXf Rpf = R.block(num_fixed_derivatives, 0, num_free_derivatives, num_fixed_derivatives);
 
   // Fixed derivatives
   Eigen::MatrixX3f Df = Eigen::MatrixX3f(num_fixed_derivatives, 3);
@@ -260,8 +238,7 @@ bool TrajectoryGenerator::calculate(const std::vector<float> &waypoint_times)
     Df.row((N_ / 2) - 1 + i) = waypoints_[i].transpose();
   }
   // End point
-  Df.row(N_ / 2 + (num_waypoints - 2)) =
-      waypoints_[num_waypoints - 1].transpose();
+  Df.row(N_ / 2 + (num_waypoints - 2)) = waypoints_[num_waypoints - 1].transpose();
   for(unsigned int i = 1; i < N_ / 2; i++)
   {
     Df.row((N_ / 2) + (num_waypoints - 2) + i) = Vec3f::Zero().transpose();
@@ -280,9 +257,7 @@ bool TrajectoryGenerator::calculate(const std::vector<float> &waypoint_times)
   coefficients_.clear();
   for(unsigned int i = 0; i < num_segments; i++)
   {
-    const Eigen::MatrixX3f p = A.block(i * N_, i * N_, N_, N_)
-                                   .partialPivLu()
-                                   .solve(d.block(i * N_, 0, N_, 3));
+    const Eigen::MatrixX3f p = A.block(i * N_, i * N_, N_, N_).partialPivLu().solve(d.block(i * N_, 0, N_, 3));
     // std::cout << "p:\n" << p << std::endl;
     coefficients_.push_back(p);
   }
@@ -290,8 +265,7 @@ bool TrajectoryGenerator::calculate(const std::vector<float> &waypoint_times)
   return true;
 }
 
-bool TrajectoryGenerator::getCommand(const float time, Vec3f &pos, Vec3f &vel,
-                                     Vec3f &acc, Vec3f &jrk) const
+bool TrajectoryGenerator::getCommand(const float time, Vec3f &pos, Vec3f &vel, Vec3f &acc, Vec3f &jrk) const
 {
   if(time < 0)
     return false;
@@ -324,14 +298,12 @@ bool TrajectoryGenerator::getCommand(const float time, Vec3f &pos, Vec3f &vel,
 
   jrk = Vec3f::Zero();
   for(unsigned int i = 3; i < p.rows(); i++)
-    jrk += p.row(i).transpose() *
-           (i * (i - 1) * (i - 2) * powInt(t_traj, i - 3));
+    jrk += p.row(i).transpose() * (i * (i - 1) * (i - 2) * powInt(t_traj, i - 3));
 
   return true;
 }
 
-void TrajectoryGenerator::calcMaxPerSegment(std::vector<float> &max_vel,
-                                            std::vector<float> &max_acc,
+void TrajectoryGenerator::calcMaxPerSegment(std::vector<float> &max_vel, std::vector<float> &max_acc,
                                             std::vector<float> &max_jrk) const
 {
   const unsigned int num_samples_per_seg = 10;
@@ -343,8 +315,7 @@ void TrajectoryGenerator::calcMaxPerSegment(std::vector<float> &max_vel,
     const float dt = seg_duration / num_samples_per_seg;
 
     float seg_max_vel = 0, seg_max_acc = 0, seg_max_jrk = 0;
-    for(unsigned int sample_idx = 0; sample_idx < num_samples_per_seg;
-        ++sample_idx)
+    for(unsigned int sample_idx = 0; sample_idx < num_samples_per_seg; ++sample_idx)
     {
       const float t_traj = sample_idx * dt;
       const Eigen::MatrixX3f &p = coefficients_[seg_idx];
@@ -362,8 +333,7 @@ void TrajectoryGenerator::calcMaxPerSegment(std::vector<float> &max_vel,
 
       Vec3f jrk = Vec3f::Zero();
       for(unsigned int i = 3; i < p.rows(); i++)
-        jrk += p.row(i).transpose() *
-               (i * (i - 1) * (i - 2) * powInt(t_traj, i - 3));
+        jrk += p.row(i).transpose() * (i * (i - 1) * (i - 2) * powInt(t_traj, i - 3));
       if(jrk.norm() > seg_max_jrk)
         seg_max_jrk = jrk.norm();
     }
@@ -378,9 +348,7 @@ void TrajectoryGenerator::calcMaxPerSegment(std::vector<float> &max_vel,
   return;
 }
 
-void TrajectoryGenerator::optimizeWaypointTimes(const float max_vel,
-                                                const float max_acc,
-                                                const float max_jrk)
+void TrajectoryGenerator::optimizeWaypointTimes(const float max_vel, const float max_acc, const float max_jrk)
 {
   std::vector<float> segment_times;
   for(unsigned int i = 0; i < waypoint_times_.size() - 1; ++i)
@@ -416,15 +384,12 @@ void TrajectoryGenerator::optimizeWaypointTimes(const float max_vel,
               acc_cost * rectified_square(seg_max_acc[i] - max_acc) +
               jrk_cost * rectified_square(seg_max_jrk[i] - max_jrk);
 
-      if(seg_max_vel[i] > max_vel || seg_max_acc[i] > max_acc ||
-         seg_max_jrk[i] > max_jrk)
+      if(seg_max_vel[i] > max_vel || seg_max_acc[i] > max_acc || seg_max_jrk[i] > max_jrk)
       {
         segment_times[i] *= 1.035f;
         done = false;
       }
-      else if(seg_max_vel[i] < 0.9f * max_vel &&
-              seg_max_acc[i] < 0.9f * max_acc &&
-              seg_max_jrk[i] < 0.9f * max_jrk)
+      else if(seg_max_vel[i] < 0.9f * max_vel && seg_max_acc[i] < 0.9f * max_acc && seg_max_jrk[i] < 0.9f * max_jrk)
       {
         segment_times[i] *= 0.966f;
         done = false;

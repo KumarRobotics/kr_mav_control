@@ -1,9 +1,9 @@
 #ifndef TRACKERS_MANAGER_TRACKER_H_
 #define TRACKERS_MANAGER_TRACKER_H_
 
-#include <ros/ros.h>
-#include <nav_msgs/Odometry.h>
 #include <kr_mav_msgs/PositionCommand.h>
+#include <nav_msgs/Odometry.h>
+#include <ros/ros.h>
 
 namespace kr_trackers_manager
 {
@@ -46,7 +46,6 @@ class Tracker
    */
   virtual kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg) = 0;
 
-
   /**
    * @brief Get status of the tracker. Only called when the tracker has been activated.
    *
@@ -55,6 +54,6 @@ class Tracker
   virtual uint8_t status() const = 0;
 };
 
-} // namespace kr_trackers_manager
+}  // namespace kr_trackers_manager
 
 #endif

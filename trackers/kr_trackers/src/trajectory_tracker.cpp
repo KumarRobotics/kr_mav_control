@@ -1,16 +1,16 @@
+#include <ros/ros.h>
+
 #include <iostream>
 #include <memory>
-
-#include <ros/ros.h>
 //#include <tf/transform_datatypes.h>
 
 #include <actionlib/server/simple_action_server.h>
 #include <kr_mav_msgs/PositionCommand.h>
-#include <kr_tracker_msgs/TrajectoryTrackerAction.h>
-#include <kr_trackers_manager/Tracker.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
+#include <kr_tracker_msgs/TrajectoryTrackerAction.h>
 #include <kr_trackers/initial_conditions.h>
 #include <kr_trackers/traj_gen.h>
+#include <kr_trackers_manager/Tracker.h>
 
 class TrajectoryTracker : public kr_trackers_manager::Tracker
 {
@@ -161,7 +161,7 @@ kr_mav_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_msgs:
     }
     else
     {
-      waypoint_times.push_back(0); // Time for the current state
+      waypoint_times.push_back(0);  // Time for the current state
       for(const auto &t : goal_.waypoint_times)
         waypoint_times.push_back(t);
     }
@@ -194,7 +194,7 @@ kr_mav_msgs::PositionCommand::ConstPtr TrajectoryTracker::update(const nav_msgs:
 
   const float traj_time = (t_now - traj_start_).toSec();
 
-  if(traj_time >= traj_total_time_) // Reached goal
+  if(traj_time >= traj_total_time_)  // Reached goal
   {
     // Send a success message and reset the length variable
     kr_tracker_msgs::TrajectoryTrackerResult result;

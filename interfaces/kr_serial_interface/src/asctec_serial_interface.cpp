@@ -23,15 +23,14 @@ static const uint8_t kPacketStartString[] = {0x55, 0x55};
 static uint16_t crc16(const uint8_t *data, int count);
 static uint16_t crc_update(uint16_t crc, uint8_t data);
 
-void encode_serial_msg(const kr_mav_msgs::Serial &msg,
-                       std::vector<uint8_t> &serial_data)
+void encode_serial_msg(const kr_mav_msgs::Serial &msg, std::vector<uint8_t> &serial_data)
 {
   const uint8_t data_length = msg.data.size();
 
   if(data_length > kPacketDataMaxSize)
   {
     std::cerr << "encode_serial_msg: Message too large: " << msg.data.size() << ", max: " << kPacketDataMaxSize
-        << std::endl;
+              << std::endl;
     return;
   }
 
@@ -48,23 +47,22 @@ void encode_serial_msg(const kr_mav_msgs::Serial &msg,
   for(int i = 0; i < data_length; i++)
     crc = crc_update(crc, msg.data[i]);
 
-  serial_data[4+data_length + 0] = crc & 0xFF;
-  serial_data[4+data_length + 1] = crc >> 8;
+  serial_data[4 + data_length + 0] = crc & 0xFF;
+  serial_data[4 + data_length + 1] = crc >> 8;
 }
 
-void process_serial_data(
-    const uint8_t *data, const size_t count,
-    boost::function<void(kr_mav_msgs::Serial &)> callback)
+void process_serial_data(const uint8_t *data, const size_t count, boost::function<void(kr_mav_msgs::Serial &)> callback)
 {
   static kr_mav_msgs::Serial serial_msg;
   static enum PacketState state = kPacketStart1;
-  static uint16_t received_length = 0, data_count = 0;;
+  static uint16_t received_length = 0, data_count = 0;
+  ;
   static uint16_t expected_crc = 0, received_crc = 0;
 
   for(size_t i = 0; i < count; i++)
   {
     const uint8_t c = data[i];
-    //printf("%d, %X\n", state, c);
+    // printf("%d, %X\n", state, c);
     if(state == kPacketStart1 && c == kPacketStartString[0])
       state = kPacketStart2;
     else if(state == kPacketStart2 && c == kPacketStartString[1])
@@ -106,7 +104,7 @@ void process_serial_data(
     }
     else if(state == kPacketCRCH)
     {
-      received_crc = received_crc + 256*c;
+      received_crc = received_crc + 256 * c;
       if(expected_crc == received_crc)
       {
         // Received complete packet
@@ -125,7 +123,7 @@ static uint16_t crc_update(uint16_t crc, uint8_t data)
   uint16_t x = ((crc >> 8) ^ data);
   x ^= x >> 4;
 
-  crc = (crc << 8) ^ (x << 12) ^ (x <<5) ^ x;
+  crc = (crc << 8) ^ (x << 12) ^ (x << 5) ^ x;
 
   return crc;
 }

@@ -1,13 +1,14 @@
-#include <Eigen/Geometry>
 #include <geometry_msgs/PoseStamped.h>
+#include <kr_mav_msgs/SO3Command.h>
 #include <mavros_msgs/AttitudeTarget.h>
 #include <nav_msgs/Odometry.h>
 #include <nodelet/nodelet.h>
-#include <kr_mav_msgs/SO3Command.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64.h>
 #include <tf/transform_datatypes.h>
+
+#include <Eigen/Geometry>
 
 class SO3CmdToMavros : public nodelet::Nodelet
 {
@@ -25,7 +26,7 @@ class SO3CmdToMavros : public nodelet::Nodelet
   int num_props_;
 
   ros::Publisher attitude_raw_pub_;
-  ros::Publisher odom_pose_pub_; // For sending PoseStamped to firmware
+  ros::Publisher odom_pose_pub_;  // For sending PoseStamped to firmware
 
   ros::Subscriber so3_cmd_sub_;
   ros::Subscriber odom_sub_;
@@ -41,9 +42,8 @@ void SO3CmdToMavros::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
   if(!odom_set_)
     odom_set_ = true;
 
-  odom_q_ = Eigen::Quaterniond(
-      odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
-      odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
+  odom_q_ = Eigen::Quaterniond(odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
+                               odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
 
   // Publish PoseStamped for mavros vision_pose plugin
   auto odom_pose_msg = boost::make_shared<geometry_msgs::PoseStamped>();
@@ -57,23 +57,18 @@ void SO3CmdToMavros::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
   if(!imu_set_)
     imu_set_ = true;
 
-  imu_q_ = Eigen::Quaterniond(pose->orientation.w, pose->orientation.x,
-                              pose->orientation.y, pose->orientation.z);
+  imu_q_ = Eigen::Quaterniond(pose->orientation.w, pose->orientation.x, pose->orientation.y, pose->orientation.z);
 
-  if(so3_cmd_set_ &&
-     ((ros::Time::now() - last_so3_cmd_time_).toSec() >= so3_cmd_timeout_))
+  if(so3_cmd_set_ && ((ros::Time::now() - last_so3_cmd_time_).toSec() >= so3_cmd_timeout_))
   {
-    ROS_INFO("so3_cmd timeout. %f seconds since last command",
-             (ros::Time::now() - last_so3_cmd_time_).toSec());
-    const auto last_so3_cmd_ptr =
-        boost::make_shared<kr_mav_msgs::SO3Command>(last_so3_cmd_);
+    ROS_INFO("so3_cmd timeout. %f seconds since last command", (ros::Time::now() - last_so3_cmd_time_).toSec());
+    const auto last_so3_cmd_ptr = boost::make_shared<kr_mav_msgs::SO3Command>(last_so3_cmd_);
 
     so3_cmd_callback(last_so3_cmd_ptr);
   }
 }
 
-void SO3CmdToMavros::so3_cmd_callback(
-    const kr_mav_msgs::SO3Command::ConstPtr &msg)
+void SO3CmdToMavros::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg)
 {
   if(!so3_cmd_set_)
     so3_cmd_set_ = true;
@@ -81,14 +76,11 @@ void SO3CmdToMavros::so3_cmd_callback(
   // grab desired forces and rotation from so3
   const Eigen::Vector3d f_des(msg->force.x, msg->force.y, msg->force.z);
 
-  const Eigen::Quaterniond q_des(msg->orientation.w, msg->orientation.x,
-                                 msg->orientation.y, msg->orientation.z);
+  const Eigen::Quaterniond q_des(msg->orientation.w, msg->orientation.x, msg->orientation.y, msg->orientation.z);
 
   // convert to tf::Quaternion
-  tf::Quaternion imu_tf =
-      tf::Quaternion(imu_q_.x(), imu_q_.y(), imu_q_.z(), imu_q_.w());
-  tf::Quaternion odom_tf =
-      tf::Quaternion(odom_q_.x(), odom_q_.y(), odom_q_.z(), odom_q_.w());
+  tf::Quaternion imu_tf = tf::Quaternion(imu_q_.x(), imu_q_.y(), imu_q_.z(), imu_q_.w());
+  tf::Quaternion odom_tf = tf::Quaternion(odom_q_.x(), odom_q_.y(), odom_q_.z(), odom_q_.w());
 
   // extract RPY's
   double imu_roll, imu_pitch, imu_yaw;
@@ -105,28 +97,22 @@ void SO3CmdToMavros::so3_cmd_callback(
 
   // transform!
   const Eigen::Quaterniond q_des_transformed =
-      Eigen::Quaterniond(tf_imu_odom_yaw.w(), tf_imu_odom_yaw.x(),
-                         tf_imu_odom_yaw.y(), tf_imu_odom_yaw.z()) *
-      q_des;
+      Eigen::Quaterniond(tf_imu_odom_yaw.w(), tf_imu_odom_yaw.x(), tf_imu_odom_yaw.y(), tf_imu_odom_yaw.z()) * q_des;
 
   // check psi for stability
   const Eigen::Matrix3d R_des(q_des);
   const Eigen::Matrix3d R_cur(odom_q_);
 
-  const float Psi =
-      0.5f * (3.0f - (R_des(0, 0) * R_cur(0, 0) + R_des(1, 0) * R_cur(1, 0) +
-                      R_des(2, 0) * R_cur(2, 0) + R_des(0, 1) * R_cur(0, 1) +
-                      R_des(1, 1) * R_cur(1, 1) + R_des(2, 1) * R_cur(2, 1) +
-                      R_des(0, 2) * R_cur(0, 2) + R_des(1, 2) * R_cur(1, 2) +
-                      R_des(2, 2) * R_cur(2, 2)));
+  const float Psi = 0.5f * (3.0f - (R_des(0, 0) * R_cur(0, 0) + R_des(1, 0) * R_cur(1, 0) + R_des(2, 0) * R_cur(2, 0) +
+                                    R_des(0, 1) * R_cur(0, 1) + R_des(1, 1) * R_cur(1, 1) + R_des(2, 1) * R_cur(2, 1) +
+                                    R_des(0, 2) * R_cur(0, 2) + R_des(1, 2) * R_cur(1, 2) + R_des(2, 2) * R_cur(2, 2)));
 
-  if(Psi > 1.0f) // Position control stability guaranteed only when Psi < 1
+  if(Psi > 1.0f)  // Position control stability guaranteed only when Psi < 1
   {
-    ROS_WARN_THROTTLE(1,"Psi > 1.0, orientation error is too large!");
+    ROS_WARN_THROTTLE(1, "Psi > 1.0, orientation error is too large!");
   }
 
-  double throttle =
-      f_des(0) * R_cur(0, 2) + f_des(1) * R_cur(1, 2) + f_des(2) * R_cur(2, 2);
+  double throttle = f_des(0) * R_cur(0, 2) + f_des(1) * R_cur(1, 2) + f_des(2) * R_cur(2, 2);
 
   // Scale force to individual rotor velocities (rad/s).
   throttle = std::sqrt(throttle / num_props_ / kf_);
@@ -179,10 +165,8 @@ void SO3CmdToMavros::onInit(void)
   ROS_ASSERT_MSG(kf_ > 0, "kf must be positive. kf = %g", kf_);
 
   // get thrust scaling parameters
-  if(priv_nh.getParam("lin_cof_a", lin_cof_a_) &&
-     priv_nh.getParam("lin_int_b", lin_int_b_))
-    ROS_INFO("Using %g*x + %g to scale prop speed to att_throttle.", lin_cof_a_,
-             lin_int_b_);
+  if(priv_nh.getParam("lin_cof_a", lin_cof_a_) && priv_nh.getParam("lin_int_b", lin_int_b_))
+    ROS_INFO("Using %g*x + %g to scale prop speed to att_throttle.", lin_cof_a_, lin_int_b_);
   else
     ROS_ERROR("Must set coefficients for thrust scaling (scaling from rotor "
               "velocity (rad/s) to att_throttle for pixhawk)");
@@ -194,21 +178,16 @@ void SO3CmdToMavros::onInit(void)
   imu_set_ = false;
   so3_cmd_set_ = false;
 
-  attitude_raw_pub_ =
-      priv_nh.advertise<mavros_msgs::AttitudeTarget>("attitude_raw", 10);
+  attitude_raw_pub_ = priv_nh.advertise<mavros_msgs::AttitudeTarget>("attitude_raw", 10);
 
-  odom_pose_pub_ =
-      priv_nh.advertise<geometry_msgs::PoseStamped>("odom_pose", 10);
+  odom_pose_pub_ = priv_nh.advertise<geometry_msgs::PoseStamped>("odom_pose", 10);
 
   so3_cmd_sub_ =
-      priv_nh.subscribe("so3_cmd", 10, &SO3CmdToMavros::so3_cmd_callback, this,
-                        ros::TransportHints().tcpNoDelay());
+      priv_nh.subscribe("so3_cmd", 10, &SO3CmdToMavros::so3_cmd_callback, this, ros::TransportHints().tcpNoDelay());
 
-  odom_sub_ = priv_nh.subscribe("odom", 10, &SO3CmdToMavros::odom_callback,
-                                this, ros::TransportHints().tcpNoDelay());
+  odom_sub_ = priv_nh.subscribe("odom", 10, &SO3CmdToMavros::odom_callback, this, ros::TransportHints().tcpNoDelay());
 
-  imu_sub_ = priv_nh.subscribe("imu", 10, &SO3CmdToMavros::imu_callback, this,
-                               ros::TransportHints().tcpNoDelay());
+  imu_sub_ = priv_nh.subscribe("imu", 10, &SO3CmdToMavros::imu_callback, this, ros::TransportHints().tcpNoDelay());
 }
 
 #include <pluginlib/class_list_macros.h>

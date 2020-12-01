@@ -1,12 +1,11 @@
 #ifndef QUADROTOR_SIMULATOR_QUADROTOR_H
 #define QUADROTOR_SIMULATOR_QUADROTOR_H
 
-#include <boost/array.hpp>
 #include <Eigen/Core>
+#include <boost/array.hpp>
 
 namespace QuadrotorSimulator
 {
-
 class Quadrotor
 {
  public:
@@ -82,14 +81,14 @@ class Quadrotor
  private:
   void updateInternalState();
 
-  double g_; // gravity
+  double g_;  // gravity
   double mass_;
-  Eigen::Matrix3d J_; // Inertia
+  Eigen::Matrix3d J_;  // Inertia
   double kf_;
   double km_;
   double prop_radius_;
   double arm_length_;
-  double motor_time_constant_; // unit: sec
+  double motor_time_constant_;  // unit: sec
   double max_rpm_;
   double min_rpm_;
   double drag_coefficient_;
@@ -101,5 +100,5 @@ class Quadrotor
   InternalState internal_state_;
 };
 
-}
+}  // namespace QuadrotorSimulator
 #endif

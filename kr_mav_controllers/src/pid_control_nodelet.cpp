@@ -1,25 +1,26 @@
-#include <ros/ros.h>
-#include <nodelet/nodelet.h>
-#include <nav_msgs/Odometry.h>
-#include <kr_mav_msgs/TRPYCommand.h>
 #include <kr_mav_msgs/PositionCommand.h>
+#include <kr_mav_msgs/TRPYCommand.h>
+#include <nav_msgs/Odometry.h>
+#include <nodelet/nodelet.h>
+#include <ros/ros.h>
 #include <std_msgs/Bool.h>
-#include <kr_pid_control/PIDControl.hpp>
-#include <Eigen/Geometry>
 #include <tf/transform_datatypes.h>
 
-#define CLAMP(x,min,max) ((x) < (min)) ? (min) : ((x) > (max)) ? (max) : (x)
+#include <Eigen/Geometry>
+#include <kr_pid_control/PIDControl.hpp>
+
+#define CLAMP(x, min, max) ((x) < (min)) ? (min) : ((x) > (max)) ? (max) : (x)
 
 class PIDControlNodelet : public nodelet::Nodelet
 {
  public:
-  PIDControlNodelet() :
-      position_cmd_updated_(false),
-      position_cmd_init_(false),
-      des_yaw_(0),
-      current_yaw_(0),
-      enable_motors_(false),
-      use_external_yaw_(false)
+  PIDControlNodelet()
+      : position_cmd_updated_(false),
+        position_cmd_init_(false),
+        des_yaw_(0),
+        current_yaw_(0),
+        enable_motors_(false),
+        use_external_yaw_(false)
   {
   }
 
@@ -49,7 +50,6 @@ class PIDControlNodelet : public nodelet::Nodelet
   bool use_external_yaw_;
 };
 
-
 void PIDControlNodelet::publishTRPYCommand(void)
 {
   float ki_yaw = 0;
@@ -70,9 +70,9 @@ void PIDControlNodelet::publishTRPYCommand(void)
   if(enable_motors_)
   {
     trpy_command->thrust = trpy(0);
-    trpy_command->roll   = CLAMP(trpy(1), -max_roll_pitch_, max_roll_pitch_);
-    trpy_command->pitch  = CLAMP(trpy(2), -max_roll_pitch_, max_roll_pitch_);
-    trpy_command->yaw    = trpy(3);
+    trpy_command->roll = CLAMP(trpy(1), -max_roll_pitch_, max_roll_pitch_);
+    trpy_command->pitch = CLAMP(trpy(2), -max_roll_pitch_, max_roll_pitch_);
+    trpy_command->yaw = trpy(3);
   }
   trpy_command->aux.current_yaw = current_yaw_;
   trpy_command->aux.enable_motors = enable_motors_;
@@ -90,19 +90,15 @@ void PIDControlNodelet::position_cmd_callback(const kr_mav_msgs::PositionCommand
 
   des_yaw_ = cmd->yaw;
   position_cmd_updated_ = true;
-  //position_cmd_init_ = true;
+  // position_cmd_init_ = true;
 
   publishTRPYCommand();
 }
 
 void PIDControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
-  const Eigen::Vector3f position(odom->pose.pose.position.x,
-                                 odom->pose.pose.position.y,
-                                 odom->pose.pose.position.z);
-  const Eigen::Vector3f velocity(odom->twist.twist.linear.x,
-                                 odom->twist.twist.linear.y,
-                                 odom->twist.twist.linear.z);
+  const Eigen::Vector3f position(odom->pose.pose.position.x, odom->pose.pose.position.y, odom->pose.pose.position.z);
+  const Eigen::Vector3f velocity(odom->twist.twist.linear.x, odom->twist.twist.linear.y, odom->twist.twist.linear.z);
 
   current_yaw_ = tf::getYaw(odom->pose.pose.orientation);
 
@@ -147,7 +143,7 @@ void PIDControlNodelet::onInit(void)
   double mass;
   n.param("mass", mass, 0.235);
   controller_.setMass(mass);
-  controller_.setMaxIntegral(mass*3);
+  controller_.setMaxIntegral(mass * 3);
 
   n.param("use_external_yaw", use_external_yaw_, true);
 
@@ -165,13 +161,12 @@ void PIDControlNodelet::onInit(void)
 
   trpy_command_pub_ = n.advertise<kr_mav_msgs::TRPYCommand>("trpy_cmd", 10);
 
-  odom_sub_ = n.subscribe("odom", 10, &PIDControlNodelet::odom_callback, this,
-                          ros::TransportHints().tcpNoDelay());
+  odom_sub_ = n.subscribe("odom", 10, &PIDControlNodelet::odom_callback, this, ros::TransportHints().tcpNoDelay());
   position_cmd_sub_ = n.subscribe("position_cmd", 10, &PIDControlNodelet::position_cmd_callback, this,
                                   ros::TransportHints().tcpNoDelay());
 
-  enable_motors_sub_ = n.subscribe("motors", 2, &PIDControlNodelet::enable_motors_callback, this,
-                                   ros::TransportHints().tcpNoDelay());
+  enable_motors_sub_ =
+      n.subscribe("motors", 2, &PIDControlNodelet::enable_motors_callback, this, ros::TransportHints().tcpNoDelay());
 }
 
 #include <pluginlib/class_list_macros.h>

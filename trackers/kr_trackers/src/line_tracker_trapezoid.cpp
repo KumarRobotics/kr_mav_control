@@ -1,12 +1,13 @@
 // TODO: make into actionlib
 
-#include <ros/ros.h>
-#include <kr_trackers_manager/Tracker.h>
-#include <kr_tracker_msgs/TrackerStatus.h>
-#include <kr_mav_msgs/LineTrackerGoal.h>
-#include <Eigen/Geometry>
-#include <tf/transform_datatypes.h>
 #include <initial_conditions.h>
+#include <kr_mav_msgs/LineTrackerGoal.h>
+#include <kr_tracker_msgs/TrackerStatus.h>
+#include <kr_trackers_manager/Tracker.h>
+#include <ros/ros.h>
+#include <tf/transform_datatypes.h>
+
+#include <Eigen/Geometry>
 
 class LineTrackerTrapezoid : public kr_trackers_manager::Tracker
 {
@@ -38,11 +39,8 @@ class LineTrackerTrapezoid : public kr_trackers_manager::Tracker
   float t_accel_, t_constant_;
 };
 
-LineTrackerTrapezoid::LineTrackerTrapezoid(void) :
-    pos_set_(false),
-    goal_set_(false),
-    goal_reached_(true),
-    active_(false)
+LineTrackerTrapezoid::LineTrackerTrapezoid(void)
+    : pos_set_(false), goal_set_(false), goal_reached_(true), active_(false)
 {
 }
 
@@ -57,8 +55,8 @@ void LineTrackerTrapezoid::Initialize(const ros::NodeHandle &nh)
   v_des_ = default_v_des_;
   a_des_ = default_a_des_;
 
-  sub_goal_ = priv_nh.subscribe("goal", 10, &LineTrackerTrapezoid::goal_callback, this,
-                                ros::TransportHints().tcpNoDelay());
+  sub_goal_ =
+      priv_nh.subscribe("goal", 10, &LineTrackerTrapezoid::goal_callback, this, ros::TransportHints().tcpNoDelay());
 }
 
 bool LineTrackerTrapezoid::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
@@ -106,15 +104,15 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerTrapezoid::update(const nav_ms
     start_yaw_ = ICs_.yaw();
     cmd->yaw = start_yaw_;
 
-    const float total_dist = (goal_-start_pos_).norm();
-    if(total_dist > v_des_*v_des_/a_des_)
+    const float total_dist = (goal_ - start_pos_).norm();
+    if(total_dist > v_des_ * v_des_ / a_des_)
     {
-      t_accel_ = v_des_/a_des_;
-      t_constant_ = total_dist/v_des_ - v_des_/a_des_;
+      t_accel_ = v_des_ / a_des_;
+      t_constant_ = total_dist / v_des_ - v_des_ / a_des_;
     }
     else
     {
-      t_accel_ = std::sqrt(total_dist/a_des_);
+      t_accel_ = std::sqrt(total_dist / a_des_);
       t_constant_ = 0;
     }
 
@@ -138,26 +136,26 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerTrapezoid::update(const nav_ms
   {
     // Accelerate
     const float dT = traj_time;
-    a = a_des_*dir;
-    v = a_des_*dir*dT;
-    x = start_pos_ + 0.5*a_des_*dir*dT*dT;
+    a = a_des_ * dir;
+    v = a_des_ * dir * dT;
+    x = start_pos_ + 0.5 * a_des_ * dir * dT * dT;
   }
   else if(traj_time <= (t_accel_ + t_constant_))
   {
     // Constant speed
     const float dT = traj_time - t_accel_;
     a = Eigen::Vector3f::Zero();
-    v = a_des_*dir*t_accel_;
-    x = (start_pos_ + 0.5*a_des_*dir*t_accel_*t_accel_) + (v*dT);
+    v = a_des_ * dir * t_accel_;
+    x = (start_pos_ + 0.5 * a_des_ * dir * t_accel_ * t_accel_) + (v * dT);
   }
   else if(traj_time <= (t_accel_ + t_constant_ + t_accel_))
   {
     // Decelerate
     const float dT = traj_time - (t_accel_ + t_constant_);
-    a = -a_des_*dir;
-    v = a_des_*dir*t_accel_ - a_des_*dir*dT;
-    x = (start_pos_ + 0.5*a_des_*dir*t_accel_*t_accel_) + (a_des_*dir*t_accel_*t_constant_) +
-        (a_des_*dir*t_accel_*dT - 0.5*a_des_*dir*dT*dT);
+    a = -a_des_ * dir;
+    v = a_des_ * dir * t_accel_ - a_des_ * dir * dT;
+    x = (start_pos_ + 0.5 * a_des_ * dir * t_accel_ * t_accel_) + (a_des_ * dir * t_accel_ * t_constant_) +
+        (a_des_ * dir * t_accel_ * dT - 0.5 * a_des_ * dir * dT * dT);
   }
   else
   {
@@ -181,15 +179,15 @@ void LineTrackerTrapezoid::goal_callback(const kr_mav_msgs::LineTrackerGoal::Con
   goal_(1) = msg->y;
   goal_(2) = msg->z;
 
-  if (msg->relative)
+  if(msg->relative)
     goal_ += ICs_.pos();
 
-  if (msg->v_des > 0)
+  if(msg->v_des > 0)
     v_des_ = msg->v_des;
   else
     v_des_ = default_v_des_;
 
-  if (msg->a_des > 0)
+  if(msg->a_des > 0)
     a_des_ = msg->a_des;
   else
     a_des_ = default_a_des_;
@@ -200,9 +198,8 @@ void LineTrackerTrapezoid::goal_callback(const kr_mav_msgs::LineTrackerGoal::Con
 
 uint8_t LineTrackerTrapezoid::status() const
 {
-  return goal_reached_ ?
-             static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED) :
-             static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE);
+  return goal_reached_ ? static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED) :
+                         static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE);
 }
 
 #include <pluginlib/class_list_macros.h>

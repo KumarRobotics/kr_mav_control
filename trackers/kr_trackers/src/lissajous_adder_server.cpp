@@ -1,43 +1,43 @@
-#include <memory>
-#include <Eigen/Geometry>
-#include <cmath>
-#include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
+#include <kr_tracker_msgs/LissajousAdderAction.h>
+#include <kr_tracker_msgs/TrackerStatus.h>
 #include <kr_trackers/initial_conditions.h>
 #include <kr_trackers/lissajous_generator.h>
 #include <kr_trackers_manager/Tracker.h>
-#include <kr_tracker_msgs/TrackerStatus.h>
-#include <kr_tracker_msgs/LissajousAdderAction.h>
+#include <ros/ros.h>
+
+#include <Eigen/Geometry>
+#include <cmath>
+#include <memory>
 
 class LissajousAdder : public kr_trackers_manager::Tracker
 {
-  public:
-    LissajousAdder(void);
-    void Initialize(const ros::NodeHandle &nh);
-    bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
-    void Deactivate(void);
+ public:
+  LissajousAdder(void);
+  void Initialize(const ros::NodeHandle &nh);
+  bool Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd);
+  void Deactivate(void);
 
-    kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
-    uint8_t status() const;
+  kr_mav_msgs::PositionCommand::ConstPtr update(const nav_msgs::Odometry::ConstPtr &msg);
+  uint8_t status() const;
 
-  private:
-    void goal_callback(void);
-    void preempt_callback(void);
+ private:
+  void goal_callback(void);
+  void preempt_callback(void);
 
-    typedef actionlib::SimpleActionServer<kr_tracker_msgs::LissajousAdderAction> ServerType;
-    std::shared_ptr<ServerType> tracker_server_;
-    ros::Publisher path_pub_;
+  typedef actionlib::SimpleActionServer<kr_tracker_msgs::LissajousAdderAction> ServerType;
+  std::shared_ptr<ServerType> tracker_server_;
+  ros::Publisher path_pub_;
 
-    InitialConditions ICs_;
-    LissajousGenerator generator_1_, generator_2_;
-    double distance_traveled_;
-    Eigen::Vector3d position_last_;
-    bool traj_start_set_;
-    std::string frame_id_;
+  InitialConditions ICs_;
+  LissajousGenerator generator_1_, generator_2_;
+  double distance_traveled_;
+  Eigen::Vector3d position_last_;
+  bool traj_start_set_;
+  std::string frame_id_;
 };
 
-LissajousAdder::LissajousAdder(void)
-  : traj_start_set_(false) {}
+LissajousAdder::LissajousAdder(void) : traj_start_set_(false) {}
 
 void LissajousAdder::Initialize(const ros::NodeHandle &nh)
 {
@@ -92,7 +92,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs::Od
     ICs_.set_from_odom(msg);
     position_last_ = Eigen::Vector3d(ICs_.pos()(0), ICs_.pos()(1), ICs_.pos()(2));
 
-    //Generate path for visualizing
+    // Generate path for visualizing
     geometry_msgs::Point initial_pt, initial_pt2;
     initial_pt.x = ICs_.pos()(0);
     initial_pt.y = ICs_.pos()(1);
@@ -144,7 +144,8 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs::Od
       feedback.time_to_completion = std::max(generator_1_.timeRemaining(), generator_2_.timeRemaining());
       tracker_server_->publishFeedback(feedback);
 
-      Eigen::Vector3d position_current = Eigen::Vector3d(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
+      Eigen::Vector3d position_current =
+          Eigen::Vector3d(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
       distance_traveled_ += (position_current - position_last_).norm();
       position_last_ = position_current;
     }
@@ -154,7 +155,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs::Od
       result.x = msg->pose.pose.position.x;
       result.y = msg->pose.pose.position.y;
       result.z = msg->pose.pose.position.z;
-      result.yaw = ICs_.yaw(); // TODO: Change this to the yaw from msg
+      result.yaw = ICs_.yaw();  // TODO: Change this to the yaw from msg
       result.duration = std::max(generator_1_.timeElapsed(), generator_2_.timeElapsed());
       result.length = distance_traveled_;
       tracker_server_->setSucceeded(result);
@@ -165,29 +166,28 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs::Od
 
 uint8_t LissajousAdder::status() const
 {
-  return tracker_server_->isActive() ?
-             static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE) :
-             static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED);
+  return tracker_server_->isActive() ? static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE) :
+                                       static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED);
 }
 
 void LissajousAdder::goal_callback(void)
 {
-  if (generator_1_.goalIsSet() || generator_2_.goalIsSet())
+  if(generator_1_.goalIsSet() || generator_2_.goalIsSet())
   {
     return;
   }
 
   kr_tracker_msgs::LissajousAdderGoal::ConstPtr msg = tracker_server_->acceptNewGoal();
 
-  if (tracker_server_->isPreemptRequested())
+  if(tracker_server_->isPreemptRequested())
   {
     tracker_server_->setPreempted();
     return;
   }
 
   traj_start_set_ = false;
-  generator_1_.setParams(msg,0);
-  generator_2_.setParams(msg,1);
+  generator_1_.setParams(msg, 0);
+  generator_2_.setParams(msg, 1);
   distance_traveled_ = 0;
   generator_1_.activate();
   generator_2_.activate();
@@ -195,7 +195,7 @@ void LissajousAdder::goal_callback(void)
 
 void LissajousAdder::preempt_callback(void)
 {
-  if (tracker_server_->isActive())
+  if(tracker_server_->isActive())
   {
     tracker_server_->setAborted();
   }

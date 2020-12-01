@@ -1,37 +1,38 @@
-#include <ros/ros.h>
-#include <nodelet/nodelet.h>
-#include <nav_msgs/Odometry.h>
-#include <kr_mav_msgs/TRPYCommand.h>
-#include <kr_mav_msgs/PositionCommand.h>
-#include <kr_mav_msgs/Corrections.h>
-#include <std_msgs/Bool.h>
-#include <Eigen/Geometry>
-#include <kr_mav_controllers/SO3Control.h>
 #include <dynamic_reconfigure/server.h>
 #include <kr_mav_controllers/SO3Config.h>
+#include <kr_mav_controllers/SO3Control.h>
+#include <kr_mav_msgs/Corrections.h>
+#include <kr_mav_msgs/PositionCommand.h>
+#include <kr_mav_msgs/TRPYCommand.h>
+#include <nav_msgs/Odometry.h>
+#include <nodelet/nodelet.h>
+#include <ros/ros.h>
+#include <std_msgs/Bool.h>
 
-#define CLAMP(x,min,max) ((x) < (min)) ? (min) : ((x) > (max)) ? (max) : (x)
+#include <Eigen/Geometry>
+
+#define CLAMP(x, min, max) ((x) < (min)) ? (min) : ((x) > (max)) ? (max) : (x)
 
 class SO3TRPYControlNodelet : public nodelet::Nodelet
 {
  public:
-  SO3TRPYControlNodelet() :
-      odom_set_(false),
-      position_cmd_updated_(false),
-      position_cmd_init_(false),
-      des_yaw_(0),
-      des_yaw_dot_(0),
-      yaw_int_(0),
-      enable_motors_(false),
-      use_external_yaw_(false),
-      g_(9.81)
+  SO3TRPYControlNodelet()
+      : odom_set_(false),
+        position_cmd_updated_(false),
+        position_cmd_init_(false),
+        des_yaw_(0),
+        des_yaw_dot_(0),
+        yaw_int_(0),
+        enable_motors_(false),
+        use_external_yaw_(false),
+        g_(9.81)
   {
     controller_.resetIntegrals();
   }
 
   void onInit();
 
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW; // Need this since we have SO3Control which needs aligned pointer
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;  // Need this since we have SO3Control which needs aligned pointer
 
  private:
   void publishCommand();
@@ -62,7 +63,6 @@ class SO3TRPYControlNodelet : public nodelet::Nodelet
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 };
 
-
 void SO3TRPYControlNodelet::publishCommand()
 {
   if(!odom_set_)
@@ -89,29 +89,29 @@ void SO3TRPYControlNodelet::publishCommand()
   const Eigen::Matrix3f R_des(q_des);
   const Eigen::Matrix3f R_cur(current_orientation_);
 
-  const float yaw_cur = std::atan2(R_cur(1,0), R_cur(0,0));
-  const float yaw_des = std::atan2(R_des(1,0), R_des(0,0));
-  const float pitch_des = -std::asin(R_des(2,0));
-  const float roll_des = std::atan2(R_des(2,1), R_des(2,2));
+  const float yaw_cur = std::atan2(R_cur(1, 0), R_cur(0, 0));
+  const float yaw_des = std::atan2(R_des(1, 0), R_des(0, 0));
+  const float pitch_des = -std::asin(R_des(2, 0));
+  const float roll_des = std::atan2(R_des(2, 1), R_des(2, 2));
 
-  const float Psi = 0.5f*(3.0f - (R_des(0,0)*R_cur(0,0) + R_des(1,0)*R_cur(1,0) + R_des(2,0)*R_cur(2,0) +
-                                  R_des(0,1)*R_cur(0,1) + R_des(1,1)*R_cur(1,1) + R_des(2,1)*R_cur(2,1) +
-                                  R_des(0,2)*R_cur(0,2) + R_des(1,2)*R_cur(1,2) + R_des(2,2)*R_cur(2,2)));
+  const float Psi = 0.5f * (3.0f - (R_des(0, 0) * R_cur(0, 0) + R_des(1, 0) * R_cur(1, 0) + R_des(2, 0) * R_cur(2, 0) +
+                                    R_des(0, 1) * R_cur(0, 1) + R_des(1, 1) * R_cur(1, 1) + R_des(2, 1) * R_cur(2, 1) +
+                                    R_des(0, 2) * R_cur(0, 2) + R_des(1, 2) * R_cur(1, 2) + R_des(2, 2) * R_cur(2, 2)));
 
   float thrust = 0.0f;
-  if(Psi < 1.0f) // Position control stability guaranteed only when Psi < 1
-    thrust = force(0)*R_cur(0,2) + force(1)*R_cur(1,2) + force(2)*R_cur(2,2);
+  if(Psi < 1.0f)  // Position control stability guaranteed only when Psi < 1
+    thrust = force(0) * R_cur(0, 2) + force(1) * R_cur(1, 2) + force(2) * R_cur(2, 2);
 
   float e_yaw = yaw_des - yaw_cur;
 
   const float PI = static_cast<float>(M_PI);
   if(e_yaw > PI)
-    e_yaw -= 2*PI;
+    e_yaw -= 2 * PI;
   else if(e_yaw < -PI)
-    e_yaw += 2*PI;
+    e_yaw += 2 * PI;
 
   // Yaw integral
-  yaw_int_ += ki_yaw*e_yaw;
+  yaw_int_ += ki_yaw * e_yaw;
   if(yaw_int_ > PI)
     yaw_int_ = PI;
   else if(yaw_int_ < -PI)
@@ -119,16 +119,16 @@ void SO3TRPYControlNodelet::publishCommand()
 
   float yaw_cmd = yaw_des + yaw_int_;
   if(yaw_cmd > PI)
-    yaw_cmd -= 2*PI;
+    yaw_cmd -= 2 * PI;
   else if(yaw_cmd < -PI)
-    yaw_cmd += 2*PI;
+    yaw_cmd += 2 * PI;
 
   kr_mav_msgs::TRPYCommand::Ptr trpy_command(new kr_mav_msgs::TRPYCommand);
   trpy_command->header.stamp = ros::Time::now();
   trpy_command->header.frame_id = frame_id_;
   if(enable_motors_)
   {
-    trpy_command->thrust = CLAMP(thrust, 0.01f*9.81f, 10.0f*9.81f);
+    trpy_command->thrust = CLAMP(thrust, 0.01f * 9.81f, 10.0f * 9.81f);
     trpy_command->roll = roll_des;
     trpy_command->pitch = pitch_des;
     trpy_command->yaw = yaw_cmd;
@@ -168,7 +168,7 @@ void SO3TRPYControlNodelet::position_cmd_callback(const kr_mav_msgs::PositionCom
   des_yaw_ = cmd->yaw;
   des_yaw_dot_ = cmd->yaw_dot;
   position_cmd_updated_ = true;
-  //position_cmd_init_ = true;
+  // position_cmd_init_ = true;
 
   publishCommand();
 }
@@ -178,12 +178,8 @@ void SO3TRPYControlNodelet::odom_callback(const nav_msgs::Odometry::ConstPtr &od
   if(!odom_set_)
     odom_set_ = true;
 
-  const Eigen::Vector3f position(odom->pose.pose.position.x,
-                                 odom->pose.pose.position.y,
-                                 odom->pose.pose.position.z);
-  const Eigen::Vector3f velocity(odom->twist.twist.linear.x,
-                                 odom->twist.twist.linear.y,
-                                 odom->twist.twist.linear.z);
+  const Eigen::Vector3f position(odom->pose.pose.position.x, odom->pose.pose.position.y, odom->pose.pose.position.z);
+  const Eigen::Vector3f velocity(odom->twist.twist.linear.x, odom->twist.twist.linear.y, odom->twist.twist.linear.z);
 
   current_orientation_ = Eigen::Quaternionf(odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
                                             odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
@@ -228,71 +224,71 @@ void SO3TRPYControlNodelet::corrections_callback(const kr_mav_msgs::Corrections:
 
 void SO3TRPYControlNodelet::cfg_callback(kr_mav_controllers::SO3Config &config, uint32_t level)
 {
-  if (level == 0)
+  if(level == 0)
   {
     NODELET_DEBUG_STREAM("Nothing changed. level: " << level);
     return;
   }
 
-  if (level & (1 << 0))
+  if(level & (1 << 0))
   {
-    config_kx_[0]  = config.kp_x;
-    config_kx_[1]  = config.kp_y;
-    config_kx_[2]  = config.kp_z;
+    config_kx_[0] = config.kp_x;
+    config_kx_[1] = config.kp_y;
+    config_kx_[2] = config.kp_z;
 
-    config_kv_[0]  = config.kd_x;
-    config_kv_[1]  = config.kd_y;
-    config_kv_[2]  = config.kd_z;
+    config_kv_[0] = config.kd_x;
+    config_kv_[1] = config.kd_y;
+    config_kv_[2] = config.kd_z;
 
     NODELET_INFO("Position Gains set to kp: {%2.3g, %2.3g, %2.3g}, kd: {%2.3g, %2.3g, %2.3g}", config_kx_[0],
                  config_kx_[1], config_kx_[2], config_kv_[0], config_kv_[1], config_kv_[2]);
   }
 
-  if (level & (1 << 1))
+  if(level & (1 << 1))
   {
-    config_ki_[0]  = config.ki_x;
-    config_ki_[1]  = config.ki_y;
-    config_ki_[2]  = config.ki_z;
+    config_ki_[0] = config.ki_x;
+    config_ki_[1] = config.ki_y;
+    config_ki_[2] = config.ki_z;
 
     config_kib_[0] = config.kib_x;
     config_kib_[1] = config.kib_y;
     config_kib_[2] = config.kib_z;
 
-    NODELET_INFO("Integral Gains set to ki: {%2.2g, %2.2g, %2.2g}, kib: {%2.2g, %2.2g, %2.2g}",
-                                        config_ki_[0], config_ki_[1], config_ki_[2], config_kib_[0], config_kib_[1], config_kib_[2]);
+    NODELET_INFO("Integral Gains set to ki: {%2.2g, %2.2g, %2.2g}, kib: {%2.2g, %2.2g, %2.2g}", config_ki_[0],
+                 config_ki_[1], config_ki_[2], config_kib_[0], config_kib_[1], config_kib_[2]);
   }
 
-  if (level & (1 << 2))
+  if(level & (1 << 2))
   {
-    kR_[0]  = config.rot_x;
-    kR_[1]  = config.rot_y;
-    kR_[2]  = config.rot_z;
+    kR_[0] = config.rot_x;
+    kR_[1] = config.rot_y;
+    kR_[2] = config.rot_z;
 
-    kOm_[0]  = config.ang_x;
-    kOm_[1]  = config.ang_y;
-    kOm_[2]  = config.ang_z;
+    kOm_[0] = config.ang_x;
+    kOm_[1] = config.ang_y;
+    kOm_[2] = config.ang_z;
 
-    NODELET_INFO("Attitude Gains set to kp: {%2.2g, %2.2g, %2.2g}, kd: {%2.2g, %2.2g, %2.2g}",
-                                       kR_[0], kR_[1], kR_[2], kOm_[0], kOm_[1], kOm_[2]);
+    NODELET_INFO("Attitude Gains set to kp: {%2.2g, %2.2g, %2.2g}, kd: {%2.2g, %2.2g, %2.2g}", kR_[0], kR_[1], kR_[2],
+                 kOm_[0], kOm_[1], kOm_[2]);
   }
 
-  if (level & (1 << 3))
+  if(level & (1 << 3))
   {
     corrections_[0] = config.kf_correction;
     corrections_[1] = config.roll_correction;
     corrections_[2] = config.pitch_correction;
-    NODELET_INFO("Corrections set to kf: %2.2g, roll: %2.2g, pitch: %2.2g",
-        corrections_[0], corrections_[1], corrections_[2]);
+    NODELET_INFO("Corrections set to kf: %2.2g, roll: %2.2g, pitch: %2.2g", corrections_[0], corrections_[1],
+                 corrections_[2]);
   }
 
-  if (level & (1 << 4))
+  if(level & (1 << 4))
   {
-      controller_.setMaxIntegral(config.max_pos_int);
-      controller_.setMaxIntegralBody(config.max_pos_int_b);
-      controller_.setMaxTiltAngle(config.max_tilt_angle);
+    controller_.setMaxIntegral(config.max_pos_int);
+    controller_.setMaxIntegralBody(config.max_pos_int_b);
+    controller_.setMaxTiltAngle(config.max_tilt_angle);
 
-      NODELET_INFO("Maxes set to Integral: %2.2g, Integral Body: %2.2g, Tilt Angle (rad): %2.2g",
-          config.max_pos_int, config.max_pos_int_b, config.max_tilt_angle);
+    NODELET_INFO("Maxes set to Integral: %2.2g, Integral Body: %2.2g, Tilt Angle (rad): %2.2g", config.max_pos_int,
+                 config.max_pos_int_b, config.max_tilt_angle);
   }
 
   NODELET_WARN_STREAM_COND(level != std::numeric_limits<uint32_t>::max() && (level >= (1 << 5)),
@@ -318,29 +314,41 @@ void SO3TRPYControlNodelet::onInit()
 
   n.param("use_external_yaw", use_external_yaw_, true);
 
-  n.param("gains/pos/x", config_kx_[0],  7.4f);
-  n.param("gains/pos/y", config_kx_[1],  7.4f);
+  n.param("gains/pos/x", config_kx_[0], 7.4f);
+  n.param("gains/pos/y", config_kx_[1], 7.4f);
   n.param("gains/pos/z", config_kx_[2], 10.4f);
-  kx_[0] = config_kx_[0]; kx_[1] = config_kx_[1]; kx_[2] = config_kx_[2];
-  config.kp_x = config_kx_[0]; config.kp_y = config_kx_[1]; config.kp_z = config_kx_[2];
+  kx_[0] = config_kx_[0];
+  kx_[1] = config_kx_[1];
+  kx_[2] = config_kx_[2];
+  config.kp_x = config_kx_[0];
+  config.kp_y = config_kx_[1];
+  config.kp_z = config_kx_[2];
 
-  n.param("gains/vel/x", config_kv_[0],  4.8f);
-  n.param("gains/vel/y", config_kv_[1],  4.8f);
-  n.param("gains/vel/z", config_kv_[2],  6.0f);
-  kv_[0] = config_kv_[0]; kv_[1] = config_kv_[1]; kv_[2] = config_kv_[2];
-  config.kd_x = config_kv_[0]; config.kd_y = config_kv_[1]; config.kd_z = config_kv_[2];
+  n.param("gains/vel/x", config_kv_[0], 4.8f);
+  n.param("gains/vel/y", config_kv_[1], 4.8f);
+  n.param("gains/vel/z", config_kv_[2], 6.0f);
+  kv_[0] = config_kv_[0];
+  kv_[1] = config_kv_[1];
+  kv_[2] = config_kv_[2];
+  config.kd_x = config_kv_[0];
+  config.kd_y = config_kv_[1];
+  config.kd_z = config_kv_[2];
 
   n.param("gains/ki/x", config_ki_[0], 0.0f);
   n.param("gains/ki/y", config_ki_[1], 0.0f);
   n.param("gains/ki/z", config_ki_[2], 0.0f);
-  config.ki_x = config_ki_[0]; config.ki_y = config_ki_[1]; config.ki_z = config_ki_[2];
+  config.ki_x = config_ki_[0];
+  config.ki_y = config_ki_[1];
+  config.ki_z = config_ki_[2];
 
   n.param("gains/ki/yaw", ki_yaw_, 0.0f);
 
   n.param("gains/kib/x", config_kib_[0], 0.0f);
   n.param("gains/kib/y", config_kib_[1], 0.0f);
   n.param("gains/kib/z", config_kib_[2], 0.0f);
-  config.kib_x = config_kib_[0]; config.kib_y = config_kib_[1]; config.kib_z = config_kib_[2];
+  config.kib_x = config_kib_[0];
+  config.kib_y = config_kib_[1];
+  config.kib_z = config_kib_[2];
 
   n.param("gains/rot/x", kR_[0], 1.5f);
   n.param("gains/rot/y", kR_[1], 1.5f);
@@ -348,14 +356,18 @@ void SO3TRPYControlNodelet::onInit()
   n.param("gains/ang/x", kOm_[0], 0.13f);
   n.param("gains/ang/y", kOm_[1], 0.13f);
   n.param("gains/ang/z", kOm_[2], 0.1f);
-  config.rot_x = kR_[0];  config.rot_y = kR_[1];  config.rot_z =  kR_[2];
-  config.ang_x = kOm_[0]; config.ang_y = kOm_[1]; config.ang_z = kOm_[2];
+  config.rot_x = kR_[0];
+  config.rot_y = kR_[1];
+  config.rot_z = kR_[2];
+  config.ang_x = kOm_[0];
+  config.ang_y = kOm_[1];
+  config.ang_z = kOm_[2];
 
   n.param("corrections/kf", corrections_[0], 0.0f);
   n.param("corrections/r", corrections_[1], 0.0f);
   n.param("corrections/p", corrections_[2], 0.0f);
-  config.kf_correction    = corrections_[0];
-  config.roll_correction  = corrections_[1];
+  config.kf_correction = corrections_[0];
+  config.roll_correction = corrections_[1];
   config.pitch_correction = corrections_[2];
 
   float max_pos_int, max_pos_int_b;

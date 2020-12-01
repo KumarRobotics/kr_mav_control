@@ -1,10 +1,10 @@
+#include <kr_mav_msgs/PositionCommand.h>
 #include <nav_msgs/Odometry.h>
 #include <nodelet/nodelet.h>
-#include <kr_mav_msgs/PositionCommand.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
-#include <std_msgs/Bool.h>
 #include <snav/snapdragon_navigator.h>
+#include <std_msgs/Bool.h>
 
 class PosCmdToSnav : public nodelet::Nodelet
 {
@@ -19,7 +19,7 @@ class PosCmdToSnav : public nodelet::Nodelet
   void motors_on();
   void motors_off();
 
-  //controller state
+  // controller state
   SnavCachedData *snav_cached_data_struct_;
 
   bool pos_cmd_set_;
@@ -35,22 +35,19 @@ class PosCmdToSnav : public nodelet::Nodelet
 
 void PosCmdToSnav::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
-  //Send min thrust as heartbeat
+  // Send min thrust as heartbeat
   if(motor_status_ && ((ros::Time::now() - last_pos_cmd_time_).toSec() >= pos_cmd_timeout_))
   {
-    sn_send_thrust_att_ang_vel_command (0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    sn_send_thrust_att_ang_vel_command(0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
   }
 }
 
 void PosCmdToSnav::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
 {
-  if(pos_cmd_set_ &&
-     ((ros::Time::now() - last_pos_cmd_time_).toSec() >= pos_cmd_timeout_))
+  if(pos_cmd_set_ && ((ros::Time::now() - last_pos_cmd_time_).toSec() >= pos_cmd_timeout_))
   {
-    ROS_DEBUG("pos_cmd timeout. %f seconds since last command",
-             (ros::Time::now() - last_pos_cmd_time_).toSec());
-    const auto last_pos_cmd_ptr =
-        boost::make_shared<kr_mav_msgs::PositionCommand>(last_pos_cmd_);
+    ROS_DEBUG("pos_cmd timeout. %f seconds since last command", (ros::Time::now() - last_pos_cmd_time_).toSec());
+    const auto last_pos_cmd_ptr = boost::make_shared<kr_mav_msgs::PositionCommand>(last_pos_cmd_);
 
     position_cmd_callback(last_pos_cmd_ptr);
   }
@@ -58,9 +55,9 @@ void PosCmdToSnav::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
 
 void PosCmdToSnav::motors_on()
 {
-  //call the update 0 success
+  // call the update 0 success
   int res_update = sn_update_data();
-  if(res_update ==  -1)
+  if(res_update == -1)
   {
     ROS_ERROR("Likely failure in snav, ensure it is running");
     return;
@@ -70,7 +67,7 @@ void PosCmdToSnav::motors_on()
   {
     case SN_PROPS_STATE_NOT_SPINNING:
     {
-      //sn_send_thrust_att_ang_vel_command (0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+      // sn_send_thrust_att_ang_vel_command (0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
       int ret = sn_spin_props();
       if(ret == -1)
         ROS_ERROR("Not able to send spinning command");
@@ -96,17 +93,17 @@ void PosCmdToSnav::motors_off()
 {
   do
   {
-    //call the update, 0-success
+    // call the update, 0-success
     int res_update = sn_update_data();
-    if(res_update ==  -1)
+    if(res_update == -1)
     {
       ROS_ERROR("Likely failure in snav, ensure it is running");
     }
 
-    //send minimum thrust and identity attitude
+    // send minimum thrust and identity attitude
     sn_send_thrust_att_ang_vel_command(0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 
-    //stop the props, 0-success
+    // stop the props, 0-success
     int r = sn_stop_props();
     if(r == 0)
       motor_status_ = 0;
@@ -114,10 +111,9 @@ void PosCmdToSnav::motors_off()
     {
       ROS_ERROR("Not able to send switch off propellers");
     }
-  }
-  while(snav_cached_data_struct_->general_status.props_state == SN_PROPS_STATE_SPINNING);
+  } while(snav_cached_data_struct_->general_status.props_state == SN_PROPS_STATE_SPINNING);
 
-  //check the propellers status
+  // check the propellers status
   if(snav_cached_data_struct_->general_status.props_state == SN_PROPS_STATE_SPINNING)
   {
     ROS_ERROR("All the propellers are still spinning");
@@ -134,15 +130,16 @@ void PosCmdToSnav::enable_motors_callback(const std_msgs::Bool::ConstPtr &msg)
     ROS_INFO("Enabling motors");
     for(int i = 0; i < 50; i++)
     {
-      sn_send_thrust_att_ang_vel_command (0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+      sn_send_thrust_att_ang_vel_command(0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
       if(!motor_status_)
         motors_on();
       else
         return;
-       ros::Duration(0.05).sleep();
+      ros::Duration(0.05).sleep();
     }
   }
-  else{
+  else
+  {
     ROS_INFO("Disabling motors");
     motors_off();
   }
@@ -165,7 +162,7 @@ void PosCmdToSnav::position_cmd_callback(const kr_mav_msgs::PositionCommand::Con
   float ydd = static_cast<float>(pos->acceleration.y);
   float zdd = static_cast<float>(pos->acceleration.z);
 
-  if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &snav_cached_data_struct_)!=0)
+  if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &snav_cached_data_struct_) != 0)
   {
     ROS_ERROR("failed to get flight data pointer");
     return;
@@ -179,13 +176,14 @@ void PosCmdToSnav::position_cmd_callback(const kr_mav_msgs::PositionCommand::Con
   }
   else
   {
-    sn_send_trajectory_tracking_command(SN_POSITION_CONTROL_VIO, SN_TRAJ_DEFAULT, x, y, z, xd, yd, zd, xdd, ydd, zdd, yaw, yaw_rate);
+    sn_send_trajectory_tracking_command(SN_POSITION_CONTROL_VIO, SN_TRAJ_DEFAULT, x, y, z, xd, yd, zd, xdd, ydd, zdd,
+                                        yaw, yaw_rate);
   }
 
   if(!pos_cmd_set_)
     pos_cmd_set_ = true;
 
-  //save last pos_cmd
+  // save last pos_cmd
   last_pos_cmd_ = *pos;
   last_pos_cmd_time_ = ros::Time::now();
 }
@@ -207,16 +205,14 @@ void PosCmdToSnav::onInit(void)
     return;
   }
 
-  odom_sub_ = priv_nh.subscribe("odom", 10, &PosCmdToSnav::odom_callback,
-                                this, ros::TransportHints().tcpNoDelay());
+  odom_sub_ = priv_nh.subscribe("odom", 10, &PosCmdToSnav::odom_callback, this, ros::TransportHints().tcpNoDelay());
 
-  imu_sub_ = priv_nh.subscribe("imu", 10, &PosCmdToSnav::imu_callback, this,
-                               ros::TransportHints().tcpNoDelay());
+  imu_sub_ = priv_nh.subscribe("imu", 10, &PosCmdToSnav::imu_callback, this, ros::TransportHints().tcpNoDelay());
 
   position_cmd_sub_ = priv_nh.subscribe("position_cmd", 10, &PosCmdToSnav::position_cmd_callback, this,
-                                  ros::TransportHints().tcpNoDelay());
-  enable_motors_sub_ = priv_nh.subscribe("motors", 2, &PosCmdToSnav::enable_motors_callback, this,
-                                   ros::TransportHints().tcpNoDelay());
+                                        ros::TransportHints().tcpNoDelay());
+  enable_motors_sub_ =
+      priv_nh.subscribe("motors", 2, &PosCmdToSnav::enable_motors_callback, this, ros::TransportHints().tcpNoDelay());
 }
 
 #include <pluginlib/class_list_macros.h>

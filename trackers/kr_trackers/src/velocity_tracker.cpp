@@ -1,7 +1,7 @@
-#include <ros/ros.h>
-#include <kr_trackers_manager/Tracker.h>
-#include <kr_tracker_msgs/VelocityGoal.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
+#include <kr_tracker_msgs/VelocityGoal.h>
+#include <kr_trackers_manager/Tracker.h>
+#include <ros/ros.h>
 #include <tf/transform_datatypes.h>
 
 class VelocityTracker : public kr_trackers_manager::Tracker
@@ -29,21 +29,15 @@ class VelocityTracker : public kr_trackers_manager::Tracker
   float timeout_;
 };
 
-VelocityTracker::VelocityTracker(void) :
-    odom_set_(false),
-    active_(false),
-    use_position_gains_(false),
-    last_t_(0)
-{
-}
+VelocityTracker::VelocityTracker(void) : odom_set_(false), active_(false), use_position_gains_(false), last_t_(0) {}
 
 void VelocityTracker::Initialize(const ros::NodeHandle &nh)
 {
   ros::NodeHandle priv_nh(nh, "velocity_tracker");
   priv_nh.param("timeout", timeout_, 0.5f);
 
-  sub_vel_cmd_ = priv_nh.subscribe("goal", 10, &VelocityTracker::velocity_cmd_cb, this,
-                                   ros::TransportHints().tcpNoDelay());
+  sub_vel_cmd_ =
+      priv_nh.subscribe("goal", 10, &VelocityTracker::velocity_cmd_cb, this, ros::TransportHints().tcpNoDelay());
 }
 
 bool VelocityTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
@@ -108,7 +102,7 @@ kr_mav_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs::O
   if(last_t_ == 0)
     last_t_ = ros::Time::now().toSec();
 
-  const double t_now =  ros::Time::now().toSec();
+  const double t_now = ros::Time::now().toSec();
   const double dt = t_now - last_t_;
   last_t_ = t_now;
 
@@ -139,7 +133,7 @@ kr_mav_msgs::PositionCommand::ConstPtr VelocityTracker::update(const nav_msgs::O
 
 void VelocityTracker::velocity_cmd_cb(const kr_tracker_msgs::VelocityGoal::ConstPtr &msg)
 {
-  //ROS_INFO("VelocityTracker goal (%2.2f, %2.2f, %2.2f, %2.2f)", msg->vx, msg->vy, msg->vz, msg->vyaw);
+  // ROS_INFO("VelocityTracker goal (%2.2f, %2.2f, %2.2f, %2.2f)", msg->vx, msg->vy, msg->vz, msg->vyaw);
   position_cmd_.velocity.x = msg->vx;
   position_cmd_.velocity.y = msg->vy;
   position_cmd_.velocity.z = msg->vz;
@@ -152,9 +146,8 @@ void VelocityTracker::velocity_cmd_cb(const kr_tracker_msgs::VelocityGoal::Const
 
 uint8_t VelocityTracker::status() const
 {
-  return active_ ?
-             static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE) :
-             static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED);
+  return active_ ? static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::ACTIVE) :
+                   static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED);
 }
 
 #include <pluginlib/class_list_macros.h>

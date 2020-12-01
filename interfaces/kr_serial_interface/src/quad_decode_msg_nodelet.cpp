@@ -1,8 +1,8 @@
-#include <ros/ros.h>
-#include <nodelet/nodelet.h>
-#include <sensor_msgs/Imu.h>
 #include <kr_mav_msgs/Serial.h>
 #include <kr_serial_interface/decode_msgs.h>
+#include <nodelet/nodelet.h>
+#include <ros/ros.h>
+#include <sensor_msgs/Imu.h>
 
 class QuadDecodeMsg : public nodelet::Nodelet
 {
@@ -55,8 +55,8 @@ void QuadDecodeMsg::onInit(void)
   imu_output_pub_ = priv_nh.advertise<sensor_msgs::Imu>("imu", 10);
   status_pub_ = priv_nh.advertise<kr_mav_msgs::StatusData>("status", 10);
 
-  serial_sub_ = priv_nh.subscribe("serial", 10, &QuadDecodeMsg::serial_callback, this,
-                                  ros::TransportHints().tcpNoDelay());
+  serial_sub_ =
+      priv_nh.subscribe("serial", 10, &QuadDecodeMsg::serial_callback, this, ros::TransportHints().tcpNoDelay());
 }
 
 #include <pluginlib/class_list_macros.h>

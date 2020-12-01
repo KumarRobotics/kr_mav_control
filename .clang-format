@@ -1,0 +1,14 @@
+---
+Language: Cpp
+BasedOnStyle: Google
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakBeforeMultilineStrings: false
+BreakBeforeBraces: Allman
+BreakBeforeTernaryOperators: false
+ColumnLimit: 120
+DerivePointerAlignment: false
+PointerAlignment: Right
+SpaceBeforeParens: Never
+...
