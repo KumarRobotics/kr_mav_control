@@ -106,7 +106,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousTracker::update(const nav_msgs::
 
   // Set gains
   kr_mav_msgs::PositionCommand::Ptr cmd = generator_.getPositionCmd();
-  if(cmd == nullptr)
+  if(cmd == NULL)
   {
     return cmd;
   }

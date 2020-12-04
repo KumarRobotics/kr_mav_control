@@ -202,7 +202,7 @@ void TRPYCmdToSnav::onInit(void)
   imu_set_ = false;
   trpy_cmd_set_ = false;
   motor_status_ = 0;
-  snav_cached_data_struct_ = nullptr;
+  snav_cached_data_struct_ = NULL;
   if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &snav_cached_data_struct_) != 0)
   {
     ROS_ERROR("\nFailed to get flight data pointer!\n");

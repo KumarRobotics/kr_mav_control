@@ -39,7 +39,7 @@ class SnavSampler
   ros::Timer attitude_estimate_timer_;
 };
 
-SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh) : sn_struct_(nullptr)
+SnavSampler::SnavSampler(ros::NodeHandle &nh, ros::NodeHandle &pnh) : sn_struct_(NULL)
 {
   if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &sn_struct_) != 0)
     throw "failed to get flight data ptr";
