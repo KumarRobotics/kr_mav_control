@@ -147,7 +147,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LineTrackerMinJerk::update(const nav_msgs
 
   current_traj_length_ += dx;
 
-  kr_mav_msgs::PositionCommand::Ptr cmd(new kr_mav_msgs::PositionCommand);
+  auto cmd = boost::make_shared<kr_mav_msgs::PositionCommand>();
   cmd->header.stamp = t_now;
   cmd->header.frame_id = msg->header.frame_id;
 
