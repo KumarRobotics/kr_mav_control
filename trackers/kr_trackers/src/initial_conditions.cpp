@@ -28,7 +28,7 @@ InitialConditions::InitialConditions()
 
 void InitialConditions::set_from_cmd(const kr_mav_msgs::PositionCommand::ConstPtr &msg)
 {
-  if(msg == nullptr)
+  if(msg == NULL)
   {
     ROS_WARN("Null PositionCommand recieved. Not setting initial condition.");
     return;

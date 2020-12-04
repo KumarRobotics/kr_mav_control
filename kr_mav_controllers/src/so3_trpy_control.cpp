@@ -123,7 +123,7 @@ void SO3TRPYControlNodelet::publishCommand()
   else if(yaw_cmd < -PI)
     yaw_cmd += 2 * PI;
 
-  auto trpy_command = boost::make_shared<kr_mav_msgs::TRPYCommand>();
+  kr_mav_msgs::TRPYCommand::Ptr trpy_command(new kr_mav_msgs::TRPYCommand);
   trpy_command->header.stamp = ros::Time::now();
   trpy_command->header.frame_id = frame_id_;
   if(enable_motors_)

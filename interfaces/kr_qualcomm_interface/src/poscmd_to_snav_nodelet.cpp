@@ -197,7 +197,7 @@ void PosCmdToSnav::onInit(void)
 
   pos_cmd_set_ = false;
   motor_status_ = 0;
-  snav_cached_data_struct_ = nullptr;
+  snav_cached_data_struct_ = NULL;
 
   if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &snav_cached_data_struct_) != 0)
   {
