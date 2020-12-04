@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
   while(ros::ok())
   {
     // read the flight data
-    SnavCachedData *snav_data = NULL;
+    SnavCachedData *snav_data = nullptr;
     if(sn_get_flight_data_ptr(sizeof(SnavCachedData), &snav_data) != 0)
     {
       ROS_ERROR("failed to get flight data ptr");

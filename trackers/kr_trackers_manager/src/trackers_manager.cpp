@@ -28,14 +28,13 @@ class TrackersManager : public nodelet::Nodelet
 };
 
 TrackersManager::TrackersManager(void)
-    : tracker_loader_("kr_trackers_manager", "kr_trackers_manager::Tracker"), active_tracker_(NULL)
+    : tracker_loader_("kr_trackers_manager", "kr_trackers_manager::Tracker"), active_tracker_(nullptr)
 {
 }
 
 TrackersManager::~TrackersManager(void)
 {
-  for(std::map<std::string, kr_trackers_manager::Tracker *>::iterator it = tracker_map_.begin();
-      it != tracker_map_.end(); it++)
+  for(auto it = tracker_map_.begin(); it != tracker_map_.end(); ++it)
   {
     delete it->second;
 #if ROS_VERSION_MINIMUM(1, 8, 0)
@@ -92,13 +91,12 @@ void TrackersManager::onInit(void)
 
 void TrackersManager::odom_callback(const nav_msgs::Odometry::ConstPtr &msg)
 {
-  std::map<std::string, kr_trackers_manager::Tracker *>::iterator it;
-  for(it = tracker_map_.begin(); it != tracker_map_.end(); it++)
+  for(auto it = tracker_map_.begin(); it != tracker_map_.end(); ++it)
   {
     if(it->second == active_tracker_)
     {
       cmd_ = it->second->update(msg);
-      if(cmd_ != NULL)
+      if(cmd_ != nullptr)
         pub_cmd_.publish(cmd_);
 
       kr_tracker_msgs::TrackerStatus::Ptr status_msg(new kr_tracker_msgs::TrackerStatus);
@@ -117,7 +115,7 @@ void TrackersManager::odom_callback(const nav_msgs::Odometry::ConstPtr &msg)
 bool TrackersManager::transition_callback(kr_tracker_msgs::Transition::Request &req,
                                           kr_tracker_msgs::Transition::Response &res)
 {
-  const std::map<std::string, kr_trackers_manager::Tracker *>::iterator it = tracker_map_.find(req.tracker);
+  const auto it = tracker_map_.find(req.tracker);
   if(it == tracker_map_.end())
   {
     res.success = false;
@@ -141,7 +139,7 @@ bool TrackersManager::transition_callback(kr_tracker_msgs::Transition::Request &
     return true;
   }
 
-  if(active_tracker_ != NULL)
+  if(active_tracker_ != nullptr)
   {
     active_tracker_->Deactivate();
   }

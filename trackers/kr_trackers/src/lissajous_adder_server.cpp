@@ -115,7 +115,7 @@ kr_mav_msgs::PositionCommand::ConstPtr LissajousAdder::update(const nav_msgs::Od
   // Set gains
   kr_mav_msgs::PositionCommand::Ptr cmd1 = generator_1_.getPositionCmd();
   kr_mav_msgs::PositionCommand::Ptr cmd2 = generator_2_.getPositionCmd();
-  if(cmd1 == NULL && cmd2 == NULL)
+  if(cmd1 == nullptr && cmd2 == nullptr)
   {
     return cmd1;
   }
