@@ -99,7 +99,7 @@ void TrackersManager::odom_callback(const nav_msgs::Odometry::ConstPtr &msg)
       if(cmd_ != nullptr)
         pub_cmd_.publish(cmd_);
 
-      auto status_msg = boost::make_shared<kr_tracker_msgs::TrackerStatus>();
+      kr_tracker_msgs::TrackerStatus::Ptr status_msg(new kr_tracker_msgs::TrackerStatus);
       status_msg->header.stamp = msg->header.stamp;
       status_msg->tracker = it->first;
       status_msg->status = it->second->status();
