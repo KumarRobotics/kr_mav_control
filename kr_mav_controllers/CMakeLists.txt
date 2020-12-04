@@ -39,7 +39,7 @@ catkin_package(
 add_library(kr_mav_so3_control src/SO3Control.cpp src/so3_control_nodelet.cpp src/so3_trpy_control.cpp)
 target_include_directories(kr_mav_so3_control PUBLIC include ${catkin_INCLUDE_DIRS})
 target_link_libraries(kr_mav_so3_control PUBLIC ${catkin_LIBRARIES} Eigen3::Eigen)
-# add_dependencies(kr_mav_so3_control ${PROJECT_NAME}_gencfg ${catkin_EXPORTED_TARGETS})
+add_dependencies(kr_mav_so3_control ${PROJECT_NAME}_gencfg ${catkin_EXPORTED_TARGETS})
 
 # TODO: PID control has not been updated for new messages add_library(kr_mav_pid_control src/PIDControl.cpp
 # src/pid_control_nodelet.cpp) add_dependencies(kr_mav_pid_control ${catkin_EXPORTED_TARGETS})
