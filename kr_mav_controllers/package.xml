@@ -20,8 +20,8 @@
   <depend>nodelet</depend>
   <depend>dynamic_reconfigure</depend>
 
-<export>
+  <export>
     <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
-</export>
+  </export>
 
 </package>

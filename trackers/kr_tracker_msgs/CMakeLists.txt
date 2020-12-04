@@ -1,23 +1,18 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.10)
 project(kr_tracker_msgs)
-
-add_compile_options(-std=c++11)
 
 # set default build type
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs nav_msgs actionlib_msgs std_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation nav_msgs geometry_msgs actionlib_msgs)
 
-include_directories(${catkin_INCLUDE_DIRS})
+add_service_files(DIRECTORY srv FILES Transition.srv)
 
-add_service_files(DIRECTORY srv
-  FILES
-  Transition.srv
-)
-
-add_action_files(DIRECTORY action
+add_action_files(
+  DIRECTORY
+  action
   FILES
   LineTracker.action
   VelocityTracker.action
@@ -26,17 +21,18 @@ add_action_files(DIRECTORY action
   LissajousTracker.action
   LissajousAdder.action)
 
-add_message_files(DIRECTORY msg
+add_message_files(
+  DIRECTORY
+  msg
   FILES
   TrackerStatus.msg
-  VelocityGoal.msg
-)
+  VelocityGoal.msg)
 
-generate_messages(
-  DEPENDENCIES geometry_msgs std_msgs actionlib_msgs)
+generate_messages(DEPENDENCIES geometry_msgs actionlib_msgs)
 
 catkin_package(
-  INCLUDE_DIRS
-  LIBRARIES
-  CATKIN_DEPENDS message_runtime geometry_msgs nav_msgs actionlib_msgs std_msgs
-  DEPENDS)
+  CATKIN_DEPENDS
+  nav_msgs
+  geometry_msgs
+  actionlib_msgs
+  message_runtime)
