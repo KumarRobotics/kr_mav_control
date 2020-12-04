@@ -13,8 +13,8 @@ find_package(
   COMPONENTS roscpp
              nodelet
              pluginlib
-             kr_mav_msgs
              nav_msgs
+             kr_mav_msgs
              kr_tracker_msgs)
 
 catkin_package(
@@ -33,7 +33,7 @@ catkin_package(
 add_library(${PROJECT_NAME} src/trackers_manager.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC include ${catkin_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES})
-# add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 install(
   TARGETS ${PROJECT_NAME}
