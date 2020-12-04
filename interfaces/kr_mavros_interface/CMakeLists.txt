@@ -6,7 +6,7 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-set(CMAKE_CXX_STANDARD)
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(
   catkin REQUIRED
