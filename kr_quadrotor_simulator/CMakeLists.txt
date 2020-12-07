@@ -6,7 +6,10 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+add_compile_options(-Wall)
 
 find_package(catkin REQUIRED COMPONENTS nav_msgs kr_mav_msgs sensor_msgs tf2_ros)
 find_package(Eigen3 REQUIRED)
