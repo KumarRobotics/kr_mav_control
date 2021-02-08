@@ -1,4 +1,4 @@
-box: ros:kinetic-robot
+box: ros:melodic-robot
 
 build:
   steps:

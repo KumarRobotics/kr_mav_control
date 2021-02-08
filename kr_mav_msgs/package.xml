@@ -10,21 +10,10 @@
 
   <author>Kartik Mohta</author>
 
-  <!-- Dependencies which this package needs to build itself. -->
   <buildtool_depend>catkin</buildtool_depend>
 
-  <!-- Dependencies needed to compile this package. -->
-  <build_depend>message_generation</build_depend>
-
   <depend>geometry_msgs</depend>
-  <depend>std_msgs</depend>
-  <depend>rosconsole</depend>
-
-  <!-- Dependencies needed after this package is compiled. -->
+  <build_depend>message_generation</build_depend>
   <exec_depend>message_runtime</exec_depend>
-
-  <!-- Dependencies needed only for running tests. -->
-  <!-- <test_depend>geometry_msgs</test_depend> -->
-  <!-- <test_depend>nav_msgs</test_depend> -->
 
 </package>

@@ -23,6 +23,6 @@
   <depend>kr_trackers_manager</depend>
 
   <export>
-    <kr_trackers_manager plugin="${prefix}/plugin.xml"/>
+    <kr_trackers_manager plugin="${prefix}/nodelet_plugin.xml"/>
   </export>
 </package>
