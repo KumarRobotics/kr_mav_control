@@ -11,14 +11,14 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>roscpp</depend>
+  <depend>dynamic_reconfigure</depend>
   <depend>geometry_msgs</depend>
-  <depend>nav_msgs</depend>
   <depend>kr_mav_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>nodelet</depend>
+  <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>tf</depend>
-  <depend>nodelet</depend>
-  <depend>dynamic_reconfigure</depend>
 
   <export>
     <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
