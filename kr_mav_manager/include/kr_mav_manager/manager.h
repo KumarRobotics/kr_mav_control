@@ -13,7 +13,7 @@
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Empty.h>
 
-// quadrotor_control
+// kr_mav_control
 #include <kr_mav_msgs/OutputData.h>
 #include <kr_mav_msgs/PositionCommand.h>
 #include <kr_mav_msgs/SO3Command.h>

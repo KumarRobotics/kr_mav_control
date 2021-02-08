@@ -8,7 +8,7 @@ roslaunch mrsl_quadrotor_launch gazebo.launch world:=levine
 roslaunch mrsl_quadrotor_launch spawn.launch mav_type:=pelican mav_name:=juliett
 ```
 
-This spawns a quadrotor with plugins for `odom` and `so3_cmd` under `juliett` namespace. quadrotor_control plugins have to be launched under this namespace.
+This spawns a quadrotor with plugins for `odom` and `so3_cmd` under `juliett` namespace. kr_mav_control plugins have to be launched under this namespace.
 
 ```
 roslaunch mrsl_quadrotor_launch controller.launch odom_topic:=ground_truth/odom mav_type:=pelican mav_name:=juliett mass:=0.5

@@ -9,7 +9,7 @@ roscd kr_multi_mav_manager/scripts
 ```
  * This will launch 4 robots in simulator
  * Switch to the `Kill` tab in the `tmux` window and press `Enter` to close everything
- * `dragonfly$ID` namespace is used for each robot. Each vehicle can be interfaced with the quadrotor_control topics/services in this namespace.
+ * `dragonfly$ID` namespace is used for each robot. Each vehicle can be interfaced with the kr_mav_control topics/services in this namespace.
  * Use the rqt_kr_multi_mav_manager GUI to control all the robots. Wait until you see `==== Multi MAV Manager is ready for action ===` in one of the tmux pane.
 
 If MAVs need to be loaded in pre-defined start locations, create a CSV file to input X,Y,Z,YAW on each new line per MAV. An example csv is provided.

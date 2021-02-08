@@ -14,7 +14,7 @@
 #include <std_msgs/UInt8.h>
 #include <tf/transform_datatypes.h>
 
-// quadrotor_control
+// kr_mav_control
 #include <kr_tracker_msgs/Transition.h>
 #include <kr_tracker_msgs/VelocityGoal.h>
 

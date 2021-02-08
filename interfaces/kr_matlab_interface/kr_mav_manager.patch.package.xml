@@ -2,7 +2,7 @@
   <name>kr_mav_manager</name>
   <version>1.0.0</version>
   <description>
-    This package provides tools to interface with the quadrotor_control stack
+    This package provides tools to interface with the kr_mav_control stack
   </description>
   <maintainer email="jut@seas.upenn.edu">Justin Thomas</maintainer>
   <license>BSD</license>
