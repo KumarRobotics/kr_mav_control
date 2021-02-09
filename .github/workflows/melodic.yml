@@ -34,5 +34,6 @@ jobs:
         run: |
           cd ~/catkin_ws
           export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,--no-undefined,-z,relro,-z,now -pthread"
+          /bin/bash -c "source /opt/ros/melodic/setup.bash"
           catkin build
       #catkin_make -DCMAKE_BUILD_TYPE=Release
