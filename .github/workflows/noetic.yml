@@ -1,5 +1,5 @@
 
-name: ROS Noetic CI
+name: Noetic
 on: 
   push:
     branches: [ master ]
