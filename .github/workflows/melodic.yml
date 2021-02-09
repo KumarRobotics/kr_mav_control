@@ -31,6 +31,7 @@ jobs:
           catkin config -DCMAKE_BUILD_TYPE=Release                    
       - name: Build package
         run: |
+          cd ~/catkin_ws
           export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,--no-undefined,-z,relro,-z,now -pthread"
           catkin build
       #catkin_make -DCMAKE_BUILD_TYPE=Release
