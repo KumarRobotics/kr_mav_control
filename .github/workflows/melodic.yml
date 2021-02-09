@@ -1,4 +1,4 @@
-name: ROS Melodic CI
+name: Melodic
 on: 
   push:
     branches: [ master ]
