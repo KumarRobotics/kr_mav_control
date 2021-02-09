@@ -27,6 +27,7 @@ jobs:
           cd ~/catkin_ws/src
           cp -r $GITHUB_WORKSPACE .
           cd ~/catkin_ws/
+          /bin/bash -c "source /opt/ros/melodic/setup.bash"
           catkin init
           catkin config -DCMAKE_BUILD_TYPE=Release                    
       - name: Build package
