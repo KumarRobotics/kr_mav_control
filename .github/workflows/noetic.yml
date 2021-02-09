@@ -1,0 +1,40 @@
+
+name: ROS Noetic CI
+on: 
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+    
+  schedule:
+    - cron:  '0 0 * * *' # at the end of every day
+jobs:    
+  build:
+    runs-on: ubuntu-18.04
+    container: ros:noetic-robot
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install catkin & package dependencies
+        run: |
+          apt-get update
+          apt-get install -y python-pip
+          apt-get install -y ros-noetic-catkin python-catkin-tools
+          apt-get install -qy g++ libeigen3-dev
+          rosdep update
+          rosdep install --from-paths . --ignore-src -y -r --as-root apt:false
+      - name: Setup catkin workspace
+        run: |
+          mkdir -p ~/catkin_ws/src
+          cd ~/catkin_ws/src
+          cp -r $GITHUB_WORKSPACE .
+          cd ~/catkin_ws/
+          catkin init
+          catkin config --extend /opt/ros/noetic
+          catkin config -DCMAKE_BUILD_TYPE=Release                    
+      - name: Build package
+        run: |
+          cd ~/catkin_ws
+          export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,--no-undefined,-z,relro,-z,now -pthread"
+          /bin/bash -c "source /opt/ros/noetic/setup.bash"
+          catkin config --extend /opt/ros/noetic
+          catkin build
