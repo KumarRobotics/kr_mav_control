@@ -18,7 +18,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y python3-pip
-          apt-get install -y ros-noetic-catkin python-catkin-tools
+          apt-get install -y ros-noetic-catkin python3-osrf-pycommon python3-catkin-tools 
           apt-get install -qy g++ libeigen3-dev
           rosdep update
           rosdep install --from-paths . --ignore-src -y -r --as-root apt:false
