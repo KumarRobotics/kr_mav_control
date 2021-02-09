@@ -18,17 +18,17 @@ jobs:
           apt-get update
           apt-get install -y python-pip
           apt-get install -y ros-melodic-catkin python-catkin-tools
+          apt-get install -qy g++ libeigen3-dev
+          rosdep update
+          rosdep install --from-paths . --ignore-src -y -r --as-root apt:false
       - name: Setup catkin workspace
         run: |
           mkdir -p ~/catkin_ws/src
-          /bin/bash -c "source /opt/ros/melodic/setup.bash" 
           cd ~/catkin_ws/src
           cp -r $GITHUB_WORKSPACE .
           cd ..
-          catkin_init_workspace src
-                    
+          catkin_init_workspace src                    
       - name: Build package
         run: |
           export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,--no-undefined,-z,relro,-z,now -pthread"
           catkin_make -DCMAKE_BUILD_TYPE=Release
-          
