@@ -1,0 +1,34 @@
+name: ROS Melodic CI
+on: 
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+    
+  schedule:
+    - cron:  '0 0 * * *' # at the end of every day
+jobs:    
+  build:
+    runs-on: ubuntu-18.04
+    container: ros:melodic-robot
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install catkin & package dependencies
+        run: |
+          apt-get update
+          apt-get install -y python-pip
+          apt-get install -y ros-melodic-catkin python-catkin-tools
+      - name: Setup catkin workspace
+        run: |
+          mkdir -p ~/catkin_ws/src
+          /bin/bash -c "source /opt/ros/melodic/setup.bash" 
+          cd ~/catkin_ws/src
+          cp -r $GITHUB_WORKSPACE .
+          cd ..
+          catkin_init_workspace src
+                    
+      - name: Build package
+        run: |
+          export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,--no-undefined,-z,relro,-z,now -pthread"
+          catkin_make -DCMAKE_BUILD_TYPE=Release
+          
