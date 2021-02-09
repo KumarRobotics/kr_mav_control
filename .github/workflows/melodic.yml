@@ -27,13 +27,14 @@ jobs:
           cd ~/catkin_ws/src
           cp -r $GITHUB_WORKSPACE .
           cd ~/catkin_ws/
-          /bin/bash -c "source /opt/ros/melodic/setup.bash"
           catkin init
+          catkin config --extend /opt/ros/melodic
           catkin config -DCMAKE_BUILD_TYPE=Release                    
       - name: Build package
         run: |
           cd ~/catkin_ws
           export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,--no-undefined,-z,relro,-z,now -pthread"
           /bin/bash -c "source /opt/ros/melodic/setup.bash"
+          catkin config --extend /opt/ros/melodic
           catkin build
       #catkin_make -DCMAKE_BUILD_TYPE=Release
