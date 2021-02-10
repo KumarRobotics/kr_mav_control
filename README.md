@@ -3,6 +3,12 @@ kr_mav_control
 
 ROS packages for quadrotor control
 
+### Build Status
+
+| Component                                                   | 18.04                                                                                                                                       | 20.04                                                                                                                                      |
+|-------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| [kr_mav_control](https://github.com/KumarRobotics/kr_mav_control) | [![Build Status](https://github.com/KumarRobotics/kr_mav_control/workflows/Melodic/badge.svg)](https://github.com/KumarRobotics/kr_mav_control/actions) | [![Build Status](https://github.com/KumarRobotics/kr_mav_control/workflows/Noetic/badge.svg)](https://github.com/KumarRobotics/kr_mav_control/actions) |
+
 ### Stacks include:
   - `kr_mav_manager`: A manager for the kr_mav_control stack
   - `rqt_mav_manager`: GUI interface for common kr_mav_manager functions
