@@ -7,6 +7,7 @@
   <license>BSD</license>
 
   <author>Dinesh Thakur</author>
+  <author>Laura Jarin-Lipschitz</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 

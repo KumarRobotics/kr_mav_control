@@ -34,7 +34,6 @@ class KrMavInterface(object):
         '/trackers_manager/circle_tracker/CircleTracker', CircleTrackerAction)
     self.traj_tracker_status = ""
 
-
   def update_odom(self, msg):
     self.odom = msg
 
@@ -114,7 +113,6 @@ class KrMavInterface(object):
       return False
 
   def send_wp_block(self, x, y, z, yaw, vel=1.0, acc=0.5, relative=False):
-
     goal = LineTrackerGoal();
     goal.x = x;
     goal.y = y;
@@ -128,7 +126,6 @@ class KrMavInterface(object):
     self.transition_service_call('LineTrackerMinJerk')
     rospy.logwarn("Waiting for Line Tracker to complete")
     self.line_tracker_client.wait_for_result()
-
 
   def transition_service_call(self, tracker_name):
     rospy.loginfo('waiting for transition service for ' + tracker_name)

@@ -16,7 +16,7 @@ def main():
   # Creating MAV objects
   mav_namespace = 'dragonfly'
   mav_id = 1
-  mav_obj = KrMavInterface('dragonfly', 1)
+  mav_obj = KrMavInterface('dragonfly', mav_id)
 
   # Motor On / Take Off
   mav_obj.motors_on()
