@@ -6,6 +6,6 @@ catkin_python_setup()
 
 catkin_package()
 
-install(PROGRAMS scripts/kr_python_interface
+install(PROGRAMS src/kr_python_interface/mav_interaface.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

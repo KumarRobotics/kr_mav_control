@@ -68,3 +68,9 @@ install(
 
 install(FILES nodelet_plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+
+install(PROGRAMS
+     scripts/twist_to_velocity_goal.py
+     scripts/waypoints_to_action.py
+     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
