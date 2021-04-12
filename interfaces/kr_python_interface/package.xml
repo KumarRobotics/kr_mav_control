@@ -2,7 +2,7 @@
   <name>kr_python_interface</name>
   <version>0.1.0</version>
   <description>Provides a python interface for kr_mav_control </description>
-  <maintainer email="ablasdel@gmail.com">Dinesh Thakur</maintainer>
+  <maintainer email="tablasdel@gmail.com">Dinesh Thakur</maintainer>
 
   <license>BSD</license>
 
