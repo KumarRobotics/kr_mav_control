@@ -13,5 +13,5 @@ roscd kr_multi_mav_manager/scripts
 
 In another terminal
 ```
-rosrun kr_matlab_interface mav_example.py
+rosrun kr_python_interface mav_example.py
 ```
