@@ -13,10 +13,6 @@ from kr_tracker_msgs.srv import Transition
 from std_srvs.srv import Trigger, SetBool
 from kr_mav_manager.srv import Vec4
 
-import rosbag
-import rospkg
-import copy
-
 class KrMavInterface(object):
 
   def __init__(self, mav_namespace='dragonfly', id=0):
@@ -45,31 +41,31 @@ class KrMavInterface(object):
   def get_odom(self):
     return self.odom
 
-  def motor_on(self):
+  def motors_on(self):
     try:
       motors = rospy.ServiceProxy(self.mav_name + '/mav_services/motors', SetBool)
       resp = motors(True)
-      print(resp)
+      rospy.loginfo(resp)
     except rospy.ServiceException as e:
-      print("Service call failed: %s"%e)
+      rospy.logwarn("Service call failed: %s"%e)
       return 'aborted'
 
-  def motor_off(self):
+  def motors_off(self):
     try:
       motors = rospy.ServiceProxy(self.mav_name + '/mav_services/motors', SetBool)
       resp = motors(False)
-      print(resp)
+      rospy.loginfo(resp)
     except rospy.ServiceException as e:
-      print("Service call failed: %s"%e)
+      rospy.logwarn("Service call failed: %s"%e)
       return 'aborted'
 
   def take_off(self):
     try:
       takeoff = rospy.ServiceProxy(self.mav_name + '/mav_services/takeoff', Trigger)
       resp = takeoff()
-      print(resp)
+      rospy.loginfo(resp)
     except rospy.ServiceException as e:
-      print("Service call failed: %s"%e)
+      rospy.logwarn("Service call failed: %s"%e)
       return 'aborted'
 
   def hover(self):

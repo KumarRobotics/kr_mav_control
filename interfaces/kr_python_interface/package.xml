@@ -12,8 +12,6 @@
 
   <run_depend>rospy</run_depend>
   <run_depend>geometry_msgs</run_depend>
-  <run_depend>python-rospkg</run_depend>
-  <run_depend>rostopic</run_depend>
   <run_depend>kr_tracker_msgs</run_depend>
   <run_depend>kr_mav_manager</run_depend>
 
