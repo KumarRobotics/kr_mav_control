@@ -29,6 +29,8 @@ The multi robot examples uses following packages.
 
 [MATLAB interface with simple simulator](doc/MultiMatlab.md)
 
+[Python interface with simple simulator](doc/PythonExample.md)
+
 [Running with Gazebo](doc/QuadGazebo.md)
 
 [Running multiple robots with Gazebo](doc/MultiGazebo.md)

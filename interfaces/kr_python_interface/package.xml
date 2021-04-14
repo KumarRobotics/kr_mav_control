@@ -1,0 +1,19 @@
+<package>
+  <name>kr_python_interface</name>
+  <version>0.1.0</version>
+  <description>Provides a python interface for kr_mav_control </description>
+  <maintainer email="tablasdel@gmail.com">Dinesh Thakur</maintainer>
+
+  <license>BSD</license>
+
+  <author>Dinesh Thakur</author>
+  <author>Laura Jarin-Lipschitz</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>rospy</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>kr_tracker_msgs</run_depend>
+  <run_depend>kr_mav_manager</run_depend>
+
+</package>
