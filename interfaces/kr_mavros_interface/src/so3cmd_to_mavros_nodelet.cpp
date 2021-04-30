@@ -39,11 +39,9 @@ class SO3CmdToMavros : public nodelet::Nodelet
 
 void SO3CmdToMavros::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
-  if(!odom_set_)
-    odom_set_ = true;
-
   odom_q_ = Eigen::Quaterniond(odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
                                odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
+  odom_set_ = true;
 
   // Publish PoseStamped for mavros vision_pose plugin
   auto odom_pose_msg = boost::make_shared<geometry_msgs::PoseStamped>();
@@ -54,10 +52,8 @@ void SO3CmdToMavros::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 
 void SO3CmdToMavros::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
 {
-  if(!imu_set_)
-    imu_set_ = true;
-
   imu_q_ = Eigen::Quaterniond(pose->orientation.w, pose->orientation.x, pose->orientation.y, pose->orientation.z);
+  imu_set_ = true;
 
   if(so3_cmd_set_ && ((ros::Time::now() - last_so3_cmd_time_).toSec() >= so3_cmd_timeout_))
   {
@@ -70,8 +66,18 @@ void SO3CmdToMavros::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
 
 void SO3CmdToMavros::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg)
 {
-  if(!so3_cmd_set_)
-    so3_cmd_set_ = true;
+  // both imu_q_ and odom_q_ would be uninitialized if not set
+  if(!imu_set_)
+  {
+    ROS_WARN("Did not receive any imu messages from %s", imu_sub_.getTopic().c_str());
+    return;
+  }
+
+  if(!odom_set_)
+  {
+    ROS_WARN("Did not receive any odom messages from %s", odom_sub_.getTopic().c_str());
+    return;
+  }
 
   // grab desired forces and rotation from so3
   const Eigen::Vector3d f_des(msg->force.x, msg->force.y, msg->force.z);
@@ -145,6 +151,7 @@ void SO3CmdToMavros::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &m
   // save last so3_cmd
   last_so3_cmd_ = *msg;
   last_so3_cmd_time_ = ros::Time::now();
+  so3_cmd_set_ = true;
 }
 
 void SO3CmdToMavros::onInit(void)
