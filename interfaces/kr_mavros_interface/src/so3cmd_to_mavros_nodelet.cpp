@@ -126,6 +126,13 @@ void SO3CmdToMavros::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &m
   // Scaling from rotor velocity (rad/s) to att_throttle for pixhawk
   throttle = lin_cof_a_ * throttle + lin_int_b_;
 
+  // failsafe for the error in traj_gen that can lead to nan values
+  //prevents throttle from being sent to 1 if it is nan.
+  if (isnan(throttle))
+  {
+    throttle = 0.0;
+  }
+
   // clamp from 0.0 to 1.0
   throttle = std::min(1.0, throttle);
   throttle = std::max(0.0, throttle);
