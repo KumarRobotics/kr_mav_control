@@ -33,14 +33,14 @@ add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EX
 
 add_library(kr_quadrotor_dynamics src/dynamics/Quadrotor.cpp)
 target_include_directories(kr_quadrotor_dynamics PUBLIC include)
-target_link_libraries(kr_quadrotor_dynamics PUBLIC Eigen3::Eigen)
+target_link_libraries(kr_quadrotor_dynamics PUBLIC Eigen3::Eigen ${PROJECT_NAME})
 
 add_executable(${PROJECT_NAME}_so3 src/quadrotor_simulator_so3.cpp)
-target_link_libraries(${PROJECT_NAME}_so3 PUBLIC kr_quadrotor_dynamics ${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME}_so3 PUBLIC kr_quadrotor_dynamics)
 # add_dependencies(${PROJECT_NAME}_so3 ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_executable(${PROJECT_NAME}_trpy src/quadrotor_simulator_trpy.cpp)
-target_link_libraries(${PROJECT_NAME}_trpy PUBLIC kr_quadrotor_dynamics ${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME}_trpy PUBLIC kr_quadrotor_dynamics)
 # add_dependencies(${PROJECT_NAME}_trpy ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 install(
