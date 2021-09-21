@@ -79,6 +79,8 @@ void SO3CmdToMavros::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &m
     return;
   }
 
+  // transform to take into consideration the different yaw of the flight
+  // controller imu and the odom
   // grab desired forces and rotation from so3
   const Eigen::Vector3d f_des(msg->force.x, msg->force.y, msg->force.z);
 
