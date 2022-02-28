@@ -74,12 +74,12 @@ MAVManager::MAVManager(std::string ns)
 
   if(!lissajous_tracker_client_.waitForServer(ros::Duration(server_wait_timeout)))
   {
-    ROS_ERROR("LissajousTracker server not found.");
+    ROS_WARN("LissajousTracker server not found.");
   }
 
   if(!lissajous_adder_client_.waitForServer(ros::Duration(server_wait_timeout)))
   {
-    ROS_ERROR("LissajousAdder server not found.");
+    ROS_WARN("LissajousAdder server not found.");
   }
 
   pub_motors_ = nh_.advertise<std_msgs::Bool>("motors", 10);
