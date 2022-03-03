@@ -21,10 +21,10 @@ class KrMavInterface(object):
 
     self.mav_name = self.mav_namespace + str(self.id)
 
-    self.pub_vel = rospy.Publisher(self.mav_name + '/cmd_vel', Twist, queue_size=10)
+    self.pub_vel = rospy.Publisher('/' + self.mav_name + '/cmd_vel', Twist, queue_size=10)
 
     self.odom = Odometry()
-    self.sub_odom = rospy.Subscriber(self.mav_name + '/odom', Odometry, self.update_odom)
+    self.sub_odom = rospy.Subscriber('/' + self.mav_name + '/odom', Odometry, self.update_odom)
 
     self.line_tracker_client = actionlib.SimpleActionClient(self.mav_name +
         '/trackers_manager/line_tracker_min_jerk/LineTracker', LineTrackerAction)
@@ -42,7 +42,7 @@ class KrMavInterface(object):
 
   def motors_on(self):
     try:
-      motors = rospy.ServiceProxy(self.mav_name + '/mav_services/motors', SetBool)
+      motors = rospy.ServiceProxy('/' + self.mav_name + '/mav_services/motors', SetBool)
       resp = motors(True)
       rospy.loginfo(resp)
     except rospy.ServiceException as e:
@@ -51,7 +51,7 @@ class KrMavInterface(object):
 
   def motors_off(self):
     try:
-      motors = rospy.ServiceProxy(self.mav_name + '/mav_services/motors', SetBool)
+      motors = rospy.ServiceProxy('/' + self.mav_name + '/mav_services/motors', SetBool)
       resp = motors(False)
       rospy.loginfo(resp)
     except rospy.ServiceException as e:
@@ -60,7 +60,7 @@ class KrMavInterface(object):
 
   def take_off(self):
     try:
-      takeoff = rospy.ServiceProxy(self.mav_name + '/mav_services/takeoff', Trigger)
+      takeoff = rospy.ServiceProxy('/' + self.mav_name + '/mav_services/takeoff', Trigger)
       resp = takeoff()
       rospy.loginfo(resp)
     except rospy.ServiceException as e:
@@ -70,9 +70,9 @@ class KrMavInterface(object):
   def hover(self):
     rospy.logwarn("Transition to hover")
     self.traj_tracker_client.cancel_all_goals()
-    rospy.wait_for_service(self.mav_name  + '/mav_services/hover')
+    rospy.wait_for_service('/' + self.mav_name  + '/mav_services/hover')
     try:
-      srv = rospy.ServiceProxy(self.mav_name + '/mav_services/hover', Trigger)
+      srv = rospy.ServiceProxy('/' + self.mav_name + '/mav_services/hover', Trigger)
       resp = srv()
       rospy.loginfo(resp)
     except rospy.ServiceException as e:
@@ -82,9 +82,9 @@ class KrMavInterface(object):
   def land(self):
     rospy.logwarn("Transition to land")
     self.traj_tracker_client.cancel_all_goals()
-    rospy.wait_for_service(self.mav_name + '/mav_services/land')
+    rospy.wait_for_service('/' + self.mav_name + '/mav_services/land')
     try:
-      srv = rospy.ServiceProxy(self.mav_name + '/mav_services/land', Trigger)
+      srv = rospy.ServiceProxy('/' + self.mav_name + '/mav_services/land', Trigger)
       resp = srv()
       rospy.loginfo(resp)
     except rospy.ServiceException as e:
@@ -104,8 +104,8 @@ class KrMavInterface(object):
 
   def send_wp(self, x, y, z, yaw):
     try:
-      rospy.wait_for_service(self.mav_name + '/mav_services/goTo')
-      srv = rospy.ServiceProxy(self.mav_name +'/mav_services/goTo', Vec4)
+      rospy.wait_for_service('/' + self.mav_name + '/mav_services/goTo')
+      srv = rospy.ServiceProxy('/' + self.mav_name +'/mav_services/goTo', Vec4)
       resp = srv([x, y, z, yaw])
       rospy.loginfo(resp)
     except rospy.ServiceException as e:
@@ -129,9 +129,9 @@ class KrMavInterface(object):
 
   def transition_service_call(self, tracker_name):
     rospy.loginfo('waiting for transition service for ' + tracker_name)
-    rospy.wait_for_service(self.mav_name +'/trackers_manager/transition')
+    rospy.wait_for_service('/' + self.mav_name +'/trackers_manager/transition')
     try:
-      tt = rospy.ServiceProxy(self.mav_name +'/trackers_manager/transition', Transition)
+      tt = rospy.ServiceProxy('/' + self.mav_name +'/trackers_manager/transition', Transition)
       resp = tt('kr_trackers/' + tracker_name)
       rospy.loginfo(resp)
       if resp.success == False or "already active" in resp.message:
