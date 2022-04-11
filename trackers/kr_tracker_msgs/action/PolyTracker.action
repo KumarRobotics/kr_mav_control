@@ -1,0 +1,17 @@
+#goal definition
+time start_time
+uint8 order
+bool set_yaw
+float64 start_yaw
+float64 final_yaw
+float64[] bound_x
+float64[] bound_y
+float64[] bound_z
+float32[] duration
+---
+#result definition
+float64 total_time
+float64 total_distance_travelled
+---
+#feedback
+float64 remaining_time

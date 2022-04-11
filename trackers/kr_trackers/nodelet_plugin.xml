@@ -54,6 +54,13 @@
     </description>
   </class>
 
+  <class name="kr_trackers/PolyTracker" type="PolyTracker" base_class_type="kr_trackers_manager::Tracker">
+    <description>
+      The traj tacker for optimization based planner
+    </description>
+  </class>
+
+
 <!--
   <class name="kr_trackers/LineTrackerTrapezoid" type="LineTrackerTrapezoid" base_class_type="kr_trackers_manager::Tracker">
     <description>
