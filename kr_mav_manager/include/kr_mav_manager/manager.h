@@ -105,7 +105,7 @@ class MAVManager
   bool setSO3Command(const kr_mav_msgs::SO3Command &cmd);
   bool setTRPYCommand(const kr_mav_msgs::TRPYCommand &cmd);
   bool useNullTracker();
-
+  bool usePolyTracker();
   // Monitoring
   bool have_recent_odom(), have_recent_imu(), have_recent_output_data();
   float voltage() { return voltage_; }

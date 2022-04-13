@@ -591,6 +591,14 @@ bool MAVManager::useNullTracker()
   return true;
 }
 
+bool MAVManager::usePolyTracker()
+{
+  if(active_tracker_.compare(poly_tracker_str) != 0)
+    return this->transition(poly_tracker_str);
+
+  return true;
+}
+
 bool MAVManager::set_motors(bool motors)
 {
   // Do nothing if we ask for motors to be turned on when they already are on
