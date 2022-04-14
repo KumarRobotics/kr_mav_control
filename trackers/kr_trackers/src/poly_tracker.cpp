@@ -39,6 +39,9 @@ class PolyTracker : public kr_trackers_manager::Tracker
   Eigen::Vector3d cur_pos_, last_goal_;
   bool have_last_goal_ = false;
 
+  double range(double angle);
+
+
 
 
   typedef actionlib::SimpleActionServer<kr_tracker_msgs::PolyTrackerAction> ServerType;
@@ -54,6 +57,7 @@ class PolyTracker : public kr_trackers_manager::Tracker
 
   ros::Time start_time_;
   min_jerk::Trajectory traj_;
+  min_yaw_jerk::Trajectory yaw_traj_;
   double traj_dur_;
 
   // for intial rotation
@@ -126,6 +130,21 @@ void PolyTracker::Deactivate(void)
   active_ = false;
 }
 
+double PolyTracker::range(double angle){
+  // range the angle into (-PI, PI]
+  double psi = angle;
+
+  if (angle > M_PI)
+  {
+    psi = 2 * M_PI - angle;
+  }
+  else if (angle <= -M_PI)
+  {
+    psi = angle + 2 * M_PI;
+  }
+  return psi;
+}
+
 
 kr_mav_msgs::PositionCommand::ConstPtr PolyTracker::update(const nav_msgs::Odometry::ConstPtr &msg)
 {
@@ -158,16 +177,7 @@ kr_mav_msgs::PositionCommand::ConstPtr PolyTracker::update(const nav_msgs::Odome
   if (yaw_set_){
     //std::cout << "cur_yaw_ is " << cur_yaw_ << " init_final_yaw_ is " << init_final_yaw_ << std::endl;
 
-    double dyaw = init_final_yaw_ - cur_yaw_;
-
-    if (dyaw > M_PI){
-      dyaw = 2 * M_PI - dyaw;
-    }
-    else if (dyaw <= -M_PI)
-    {
-      dyaw = dyaw + 2 * M_PI;
-    }
-
+    double dyaw = range(init_final_yaw_ - cur_yaw_);
 
     if (abs(dyaw) < 0.5 || init_yaw_time_ > 2.0){
       yaw_set_ = false;
@@ -183,10 +193,7 @@ kr_mav_msgs::PositionCommand::ConstPtr PolyTracker::update(const nav_msgs::Odome
     yaw_yawdot.first  = desired_yaw;
     yaw_yawdot.second = init_dyaw_;
     
-
-    last_yaw_ = desired_yaw;
     init_yaw_time_ += (time_now  - time_last_).toSec();
-
 
   }else if (traj_set_){
 
@@ -198,17 +205,19 @@ kr_mav_msgs::PositionCommand::ConstPtr PolyTracker::update(const nav_msgs::Odome
       vel = traj_.getVel(t_cur);
       acc = traj_.getAcc(t_cur);
 
-      /*** calculate yaw ***/
-      Eigen::Vector3d dir = t_cur + time_forward_ <= traj_dur_
-                              ? traj_.getPos(t_cur + time_forward_) - pos
-                              : traj_.getPos(traj_dur_) - pos;
+      // /*** calculate yaw ***/
+      // Eigen::Vector3d dir = t_cur + time_forward_ <= traj_dur_
+      //                         ? traj_.getPos(t_cur + time_forward_) - pos
+      //                         : traj_.getPos(traj_dur_) - pos;
 
-      yaw_yawdot = calculate_yaw(dir, (time_now - time_last_).toSec());
-      /*** calculate yaw ***/
+      // yaw_yawdot = calculate_yaw(dir, (time_now - time_last_).toSec());
+      // /*** calculate yaw ***/
 
 
-      // update
-      last_yaw_ = yaw_yawdot.first;
+
+      yaw_yawdot.first   = range(yaw_traj_.getPos(t_cur));
+      yaw_yawdot.second  = range(yaw_traj_.getVel(t_cur));
+
 
     }else if ( t_cur >= traj_dur_ ){
 
@@ -218,6 +227,8 @@ kr_mav_msgs::PositionCommand::ConstPtr PolyTracker::update(const nav_msgs::Odome
       // finish executing the trajectory
       traj_set_ = false;
 
+      yaw_yawdot.first   = range(yaw_traj_.getPos(traj_dur_));
+      yaw_yawdot.second  = 0.0;
     }
 
   }
@@ -226,7 +237,7 @@ kr_mav_msgs::PositionCommand::ConstPtr PolyTracker::update(const nav_msgs::Odome
   //publish the command
   position_cmd_.header.frame_id = msg->header.frame_id;
   position_cmd_.header.stamp = time_now;
-  //std::cout << " publish the command cur_pos_ " << cur_pos_ << std::endl;
+  //std::cout << " yaw_yawdot.first " << yaw_yawdot.first << std::endl;
   position_cmd_.position.x       = pos(0);
   position_cmd_.position.y       = pos(1);
   position_cmd_.position.z       = pos(2);
@@ -240,6 +251,8 @@ kr_mav_msgs::PositionCommand::ConstPtr PolyTracker::update(const nav_msgs::Odome
   position_cmd_.yaw_dot = yaw_yawdot.second;
 
   time_last_ = time_now;
+  last_yaw_ = yaw_yawdot.first;
+
   return kr_mav_msgs::PositionCommand::ConstPtr(new kr_mav_msgs::PositionCommand(position_cmd_));
 }
 
@@ -286,14 +299,7 @@ void PolyTracker::goal_callback()
 
     }
 
-    if (init_dyaw_ > M_PI)
-    {
-      init_dyaw_ = 2 * M_PI - init_dyaw_;
-    }
-    else if (init_dyaw_ <= -M_PI)
-    {
-      init_dyaw_ = init_dyaw_ + 2 * M_PI;
-    }
+    init_dyaw_ = range(init_dyaw_);
 
     // clip the yaw dot
     if (init_dyaw_ > YAW_DOT_MAX_PER_SEC)
@@ -319,8 +325,13 @@ void PolyTracker::goal_callback()
     traj_set_ = true;
 
     int piece_nums = msg->duration.size();
+
+
     std::vector<double> dura(piece_nums);
     std::vector<min_jerk::BoundaryCond> bCond(piece_nums);
+    std::vector<min_yaw_jerk::BoundaryCond> bCond_yaw(piece_nums);
+
+
     for (int i = 0; i < piece_nums; ++i)
     {
       int i6 = i * 6;
@@ -330,7 +341,9 @@ void PolyTracker::goal_callback()
           msg->bound_y[i6 + 3], msg->bound_y[i6 + 4], msg->bound_y[i6 + 5];
       bCond[i].row(2) << msg->bound_z[i6 + 0], msg->bound_z[i6 + 1], msg->bound_z[i6 + 2],
           msg->bound_z[i6 + 3], msg->bound_z[i6 + 4], msg->bound_z[i6 + 5];
-
+      
+      bCond_yaw[i].row(0) << msg->bound_yaw[i6 + 0], msg->bound_yaw[i6 + 1], msg->bound_yaw[i6 + 2],
+          msg->bound_yaw[i6 + 3], msg->bound_yaw[i6 + 4], msg->bound_yaw[i6 + 5]; 
 
       dura[i] = msg->duration[i];
     }
@@ -339,6 +352,9 @@ void PolyTracker::goal_callback()
     /* Store data */
     start_time_ = msg->start_time;
     traj_ = min_jerk::Trajectory(bCond, dura);
+    yaw_traj_ = min_yaw_jerk::Trajectory(bCond_yaw, dura);
+
+
     traj_dur_ = traj_.getTotalDuration();
     //ROS_WARN("PolyTracker: set the poly trajectory");
   }
@@ -381,16 +397,7 @@ std::pair<double, double> PolyTracker::calculate_yaw(Eigen::Vector3d &dir, doubl
                   : last_yaw_;
   //std::cout << " last_yaw_ is  " << last_yaw_ << std::endl;
   double yawdot = 0;
-  double d_yaw = yaw_temp - last_yaw_;
-
-  if (d_yaw >= M_PI)
-  {
-    d_yaw -= 2 * M_PI;
-  }
-  if (d_yaw <= -M_PI)
-  {
-    d_yaw += 2 * M_PI;
-  }
+  double d_yaw = range(yaw_temp - last_yaw_);
 
   const double YDM = d_yaw >= 0 ? YAW_DOT_MAX_PER_SEC : -YAW_DOT_MAX_PER_SEC;
   const double YDDM = d_yaw >= 0 ? YAW_DOT_DOT_MAX_PER_SEC : -YAW_DOT_DOT_MAX_PER_SEC;
@@ -418,13 +425,9 @@ std::pair<double, double> PolyTracker::calculate_yaw(Eigen::Vector3d &dir, doubl
   yawdot = d_yaw / dt;
   //std::cout << " yawdot is  " << yawdot << std::endl;
 
-  double yaw = last_yaw_ + d_yaw;
+  double yaw = range(last_yaw_ + d_yaw);
   
   //std::cout << " yaw is  " << yaw << std::endl;
-  if (yaw > M_PI)
-    yaw -= 2 * M_PI;
-  if (yaw < -M_PI)
-    yaw += 2 * M_PI;
   yaw_yawdot.first = yaw;
   yaw_yawdot.second = yawdot;
 

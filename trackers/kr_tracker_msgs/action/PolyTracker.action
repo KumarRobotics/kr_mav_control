@@ -4,10 +4,11 @@ uint8 order
 bool set_yaw
 float64 start_yaw
 float64 final_yaw
+float32[] duration
 float64[] bound_x
 float64[] bound_y
 float64[] bound_z
-float32[] duration
+float64[] bound_yaw
 ---
 #result definition
 float64 total_time
