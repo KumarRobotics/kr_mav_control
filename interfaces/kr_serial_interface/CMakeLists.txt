@@ -11,9 +11,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_options(-Wall)
 
+find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(catkin REQUIRED COMPONENTS nodelet kr_mav_msgs roscpp sensor_msgs)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS
