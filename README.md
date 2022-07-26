@@ -35,6 +35,8 @@ The multi robot examples uses following packages.
 
 [Running multiple robots with Gazebo](doc/MultiGazebo.md)
 
+This code has been tested with ROS Noetic on Ubuntu 20.04.
+
 ### Block Diagram
 
 The following block diagram shows how the packages in the repo fit together.
