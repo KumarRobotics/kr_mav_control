@@ -624,7 +624,7 @@ bool MAVManager::set_motors(bool motors)
   // Queue a few to make sure the signal gets through.
   // Also, the crazyflie interface throttles commands to 30 Hz, so this needs
   // to have a sufficent duration.
-  for(int i = 0; i < 10; i++)
+  for(int i = 0; i < 20; i++)
   {
     pub_so3_command_.publish(so3_cmd);
     pub_trpy_command_.publish(trpy_cmd);
