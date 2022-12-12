@@ -135,6 +135,9 @@ MAVManager::MAVManager(std::string ns)
   // Disable motors
   if(!this->set_motors(false))
     ROS_ERROR("Could not disable motors");
+  
+  // Params
+  nh_.param<int>("motors_msg_queue_num", motors_msg_queue_num_, 10);
 }
 
 void MAVManager::tracker_done_callback(const actionlib::SimpleClientGoalState &state,
@@ -624,7 +627,7 @@ bool MAVManager::set_motors(bool motors)
   // Queue a few to make sure the signal gets through.
   // Also, the crazyflie interface throttles commands to 30 Hz, so this needs
   // to have a sufficent duration.
-  for(int i = 0; i < 20; i++)
+  for(int i = 0; i < motors_msg_queue_num_; i++)
   {
     pub_so3_command_.publish(so3_cmd);
     pub_trpy_command_.publish(trpy_cmd);

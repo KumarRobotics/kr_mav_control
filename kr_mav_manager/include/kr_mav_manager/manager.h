@@ -188,6 +188,9 @@ class MAVManager
 
   // Services
   ros::ServiceClient srv_transition_;
+
+  // Params
+  int motors_msg_queue_num_;
 };
 
 }  // namespace kr_mav_manager
