@@ -24,7 +24,6 @@
 
 
 // revise to only generate minimum jerk trajs
-
 #ifndef POLY_UTIL_HPP
 #define POLY_UTIL_HPP
 
@@ -234,6 +233,15 @@ namespace min_jerk
             return;
         }
 
+        inline bool is_empty() const
+        {
+          if (pieces.size() <= 0)
+          {
+            return true;
+          }
+        return false;
+        }
+        
         inline Pieces::const_iterator begin() const
         {
             return pieces.begin();
@@ -319,32 +327,6 @@ namespace min_jerk
     };
 
 } // namespace min_jerk
-
-
-
-/*
-    MIT License
-
-    Copyright (c) 2020 Zhepei Wang (wangzhepei@live.com)
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
-*/
 
 
 namespace min_yaw_jerk
@@ -487,47 +469,6 @@ namespace min_yaw_jerk
             return boundCond;
         }
 
-
-        inline const CoefficientMat &getNormalizedCoeffMat() const
-        {
-            return nCoeffMat;
-        }
-
-        // Get the coefficient matrix of the piece
-        // Default arg chooses the natural coefficients
-        // If normalized version is needed, set the arg true
-        inline CoefficientMat getCoeffMat(bool normalized = false)
-        {
-            CoefficientMat posCoeffsMat;
-            double t = 1;
-            for (int i = TrajOrder; i >= 0; i--)
-            {
-                posCoeffsMat(i) = nCoeffMat(i) / t;
-                t *= normalized ? 1.0 : duration;
-            }
-            return posCoeffsMat;
-        }
-
-
-
-        // Get the polynomial coefficients of velocity of this piece
-        // Default arg chooses the natural coefficients
-        // If normalized version is needed, set the arg true
-        inline VelCoefficientMat getVelCoeffMat(bool normalized = false)
-        {
-            VelCoefficientMat velCoeffMat;
-            int n = 1;
-            double t = 1.0;
-            t *= normalized ? 1.0 : duration;
-            for (int i = TrajOrder - 1; i >= 0; i--)
-            {
-                velCoeffMat(i) = n * nCoeffMat(i) / t;
-                n++;
-                t *= normalized ? 1.0 : duration;
-            }
-            return velCoeffMat;
-        }
-
     };
 
     // A whole trajectory which contains multiple pieces
@@ -557,6 +498,15 @@ namespace min_yaw_jerk
             return pieces.size();
         }
 
+        inline bool is_empty() const
+        {
+          if (pieces.size() <= 0)
+          {
+            return true;
+          }
+        return false;
+        }
+
         // Get durations vector of all pieces
         inline Eigen::VectorXd getDurations() const
         {
@@ -582,82 +532,6 @@ namespace min_yaw_jerk
         }
 
         
-
-        // known the idx of the trajectory 
-        inline Eigen::Vector2d getStartEndTime(int idx) const
-        {
-            double totalDuration = 0.0;
-            Eigen::Vector2d se_time;
-
-            if (idx > 0){
-                for (int i = 0; i < idx; i++)
-                {
-                    totalDuration += pieces[i].getDuration();
-                }
-            }
-            se_time(0) = totalDuration;
-            se_time(1) = totalDuration + pieces[idx].getDuration();
-
-
-            return se_time;
-
-
-        }
-
-
-        // this include the start and end point
-        inline Eigen::MatrixXd getPositions() const
-        {
-            int N = getPieceNum();
-            Eigen::MatrixXd positions(1, N + 1);
-            for (int i = 0; i < N; i++)
-            {
-                positions.col(i) = pieces[i].getBoundCond().col(0);
-            }
-            positions.col(N) = pieces[N - 1].getBoundCond().col((TrajOrder + 1) / 2);
-            return positions;
-        }
-
-        inline Eigen::VectorXd getConstPoints(const int K) const
-        {
-            //k is the resolution
-            int N = getPieceNum();
-            Eigen::VectorXd pts(N * K + 1);
-            double pos;
-            Eigen::Matrix<double, 6, 1> beta0;
-            double s1, s2, s3, s4, s5;
-            double step;
-            int i_dp = 0;
-            for (int i = 0; i < N; ++i)
-            {
-                step = 1.0 / double(K);
-                s1 = 0.0;
-                double t = 0;
-                // innerLoop = K;
-                for (int j = 0; j <= K; ++j)
-                {
-                    s2 = s1 * s1;
-                    s3 = s2 * s1;
-                    s4 = s2 * s2;
-                    s5 = s4 * s1;
-                    beta0 << s5,s4,s3,s2,s1,1.0;
-                    //ROS_INFO_STREAM("beta0 IS " <<beta0);
-                    pos = pieces[i].getNormalizedCoeffMat() * beta0;
-                    //ROS_INFO_STREAM("pieces[i].getNormalizedCoeffMat() " << pieces[i].getNormalizedCoeffMat());
-                    pts(i_dp) = pos;
-
-                    s1 += step;
-                    if (j != K || (j == K && i == N - 1))
-                    {
-                        ++i_dp;
-                    }
-                }
-            }
-            return pts;
-        }
-
-
-
         // Reload the operator[] to access the i-th piece
         inline const Piece &operator[](int i) const
         {
