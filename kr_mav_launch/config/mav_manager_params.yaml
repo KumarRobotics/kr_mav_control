@@ -3,4 +3,4 @@ need_imu: false
 need_output_data: true
 use_attitude_safety_catch: false
 max_attitude_angle: 0.43
-takeoff_height: 0.2
+takeoff_height: 0.6

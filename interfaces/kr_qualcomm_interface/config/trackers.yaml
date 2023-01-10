@@ -9,3 +9,4 @@ trackers:
   - kr_trackers/TrajectoryTracker
   - kr_trackers/SmoothVelTracker
   - kr_trackers/LissajousTracker
+  - kr_trackers/PolyTracker
