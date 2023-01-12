@@ -19,14 +19,16 @@ add_action_files(
   CircleTracker.action
   TrajectoryTracker.action
   LissajousTracker.action
-  LissajousAdder.action)
+  LissajousAdder.action
+  PolyTracker.action)
 
 add_message_files(
   DIRECTORY
   msg
   FILES
   TrackerStatus.msg
-  VelocityGoal.msg)
+  VelocityGoal.msg
+  Polynomial.msg)
 
 generate_messages(DEPENDENCIES geometry_msgs actionlib_msgs)
 

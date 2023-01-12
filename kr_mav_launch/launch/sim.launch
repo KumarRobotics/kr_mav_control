@@ -13,6 +13,9 @@
   <arg name="initial_orientation/y" default="0.0"/>
   <arg name="initial_orientation/z" default="0.0"/>
   <arg name="initial_orientation/w" default="1.0"/>
+  <arg name="initial_yaw" default="10.0"/>
+
+
 
   <arg name="color/r" default="0.0"/>
   <arg name="color/g" default="0.0"/>
@@ -38,6 +41,8 @@
     <param name="initial_orientation/y" value="$(arg initial_orientation/y)"/>
     <param name="initial_orientation/z" value="$(arg initial_orientation/z)"/>
     <param name="initial_orientation/w" value="$(arg initial_orientation/w)"/>
+    <param name="initial_yaw" value="$(arg initial_yaw)"/>
+
   </node>
 
   <include file="$(find kr_mav_launch)/launch/mesh_vis.launch">

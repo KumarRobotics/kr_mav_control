@@ -55,9 +55,13 @@ add_library(
   src/null_tracker.cpp
   src/smooth_vel_tracker_server.cpp
   src/trajectory_tracker.cpp
+  src/poly_tracker.cpp
   src/traj_gen.cpp
   src/velocity_tracker.cpp)
-target_include_directories(${PROJECT_NAME} PUBLIC include ${catkin_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PUBLIC 
+    include 
+    ${catkin_INCLUDE_DIRS}
+    utils)
 target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES} Eigen3::Eigen)
 
 install(

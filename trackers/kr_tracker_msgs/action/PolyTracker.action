@@ -1,0 +1,21 @@
+#goal definition
+time t_start
+uint8 order
+bool set_yaw
+float64 start_yaw
+float64 final_yaw
+kr_tracker_msgs/Polynomial[] seg_x
+kr_tracker_msgs/Polynomial[] seg_y
+kr_tracker_msgs/Polynomial[] seg_z
+kr_tracker_msgs/Polynomial[] seg_yaw
+int8 cpts_status # 0 is no valid cpts, 1 is berstein, 2 is bspline
+geometry_msgs/Point[] pos_pts 
+float64[] yaw_pts
+float32[] knots
+---
+#result definition
+float64 total_time
+float64 total_distance_travelled
+---
+#feedback
+float64 remaining_time

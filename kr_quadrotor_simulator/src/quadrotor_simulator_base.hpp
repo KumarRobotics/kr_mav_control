@@ -121,6 +121,18 @@ QuadrotorSimulatorBase<T, U>::QuadrotorSimulatorBase(ros::NodeHandle &n)
   n.param("initial_orientation/x", initial_q.x(), 0.0);
   n.param("initial_orientation/y", initial_q.y(), 0.0);
   n.param("initial_orientation/z", initial_q.z(), 0.0);
+
+  double yaw;
+  n.param("initial_yaw", yaw, 10.0);
+
+
+  if (abs(yaw) <= M_PI){
+    initial_q = Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX())
+                * Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY())
+                * Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+  }
+
+
   initial_q.normalize();
 
   Quadrotor::State state = quad_.getState();

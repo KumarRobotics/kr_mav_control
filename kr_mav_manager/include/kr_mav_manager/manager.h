@@ -23,6 +23,8 @@
 #include <kr_tracker_msgs/LissajousAdderAction.h>
 #include <kr_tracker_msgs/LissajousTrackerAction.h>
 #include <kr_tracker_msgs/TrackerStatus.h>
+#include <kr_tracker_msgs/PolyTrackerAction.h>
+
 
 namespace kr_mav_manager
 {
@@ -103,7 +105,7 @@ class MAVManager
   bool setSO3Command(const kr_mav_msgs::SO3Command &cmd);
   bool setTRPYCommand(const kr_mav_msgs::TRPYCommand &cmd);
   bool useNullTracker();
-
+  bool usePolyTracker();
   // Monitoring
   bool have_recent_odom(), have_recent_imu(), have_recent_output_data();
   float voltage() { return voltage_; }
@@ -129,6 +131,9 @@ class MAVManager
   typedef actionlib::SimpleActionClient<kr_tracker_msgs::CircleTrackerAction> CircleClientType;
   typedef actionlib::SimpleActionClient<kr_tracker_msgs::LissajousTrackerAction> LissajousClientType;
   typedef actionlib::SimpleActionClient<kr_tracker_msgs::LissajousAdderAction> CompoundLissajousClientType;
+  typedef actionlib::SimpleActionClient<kr_tracker_msgs::PolyTrackerAction> PolyClientType;
+
+
 
   ros::NodeHandle nh_;
   ros::NodeHandle priv_nh_;
@@ -178,6 +183,7 @@ class MAVManager
   CircleClientType circle_tracker_client_;
   LissajousClientType lissajous_tracker_client_;
   CompoundLissajousClientType lissajous_adder_client_;
+  PolyClientType poly_tracker_client_;
 
   // Publishers
   ros::Publisher pub_motors_, pub_estop_, pub_goal_yaw_, pub_goal_velocity_, pub_so3_command_, pub_trpy_command_,
