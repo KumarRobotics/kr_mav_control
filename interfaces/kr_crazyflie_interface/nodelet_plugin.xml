@@ -1,4 +1,4 @@
-<library path="lib/libso3cmd_to_crazyflie_nodelet">
+<library path="lib/libkr_crazyflie_interface">
   <class name="kr_crazyflie_interface/SO3CmdToCrazyflie" type="SO3CmdToCrazyflie" base_class_type="nodelet::Nodelet">
     <description>
       This reformats an so3_command and publishes it on compatabile Crazyflie topics
