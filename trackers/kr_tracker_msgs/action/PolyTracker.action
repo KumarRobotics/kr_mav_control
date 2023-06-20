@@ -2,6 +2,7 @@
 time t_start
 uint8 order
 bool set_yaw
+bool separate_yaw
 float64 start_yaw
 float64 final_yaw
 kr_tracker_msgs/Polynomial[] seg_x
