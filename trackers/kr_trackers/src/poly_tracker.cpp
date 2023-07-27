@@ -115,13 +115,13 @@ double PolyTracker::range(double angle)
 {
   // range the angle into (-PI, PI]
   double psi = angle;
-  if(angle > M_PI)
+  while(psi > M_PI)
   {
-    psi = 2 * M_PI - angle;
+    psi -= 2 * M_PI;
   }
-  else if(angle <= -M_PI)
+  while(psi <= -M_PI)
   {
-    psi = angle + 2 * M_PI;
+    psi += 2 * M_PI;
   }
   return psi;
 }
@@ -542,7 +542,11 @@ std::pair<double, double> PolyTracker::calculate_yaw(Eigen::Vector3d &dir, doubl
   std::pair<double, double> yaw_yawdot(0, 0);
   double yaw_temp = dir.norm() > 0.1 ? atan2(dir(1), dir(0)) : last_yaw_;
   double yawdot = 0;
-  double d_yaw = range(yaw_temp - last_yaw_);
+  double d_yaw;
+
+  d_yaw = range(yaw_temp - last_yaw_);
+
+
 
   const double YDM = d_yaw >= 0 ? max_dyaw_ : -max_dyaw_;
   const double YDDM = d_yaw >= 0 ? max_ddyaw_ : -max_ddyaw_;
@@ -563,7 +567,7 @@ std::pair<double, double> PolyTracker::calculate_yaw(Eigen::Vector3d &dir, doubl
   }
 
   yawdot = d_yaw / dt;
-  double yaw = range(last_yaw_ + d_yaw);
+  double yaw = last_yaw_ + d_yaw;
 
   yaw_yawdot.first = yaw;
   yaw_yawdot.second = yawdot;
