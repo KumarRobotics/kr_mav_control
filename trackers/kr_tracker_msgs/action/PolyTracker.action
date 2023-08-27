@@ -5,14 +5,22 @@ bool set_yaw
 bool separate_yaw
 float64 start_yaw
 float64 final_yaw
+######################## polynomial seting
 kr_tracker_msgs/Polynomial[] seg_x
 kr_tracker_msgs/Polynomial[] seg_y
 kr_tracker_msgs/Polynomial[] seg_z
 kr_tracker_msgs/Polynomial[] seg_yaw
+######################## bspline / berstein seting
 int8 cpts_status # 0 is no valid cpts, 1 is berstein, 2 is bspline
+float32[] knots
 geometry_msgs/Point[] pos_pts 
 float64[] yaw_pts
-float32[] knots
+######################## added for discrete flat state
+geometry_msgs/Point[] vel_pts  ### must set to enable 
+geometry_msgs/Point[] acc_pts
+float64[] dyaw_pts
+float64 dt
+int32 N
 ---
 #result definition
 float64 total_time

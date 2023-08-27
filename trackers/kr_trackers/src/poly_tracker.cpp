@@ -16,11 +16,15 @@ struct TrajData
   double traj_dur_ = 0, traj_yaw_dur_ = 0;
   ros::Time start_time_;
   int dim_;
+
+
   traj_opt::Trajectory2D traj_2d_;
   traj_opt::Trajectory3D traj_3d_;
   traj_opt::Trajectory4D traj_with_yaw_;
   traj_opt::Trajectory1D traj_yaw_;
   bool has_solo_yaw_traj_ = false;
+
+  traj_opt::DiscreteStates traj_discrete_;
 };
 
 
@@ -172,7 +176,7 @@ kr_mav_msgs::PositionCommand::ConstPtr PolyTracker::update(const nav_msgs::Odome
     pos = last_pos_;
   }
 
-  if(yaw_set_)
+  if(yaw_set_) // 1. rotate yaw mode
   {
     double dyaw = range(init_final_yaw_ - cur_yaw_);
 
@@ -208,6 +212,24 @@ kr_mav_msgs::PositionCommand::ConstPtr PolyTracker::update(const nav_msgs::Odome
     {
       switch(current_trajectory_->dim_)
       {
+        case 1:
+        {
+
+
+          Eigen::VectorXd cur_state = current_trajectory_->traj_discrete_.getState(t_cur);
+          pos = cur_state.head(3);
+          vel = cur_state.segment(3, 3);
+          acc = cur_state.tail(3);
+
+          
+          /*** calculate yaw ***/
+          Eigen::Vector3d dir = t_cur + time_forward_ <= current_trajectory_->traj_dur_ ? 
+                                                          current_trajectory_->traj_discrete_.getNextPos(t_cur + time_forward_) - pos :
+                                                          current_trajectory_->traj_discrete_.getNextPos(current_trajectory_->traj_dur_) - pos;
+          yaw_yawdot = calculate_yaw(dir, (time_now - time_last_).toSec());
+
+          break;
+        }
         case 2:
         {
           wp  = current_trajectory_->traj_2d_.getPos(t_cur);
@@ -353,7 +375,7 @@ void PolyTracker::goal_callback()
     yaw_set_ = true;
     init_yaw_time_ = 0.0;
   }
-  else if(msg->seg_x.size() > 0 || msg->pos_pts.size() > 0)
+  else if(msg->seg_x.size() > 0 || msg->knots.size() > 0)     // continuous trajectory
   {
     goal_set_ = true;
     goal_reached_ = false;
@@ -541,6 +563,33 @@ void PolyTracker::goal_callback()
     traj_set_ = true;
 
     ROS_INFO("PolyTracker: Set the poly trajectory");
+  }
+  else if  (msg->vel_pts.size() > 0) 
+  {
+
+    double interval = msg->dt;
+    int Num = msg->N;
+    std::vector<Eigen::VectorXd> discrete_states;
+   
+    for(size_t j = 0; j < Num; ++j)
+    {
+      Eigen::VectorXd state(9);
+      
+      state << msg->pos_pts[j].x, msg->pos_pts[j].y, msg->pos_pts[j].z,
+               msg->vel_pts[j].x, msg->vel_pts[j].y, msg->vel_pts[j].z,
+               msg->acc_pts[j].x, msg->acc_pts[j].y, msg->acc_pts[j].z;
+
+      discrete_states.push_back(state);
+    }
+
+    next_trajectory_->traj_discrete_ = traj_opt::DiscreteStates(interval, Num, discrete_states);
+    next_trajectory_->dim_ = 1; // set discrete mode
+    next_trajectory_->start_time_ = msg->t_start;
+    next_trajectory_->traj_dur_   = interval * (Num-1);
+
+    traj_set_ = true;
+
+    ROS_INFO("PolyTracker: Set the discrete trajectory");
   }
   else
   {
