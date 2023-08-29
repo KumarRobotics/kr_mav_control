@@ -20,7 +20,7 @@ geometry_msgs/Point[] vel_pts  ### must set to enable
 geometry_msgs/Point[] acc_pts
 float64[] dyaw_pts
 float64 dt
-int32 N
+int32 N # equals to the pts size
 ---
 #result definition
 float64 total_time

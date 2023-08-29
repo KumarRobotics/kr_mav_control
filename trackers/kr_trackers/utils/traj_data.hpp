@@ -294,7 +294,7 @@ typedef Trajectory<4> Trajectory4D;
 class DiscreteStates
 {
   private:
-    int N = 20;
+    int N = 20;  //num of states
     double dt;
 
     std::vector<Eigen::VectorXd> states;  // p v a
@@ -327,13 +327,14 @@ class DiscreteStates
 
       double tau =  t - index * dt;
 
+      std::cout << "  index  " << index << std::endl;
 
       if(is_linear_cut)
       {
         return x1 + tau / dt * (x2 - x1);
       }
 
-      Eigen::MatrixXd psi = Q(tau) * (Phi(dt - tau).transpose()) * QInverse(dt);
+      Eigen::MatrixXd psi = (Phi(dt - tau).transpose());
       Eigen::MatrixXd lambda = Phi(tau) - psi * Phi(dt);
 
       return lambda * x1 + psi * x2;
@@ -346,7 +347,7 @@ class DiscreteStates
 
       int index = std::floor(t / dt);
 
-      return states[index];
+      return states[std::min(index, N-1)];
     }
 
 
@@ -355,7 +356,7 @@ class DiscreteStates
 
       int index = std::floor(t / dt);
 
-      return states[index+1];
+      return states[std::min(index+1, N-1)];
     }
 
 
@@ -364,7 +365,7 @@ class DiscreteStates
 
       int index = std::floor(t / dt);
 
-      return states[index+1].head(3);
+      return states[std::min(index+1, N-1)].head(3);
     }
 
 
@@ -381,71 +382,10 @@ class DiscreteStates
 
       for (int i = 0; i < 3; ++i)
         phi(i, i + 6) = 0.5 * tau * tau;
-      //std::cout << "   phi  " << phi << std::endl;
       return phi;
     }
 
-
-    static inline Eigen::MatrixXd QInverse(const double tau) 
-    {
-      Eigen::MatrixXd q_inv(9, 9);
-      q_inv.setZero();
-      std::array<double, 5> tau_powers;
-      const double tau_inv = 1.0 / tau;
-
-      Eigen::Matrix3d qc_inv = Eigen::Matrix3d::Identity();
-
-      
-      tau_powers[0] = tau_inv;
-      for (int i = 1; i < 5; ++i) tau_powers[i] = tau_inv * tau_powers[i - 1];
-
-      q_inv.block(0, 0, 3, 3) = 720 * tau_powers[4] * qc_inv;
-      q_inv.block(0, 3, 3, 3) = -360 * tau_powers[3]* qc_inv;
-      q_inv.block(0, 6, 3, 3) = 60 * tau_powers[2]* qc_inv;
-      q_inv.block(3, 0, 3, 3) = q_inv(0, 1)* qc_inv;
-      q_inv.block(3, 3, 3, 3) = 192 * tau_powers[2]* qc_inv;
-      q_inv.block(3, 6, 3, 3) = -36 * tau_powers[1]* qc_inv;
-      q_inv.block(6, 0, 3, 3) = q_inv(0, 2)* qc_inv;
-      q_inv.block(6, 3, 3, 3) = q_inv(1, 2)* qc_inv;
-      q_inv.block(6, 6, 3, 3) = 9 * tau_powers[0]* qc_inv;
-
-      return q_inv;
-    }
-
-    static inline Eigen::MatrixXd Q(const double tau) 
-    {
-
-      Eigen::MatrixXd q(9, 9);
-      q.setZero();
-      std::array<double, 5> tau_powers;
-      constexpr double one_third = 1.0 / 3.0;
-      constexpr double one_sixth = 1.0 / 6.0;
-
-      Eigen::Matrix3d qc = Eigen::Matrix3d::Identity();
-
-
-      tau_powers[0] = tau;
-      for (int i = 1; i < 5; ++i) tau_powers[i] = tau * tau_powers[i - 1];
-
-      q.block(0, 0, 3, 3) = 0.05 * tau_powers[4] * qc;
-      q.block(0, 3, 3, 3) = 0.125 * tau_powers[3] * qc;
-      q.block(0, 6, 3, 3) = one_sixth * tau_powers[2] * qc;
-      q.block(3, 0, 3, 3) = q(0, 1) * qc;
-      q.block(3, 3, 3, 3) = one_third * tau_powers[2] * qc;
-      q.block(3, 6, 3, 3) = 0.5 * tau_powers[1] * qc;
-      q.block(6, 0, 3, 3) = q(0, 2) * qc;
-      q.block(6, 3, 3, 3) = q(1, 2) * qc;
-      q.block(6, 6, 3, 3) = tau_powers[0] * qc;
-
-      return q;
-    }
-
-
-
 };
-
-
-
 
 
 }  // namespace traj_opt

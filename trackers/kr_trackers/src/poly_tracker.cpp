@@ -215,13 +215,11 @@ kr_mav_msgs::PositionCommand::ConstPtr PolyTracker::update(const nav_msgs::Odome
         case 1:
         {
 
-
           Eigen::VectorXd cur_state = current_trajectory_->traj_discrete_.getState(t_cur);
           pos = cur_state.head(3);
           vel = cur_state.segment(3, 3);
           acc = cur_state.tail(3);
 
-          
           /*** calculate yaw ***/
           Eigen::Vector3d dir = t_cur + time_forward_ <= current_trajectory_->traj_dur_ ? 
                                                           current_trajectory_->traj_discrete_.getNextPos(t_cur + time_forward_) - pos :
@@ -570,7 +568,6 @@ void PolyTracker::goal_callback()
     double interval = msg->dt;
     int Num = msg->N;
     std::vector<Eigen::VectorXd> discrete_states;
-   
     for(size_t j = 0; j < Num; ++j)
     {
       Eigen::VectorXd state(9);
