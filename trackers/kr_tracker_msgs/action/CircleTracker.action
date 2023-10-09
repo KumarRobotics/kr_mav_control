@@ -1,7 +1,7 @@
 #goal definition
-float64 Ax
-float64 Ay
-float64 T
+float64 ax
+float64 ay
+float64 t
 float64 duration
 ---
 #result definition
