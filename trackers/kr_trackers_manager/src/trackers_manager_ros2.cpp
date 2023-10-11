@@ -9,12 +9,12 @@
 #include <nav_msgs/msg/odometry.hpp>
 // #include <kr_trackers_manager/tracker.hpp>
 
-namespace composition {
+//namespace composition {
 
 class TrackersManager : public rclcpp::Node
 {
  public:
-  TrackersManager();
+  TrackersManager(const rclcpp::NodeOptions & options);
   ~TrackersManager();
 
   void OnInit(void);
@@ -40,12 +40,13 @@ class TrackersManager : public rclcpp::Node
   // kr_mav_msgs::msg::PositionCommand::ConstSharedPtr cmd_;
 };
 
-TrackersManager::TrackersManager()
-  : Node("trackers_manager"), tracker_loader_("kr_trackers_manager", "kr_trackers_manager::Tracker")
+TrackersManager::TrackersManager(const rclcpp::NodeOptions & options)
+: Node("tracker", options)
+//  : Node("trackers_manager"), tracker_loader_("kr_trackers_manager", "kr_trackers_manager::Tracker")
 {
   // pub_cmd_ = create_publisher<kr_mav_msgs::msg::PositionCommand>("cmd", 10);
-  pub_status_ = create_publisher<kr_mav_msgs::msg::TrackerStatus>("status", 10);
-  sub_odom_ = create_subscription<nav_msgs::msg::Odometry>("odom", 10, &TrackersManager::odom_callback);
+  pub_status_ = create_publisher<kr_trackers_msgs::msg::TrackerStatus>("status", 10);
+  sub_odom_ = create_subscription<nav_msgs::msg::Odometry>("odom", 10, std::bind(&TrackersManager::odom_callback, this, std::placeholders::_1));
 }
 
 TrackersManager::~TrackersManager()
@@ -69,7 +70,7 @@ TrackersManager::~TrackersManager()
 void TrackersManager::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
   // Your odom_callback implementation here.
-  RCLCPP_INFO_STREAM("Received odom!");
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Received odom!");
 }
 
 // bool TrackersManager::transition_callback(
@@ -80,7 +81,7 @@ void TrackersManager::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg
 //   // Your transition_callback implementation here.
 // }
 
-} // namespace
+//} // namespace
   
 #include "rclcpp_components/register_node_macro.hpp"
 // Register the component with class_loader.
