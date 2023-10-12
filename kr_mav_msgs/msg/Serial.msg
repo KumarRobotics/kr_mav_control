@@ -6,7 +6,7 @@ uint8 PWM_CMD = 119 # 'w' in base 10
 uint8 STATUS_DATA = 99 # 'c' in base 10
 uint8 OUTPUT_DATA = 100 # 'd' in base 10
 
-Header header
+std_msgs/Header header
 uint8 channel
 uint8 type # One of the types listed above
 uint8[] data
