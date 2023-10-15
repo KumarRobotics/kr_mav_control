@@ -17,7 +17,9 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(kr_trackers_msgs REQUIRED)
+find_package(kr_mav_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(pluginlib REQUIRED)
 
 include_directories(include)
 
@@ -32,11 +34,12 @@ ament_target_dependencies(trackers_manager
   "rclcpp"
   "rclcpp_components"
   "kr_trackers_msgs"
+  "kr_mav_msgs"
+  "pluginlib"
   "nav_msgs")
 
 rclcpp_components_register_nodes(trackers_manager "kr_trackers_manager::TrackersManager")
 set(node_plugins "${node_plugins}kr_trackers_manager::TrackersManager;$<TARGET_FILE:component>\n")
-
 
 # since the package installs libraries without exporting them
 # it needs to make sure that the library path is being exported

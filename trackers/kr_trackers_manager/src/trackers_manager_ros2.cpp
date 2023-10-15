@@ -7,7 +7,8 @@
 #include <kr_trackers_msgs/msg/tracker_status.hpp>
 #include <kr_trackers_msgs/srv/transition.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-// #include <kr_trackers_manager/tracker.hpp>
+#include <kr_trackers_manager/tracker.hpp>
+#include <pluginlib/class_loader.h>
 
 //namespace composition {
 
@@ -34,19 +35,23 @@ class TrackersManager : public rclcpp::Node
 
   // rclcpp::Service<kr_tracker_msgs::srv::Transition>::SharedPtr srv_tracker_;
 
-  // std::unique_ptr<pluginlib::ClassLoader<kr_trackers_manager::Tracker>> tracker_loader_;
+  std::unique_ptr<pluginlib::ClassLoader<kr_trackers_manager::Tracker>> tracker_loader_;
   // kr_trackers_manager::Tracker::SharedPtr active_tracker_;
   // std::map<std::string, kr_trackers_manager::Tracker::SharedPtr> tracker_map_;
   // kr_mav_msgs::msg::PositionCommand::ConstSharedPtr cmd_;
 };
 
 TrackersManager::TrackersManager(const rclcpp::NodeOptions & options)
-: Node("tracker", options)
+: Node("tracker", options), 
+  tracker_loader_("kr_trackers_manager", "kr_trackers_manager::Tracker") 
+//  active_tracker_(NULL)
 //  : Node("trackers_manager"), tracker_loader_("kr_trackers_manager", "kr_trackers_manager::Tracker")
 {
   // pub_cmd_ = create_publisher<kr_mav_msgs::msg::PositionCommand>("cmd", 10);
   pub_status_ = create_publisher<kr_trackers_msgs::msg::TrackerStatus>("status", 10);
-  sub_odom_ = create_subscription<nav_msgs::msg::Odometry>("odom", 10, std::bind(&TrackersManager::odom_callback, this, std::placeholders::_1));
+
+  sub_odom_ = create_subscription<nav_msgs::msg::Odometry>("odom", 10, 
+      std::bind(&TrackersManager::odom_callback, this, std::placeholders::_1));
 }
 
 TrackersManager::~TrackersManager()

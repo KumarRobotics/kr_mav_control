@@ -1,0 +1,5 @@
+<library path="kr_mav_trackers">
+  <class type="LineTrackerMinJerk" base_class_type="kr_trackers_manager::Tracker">
+    <description>This is the Line Tracker Minimum Jerk Plugin</description>
+  </class>
+</library>

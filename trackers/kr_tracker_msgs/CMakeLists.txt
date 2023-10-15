@@ -22,6 +22,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/TrackerStatus.msg"
 "msg/VelocityGoal.msg"
+
 "srv/Transition.srv"
 
 "action/CircleTracker.action"
