@@ -1,5 +1,5 @@
-#ifndef COMPOSITION__TRACKERS_MNAGER_ROS2_CPP
-#define COMPOSITION__TRACKERS_MNAGER_ROS2_CPP
+#ifndef COMPOSITION__TRACKERS_MANAGER_ROS2_CPP
+#define COMPOSITION__TRACKERS_MANAGER_ROS2_CPP
 
 // #include "composition/visibility_control.h"
 #include <rclcpp/rclcpp.hpp>
@@ -35,15 +35,15 @@ class TrackersManager : public rclcpp::Node
 
   // rclcpp::Service<kr_tracker_msgs::srv::Transition>::SharedPtr srv_tracker_;
 
-  std::unique_ptr<pluginlib::ClassLoader<kr_trackers_manager::Tracker>> tracker_loader_;
+  // std::unique_ptr<pluginlib::ClassLoader<kr_trackers_manager::Tracker>> tracker_loader_;
   // kr_trackers_manager::Tracker::SharedPtr active_tracker_;
   // std::map<std::string, kr_trackers_manager::Tracker::SharedPtr> tracker_map_;
   // kr_mav_msgs::msg::PositionCommand::ConstSharedPtr cmd_;
 };
 
 TrackersManager::TrackersManager(const rclcpp::NodeOptions & options)
-: Node("tracker", options), 
-  tracker_loader_("kr_trackers_manager", "kr_trackers_manager::Tracker") 
+: Node("tracker", options) 
+//  tracker_loader_("kr_trackers_manager", "kr_trackers_manager::Tracker") 
 //  active_tracker_(NULL)
 //  : Node("trackers_manager"), tracker_loader_("kr_trackers_manager", "kr_trackers_manager::Tracker")
 {

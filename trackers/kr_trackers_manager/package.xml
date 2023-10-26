@@ -13,12 +13,15 @@
   <author>Kartik Mohta</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>rcutils</depend>
-
-  <depend>nav_msgs</depend>
   <depend>kr_trackers_msgs</depend>
+  <depend>kr_mav_msgs</depend>
+  <depend>pluginlib</depend>
+  <depend>nav_msgs</depend>
+
 
   <export>
     <build_type>ament_cmake</build_type>

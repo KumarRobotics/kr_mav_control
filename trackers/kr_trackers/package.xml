@@ -1,28 +1,43 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>kr_trackers</name>
   <version>1.0.0</version>
   <description>kr_trackers</description>
   <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
   <maintainer email="michael.f.watterson@gmail.com">Michael Watterson</maintainer>
   <maintainer email="justinthomas@jtwebs.net">Justin Thomas</maintainer>
+  <maintainer email="kashishgarg9@gmail.com">Kashish Garg</maintainer>
 
   <license>BSD</license>
 
   <author>Kartik Mohta</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>actionlib</depend>
-  <depend>std_msgs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>nav_msgs</depend>
-  <depend>tf</depend>
-  <depend>kr_mav_msgs</depend>
-  <depend>kr_tracker_msgs</depend>
-  <depend>kr_trackers_manager</depend>
+  <build_depend>rclcpp</build_depend>
+  <build_depend>rclcpp_components</build_depend>
+  <build_depend>rcutils</build_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>kr_trackers_manager</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>kr_mav_msgs</build_depend>
+  <build_depend>kr_tracker_msgs</build_depend>
+
+  <exec_depend>rclcpp</exec_depend>
+  <exec_depend>rclcpp_components</exec_depend>
+  <exec_depend>rcutils</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>kr_trackers_manager</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>tf</exec_depend>
+  <exec_depend>kr_mav_msgs</exec_depend>
+  <exec_depend>kr_tracker_msgs</exec_depend>
 
   <export>
-    <kr_trackers_manager plugin="${prefix}/nodelet_plugin.xml"/>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

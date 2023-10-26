@@ -1,8 +1,8 @@
 #ifndef STD_TRACKERS_INITIAL_CONDITIONS_H
 #define STD_TRACKERS_INITIAL_CONDITIONS_H
 
-#include <kr_mav_msgs/PositionCommand.h>
-#include <nav_msgs/Odometry.h>
+#include <kr_mav_msgs/msg/position_command.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <Eigen/Core>
 
