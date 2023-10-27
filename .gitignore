@@ -52,3 +52,6 @@ qtcreator-*
 CATKIN_IGNORE
 
 *.bag
+
+#ignore vscode config files
+.vscode/

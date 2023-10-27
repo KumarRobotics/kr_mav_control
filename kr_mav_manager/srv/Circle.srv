@@ -1,6 +1,6 @@
-float32 Ax
-float32 Ay
-float32 T
+float32 ax
+float32 ay
+float32 t
 float32 duration
 ---
 bool success
