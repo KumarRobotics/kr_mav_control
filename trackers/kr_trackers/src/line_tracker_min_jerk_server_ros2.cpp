@@ -1,4 +1,5 @@
 // #include <actionlib/server/simple_action_server.h>
+#include "rclcpp_action/rclcpp_action.hpp"
 #include <rclcpp/rclcpp.hpp>
 
 #include <kr_mav_msgs/msg/position_command.hpp>
@@ -34,12 +35,12 @@ class LineTrackerMinJerk : public kr_trackers_manager::Tracker
                       const float &yawi, const float &yawf, const float &yaw_dot_i, const float &yaw_dot_f, float dt,
                       Eigen::Vector3f coeffs[6], float yaw_coeffs[4]);
 
-//  typedef actionlib::SimpleActionServer<kr_tracker_msgs::LineTrackerAction> ServerType;
-
+  // typedef actionlib::SimpleActionServer<kr_tracker_msgs::LineTrackerAction> ServerType;
+  using GoalHandleLineTracker = rclcpp_action::ServerGoalHandle<kr_trackers_msgs::LineTrackerAction>;
   // Action server that takes a goal.
   // Must be a pointer, because plugin does not support a constructor
   // with inputs, but an action server must be initialized with a Nodehandle.
-  std::shared_ptr<ServerType> tracker_server_;
+//  std::shared_ptr<ServerType> tracker_server_;
 
   Eigen::Vector3f current_pos_;
 
@@ -453,5 +454,5 @@ uint8_t LineTrackerMinJerk::status() const
 //                                       static_cast<uint8_t>(kr_tracker_msgs::TrackerStatus::SUCCEEDED);
 }
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(LineTrackerMinJerk, kr_trackers_manager::Tracker);
+// #include <pluginlib/class_list_macros.h>
+// PLUGINLIB_EXPORT_CLASS(LineTrackerMinJerk, kr_trackers_manager::Tracker);

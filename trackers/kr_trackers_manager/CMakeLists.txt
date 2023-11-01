@@ -26,21 +26,21 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # create ament index resource which references the libraries in the binary dir
 set(node_plugins "")
 
-add_library(trackers_manager SHARED
+add_library(kr_trackers_manager SHARED
   src/trackers_manager_ros2.cpp)
-target_compile_definitions(trackers_manager
+target_compile_definitions(kr_trackers_manager
   PRIVATE "COMPOSITION_BUILDING_DLL")
 
-ament_target_dependencies(trackers_manager
-  "rclcpp"
-  "rclcpp_components"
-  "rcutils"
-  "kr_trackers_msgs"
-  "kr_mav_msgs"
-  "pluginlib"
+ament_target_dependencies(kr_trackers_manager
+  rclcpp
+  rclcpp_components
+  rcutils
+  kr_trackers_msgs
+  kr_mav_msgs
+  pluginlib
   )
 
-rclcpp_components_register_nodes(trackers_manager "kr_trackers_manager::TrackersManager")
+rclcpp_components_register_nodes(kr_trackers_manager "kr_trackers_manager::TrackersManager")
 set(node_plugins "${node_plugins}kr_trackers_manager::TrackersManager;$<TARGET_FILE:component>\n")
 
 # since the package installs libraries without exporting them
@@ -50,15 +50,28 @@ if(NOT WIN32)
     "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}")
 endif()
 
-target_include_directories(trackers_manager
+target_include_directories(kr_trackers_manager
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
 # ament_export_dependencies()
-ament_export_targets(export_trackers_manager HAS_LIBRARY_TARGET)
-ament_export_libraries(trackers_manager)
+
+install(
+  TARGETS kr_trackers_manager
+  EXPORT kr_trackers_manager
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
+
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
+
+#ament_export_targets(export_kr_trackers_manager HAS_LIBRARY_TARGET)
 ament_export_include_directories(include)
+ament_export_libraries(kr_trackers_manager)
 ament_export_dependencies(
     ament_cmake
     rclcpp
@@ -70,18 +83,4 @@ ament_export_dependencies(
     pluginlib
 )
 
-
-install(TARGETS trackers_manager
-  EXPORT export_trackers_manager
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin)
-
-install(
-  DIRECTORY include/
-  DESTINATION include
-)
-
-
 ament_package()
-

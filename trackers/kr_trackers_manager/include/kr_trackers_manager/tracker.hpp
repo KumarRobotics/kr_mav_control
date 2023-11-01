@@ -7,7 +7,7 @@
 
 namespace kr_trackers_manager
 {
-class Tracker : public rclcpp::Node
+class Tracker 
 {
  public:
   virtual ~Tracker(void) {}

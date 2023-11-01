@@ -26,7 +26,7 @@ InitialConditions::InitialConditions()
 {
 }
 
-void InitialConditions::set_from_cmd(const kr_mav_msgs::PositionCommand::ConstPtr &msg)
+void InitialConditions::set_from_cmd(const kr_mav_msgs::msg::PositionCommand::SharedPtr &msg)
 {
   if(msg == NULL)
   {
