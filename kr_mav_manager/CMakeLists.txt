@@ -1,70 +1,45 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.5)
 project(kr_mav_manager)
 
-# set default build type
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
 endif()
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-add_compile_options(-Wall)
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
-find_package(
-  catkin REQUIRED
-  COMPONENTS roscpp
-             nav_msgs
-             sensor_msgs
-             geometry_msgs
-             kr_mav_msgs
-             kr_tracker_msgs
-             std_msgs
-             std_srvs
-             message_generation
-             actionlib)
-find_package(Eigen3 REQUIRED NO_MODULE)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-add_service_files(
-  DIRECTORY
-  srv
-  FILES
-  Vec4.srv
-  GoalTimed.srv
-  Circle.srv
-  Lissajous.srv
-  CompoundLissajous.srv)
-generate_messages()
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
-catkin_package(
-  INCLUDE_DIRS
-  include
-  LIBRARIES
-  ${PROJECT_NAME}
-  CATKIN_DEPENDS
-  roscpp
-  std_msgs
-  nav_msgs
-  sensor_msgs
-  geometry_msgs
-  kr_mav_msgs
-  kr_tracker_msgs
-  message_runtime
-  DEPENDS
-  EIGEN3)
+rosidl_generate_interfaces(${PROJECT_NAME}
+	"srv/Circle.srv"
+	"srv/CompoundLissajous.srv"
+	"srv/GoalTimed.srv"
+	"srv/Lissajous.srv"
+	"srv/Vec4.srv"
+)
 
-add_library(${PROJECT_NAME} src/manager.cpp)
-target_include_directories(${PROJECT_NAME} PUBLIC include ${catkin_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${catkin_LIBRARIES} Eigen3::Eigen)
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # uncomment the line when a copyright and license is not present in all source files
+  #set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # uncomment the line when this package is not in a git repo
+  #set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
-add_executable(mav_services src/mav_services.cpp)
-target_link_libraries(mav_services PRIVATE ${PROJECT_NAME})
+ament_export_dependencies(rosidl_default_runtime)
 
-install(
-  TARGETS ${PROJECT_NAME} mav_services
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
-install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+ament_package()

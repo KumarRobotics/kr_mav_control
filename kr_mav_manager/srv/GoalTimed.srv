@@ -1,6 +1,6 @@
 float32[4] goal
-duration duration
-time t_start
+builtin_interfaces/Duration duration
+builtin_interfaces/Time t_start
 ---
 bool success
 string message
