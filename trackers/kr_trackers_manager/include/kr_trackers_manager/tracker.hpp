@@ -1,6 +1,3 @@
-#ifndef TRACKERS_MANAGER_TRACKER_H_
-#define TRACKERS_MANAGER_TRACKER_H_
-
 #include <kr_mav_msgs/msg/position_command.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include "rclcpp/rclcpp.hpp"
@@ -56,4 +53,3 @@ class Tracker
 
 }  // namespace kr_trackers_manager
 
-#endif

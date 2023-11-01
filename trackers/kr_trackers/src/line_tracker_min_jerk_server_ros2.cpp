@@ -1,4 +1,6 @@
 // #include <actionlib/server/simple_action_server.h>
+#ifndef COMPOSITION__LINEMINJERK_COMPONENT_HPP_
+#define COMPOSITION__LINEMINJERK_COMPONENT_HPP_
 #include "rclcpp_action/rclcpp_action.hpp"
 #include <rclcpp/rclcpp.hpp>
 
@@ -12,12 +14,13 @@
 #include <Eigen/Core>
 #include <memory>
 
-class LineTrackerMinJerk : public kr_trackers_manager::Tracker
+class LineTrackerMinJerk : public rclcpp::Node, public kr_trackers_manager::Tracker 
 {
  public:
-  LineTrackerMinJerk(void);
+  // COMPOSITION_PUBLIC
+  explicit LineTrackerMinJerk(const rclcpp::NodeOptions & options);
 
-  void Initialize(const rclcpp::NodeOptions & options);
+  void Initialize();
   bool Activate(const kr_mav_msgs::msg::PositionCommand::SharedPtr &cmd);
   void Deactivate(void);
 
@@ -36,11 +39,12 @@ class LineTrackerMinJerk : public kr_trackers_manager::Tracker
                       Eigen::Vector3f coeffs[6], float yaw_coeffs[4]);
 
   // typedef actionlib::SimpleActionServer<kr_tracker_msgs::LineTrackerAction> ServerType;
-  using GoalHandleLineTracker = rclcpp_action::ServerGoalHandle<kr_trackers_msgs::LineTrackerAction>;
+  using GoalHandleLineTracker = rclcpp_action::ServerGoalHandle<kr_trackers_msgs::action::LineTracker>;
   // Action server that takes a goal.
   // Must be a pointer, because plugin does not support a constructor
   // with inputs, but an action server must be initialized with a Nodehandle.
-//  std::shared_ptr<ServerType> tracker_server_;
+  //std::shared_ptr<ServerType> tracker_server_;
+  rclcpp_action::Server<kr_trackers_msgs::action::LineTracker>::SharedPtr tracker_server_;
 
   Eigen::Vector3f current_pos_;
 
@@ -61,17 +65,19 @@ class LineTrackerMinJerk : public kr_trackers_manager::Tracker
   float current_traj_length_;
 };
 
-LineTrackerMinJerk::LineTrackerMinJerk(void)
-    : pos_set_(false),
+LineTrackerMinJerk::LineTrackerMinJerk(const rclcpp::NodeOptions & options)
+    : rclcpp::Node("line_tracker_min_jerk", options),
+      pos_set_(false),
       goal_set_(false),
       goal_reached_(true),
       active_(false),
    //   traj_start_(ros::Time::now()),
       traj_start_set_(false)
 {
+
 }
 
-void LineTrackerMinJerk::Initialize(const rclcpp::NodeOptions & options)
+void LineTrackerMinJerk::Initialize()
 {
 //  ros::NodeHandle priv_nh(nh, "line_tracker_min_jerk");
 //
@@ -86,6 +92,12 @@ void LineTrackerMinJerk::Initialize(const rclcpp::NodeOptions & options)
 //  yaw_a_des_ = default_yaw_a_des_;
 //
 //  // Set up the action server.
+  // this->tracker_server_ = rclcpp_action::create_server<kr_tracker_msgs::action::LineTracker>(
+  //     this,
+  //     "line_tracker_min_jerk",
+  //     std::bind(&LineTrackerMinJerk::handle_goal, this, _1, _2),
+  //     std::bind(&LineTrackerMinJerk::handle_cancel, this, _1),
+  //     std::bind(&LineTrackerMinJerk::handle_accepted, this, _1));
 //  tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LineTracker", false));
 //  tracker_server_->registerGoalCallback(boost::bind(&LineTrackerMinJerk::goal_callback, this));
 //  tracker_server_->registerPreemptCallback(boost::bind(&LineTrackerMinJerk::preempt_callback, this));
@@ -456,3 +468,6 @@ uint8_t LineTrackerMinJerk::status() const
 
 // #include <pluginlib/class_list_macros.h>
 // PLUGINLIB_EXPORT_CLASS(LineTrackerMinJerk, kr_trackers_manager::Tracker);
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(LineTrackerMinJerk)
+#endif

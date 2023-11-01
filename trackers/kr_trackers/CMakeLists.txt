@@ -25,7 +25,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(Eigen3 3.3 REQUIRED)
 
 # include_directories(include)
-ament_export_dependencies(kr_trackers
+ament_export_dependencies(line_tracker_min_jerk_component
   rclcpp
   rclcpp_components
   kr_trackers_msgs
@@ -34,6 +34,7 @@ ament_export_dependencies(kr_trackers
   kr_trackers_manager
   nav_msgs
   geometry_msgs
+  tf2
 )
 
 # target_link_libraries(kr_trackers
@@ -43,13 +44,14 @@ ament_export_dependencies(kr_trackers
 set(node_plugins "")
 
 add_library(
-  kr_trackers SHARED
+  line_tracker_min_jerk_component SHARED
   src/line_tracker_min_jerk_server_ros2.cpp
+  src/initial_conditions.cpp
 )
-target_compile_definitions(kr_trackers
+target_compile_definitions(line_tracker_min_jerk_component
   PRIVATE "COMPOSITION_BUILDING_DLL"
 )
-ament_target_dependencies(kr_trackers
+ament_target_dependencies(line_tracker_min_jerk_component
   rclcpp
   rclcpp_components
   kr_trackers_msgs
@@ -59,15 +61,10 @@ ament_target_dependencies(kr_trackers
   nav_msgs
   geometry_msgs
 )
-
-# target_link_libraries(kr_trackers
-# kr_trackers_manager
-# )
-  
-rclcpp_components_register_nodes(kr_trackers "kr_trackers::LineTrackerMinJerk")
-set(node_plugins "${node_plugins}kr_trackers::LineTrackerMinJerk;$<TARGET_FILE:kr_trackers>\n")
-# target_link_libraries(kr_trackers kr_trackers_manager)
-target_link_libraries(kr_trackers Eigen3::Eigen)
+rclcpp_components_register_nodes(line_tracker_min_jerk_component "LineTrackerMinJerk")
+# set(node_plugins "${node_plugins}kr_trackers::LineTrackerMinJerk;$<TARGET_FILE:kr_trackers>\n")
+set(node_plugins "${node_plugins}kr_trackers::LineTrackerMinJerk;$<TARGET_FILE:line_tracker_min_jerk_component>\n")
+target_link_libraries(line_tracker_min_jerk_component Eigen3::Eigen)
 
 # since the package installs libraries without exporting them
 # it needs to make sure that the library path is being exported
@@ -76,14 +73,14 @@ if(NOT WIN32)
     "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}")
 endif()
 
-target_include_directories(kr_trackers
+target_include_directories(line_tracker_min_jerk_component
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
 install(TARGETS
-  kr_trackers
+  line_tracker_min_jerk_component
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
