@@ -12,6 +12,7 @@
  * in the desired, which we want to avoid.
  */
 
+#include <rclcpp/rclcpp.hpp>
 #include <kr_trackers/initial_conditions.h>
 #include <tf2/utils.h>
 
@@ -31,6 +32,7 @@ void InitialConditions::set_from_cmd(const kr_mav_msgs::msg::PositionCommand::Sh
   if(msg == NULL)
   {
     //ROS_WARN("Null PositionCommand recieved. Not setting initial condition.");
+    //RCLCPP_WARN_STREAM_ONCE("Null PositionCommand recieved. Not setting initial condition.");
     return;
   }
 

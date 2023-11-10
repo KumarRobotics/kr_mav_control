@@ -3,6 +3,8 @@
 #define COMPOSITION__LINEMINJERK_COMPONENT_HPP_
 #include "rclcpp_action/rclcpp_action.hpp"
 #include <rclcpp/rclcpp.hpp>
+#include "rclcpp/time.hpp"
+#include "rclcpp/duration.hpp"
 
 #include <kr_mav_msgs/msg/position_command.hpp>
 #include <kr_trackers_msgs/msg/tracker_status.hpp>
@@ -38,12 +40,10 @@ class LineTrackerMinJerk : public rclcpp::Node, public kr_trackers_manager::Trac
                       const float &yawi, const float &yawf, const float &yaw_dot_i, const float &yaw_dot_f, float dt,
                       Eigen::Vector3f coeffs[6], float yaw_coeffs[4]);
 
-  // typedef actionlib::SimpleActionServer<kr_tracker_msgs::LineTrackerAction> ServerType;
   using GoalHandleLineTracker = rclcpp_action::ServerGoalHandle<kr_trackers_msgs::action::LineTracker>;
   // Action server that takes a goal.
   // Must be a pointer, because plugin does not support a constructor
   // with inputs, but an action server must be initialized with a Nodehandle.
-  //std::shared_ptr<ServerType> tracker_server_;
   rclcpp_action::Server<kr_trackers_msgs::action::LineTracker>::SharedPtr tracker_server_;
 
   Eigen::Vector3f current_pos_;
@@ -53,11 +53,16 @@ class LineTrackerMinJerk : public rclcpp::Node, public kr_trackers_manager::Trac
   float v_des_, a_des_, yaw_v_des_, yaw_a_des_;
   bool active_;
 
+  // priv_nh.param("default_v_des", default_v_des_, 0.5);
+  // priv_nh.param("default_a_des", default_a_des_, 0.3);
+  // priv_nh.param("default_yaw_v_des", default_yaw_v_des_, 0.8);
+  // priv_nh.param("default_yaw_a_des", default_yaw_a_des_, 0.2);
+
   InitialConditions ICs_;
   Eigen::Vector3f goal_;
-  //ros::Time traj_start_;
+  rclcpp::Time traj_start_;
   float traj_duration_;
-  //ros::Duration goal_duration_;
+  rclcpp::Duration goal_duration_;
   Eigen::Vector3f coeffs_[6];
   float goal_yaw_, yaw_coeffs_[4];
   bool traj_start_set_;
@@ -71,9 +76,28 @@ LineTrackerMinJerk::LineTrackerMinJerk(const rclcpp::NodeOptions & options)
       goal_set_(false),
       goal_reached_(true),
       active_(false),
-   //   traj_start_(ros::Time::now()),
+      traj_start_(rclcpp::Clock().now()),
+      goal_duration_(0), // rclcpp::Duration requires argument, ros::Duration didn't: 
+                         // https://docs.ros2.org/dashing/api/rclcpp/classrclcpp_1_1Duration.html
       traj_start_set_(false)
 {
+  std::cout << "Created object!" << std::endl;
+
+  declare_parameter("default_v_des", 0.5);
+  declare_parameter("default_a_des", 0.3);
+  declare_parameter("default_yaw_v_des", 0.8);
+  declare_parameter("default_yaw_a_des", 0.2);
+
+  get_parameter("default_v_des", default_v_des_);
+  get_parameter("default_a_des", default_a_des_);
+  get_parameter("default_yaw_v_des", default_yaw_v_des_);
+  get_parameter("default_yaw_a_des", default_yaw_a_des_);
+
+  v_des_ = default_v_des_;
+  a_des_ = default_a_des_;
+  yaw_v_des_ = default_yaw_v_des_;
+  yaw_a_des_ = default_yaw_a_des_;
+  
 
 }
 
