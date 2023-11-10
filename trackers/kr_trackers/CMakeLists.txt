@@ -23,7 +23,7 @@ find_package(std_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(Eigen3 3.3 REQUIRED)
-
+find_package(rclcpp_action REQUIRED)
 # include_directories(include)
 ament_export_dependencies(line_tracker_min_jerk_component
   rclcpp
@@ -35,6 +35,7 @@ ament_export_dependencies(line_tracker_min_jerk_component
   nav_msgs
   geometry_msgs
   tf2
+  rclcpp_action
 )
 
 # target_link_libraries(kr_trackers
@@ -60,6 +61,7 @@ ament_target_dependencies(line_tracker_min_jerk_component
   kr_trackers_manager
   nav_msgs
   geometry_msgs
+  rclcpp_action
 )
 rclcpp_components_register_nodes(line_tracker_min_jerk_component "LineTrackerMinJerk")
 # set(node_plugins "${node_plugins}kr_trackers::LineTrackerMinJerk;$<TARGET_FILE:kr_trackers>\n")

@@ -31,7 +31,10 @@ class LineTrackerMinJerk : public rclcpp::Node, public kr_trackers_manager::Trac
   uint8_t status() const;
 
  private:
-  void goal_callback();
+
+  using LineTrackerGoalHandle = rclcpp_action::ServerGoalHandle<kr_trackers_msgs::action::LineTracker>;
+
+  void goal_callback(const std::shared_ptr<LineTrackerGoalHandle> goal_handle);
 
   void preempt_callback();
 
@@ -40,7 +43,6 @@ class LineTrackerMinJerk : public rclcpp::Node, public kr_trackers_manager::Trac
                       const float &yawi, const float &yawf, const float &yaw_dot_i, const float &yaw_dot_f, float dt,
                       Eigen::Vector3f coeffs[6], float yaw_coeffs[4]);
 
-  using GoalHandleLineTracker = rclcpp_action::ServerGoalHandle<kr_trackers_msgs::action::LineTracker>;
   // Action server that takes a goal.
   // Must be a pointer, because plugin does not support a constructor
   // with inputs, but an action server must be initialized with a Nodehandle.
@@ -52,11 +54,6 @@ class LineTrackerMinJerk : public rclcpp::Node, public kr_trackers_manager::Trac
   double default_v_des_, default_a_des_, default_yaw_v_des_, default_yaw_a_des_;
   float v_des_, a_des_, yaw_v_des_, yaw_a_des_;
   bool active_;
-
-  // priv_nh.param("default_v_des", default_v_des_, 0.5);
-  // priv_nh.param("default_a_des", default_a_des_, 0.3);
-  // priv_nh.param("default_yaw_v_des", default_yaw_v_des_, 0.8);
-  // priv_nh.param("default_yaw_a_des", default_yaw_a_des_, 0.2);
 
   InitialConditions ICs_;
   Eigen::Vector3f goal_;
@@ -82,7 +79,13 @@ LineTrackerMinJerk::LineTrackerMinJerk(const rclcpp::NodeOptions & options)
       traj_start_set_(false)
 {
   std::cout << "Created object!" << std::endl;
+  this->Initialize();
 
+  
+}
+
+void LineTrackerMinJerk::Initialize()
+{
   declare_parameter("default_v_des", 0.5);
   declare_parameter("default_a_des", 0.3);
   declare_parameter("default_yaw_v_des", 0.8);
@@ -97,36 +100,30 @@ LineTrackerMinJerk::LineTrackerMinJerk(const rclcpp::NodeOptions & options)
   a_des_ = default_a_des_;
   yaw_v_des_ = default_yaw_v_des_;
   yaw_a_des_ = default_yaw_a_des_;
-  
 
-}
+  // Set up the action server.
+  tracker_server_ = rclcpp_action::create_server<kr_trackers_msgs::action::LineTracker>(
+      this,
+      "line_tracker_min_jerk",
 
-void LineTrackerMinJerk::Initialize()
-{
-//  ros::NodeHandle priv_nh(nh, "line_tracker_min_jerk");
-//
-//  priv_nh.param("default_v_des", default_v_des_, 0.5);
-//  priv_nh.param("default_a_des", default_a_des_, 0.3);
-//  priv_nh.param("default_yaw_v_des", default_yaw_v_des_, 0.8);
-//  priv_nh.param("default_yaw_a_des", default_yaw_a_des_, 0.2);
-//
-//  v_des_ = default_v_des_;
-//  a_des_ = default_a_des_;
-//  yaw_v_des_ = default_yaw_v_des_;
-//  yaw_a_des_ = default_yaw_a_des_;
-//
-//  // Set up the action server.
-  // this->tracker_server_ = rclcpp_action::create_server<kr_tracker_msgs::action::LineTracker>(
-  //     this,
-  //     "line_tracker_min_jerk",
-  //     std::bind(&LineTrackerMinJerk::handle_goal, this, _1, _2),
-  //     std::bind(&LineTrackerMinJerk::handle_cancel, this, _1),
-  //     std::bind(&LineTrackerMinJerk::handle_accepted, this, _1));
-//  tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LineTracker", false));
-//  tracker_server_->registerGoalCallback(boost::bind(&LineTrackerMinJerk::goal_callback, this));
-//  tracker_server_->registerPreemptCallback(boost::bind(&LineTrackerMinJerk::preempt_callback, this));
-//
-//  tracker_server_->start();
+      [](const rclcpp_action::GoalUUID &, std::shared_ptr<const kr_trackers_msgs::action::LineTracker::Goal>)
+      {
+        // Accept all goals
+        return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+      },
+
+      [](const std::shared_ptr<LineTrackerGoalHandle>)
+      {
+        // Accept all cancel requests
+        return rclcpp_action::CancelResponse::ACCEPT;
+      },
+
+      std::bind(&LineTrackerMinJerk::goal_callback, this, std::placeholders::_1));
+
+   // tracker_server_ = std::shared_ptr<ServerType>(new ServerType(priv_nh, "LineTracker", false));
+   // tracker_server_->registerGoalCallback(boost::bind(&LineTrackerMinJerk::goal_callback, this));
+   // tracker_server_->registerPreemptCallback(boost::bind(&LineTrackerMinJerk::preempt_callback, this));
+   // tracker_server_->start();
 }
 
 bool LineTrackerMinJerk::Activate(const kr_mav_msgs::msg::PositionCommand::SharedPtr &cmd)
@@ -372,7 +369,7 @@ kr_mav_msgs::msg::PositionCommand::SharedPtr LineTrackerMinJerk::update(const na
 //   return cmd;
 }
 
-void LineTrackerMinJerk::goal_callback()
+void LineTrackerMinJerk::goal_callback(const std::shared_ptr<LineTrackerGoalHandle> goal_handle)
 {
 //  // If another goal is already active, cancel that goal
 //  // and track this one instead.
