@@ -25,15 +25,17 @@ find_package(Eigen3 REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(kr_mav_msgs REQUIRED)
 find_package(kr_trackers_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-	"srv/Circle.srv"
-	"srv/CompoundLissajous.srv"
-	"srv/GoalTimed.srv"
-	"srv/Lissajous.srv"
-	"srv/Vec4.srv"
+"srv/Circle.srv"
+"srv/CompoundLissajous.srv"
+"srv/GoalTimed.srv"
+"srv/Lissajous.srv"
+"srv/Vec4.srv"
+DEPENDENCIES builtin_interfaces
 )
 
 ## Create library
@@ -57,6 +59,18 @@ install(
 )
 
 ##
+
+# find_package(kr_mav_manager REQUIRED)
+
+add_executable(mav_services src/mav_services.cpp)
+ament_target_dependencies(mav_services std_srvs)
+rosidl_target_interfaces(mav_services ${PROJECT_NAME} "rosidl_typesupport_cpp") # to link local msg/srv/action definitions (galactic or lower)
+target_link_libraries(mav_services manager)
+
+install(TARGETS
+mav_services
+DESTINATION lib/${PROJECT_NAME}
+)
 
 
 if(BUILD_TESTING)
