@@ -32,6 +32,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/SO3Command.msg"
 "msg/StatusData.msg"
 "msg/TRPYCommand.msg"
+DEPENDENCIES builtin_interfaces std_msgs geometry_msgs
 )
 
 if(BUILD_TESTING)
