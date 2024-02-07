@@ -1,0 +1,20 @@
+<package format="2">
+  <name>kr_quadrotor_simulator</name>
+  <version>1.0.0</version>
+  <description>kr_quadrotor_simulator</description>
+  <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
+  <maintainer email="michael.f.watterson@gmail.com">Michael Watterson</maintainer>
+
+  <license>BSD</license>
+
+  <author>Kartik Mohta</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>kr_mav_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf2_ros</depend>
+</package>
