@@ -8,6 +8,7 @@
 // ROS2 related
 // equivalent to #include <tf/transform_datatypes.h>
 #include "tf2/utils.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 namespace kr_mav_manager
 {
@@ -43,11 +44,11 @@ MAVManager::MAVManager()
 
   // Declaring parameters
   this->declare_parameter("server_wait_timeout", 0.5f);
-  this->declare_parameter("need_imu");
-  this->declare_parameter("need_output_data");
-  this->declare_parameter("use_attitude_safety_catch");
-  this->declare_parameter("max_attitude_angle");
-  this->declare_parameter("mass");
+  this->declare_parameter("need_imu", rclcpp::PARAMETER_BOOL);
+  this->declare_parameter("need_output_data", rclcpp::PARAMETER_BOOL);
+  this->declare_parameter("use_attitude_safety_catch", rclcpp::PARAMETER_BOOL);
+  this->declare_parameter("max_attitude_angle", rclcpp::PARAMETER_DOUBLE);
+  this->declare_parameter("mass", rclcpp::PARAMETER_DOUBLE);
   this->declare_parameter("odom_timeout", 0.1f);
   this->declare_parameter("takeoff_height", 0.1);
 

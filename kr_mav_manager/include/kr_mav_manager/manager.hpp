@@ -93,8 +93,7 @@ public:
   bool goTo(Vec3 xyz, Vec2 v_and_a_des = Vec2::Zero());   // Uses current yaw
 
   bool goToTimed(float x, float y, float z, float yaw, float v_des = 0.0f, float a_des = 0.0f, bool relative = false,
-                 rclcpp::Duration duration = rclcpp::Duration(0), rclcpp::Time start_time = rclcpp::Time(0)); //check this->now()
-                //  {start_time = this->now();}
+                 rclcpp::Duration duration = rclcpp::Duration(0,0), rclcpp::Time start_time = rclcpp::Time(0)); 
 
   bool setDesVelInWorldFrame(float x, float y, float z, float yaw, bool use_position_feedback = false);
   bool setDesVelInBodyFrame(float x, float y, float z, float yaw, bool use_position_feedback = false);

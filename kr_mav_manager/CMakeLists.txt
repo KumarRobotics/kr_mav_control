@@ -28,6 +28,8 @@ find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(kr_mav_msgs REQUIRED)
 find_package(kr_trackers_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
 "srv/Circle.srv"
@@ -45,7 +47,7 @@ include_directories(include/)
 add_library(manager src/manager.cpp)
 
 ament_export_targets(manager HAS_LIBRARY_TARGET)
-ament_target_dependencies(manager rclcpp rclcpp_action nav_msgs std_msgs sensor_msgs kr_trackers_msgs kr_mav_msgs)
+ament_target_dependencies(manager rclcpp rclcpp_action nav_msgs std_msgs sensor_msgs kr_trackers_msgs kr_mav_msgs tf2 tf2_geometry_msgs)
 target_link_libraries(manager Eigen3::Eigen)
 ament_export_dependencies(manager rclcpp rclcpp_action nav_msgs std_msgs sensor_msgs kr_mav_msgs kr_trackers_msgs Eigen3::Eigen)
 
@@ -64,8 +66,8 @@ install(
 
 add_executable(mav_services src/mav_services.cpp)
 ament_target_dependencies(mav_services std_srvs)
-rosidl_target_interfaces(mav_services ${PROJECT_NAME} "rosidl_typesupport_cpp") # to link local msg/srv/action definitions (galactic or lower)
-target_link_libraries(mav_services manager)
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp") # to link local msg/srv/action definitions (galactic or lower)
+target_link_libraries(mav_services manager "${cpp_typesupport_target}") 
 
 install(TARGETS
 mav_services
