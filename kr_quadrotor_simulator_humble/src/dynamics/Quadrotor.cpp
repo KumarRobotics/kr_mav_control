@@ -1,4 +1,4 @@
-#include "kr_quadrotor_simulator_humble/Quadrotor.h"
+#include "kr_quadrotor_simulator_humble/Quadrotor.hpp"
 
 #include <Eigen/Geometry>
 #include <boost/bind.hpp>
