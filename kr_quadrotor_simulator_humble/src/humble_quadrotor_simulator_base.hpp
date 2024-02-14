@@ -21,8 +21,8 @@ class QuadrotorSimulatorBase : public rclcpp::Node
  public:
   QuadrotorSimulatorBase(const rclcpp::NodeOptions & options);
   void run(void);
-  // void extern_force_callback(const geometry_msgs::Vector3Stamped::ConstPtr &f_ext);
-  // void extern_moment_callback(const geometry_msgs::Vector3Stamped::ConstPtr &m_ext);
+  void extern_force_callback(const geometry_msgs::msg::Vector3Stamped::SharedPtr &f_ext);
+  void extern_moment_callback(const geometry_msgs::msg::Vector3Stamped::SharedPtr &m_ext);
 
  protected:
   typedef struct _ControlInput
@@ -256,19 +256,19 @@ void QuadrotorSimulatorBase<T, U>::run(void)
     r.sleep();
   }
 }
-// 
-// template <typename T, typename U>
-// void QuadrotorSimulatorBase<T, U>::extern_force_callback(const geometry_msgs::Vector3Stamped::ConstPtr &f_ext)
-// {
-//   quad_.setExternalForce(Eigen::Vector3d(f_ext->vector.x, f_ext->vector.y, f_ext->vector.z));
-// }
-// 
-// template <typename T, typename U>
-// void QuadrotorSimulatorBase<T, U>::extern_moment_callback(const geometry_msgs::Vector3Stamped::ConstPtr &m_ext)
-// {
-//   quad_.setExternalMoment(Eigen::Vector3d(m_ext->vector.x, m_ext->vector.y, m_ext->vector.z));
-// }
-// 
+
+template <typename T, typename U>
+void QuadrotorSimulatorBase<T, U>::extern_force_callback(const geometry_msgs::msg::Vector3Stamped::SharedPtr &f_ext)
+{
+  quad_.setExternalForce(Eigen::Vector3d(f_ext->vector.x, f_ext->vector.y, f_ext->vector.z));
+}
+
+template <typename T, typename U>
+void QuadrotorSimulatorBase<T, U>::extern_moment_callback(const geometry_msgs::msg::Vector3Stamped::SharedPtr &m_ext)
+{
+  quad_.setExternalMoment(Eigen::Vector3d(m_ext->vector.x, m_ext->vector.y, m_ext->vector.z));
+}
+
 template <typename T, typename U>
 void QuadrotorSimulatorBase<T, U>::stateToOdomMsg(const Quadrotor::State &state, nav_msgs::msg::Odometry &odom) const
 {
