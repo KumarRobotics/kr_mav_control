@@ -1,38 +1,54 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.8)
 project(kr_tracker_msgs)
 
-# set default build type
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS message_generation nav_msgs geometry_msgs actionlib_msgs)
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
-add_service_files(DIRECTORY srv FILES Transition.srv)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-add_action_files(
-  DIRECTORY
-  action
-  FILES
-  LineTracker.action
-  VelocityTracker.action
-  CircleTracker.action
-  TrajectoryTracker.action
-  LissajousTracker.action
-  LissajousAdder.action)
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
-add_message_files(
-  DIRECTORY
-  msg
-  FILES
-  TrackerStatus.msg
-  VelocityGoal.msg)
+find_package(rosidl_default_generators REQUIRED)
+rosidl_generate_interfaces(${PROJECT_NAME}
+"msg/TrackerStatus.msg"
+"msg/VelocityGoal.msg"
 
-generate_messages(DEPENDENCIES geometry_msgs actionlib_msgs)
+"srv/Transition.srv"
 
-catkin_package(
-  CATKIN_DEPENDS
-  nav_msgs
-  geometry_msgs
-  actionlib_msgs
-  message_runtime)
+"action/CircleTracker.action"
+"action/LineTracker.action"
+"action/LissajousAdder.action"
+"action/LissajousTracker.action"
+"action/TrajectoryTracker.action"
+"action/VelocityTracker.action"
+
+DEPENDENCIES std_msgs builtin_interfaces geometry_msgs
+)
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # uncomment the line when a copyright and license is not present in all source files
+  #set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # uncomment the line when this package is not in a git repo
+  #set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+ament_export_dependencies(rosidl_default_runtime)
+
+ament_package()
