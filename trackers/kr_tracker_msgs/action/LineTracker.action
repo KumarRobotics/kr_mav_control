@@ -6,8 +6,8 @@ float64 yaw
 float64 v_des
 float64 a_des
 bool relative
-time t_start
-duration duration
+builtin_interfaces/Time t_start
+builtin_interfaces/Duration duration
 ---
 #result definition
 # send back goal

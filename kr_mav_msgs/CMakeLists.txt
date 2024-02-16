@@ -1,34 +1,41 @@
 cmake_minimum_required(VERSION 3.10)
 project(kr_mav_msgs)
 
-# set default build type
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs)
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-add_message_files(
-  DIRECTORY
-  msg
-  FILES
-  AuxCommand.msg
-  Corrections.msg
-  MotorRPM.msg
-  OutputData.msg
-  PWMCommand.msg
-  PositionCommand.msg
-  SO3Command.msg
-  Serial.msg
-  StatusData.msg
-  TRPYCommand.msg)
+find_package(rosidl_default_generators REQUIRED)
+rosidl_generate_interfaces(${PROJECT_NAME}
+"msg/AuxCommand.msg"
+"msg/Corrections.msg"
+"msg/MotorRPM.msg"
+"msg/OutputData.msg"
+"msg/PositionCommand.msg"
+"msg/PWMCommand.msg"
+"msg/Serial.msg"
+"msg/SO3Command.msg"
+"msg/StatusData.msg"
+"msg/TRPYCommand.msg"
+DEPENDENCIES builtin_interfaces std_msgs geometry_msgs
+)
 
-generate_messages(DEPENDENCIES geometry_msgs)
+ament_export_dependencies(rosidl_default_runtime)
 
-catkin_package(
-  CATKIN_DEPENDS
-  geometry_msgs
-  message_runtime
-  DEPENDS
-  EIGEN3)
+ament_package()
