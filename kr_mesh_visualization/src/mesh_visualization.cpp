@@ -34,11 +34,11 @@ class MeshVisualizationNode : public rclcpp::Node
 
     using namespace std::placeholders;
     pub_vis_ = this->create_publisher<visualization_msgs::msg::Marker>("~/robot", 10);
-    
+
     if(msg_type == "nav_msgs/msg/Odometry")
     {
-      sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>("~/input", 10,
-                  std::bind(&MeshVisualizationNode::odom_callback, this, _1));
+      sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+          "~/input", 10, std::bind(&MeshVisualizationNode::odom_callback, this, _1));
     }
     else if(msg_type == "geometry_msgs/msg/PoseStamped")
     {
@@ -54,7 +54,6 @@ class MeshVisualizationNode : public rclcpp::Node
     {
       RCLCPP_ERROR_STREAM(this->get_logger(), std::string(this->get_name()) << " got unsupported message type " << msg_type << "\n");
     }
-
   }
 
  protected:
