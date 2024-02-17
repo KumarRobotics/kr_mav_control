@@ -1,20 +1,25 @@
-<package format="2">
+<package format="3">
   <name>kr_mesh_visualization</name>
   <version>1.0.0</version>
   <description>kr_mesh_visualization</description>
-
+  
   <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
   <maintainer email="michael.f.watterson@gmail.com">Michael Watterson</maintainer>
-
+  <maintainer email="pranavpshah2098@gmail.com">Pranav Shah</maintainer>
   <license>BSD</license>
-
   <author>Kartik Mohta</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>nav_msgs</depend>
+  <depend>rclcpp</depend>
   <depend>geometry_msgs</depend>
-  <depend>topic_tools</depend>
+  <depend>nav_msgs</depend>
   <depend>visualization_msgs</depend>
 
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
