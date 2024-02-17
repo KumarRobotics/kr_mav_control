@@ -19,6 +19,7 @@ class MeshVisualizationNode : public rclcpp::Node
     this->declare_parameter<double>("scale/y", 1.0);
     this->declare_parameter<double>("scale/z", 1.0);
     this->declare_parameter<std::string>("new_frame_id", std::string(""));
+    this->declare_parameter<std::string>("msg_type", std::string("nav_msgs/msg/Odometry"));
 
     this->get_parameter("mesh_resource", mesh_resource);
     this->get_parameter("color/r", color_r);
@@ -29,18 +30,31 @@ class MeshVisualizationNode : public rclcpp::Node
     this->get_parameter("scale/y", scale_y);
     this->get_parameter("scale/z", scale_z);
     this->get_parameter("new_frame_id", new_frame_id);
+    this->get_parameter("msg_type", msg_type);
 
     using namespace std::placeholders;
     pub_vis_ = this->create_publisher<visualization_msgs::msg::Marker>("~/robot", 10);
-    sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>("~/input", 10,
-                std::bind(&MeshVisualizationNode::odom_callback, this, _1));
     
+    if(msg_type == "nav_msgs/msg/Odometry")
+    {
+      sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>("~/input", 10,
+                  std::bind(&MeshVisualizationNode::odom_callback, this, _1));
+    }
+    else if(msg_type == "geometry_msgs/msg/PoseStamped")
+    {
+      sub_ps_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+          "~/input", 10, std::bind(&MeshVisualizationNode::callback_pose_stamped, this, _1));
+    }
+    else if(msg_type == "geometry_msgs/msg/PoseWithCovarianceStamped")
+    {
+      sub_pwcs_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+          "~/input", 10, std::bind(&MeshVisualizationNode::callback_pose_with_covariance_stamped, this, _1));
+    }
+    else
+    {
+      RCLCPP_ERROR_STREAM(this->get_logger(), std::string(this->get_name()) << " got unsupported message type " << msg_type << "\n");
+    }
 
-    /* Uncomment any of the below subscribers to support another message type */
-    // sub_pwcs_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    //     "~/input", 10, std::bind(&MeshVisualizationNode::callback_pose_with_covariance_stamped, this, _1));
-    // sub_ps_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-    //     "~/input", 10, std::bind(&MeshVisualizationNode::callback_pose_stamped, this, _1));
   }
 
  protected:
@@ -51,6 +65,7 @@ class MeshVisualizationNode : public rclcpp::Node
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   double color_r, color_g, color_b, color_a;
   double scale_x, scale_y, scale_z;
+  std::string msg_type;
 
   void publishMarker(const std::string &frame_id, const geometry_msgs::msg::Pose &pose)
   {

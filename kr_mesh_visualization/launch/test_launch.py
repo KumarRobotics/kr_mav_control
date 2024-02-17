@@ -14,6 +14,11 @@ def generate_launch_description():
     "new_frame_id", default_value=TextSubstitution(text="")
   )
 
+  msg_type_launch_arg = DeclareLaunchArgument(
+    "msg_type",
+    default_value=TextSubstitution(text="nav_msgs/msg/Odometry")
+  )
+
   mesh_visualization_node = Node(
     package="kr_mesh_visualization",
     executable="kr_mesh_visualization",
@@ -28,12 +33,14 @@ def generate_launch_description():
       {"color/g": 0.0},
       {"color/b": 1.0},
       {"color/a": 0.7},
-      {"new_frame_id": LaunchConfiguration("new_frame_id")}
+      {"new_frame_id": LaunchConfiguration("new_frame_id")},
+      {"msg_type": LaunchConfiguration("msg_type")}
     ]
   )
 
   return LaunchDescription([
     input_topic_launch_arg,
     new_frame_id_launch_arg,
+    msg_type_launch_arg,
     mesh_visualization_node
   ])
