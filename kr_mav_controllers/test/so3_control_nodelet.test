@@ -1,0 +1,12 @@
+<launch>
+  <node pkg="nodelet" type="nodelet" name="so3_control_nodelet_manager" args="manager"/>
+  <node pkg="nodelet" type="nodelet" name="so3_control_nodelet" args="load kr_mav_controllers/SO3ControlNodelet so3_control_nodelet_manager" output="screen">
+    <remap from="~odom" to="odom" />
+    <remap from="~position_cmd" to="position_cmd" />
+    <remap from="~motors" to="motors" />
+    <remap from="~corrections" to="corrections" />
+    <remap from="~so3_cmd" to="so3_cmd" />
+  </node>
+
+  <test test-name="so3_control_nodelet_test" pkg="kr_mav_controllers" type="so3_control_nodelet_test" time-limit="60.0"/>
+</launch>
