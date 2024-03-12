@@ -3,7 +3,7 @@ kr_mav_control
 
 ROS packages for quadrotor control
 
-[![Build Status](https://github.com/KumarRobotics/kr_mav_control/workflows/build/badge.svg)](https://github.com/KumarRobotics/kr_mav_control/actions?query=workflow%3Abuild)
+[![Build Status](https://github.com/KumarRobotics/kr_mav_control/workflows/build-and-test/badge.svg)](https://github.com/KumarRobotics/kr_mav_control/actions?query=workflow%3Abuild)
 
 ### Stack includes:
 
