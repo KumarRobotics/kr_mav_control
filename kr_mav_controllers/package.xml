@@ -20,6 +20,9 @@
   <depend>std_msgs</depend>
   <depend>tf</depend>
 
+  <test_depend>rostest</test_depend>
+  <test_depend>gtest</test_depend>
+
   <export>
     <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
   </export>

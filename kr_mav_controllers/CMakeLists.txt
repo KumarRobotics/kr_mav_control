@@ -61,3 +61,23 @@ install(
 install(FILES nodelet_plugin.xml
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(catkin REQUIRED COMPONENTS
+    roscpp
+    std_msgs
+    nav_msgs
+    kr_mav_msgs
+    rostest
+  )
+
+  include_directories(include ${catkin_INCLUDE_DIRS})
+  include_directories(${GTEST_INCLUDE_DIRS})
+
+  add_executable(so3_control_nodelet_test test/so3_control_nodelet_test.cpp)
+  # add_rostest_gtest(so3_control_nodelet_test test/so3_control_nodelet.test test/so3_control_nodelet_test.cpp)
+  target_link_libraries(so3_control_nodelet_test ${catkin_LIBRARIES} ${GTEST_LIBRARIES})
+
+  add_rostest(test/so3_control_nodelet.test)
+
+endif()

@@ -1,4 +1,4 @@
-name: build
+name: build-and-test
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -qy g++ libeigen3-dev
+          apt-get install -qy g++ libeigen3-dev python3-catkin-tools
           rosdep update
           rosdep install --from-paths . --ignore-src -y -r --as-root apt:false
 
@@ -32,9 +32,11 @@ jobs:
           ln -s ${GITHUB_WORKSPACE}
           catkin_init_workspace .
 
-      - name: Build workspace
+      - name: Build workspace and run tests
         run: |
           . /opt/ros/${{ matrix.ros_distro }}/setup.sh
           cd ${RUNNER_WORKSPACE}/catkin_ws
           export LDFLAGS="-Wl,-O1,--sort-common,--as-needed,--no-undefined,-z,relro,-z,now -pthread"
-          catkin_make -DCMAKE_BUILD_TYPE=NONE
+          catkin build -j4 --no-status -DCMAKE_BUILD_TYPE=Release
+          . ${RUNNER_WORKSPACE}/catkin_ws/devel/setup.sh
+          catkin test

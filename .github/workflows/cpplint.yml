@@ -10,14 +10,14 @@ jobs:
       with:
         github_token: ${{ secrets.github_token }}
         reporter: github-pr-review
-        flags: --linelength=120 # Optional
-        filter: "-whitespace/braces \"
-          ,-whitespace/parens"
-        #"-readability/braces\
-        #   ,-whitespace/braces\
+        flags: --linelength=120
+        filter: "-readability/braces\
+          ,-whitespace/braces\
+          ,-whitespace/parens\
+          ,-whitespace/newline\
+          ,-build/c++11"
+        #   -readability/braces\
         #   ,-whitespace/comments\
         #   ,-whitespace/indent\
-        #   ,-whitespace/newline\
         #   ,-whitespace/operators\
-        #   ,-whitespace/parens\
         #   " # Optional
