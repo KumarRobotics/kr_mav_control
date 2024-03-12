@@ -1,0 +1,23 @@
+name: Reviewdog
+on: [pull_request]
+
+jobs:
+  cpplint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: reviewdog/action-cpplint@master
+      with:
+        github_token: ${{ secrets.github_token }}
+        reporter: github-pr-review
+        flags: --linelength=120
+        filter: "-readability/braces\
+          ,-whitespace/braces\
+          ,-whitespace/parens\
+          ,-whitespace/newline\
+          ,-build/c++11"
+        #   -readability/braces\
+        #   ,-whitespace/comments\
+        #   ,-whitespace/indent\
+        #   ,-whitespace/operators\
+        #   " # Optional
