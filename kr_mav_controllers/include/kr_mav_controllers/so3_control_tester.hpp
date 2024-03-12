@@ -4,6 +4,7 @@
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
+#include <vector>
 
 class SO3ControlTester
 {

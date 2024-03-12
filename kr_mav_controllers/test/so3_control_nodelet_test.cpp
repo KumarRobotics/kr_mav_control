@@ -21,7 +21,7 @@ TEST(SO3ControlNodeletTest, Test1)
     std::lock_guard<std::mutex> lock(tester.mutex);
     EXPECT_FALSE(tester.so3_command_received_);
   }
-  ASSERT_TRUE(tester.is_so3_cmd_publisher_active()); // checking if nodelet is active
+  ASSERT_TRUE(tester.is_so3_cmd_publisher_active());  // checking if nodelet is active
 }
 
 /*
