@@ -14,7 +14,7 @@
 class PIDControlComponent : public rclcpp::Node
 {
  public:
-  PIDControlComponent(const rclcpp::NodeOptions &options);
+  explicit PIDControlComponent(const rclcpp::NodeOptions &options);
 
  private:
   void publishTRPYCommand(void);

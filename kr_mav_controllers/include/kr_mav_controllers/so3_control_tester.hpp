@@ -1,11 +1,12 @@
+#include <memory>
+#include <vector>
+
 #include "kr_mav_msgs/msg/corrections.hpp"
 #include "kr_mav_msgs/msg/position_command.hpp"
 #include "kr_mav_msgs/msg/so3_command.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
-
-using namespace std::chrono_literals;
 
 class SO3ControlTester : public rclcpp::Node
 {
@@ -58,7 +59,7 @@ bool SO3ControlTester::is_so3_cmd_publisher_active()
     flag = true;
   else
   {
-    rclcpp::sleep_for(1s);
+    rclcpp::sleep_for(std::chrono::seconds(1));
     if(so3_cmd_sub_->get_publisher_count() > 0)
       flag = true;
     else

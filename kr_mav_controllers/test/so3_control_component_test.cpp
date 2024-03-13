@@ -23,7 +23,7 @@ class SO3ControlComponentTest : public testing::Test
   {
     executor->add_node(tester);
     spin_thread = std::thread([this]() { executor->spin(); });
-    rclcpp::sleep_for(1s);
+    rclcpp::sleep_for(std::chrono::seconds(1));
   }
 
   // Cancel spinning of node
@@ -57,7 +57,7 @@ TEST_F(SO3ControlComponentTest, Test2)
 {
   std::cout << "Performing Test2!\n";
   tester->publish_single_position_command();
-  rclcpp::sleep_for(1s);
+  rclcpp::sleep_for(std::chrono::seconds(1));
   {
     std::lock_guard<std::mutex> lock(tester->mutex);
     EXPECT_FALSE(tester->so3_command_received_);
@@ -73,7 +73,7 @@ TEST_F(SO3ControlComponentTest, Test3)
 {
   tester->publish_enable_motors(true);
   tester->publish_single_position_command();
-  rclcpp::sleep_for(1s);
+  rclcpp::sleep_for(std::chrono::seconds(1));
   {
     std::lock_guard<std::mutex> lock(tester->mutex);
     EXPECT_FALSE(tester->so3_command_received_);
@@ -90,9 +90,9 @@ TEST_F(SO3ControlComponentTest, Test4)
   tester->publish_enable_motors(true);
   tester->populate_odom_msgs();
   tester->publish_odom_msg(0);
-  rclcpp::sleep_for(1s);
+  rclcpp::sleep_for(std::chrono::seconds(1));
   tester->publish_single_position_command();
-  rclcpp::sleep_for(1s);
+  rclcpp::sleep_for(std::chrono::seconds(1));
   Test4Data ref;
   {
     std::lock_guard<std::mutex> lock(tester->mutex);
@@ -124,12 +124,12 @@ TEST_F(SO3ControlComponentTest, Test5)
   tester->populate_odom_msgs();
   tester->populate_position_cmd_vector(1, 1, 2, 0, 0.1);
   tester->publish_odom_msg(0);
-  rclcpp::sleep_for(1s);
+  rclcpp::sleep_for(std::chrono::seconds(1));
   Test5Data ref;
   for(int i = 0; i < 11; i++)
   {
     tester->publish_position_command(i);
-    rclcpp::sleep_for(1s);
+    rclcpp::sleep_for(std::chrono::seconds(1));
     {
       std::lock_guard<std::mutex> lock(tester->mutex);
       EXPECT_TRUE(tester->so3_command_received_);
@@ -161,12 +161,12 @@ TEST_F(SO3ControlComponentTest, Test6)
   tester->populate_odom_msgs();
   tester->populate_position_cmd_vector(2, 3, 5, 7, 0.2);
   tester->publish_odom_msg(1);
-  rclcpp::sleep_for(1s);
+  rclcpp::sleep_for(std::chrono::seconds(1));
   Test6Data ref;
   for(int i = 0; i < 11; i++)
   {
     tester->publish_position_command(i);
-    rclcpp::sleep_for(1s);
+    rclcpp::sleep_for(std::chrono::seconds(1));
     {
       std::lock_guard<std::mutex> lock(tester->mutex);
       EXPECT_TRUE(tester->so3_command_received_);
@@ -201,14 +201,14 @@ TEST_F(SO3ControlComponentTest, Test7)
   float kf_corr = 1.0f;
   float ang_corr[2] = {0.2f, 0.3f};
   tester->publish_corrections(kf_corr, ang_corr);
-  rclcpp::sleep_for(1s);
+  rclcpp::sleep_for(std::chrono::seconds(1));
   tester->publish_odom_msg(2);
-  rclcpp::sleep_for(1s);
+  rclcpp::sleep_for(std::chrono::seconds(1));
   Test7Data ref;
   for(int i = 0; i < 11; i++)
   {
     tester->publish_position_command(i);
-    rclcpp::sleep_for(1s);
+    rclcpp::sleep_for(std::chrono::seconds(1));
     {
       std::lock_guard<std::mutex> lock(tester->mutex);
       EXPECT_TRUE(tester->so3_command_received_);

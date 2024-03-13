@@ -14,7 +14,7 @@
 class SO3ControlComponent : public rclcpp::Node
 {
  public:
-  SO3ControlComponent(const rclcpp::NodeOptions &options);
+  explicit SO3ControlComponent(const rclcpp::NodeOptions &options);
 
  private:
   void publishSO3Command();

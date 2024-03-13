@@ -13,7 +13,7 @@
 class SO3TRPYControlComponent : public rclcpp::Node
 {
  public:
-  SO3TRPYControlComponent(const rclcpp::NodeOptions &options);
+  explicit SO3TRPYControlComponent(const rclcpp::NodeOptions &options);
 
  private:
   void publishCommand();
