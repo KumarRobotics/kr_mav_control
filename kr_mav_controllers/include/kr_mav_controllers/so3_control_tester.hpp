@@ -1,16 +1,17 @@
-#include <kr_mav_msgs/Corrections.h>
-#include <kr_mav_msgs/PositionCommand.h>
-#include <kr_mav_msgs/SO3Command.h>
-#include <nav_msgs/Odometry.h>
-#include <ros/ros.h>
-#include <std_msgs/Bool.h>
-#include <vector>
+#include "kr_mav_msgs/msg/corrections.hpp"
+#include "kr_mav_msgs/msg/position_command.hpp"
+#include "kr_mav_msgs/msg/so3_command.hpp"
+#include "nav_msgs/msg/odometry.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/bool.hpp"
 
-class SO3ControlTester
+using namespace std::chrono_literals;
+
+class SO3ControlTester : public rclcpp::Node
 {
  public:
   SO3ControlTester();
-  void so3CommandCallback(const kr_mav_msgs::SO3Command::ConstPtr &msg);
+  void so3CommandCallback(const kr_mav_msgs::msg::SO3Command::SharedPtr msg);
   void publish_single_position_command();
   void publish_enable_motors(bool flag);
   void populate_position_cmd_vector(int x_gain, int y_gain, int z_gain, uint8_t use_msg_gains_flags, float yaw_dot);
@@ -20,27 +21,30 @@ class SO3ControlTester
   void reset_so3_cmd_pointer();
   void publish_corrections(float kf_correction, float (&angle_corrections)[2]);
   bool is_so3_cmd_publisher_active();
-  kr_mav_msgs::SO3Command::Ptr so3_cmd_;
+  kr_mav_msgs::msg::SO3Command::SharedPtr so3_cmd_;
   bool so3_command_received_ = false;
   std::mutex mutex;
 
  private:
-  ros::NodeHandle nh_;
-  ros::Publisher position_cmd_pub_, enable_motors_pub_, odom_pub_, corrections_pub_;
-  ros::Subscriber so3_cmd_sub_;
-  std::vector<kr_mav_msgs::PositionCommand> position_cmds;
-  std::vector<nav_msgs::Odometry> odom_msgs;
+  rclcpp::Publisher<kr_mav_msgs::msg::PositionCommand>::SharedPtr position_cmd_pub_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr enable_motors_pub_;
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+  rclcpp::Publisher<kr_mav_msgs::msg::Corrections>::SharedPtr corrections_pub_;
+  rclcpp::Subscription<kr_mav_msgs::msg::SO3Command>::SharedPtr so3_cmd_sub_;
+  std::vector<kr_mav_msgs::msg::PositionCommand> position_cmds;
+  std::vector<nav_msgs::msg::Odometry> odom_msgs;
 
   std::array<float, 11> angles = {0.0, 0.314, 0.628, 0.942, 1.257, 1.571, 1.885, 2.199, 2.513, 2.827, 3.142};
 };
 
-SO3ControlTester::SO3ControlTester() : nh_("")
+SO3ControlTester::SO3ControlTester() : Node("so3_control_tester")
 {
-  position_cmd_pub_ = nh_.advertise<kr_mav_msgs::PositionCommand>("position_cmd", 5, true);
-  so3_cmd_sub_ = nh_.subscribe("so3_cmd", 5, &SO3ControlTester::so3CommandCallback, this);
-  enable_motors_pub_ = nh_.advertise<std_msgs::Bool>("motors", 5, true);
-  odom_pub_ = nh_.advertise<nav_msgs::Odometry>("odom", 5, true);
-  corrections_pub_ = nh_.advertise<kr_mav_msgs::Corrections>("corrections", 5, true);
+  position_cmd_pub_ = this->create_publisher<kr_mav_msgs::msg::PositionCommand>("position_cmd", 5);
+  enable_motors_pub_ = this->create_publisher<std_msgs::msg::Bool>("motors", 5);
+  odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 5);
+  corrections_pub_ = this->create_publisher<kr_mav_msgs::msg::Corrections>("corrections", 5);
+  so3_cmd_sub_ = this->create_subscription<kr_mav_msgs::msg::SO3Command>(
+      "so3_cmd", 5, std::bind(&SO3ControlTester::so3CommandCallback, this, std::placeholders::_1));
 }
 
 /*
@@ -50,12 +54,12 @@ SO3ControlTester::SO3ControlTester() : nh_("")
 bool SO3ControlTester::is_so3_cmd_publisher_active()
 {
   bool flag = false;
-  if(so3_cmd_sub_.getNumPublishers() > 0)
+  if(so3_cmd_sub_->get_publisher_count() > 0)
     flag = true;
   else
   {
-    ros::Duration(1.0).sleep();
-    if(so3_cmd_sub_.getNumPublishers() > 0)
+    rclcpp::sleep_for(1s);
+    if(so3_cmd_sub_->get_publisher_count() > 0)
       flag = true;
     else
       flag = false;
@@ -66,20 +70,20 @@ bool SO3ControlTester::is_so3_cmd_publisher_active()
 /*
  * @brief Callback function to hand so3 command messages from nodelet.
  *
- * @param msg Type: kr_mav_msgs::SO3Command::ConstPtr
+ * @param[in] msg Type: kr_mav_msgs::SO3Command::ConstPtr
  */
-void SO3ControlTester::so3CommandCallback(const kr_mav_msgs::SO3Command::ConstPtr &msg)
+void SO3ControlTester::so3CommandCallback(const kr_mav_msgs::msg::SO3Command::SharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex);
   so3_command_received_ = true;
   if(!so3_cmd_)
   {
-    so3_cmd_ = boost::make_shared<kr_mav_msgs::SO3Command>(*msg);
+    so3_cmd_ = std::make_shared<kr_mav_msgs::msg::SO3Command>(*msg);
   }
   else
   {
     so3_cmd_.reset();
-    so3_cmd_ = boost::make_shared<kr_mav_msgs::SO3Command>(*msg);
+    so3_cmd_ = std::make_shared<kr_mav_msgs::msg::SO3Command>(*msg);
   }
 }
 
@@ -99,7 +103,7 @@ void SO3ControlTester::reset_so3_cmd_pointer()
  */
 void SO3ControlTester::publish_single_position_command()
 {
-  kr_mav_msgs::PositionCommand cmd;
+  auto cmd = kr_mav_msgs::msg::PositionCommand();
   cmd.position.x = 1.0;
   cmd.position.y = 0.2;
   cmd.position.z = 5.0;
@@ -121,30 +125,30 @@ void SO3ControlTester::publish_single_position_command()
   cmd.kv[1] = 0.1;
   cmd.kv[2] = 0.1;
   cmd.use_msg_gains_flags = 0;
-  position_cmd_pub_.publish(cmd);
+  position_cmd_pub_->publish(cmd);
 }
 
 /*
  * @brief Function to publish message over the topic `motors`
  *
- * @param flag boolean flag message to enable/disable motors
+ * @param[in] flag boolean flag message to enable/disable motors
  */
 void SO3ControlTester::publish_enable_motors(bool flag)
 {
-  std_msgs::Bool msg;
+  auto msg = std_msgs::msg::Bool();
   msg.data = flag;
-  enable_motors_pub_.publish(msg);
+  enable_motors_pub_->publish(msg);
 }
 
 /*
  * @brief Function that populates the a vector of `kr_mav_messages::PositionCommand`
  *        Generates position commands based on sine and cosine functions
  *
- * @param x_gain int, max x-position
- * @param y_gain int, max y-position
- * @param z_gain int, max z_position
- * @param use_msg_gains_flags uint8_t, indicates which gains to use from the message
- * @param yaw_dot float, desired yaw_dot
+ * @param[in] x_gain int, max x-position
+ * @param[in] y_gain int, max y-position
+ * @param[in] z_gain int, max z_position
+ * @param[in] use_msg_gains_flags uint8_t, indicates which gains to use from the message
+ * @param[in] yaw_dot float, desired yaw_dot
  */
 void SO3ControlTester::populate_position_cmd_vector(int x_gain, int y_gain, int z_gain, uint8_t use_msg_gains_flags,
                                                     float yaw_dot)
@@ -160,7 +164,7 @@ void SO3ControlTester::populate_position_cmd_vector(int x_gain, int y_gain, int 
     float z_sin = z_gain * std::sin(angles[i]);
     float z_cos = z_gain * std::cos(angles[i]);
 
-    kr_mav_msgs::PositionCommand cmd;
+    auto cmd = kr_mav_msgs::msg::PositionCommand();
     cmd.position.x = x_sin;
     cmd.position.y = y_sin;
     cmd.position.z = z_sin;
@@ -189,14 +193,14 @@ void SO3ControlTester::populate_position_cmd_vector(int x_gain, int y_gain, int 
 /*
  * @brief Function to publish position command indexed from the vector of `kr_mav_msgs::PositionCommand` msgs
  *
- * @param index int
+ * @param[in] index int
  */
 void SO3ControlTester::publish_position_command(int index)
 {
   int position_cmds_vector_size = position_cmds.size();
   if(index < position_cmds_vector_size)
   {
-    position_cmd_pub_.publish(position_cmds[index]);
+    position_cmd_pub_->publish(position_cmds[index]);
   }
 }
 
@@ -207,7 +211,7 @@ void SO3ControlTester::populate_odom_msgs()
 {
   odom_msgs.clear();
 
-  nav_msgs::Odometry msg;
+  auto msg = nav_msgs::msg::Odometry();
   msg.header.frame_id = "quadrotor";
   msg.pose.pose.position.x = 0.0;
   msg.pose.pose.position.y = 0.0;
@@ -260,30 +264,30 @@ void SO3ControlTester::populate_odom_msgs()
 /*
  * @brief Function to publish odom message index from a vector of `nav_msgs::Odometry` msgs
  *
- * @param index int
+ * @param[in] index int
  */
 void SO3ControlTester::publish_odom_msg(int index)
 {
   int odom_vector_size = odom_msgs.size();
   if(index < odom_vector_size)
   {
-    odom_pub_.publish(odom_msgs[index]);
+    odom_pub_->publish(odom_msgs[index]);
   }
 }
 
 /*
  * @brief Function to publish corrections message of type `kr_mav_msgs::Corrections`
  *
- * @param kf_correction float
- * @param angle_corrections float[2]
+ * @param[in] kf_correction float
+ * @param[in] angle_corrections float[2]
  */
 void SO3ControlTester::publish_corrections(float kf_correction, float (&angle_corrections)[2])
 {
-  kr_mav_msgs::Corrections msg;
+  auto msg = kr_mav_msgs::msg::Corrections();
   msg.kf_correction = kf_correction;
   msg.angle_corrections[0] = angle_corrections[0];
   msg.angle_corrections[1] = angle_corrections[1];
-  corrections_pub_.publish(msg);
+  corrections_pub_->publish(msg);
 }
 
 /*

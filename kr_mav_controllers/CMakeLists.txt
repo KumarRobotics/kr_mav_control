@@ -1,83 +1,58 @@
 cmake_minimum_required(VERSION 3.10)
 project(kr_mav_controllers)
 
-# set default build type
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-add_compile_options(-Wall)
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(kr_mav_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
-find_package(catkin REQUIRED COMPONENTS
-  dynamic_reconfigure
-  geometry_msgs
-  kr_mav_msgs
-  nav_msgs
-  nodelet
-  roscpp
-  std_msgs
-  tf
-)
-find_package(Eigen3 REQUIRED NO_MODULE)
+include_directories(include)
 
-generate_dynamic_reconfigure_options(cfg/SO3.cfg)
+add_library(kr_mav_pid_control SHARED src/pid_control_component.cpp src/PIDControl.cpp)
+ament_target_dependencies(kr_mav_pid_control rclcpp rclcpp_components kr_mav_msgs nav_msgs std_msgs tf2 tf2_geometry_msgs)
+target_link_libraries(kr_mav_pid_control Eigen3::Eigen)
+rclcpp_components_register_nodes(kr_mav_pid_control "PIDControlComponent")
 
-catkin_package(
-  INCLUDE_DIRS
-  LIBRARIES
-  CATKIN_DEPENDS
-  dynamic_reconfigure
-  geometry_msgs
-  kr_mav_msgs
-  nav_msgs
-  nodelet
-  roscpp
-  std_msgs
-  tf
-  DEPENDS
-  EIGEN3
+add_library(kr_mav_so3_control SHARED src/so3_control_component.cpp src/SO3Control.cpp src/so3_trpy_control.cpp)
+ament_target_dependencies(kr_mav_so3_control rclcpp rclcpp_components kr_mav_msgs nav_msgs std_msgs geometry_msgs tf2 tf2_geometry_msgs)
+target_link_libraries(kr_mav_so3_control Eigen3::Eigen)
+rclcpp_components_register_nodes(kr_mav_so3_control "SO3ControlComponent")
+rclcpp_components_register_nodes(kr_mav_so3_control "SO3TRPYControlComponent")
+
+install(TARGETS
+  kr_mav_pid_control
+  kr_mav_so3_control
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
-add_library(kr_mav_so3_control src/SO3Control.cpp src/so3_control_nodelet.cpp src/so3_trpy_control.cpp)
-target_include_directories(kr_mav_so3_control PUBLIC include ${catkin_INCLUDE_DIRS})
-target_link_libraries(kr_mav_so3_control PUBLIC ${catkin_LIBRARIES} Eigen3::Eigen)
-add_dependencies(kr_mav_so3_control ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  find_package(launch_testing_ament_cmake REQUIRED)
 
-# TODO: PID control has not been updated for new messages add_library(kr_mav_pid_control src/PIDControl.cpp
-# src/pid_control_nodelet.cpp) add_dependencies(kr_mav_pid_control ${catkin_EXPORTED_TARGETS})
-# target_link_libraries(kr_mav_pid_control ${catkin_LIBRARIES})
-
-install(
-  TARGETS kr_mav_so3_control
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-# install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-install(FILES nodelet_plugin.xml
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-
-if(CATKIN_ENABLE_TESTING)
-  find_package(catkin REQUIRED COMPONENTS
-    roscpp
+  include_directories(include)
+  ament_add_gtest_executable(so3_control_component_test test/so3_control_component_test.cpp)
+  ament_target_dependencies(so3_control_component_test
     std_msgs
-    nav_msgs
     kr_mav_msgs
-    rostest
+    nav_msgs
+    rclcpp
   )
 
-  include_directories(include ${catkin_INCLUDE_DIRS})
-  include_directories(${GTEST_INCLUDE_DIRS})
-
-  add_executable(so3_control_nodelet_test test/so3_control_nodelet_test.cpp)
-  # add_rostest_gtest(so3_control_nodelet_test test/so3_control_nodelet.test test/so3_control_nodelet_test.cpp)
-  target_link_libraries(so3_control_nodelet_test ${catkin_LIBRARIES} ${GTEST_LIBRARIES})
-
-  add_rostest(test/so3_control_nodelet.test)
+  add_launch_test(test/launch/so3_control_component_test.test.py TIMEOUT 80 ARGS "test_binary_dir:=${CMAKE_CURRENT_BINARY_DIR}")
 
 endif()
+
+ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
+ament_package()

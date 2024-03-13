@@ -1,5 +1,5 @@
-#ifndef PID_CONTROL_H
-#define PID_CONTROL_H
+#ifndef PID_CONTROL_HPP
+#define PID_CONTROL_HPP
 
 #include <Eigen/Geometry>
 
@@ -22,7 +22,7 @@ class PIDControl
 
   const Eigen::Vector4f &getControls(void);
 
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  private:
   // Inputs for the controller
@@ -39,4 +39,4 @@ class PIDControl
   Eigen::Vector4f trpy_;
 };
 
-#endif
+#endif  // PID_CONTROL_HPP

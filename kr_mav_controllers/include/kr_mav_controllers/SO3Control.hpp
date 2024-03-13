@@ -1,5 +1,5 @@
-#ifndef SO3_CONTROL_H
-#define SO3_CONTROL_H
+#ifndef SO3_CONTROL_HPP
+#define SO3_CONTROL_HPP
 
 #include <Eigen/Geometry>
 
@@ -27,7 +27,7 @@ class SO3Control
   const Eigen::Quaternionf &getComputedOrientation();
   const Eigen::Vector3f &getComputedAngularVelocity();
 
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  private:
   // Inputs for the controller
@@ -48,4 +48,4 @@ class SO3Control
   Eigen::Vector3f pos_int_b_;
 };
 
-#endif
+#endif  // SO3_CONTROL_HPP
