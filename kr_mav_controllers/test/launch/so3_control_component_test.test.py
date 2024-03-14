@@ -7,10 +7,10 @@ import launch_testing
 import launch_testing.actions
 import launch
 import unittest
-import os
 
 def generate_test_description():
 
+    # initialize component
     component_under_test = ComposableNodeContainer(
         name="so3_container",
         namespace="",
@@ -33,6 +33,7 @@ def generate_test_description():
         output="screen"
     )
 
+    # initialize test node
     so3_control_component_test = Node(
         executable=launch.substitutions.PathJoinSubstitution(
             [
@@ -42,19 +43,6 @@ def generate_test_description():
         ),
         output="screen",
     )
-
-    # test_executable_path = os.path.join(
-    #     get_package_share_directory("kr_mav_controllers"),
-    #     'test',  # Executables are usually installed to lib/<package_name> in ROS 2
-    #     "so3_control_component_test.cpp"
-    # )
-    # so3_control_component_test = Node(
-    #     package="kr_mav_controllers",
-    #     executable="so3_control_component_test",
-    #     name="so3_control_tester",
-    #     output="screen"
-    # )
-
 
     return LaunchDescription([
         launch.actions.DeclareLaunchArgument(
@@ -68,18 +56,10 @@ def generate_test_description():
     ]), {'component_under_test': component_under_test,
          'so3_control_component_test': so3_control_component_test}
 
-    # return LaunchDescription([
-    #     component_under_test,
-    #     so3_control_component_test,
-    #     launch_testing.actions.ReadyToTest()
-    # ]), {'component_under_test': component_under_test,
-    #      'so3_control_component_test': so3_control_component_test}
-
 class TestGTestWaitForCompletion(unittest.TestCase):
     # Waits for test to complete, then waits a bit to make sure result files are generated
     def test_gtest_run_complete(self, proc_info, so3_control_component_test):
         proc_info.assertWaitForShutdown(so3_control_component_test, timeout=1000.0)
-
 
 @launch_testing.post_shutdown_test()
 class TestGTestProcessPostShutdown(unittest.TestCase):
@@ -88,4 +68,3 @@ class TestGTestProcessPostShutdown(unittest.TestCase):
         launch_testing.asserts.assertExitCodes(
             proc_info, process=so3_control_component_test
         )
-
