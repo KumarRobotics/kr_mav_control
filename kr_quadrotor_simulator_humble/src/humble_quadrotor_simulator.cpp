@@ -132,8 +132,6 @@ QuadrotorSimulator::QuadrotorSimulator():Node("quadrotor_simulator_so3")
   // n.param("world_frame_id", world_frame_id_, std::string("simulator"));
   // n.param("quadrotor_name", quad_name_, std::string("quadrotor"));
 
-
-
   // TODO: Convert this lambda function. Use list_parameters and search through 
   // list for desired param.
   
@@ -225,8 +223,8 @@ void QuadrotorSimulator::run(void)
   // ros::Rate r(simulation_rate_);
   rclcpp::Rate r(simulation_rate_);
 
-  // const ros::Duration odom_pub_duration(1 / odom_rate_);
-  const rclcpp::Duration odom_pub_duration(1 / odom_rate_);
+  //TODO: TEST to make sure this works!
+  const rclcpp::Duration odom_pub_duration = rclcpp::Duration::from_seconds(1/odom_rate_);
   rclcpp::Time next_odom_pub_time = this->now();
 
   // auto base_node = std::make_shared<this>();
@@ -425,11 +423,12 @@ QuadrotorSimulator::ControlInput QuadrotorSimulator::getControl(const Quadrotor 
                               Rd23 * R23 + Rd33 * R33));
 
   // TODO: Figure out RCLCPP WARN THROTTLE:
-  // if(Psi > 1.0f){  // Position control stability guaranteed only when Psi < 1
-  //   //ROS_WARN_THROTTLE(1, "Warning Psi = %f > 1", Psi);
-  //   auto clk = get_clock();
-  //   RCLCPP_WARN_THROTTLE(get_logger(), *clk, 1, "Warning Psi = %f > 1", Psi);
-  // }
+  if(Psi > 1.0f){  // Position control stability guaranteed only when Psi < 1
+    //ROS_WARN_THROTTLE(1, "Warning Psi = %f > 1", Psi);
+    auto clk = get_clock();
+    rclcpp::Clock non_const_clock(*clk);
+    RCLCPP_WARN_THROTTLE(get_logger(), non_const_clock, 1, "Warning Psi = %f > 1", Psi);
+  }
 
   float force = cmd.force[0] * R13 + cmd.force[1] * R23 + cmd.force[2] * R33;
 
@@ -493,14 +492,14 @@ QuadrotorSimulator::ControlInput QuadrotorSimulator::getControl(const Quadrotor 
 
 int main(int argc, char **argv)
 {
-  std::cout << "Hello Kashy" << std::endl;
 //   ros::init(argc, argv, "kr_quadrotor_simulator_so3");
 //   ros::NodeHandle nh("~");
 //   QuadrotorSimulator::QuadrotorSimulatorSO3 quad_sim(nh);
 //   quad_sim.run();
-  // auto node = std::make_shared<QuadrotorSimulator::QuadrotorSimulatorSO3>();
-  // node->run();
-  // rclcpp::spin(node);
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<QuadrotorSimulator::QuadrotorSimulator>();
+  node->run();
+  rclcpp::spin(node);
   // rclcpp::shutdown();
   return 0;
 
