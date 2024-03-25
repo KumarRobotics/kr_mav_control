@@ -1,22 +1,23 @@
 #include <Eigen/Geometry>
 
+#include "geometry_msgs/msg/pose_stamped.hpp"
 #include "kr_mav_controllers/SO3Control.hpp"
 #include "kr_mav_msgs/msg/corrections.hpp"
 #include "kr_mav_msgs/msg/position_command.hpp"
-#include "kr_mav_msgs/msg/trpy_command.hpp"
+#include "kr_mav_msgs/msg/so3_command.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "tf2/utils.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
-#define CLAMP(x, min, max) ((x) < (min)) ? (min) : ((x) > (max)) ? (max) : (x)
-
-class SO3TRPYControlComponent : public rclcpp::Node
+class SO3ControlComponent : public rclcpp::Node
 {
  public:
-  explicit SO3TRPYControlComponent(const rclcpp::NodeOptions &options);
+  explicit SO3ControlComponent(const rclcpp::NodeOptions &options);
 
  private:
-  void publishCommand();
+  void publishSO3Command();
   void position_cmd_callback(const kr_mav_msgs::msg::PositionCommand::UniquePtr cmd);
   void odom_callback(const nav_msgs::msg::Odometry::UniquePtr odom);
   void enable_motors_callback(const std_msgs::msg::Bool::UniquePtr msg);
@@ -24,21 +25,22 @@ class SO3TRPYControlComponent : public rclcpp::Node
   rcl_interfaces::msg::SetParametersResult cfg_callback(std::vector<rclcpp::Parameter> parameters);
 
   SO3Control controller_;
-  rclcpp::Publisher<kr_mav_msgs::msg::TRPYCommand>::SharedPtr trpy_command_pub_;
+  rclcpp::Publisher<kr_mav_msgs::msg::SO3Command>::SharedPtr so3_command_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr command_viz_pub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<kr_mav_msgs::msg::PositionCommand>::SharedPtr position_cmd_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr enable_motors_sub_;
   rclcpp::Subscription<kr_mav_msgs::msg::Corrections>::SharedPtr corrections_sub_;
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr reconfigure_handle_;
 
-  bool odom_set_, position_cmd_updated_, position_cmd_init_;
+  bool position_cmd_updated_, position_cmd_init_;
   std::string frame_id_;
 
   Eigen::Vector3f des_pos_, des_vel_, des_acc_, des_jrk_, kx_, kv_, config_kx_, config_kv_, config_ki_, config_kib_;
-  float des_yaw_, des_yaw_dot_, yaw_int_;
-  bool enable_motors_, use_external_yaw_;
+  float des_yaw_, des_yaw_dot_;
+  float current_yaw_;
+  bool enable_motors_, use_external_yaw_, have_odom_;
   float kr_[3], kom_[3], corrections_[3];
-  float ki_yaw_;
   float mass_;
   const float g_;
   Eigen::Quaternionf current_orientation_;
@@ -46,94 +48,68 @@ class SO3TRPYControlComponent : public rclcpp::Node
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW  // Need this since we have SO3Control which needs aligned pointer
 };
 
-void SO3TRPYControlComponent::publishCommand()
+void SO3ControlComponent::publishSO3Command()
 {
-  if(!odom_set_)
+  if(!have_odom_)
   {
-    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Odom no set, not publishing command!");
+    RCLCPP_WARN(this->get_logger(), "No Odometry! Not publishing SO3Command.");
     return;
   }
 
-  float ki_yaw = 0;
   Eigen::Vector3f ki = Eigen::Vector3f::Zero();
   Eigen::Vector3f kib = Eigen::Vector3f::Zero();
   if(enable_motors_)
   {
-    ki_yaw = ki_yaw_;
     ki = config_ki_;
     kib = config_kib_;
   }
+
   controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki, kib);
 
   const Eigen::Vector3f &force = controller_.getComputedForce();
-  const Eigen::Quaternionf &q_des = controller_.getComputedOrientation();
+  const Eigen::Quaternionf &orientation = controller_.getComputedOrientation();
   const Eigen::Vector3f &ang_vel = controller_.getComputedAngularVelocity();
 
-  const Eigen::Matrix3f R_des(q_des);
-  const Eigen::Matrix3f R_cur(current_orientation_);
-
-  const float yaw_cur = std::atan2(R_cur(1, 0), R_cur(0, 0));
-  const float yaw_des = std::atan2(R_des(1, 0), R_des(0, 0));
-  const float pitch_des = -std::asin(R_des(2, 0));
-  const float roll_des = std::atan2(R_des(2, 1), R_des(2, 2));
-
-  const float Psi = 0.5f * (3.0f - (R_des(0, 0) * R_cur(0, 0) + R_des(1, 0) * R_cur(1, 0) + R_des(2, 0) * R_cur(2, 0) +
-                                    R_des(0, 1) * R_cur(0, 1) + R_des(1, 1) * R_cur(1, 1) + R_des(2, 1) * R_cur(2, 1) +
-                                    R_des(0, 2) * R_cur(0, 2) + R_des(1, 2) * R_cur(1, 2) + R_des(2, 2) * R_cur(2, 2)));
-
-  float thrust = 0.0f;
-  if(Psi < 1.0f)  // Position control stability guaranteed only when Psi < 1
-    thrust = force(0) * R_cur(0, 2) + force(1) * R_cur(1, 2) + force(2) * R_cur(2, 2);
-
-  float e_yaw = yaw_des - yaw_cur;
-
-  const float PI = static_cast<float>(M_PI);
-  if(e_yaw > PI)
-    e_yaw -= 2 * PI;
-  else if(e_yaw < -PI)
-    e_yaw += 2 * PI;
-
-  // Yaw integral
-  yaw_int_ += ki_yaw * e_yaw;
-  if(yaw_int_ > PI)
-    yaw_int_ = PI;
-  else if(yaw_int_ < -PI)
-    yaw_int_ = -PI;
-
-  float yaw_cmd = yaw_des + yaw_int_;
-  if(yaw_cmd > PI)
-    yaw_cmd -= 2 * PI;
-  else if(yaw_cmd < -PI)
-    yaw_cmd += 2 * PI;
-
-  auto trpy_command = std::make_unique<kr_mav_msgs::msg::TRPYCommand>();
-  trpy_command->header.stamp = this->now();
-  trpy_command->header.frame_id = frame_id_;
-  if(enable_motors_)
+  auto so3_command = std::make_unique<kr_mav_msgs::msg::SO3Command>();
+  so3_command->header.stamp = this->now();
+  so3_command->header.frame_id = frame_id_;
+  so3_command->force.x = force(0);
+  so3_command->force.y = force(1);
+  so3_command->force.z = force(2);
+  so3_command->orientation.x = orientation.x();
+  so3_command->orientation.y = orientation.y();
+  so3_command->orientation.z = orientation.z();
+  so3_command->orientation.w = orientation.w();
+  so3_command->angular_velocity.x = ang_vel(0);
+  so3_command->angular_velocity.y = ang_vel(1);
+  so3_command->angular_velocity.z = ang_vel(2);
+  for(int i = 0; i < 3; i++)
   {
-    trpy_command->thrust = CLAMP(thrust, 0.01f * 9.81f, 10.0f * 9.81f);
-    trpy_command->roll = roll_des;
-    trpy_command->pitch = pitch_des;
-    trpy_command->yaw = yaw_cmd;
-    trpy_command->angular_velocity.x = ang_vel(0);
-    trpy_command->angular_velocity.y = ang_vel(1);
-    trpy_command->angular_velocity.z = ang_vel(2);
-    for(int i = 0; i < 3; i++)
-    {
-      trpy_command->kr[i] = kr_[i];
-      trpy_command->kom[i] = kom_[i];
-    }
+    so3_command->kr[i] = kr_[i];
+    so3_command->kom[i] = kom_[i];
   }
-  trpy_command->aux.current_yaw = yaw_cur;
-  trpy_command->aux.kf_correction = corrections_[0];
-  trpy_command->aux.angle_corrections[0] = corrections_[1];
-  trpy_command->aux.angle_corrections[1] = corrections_[2];
-  trpy_command->aux.enable_motors = enable_motors_;
-  trpy_command->aux.use_external_yaw = use_external_yaw_;
-  trpy_command_pub_->publish(std::move(trpy_command));
+  so3_command->aux.current_yaw = current_yaw_;
+  so3_command->aux.kf_correction = corrections_[0];
+  so3_command->aux.angle_corrections[0] = corrections_[1];
+  so3_command->aux.angle_corrections[1] = corrections_[2];
+  so3_command->aux.enable_motors = enable_motors_;
+  so3_command->aux.use_external_yaw = use_external_yaw_;
+
+  auto cmd_viz_msg = std::make_unique<geometry_msgs::msg::PoseStamped>();
+  cmd_viz_msg->header = so3_command->header;
+  cmd_viz_msg->pose.position.x = des_pos_(0);
+  cmd_viz_msg->pose.position.y = des_pos_(1);
+  cmd_viz_msg->pose.position.z = des_pos_(2);
+  cmd_viz_msg->pose.orientation.x = orientation.x();
+  cmd_viz_msg->pose.orientation.y = orientation.y();
+  cmd_viz_msg->pose.orientation.z = orientation.z();
+  cmd_viz_msg->pose.orientation.w = orientation.w();
+  command_viz_pub_->publish(std::move(cmd_viz_msg));
+
+  so3_command_pub_->publish(std::move(so3_command));
 }
 
-void SO3TRPYControlComponent::position_cmd_callback(const kr_mav_msgs::msg::PositionCommand::UniquePtr cmd)
+void SO3ControlComponent::position_cmd_callback(const kr_mav_msgs::msg::PositionCommand::UniquePtr cmd)
 {
   des_pos_ = Eigen::Vector3f(cmd->position.x, cmd->position.y, cmd->position.z);
   des_vel_ = Eigen::Vector3f(cmd->velocity.x, cmd->velocity.y, cmd->velocity.z);
@@ -153,16 +129,19 @@ void SO3TRPYControlComponent::position_cmd_callback(const kr_mav_msgs::msg::Posi
   position_cmd_updated_ = true;
   // position_cmd_init_ = true;
 
-  publishCommand();
+  publishSO3Command();
 }
 
-void SO3TRPYControlComponent::odom_callback(const nav_msgs::msg::Odometry::UniquePtr odom)
+void SO3ControlComponent::odom_callback(const nav_msgs::msg::Odometry::UniquePtr odom)
 {
-  if(!odom_set_)
-    odom_set_ = true;
+  have_odom_ = true;
+
+  frame_id_ = odom->header.frame_id;
 
   const Eigen::Vector3f position(odom->pose.pose.position.x, odom->pose.pose.position.y, odom->pose.pose.position.z);
   const Eigen::Vector3f velocity(odom->twist.twist.linear.x, odom->twist.twist.linear.y, odom->twist.twist.linear.z);
+
+  current_yaw_ = tf2::getYaw(odom->pose.pose.orientation);
 
   current_orientation_ = Eigen::Quaternionf(odom->pose.pose.orientation.w, odom->pose.pose.orientation.x,
                                             odom->pose.pose.orientation.y, odom->pose.pose.orientation.z);
@@ -179,12 +158,12 @@ void SO3TRPYControlComponent::odom_callback(const nav_msgs::msg::Odometry::Uniqu
     // hasn't been called and we publish the so3 command ourselves
     // TODO: Fallback to hover if position_cmd hasn't been received for some time
     if(!position_cmd_updated_)
-      publishCommand();
+      publishSO3Command();
     position_cmd_updated_ = false;
   }
 }
 
-void SO3TRPYControlComponent::enable_motors_callback(const std_msgs::msg::Bool::UniquePtr msg)
+void SO3ControlComponent::enable_motors_callback(const std_msgs::msg::Bool::UniquePtr msg)
 {
   if(msg->data)
     RCLCPP_INFO(this->get_logger(), "Enabling motors");
@@ -192,20 +171,18 @@ void SO3TRPYControlComponent::enable_motors_callback(const std_msgs::msg::Bool::
     RCLCPP_INFO(this->get_logger(), "Disabling motors");
 
   enable_motors_ = msg->data;
-
-  // Reset integrals when toggling motor state
-  yaw_int_ = 0;
+  // Reset integral when toggling motor state
   controller_.resetIntegrals();
 }
 
-void SO3TRPYControlComponent::corrections_callback(const kr_mav_msgs::msg::Corrections::UniquePtr msg)
+void SO3ControlComponent::corrections_callback(const kr_mav_msgs::msg::Corrections::UniquePtr msg)
 {
   corrections_[0] = msg->kf_correction;
   corrections_[1] = msg->angle_corrections[0];
   corrections_[2] = msg->angle_corrections[1];
 }
-rcl_interfaces::msg::SetParametersResult SO3TRPYControlComponent::cfg_callback(
-    std::vector<rclcpp::Parameter> parameters)
+
+rcl_interfaces::msg::SetParametersResult SO3ControlComponent::cfg_callback(std::vector<rclcpp::Parameter> parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
   for(auto &parameter : parameters)
@@ -364,17 +341,18 @@ rcl_interfaces::msg::SetParametersResult SO3TRPYControlComponent::cfg_callback(
   return result;
 }
 
-SO3TRPYControlComponent::SO3TRPYControlComponent(const rclcpp::NodeOptions &options)
+SO3ControlComponent::SO3ControlComponent(const rclcpp::NodeOptions &options)
     : Node("so3_control", rclcpp::NodeOptions(options).use_intra_process_comms(true)),
-      odom_set_(false),
       position_cmd_updated_(false),
       position_cmd_init_(false),
       des_yaw_(0),
       des_yaw_dot_(0),
-      yaw_int_(0),
+      current_yaw_(0),
       enable_motors_(false),
       use_external_yaw_(false),
-      g_(9.81)
+      have_odom_(false),
+      g_(9.81),
+      current_orientation_(Eigen::Quaternionf::Identity())
 {
   controller_.resetIntegrals();
 
@@ -579,11 +557,11 @@ SO3TRPYControlComponent::SO3TRPYControlComponent(const rclcpp::NodeOptions &opti
 
   rcl_interfaces::msg::ParameterDescriptor desc_max_tilt_angle;
   rcl_interfaces::msg::FloatingPointRange r_max_tilt_angle;
-  r_max_tilt_angle.set__from_value(0.0).set__to_value(3.14).set__step(0);
+  r_max_tilt_angle.set__from_value(0.0).set__to_value(static_cast<float>(M_PI)).set__step(0);
   desc_max_tilt_angle.type = 3;  // PARAMETER_DOUBLE
   desc_max_tilt_angle.description = std::string("Max tilt angle");
   desc_max_tilt_angle.floating_point_range = {r_max_tilt_angle};
-  this->declare_parameter("max_tilt_angle", static_cast<float>(M_PI), desc_max_tilt_angle);
+  this->declare_parameter("max_tilt_angle", 3.14f, desc_max_tilt_angle);
 
   // Getting dynamic parameters
   this->get_parameter("kp_x", config_kx_[0]);
@@ -600,6 +578,9 @@ SO3TRPYControlComponent::SO3TRPYControlComponent(const rclcpp::NodeOptions &opti
   kv_[1] = config_kv_[1];
   kv_[2] = config_kv_[2];
 
+  RCLCPP_INFO(this->get_logger(), "Position Gains set to kp: {%2.3g, %2.3g, %2.3g}, kd: {%2.3g, %2.3g, %2.3g}",
+              config_kx_[0], config_kx_[1], config_kx_[2], config_kv_[0], config_kv_[1], config_kv_[2]);
+
   this->get_parameter("ki_x", config_ki_[0]);
   this->get_parameter("ki_y", config_ki_[1]);
   this->get_parameter("ki_z", config_ki_[2]);
@@ -607,6 +588,9 @@ SO3TRPYControlComponent::SO3TRPYControlComponent(const rclcpp::NodeOptions &opti
   this->get_parameter("kib_x", config_kib_[0]);
   this->get_parameter("kib_y", config_kib_[1]);
   this->get_parameter("kib_z", config_kib_[2]);
+
+  RCLCPP_INFO(this->get_logger(), "Integral Gains set to ki: {%2.2g, %2.2g, %2.2g}, kib: {%2.2g, %2.2g, %2.2g}",
+              config_ki_[0], config_ki_[1], config_ki_[2], config_kib_[0], config_kib_[1], config_kib_[2]);
 
   this->get_parameter("rot_x", kr_[0]);
   this->get_parameter("rot_y", kr_[1]);
@@ -616,9 +600,15 @@ SO3TRPYControlComponent::SO3TRPYControlComponent(const rclcpp::NodeOptions &opti
   this->get_parameter("ang_y", kom_[1]);
   this->get_parameter("ang_z", kom_[2]);
 
+  RCLCPP_INFO(this->get_logger(), "Attitude Gains set to kp: {%2.2g, %2.2g, %2.2g}, kd: {%2.2g, %2.2g, %2.2g}", kr_[0],
+              kr_[1], kr_[2], kom_[0], kom_[1], kom_[2]);
+
   this->get_parameter("kf_correction", corrections_[0]);
   this->get_parameter("roll_correction", corrections_[1]);
   this->get_parameter("pitch_correction", corrections_[2]);
+
+  RCLCPP_INFO(this->get_logger(), "Corrections set to kf: %2.2g, roll: %2.2g, pitch: %2.2g", corrections_[0],
+              corrections_[1], corrections_[2]);
 
   float max_pos_int, max_pos_int_b;
   this->get_parameter("max_pos_int", max_pos_int);
@@ -630,11 +620,15 @@ SO3TRPYControlComponent::SO3TRPYControlComponent(const rclcpp::NodeOptions &opti
   this->get_parameter("max_tilt_angle", max_tilt_angle);
   controller_.setMaxTiltAngle(max_tilt_angle);
 
-  // Initialize dynamic reconfigure callback
-  reconfigure_handle_ = this->add_on_set_parameters_callback(
-      std::bind(&SO3TRPYControlComponent::cfg_callback, this, std::placeholders::_1));
+  RCLCPP_INFO(this->get_logger(), "Maxes set to Integral: %2.2g, Integral Body: %2.2g, Tilt Angle (Rad): %2.2g",
+              max_pos_int, max_pos_int_b, max_tilt_angle);
 
-  trpy_command_pub_ = this->create_publisher<kr_mav_msgs::msg::TRPYCommand>("~/trpy_cmd", 10);
+  // Initialize dynamic reconfigure callback
+  reconfigure_handle_ =
+      this->add_on_set_parameters_callback(std::bind(&SO3ControlComponent::cfg_callback, this, std::placeholders::_1));
+
+  so3_command_pub_ = this->create_publisher<kr_mav_msgs::msg::SO3Command>("~/so3_cmd", 10);
+  command_viz_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("~/cmd_viz", 10);
 
   // Setting QoS profile to get equivalent performance to ros::TransportHints().tcpNoDelay()
   rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
@@ -642,14 +636,14 @@ SO3TRPYControlComponent::SO3TRPYControlComponent(const rclcpp::NodeOptions &opti
   auto qos2 = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, 2), qos_profile);
 
   odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-      "~/odom", qos1, std::bind(&SO3TRPYControlComponent::odom_callback, this, std::placeholders::_1));
+      "~/odom", qos1, std::bind(&SO3ControlComponent::odom_callback, this, std::placeholders::_1));
   position_cmd_sub_ = this->create_subscription<kr_mav_msgs::msg::PositionCommand>(
-      "~/position_cmd", qos1, std::bind(&SO3TRPYControlComponent::position_cmd_callback, this, std::placeholders::_1));
+      "~/position_cmd", qos1, std::bind(&SO3ControlComponent::position_cmd_callback, this, std::placeholders::_1));
   enable_motors_sub_ = this->create_subscription<std_msgs::msg::Bool>(
-      "~/motors", qos2, std::bind(&SO3TRPYControlComponent::enable_motors_callback, this, std::placeholders::_1));
+      "~/motors", qos2, std::bind(&SO3ControlComponent::enable_motors_callback, this, std::placeholders::_1));
   corrections_sub_ = this->create_subscription<kr_mav_msgs::msg::Corrections>(
-      "~/corrections", qos1, std::bind(&SO3TRPYControlComponent::corrections_callback, this, std::placeholders::_1));
+      "~/corrections", qos1, std::bind(&SO3ControlComponent::corrections_callback, this, std::placeholders::_1));
 }
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(SO3TRPYControlComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(SO3ControlComponent)

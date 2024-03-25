@@ -1,5 +1,6 @@
+#include "kr_mav_controllers/PIDControl.hpp"
+
 #include <iostream>
-#include <kr_pid_control/PIDControl.hpp>
 
 PIDControl::PIDControl() : mass_(0.5), g_(9.81), yaw_int_(0.0), max_pos_int_(0.5) {}
 
