@@ -3,9 +3,12 @@
 <package format="3">
   <name>rqt_mav_manager</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Provides a GUI plugin for MAV Manager.</description>
+  <maintainer email="ablasdel@gmail.com">Dinesh Thakur</maintainer>
+  <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
   <maintainer email="pranavpshah2098@gmail.com">pranav</maintainer>
-  <license>TODO: License declaration</license>
+
+  <license>BSD</license>
 
   <depend>rclpy</depend>
 
