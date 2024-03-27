@@ -1,25 +1,32 @@
-<package format="2">
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>rqt_mav_manager</name>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <description>Provides a GUI plugin for MAV Manager.</description>
   <maintainer email="ablasdel@gmail.com">Dinesh Thakur</maintainer>
   <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
+  <maintainer email="pranavpshah2098@gmail.com">pranav</maintainer>
 
   <license>BSD</license>
 
-  <url type="repository">https://github.com/KumarRobotics/kr_ui</url>
+  <depend>rclpy</depend>
 
-  <author>Dinesh Thakur</author>
-
-  <buildtool_depend>catkin</buildtool_depend>
-
-  <exec_depend>rospy</exec_depend>
-  <exec_depend>rqt_gui_py</exec_depend>
-  <exec_depend>kr_mav_manager</exec_depend>
-  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>python3-pyside2</exec_depend>
+  <exec_depend>python3-qt5-bindings</exec_depend>
+  <exec_depend>python_qt_binding</exec_depend>
   <exec_depend>rqt_gui</exec_depend>
+  <exec_depend>rqt_gui_py</exec_depend>
+  <exec_depend>qt_gui_py_common</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>example_interfaces</exec_depend>
+  <exec_depend>kr_mav_manager</exec_depend>
+
+  <test_depend>python3-pytest</test_depend>
 
   <export>
+    <build_type>ament_python</build_type>
     <rqt_gui plugin="${prefix}/plugin.xml"/>
   </export>
 </package>

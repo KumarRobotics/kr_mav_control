@@ -1,24 +1,25 @@
-<package format="2">
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>kr_crazyflie_interface</name>
   <version>1.0.0</version>
   <description>kr_crazyflie_interface</description>
   <maintainer email="JustinThomas@jtwebs.net">Justin Thomas</maintainer>
   <maintainer email="adw106@gmail.com">Aaron Weinstein</maintainer>
+  <maintainer email="pranavpshah2098@gmail.com">Pranav Shah</maintainer>
 
   <license>BSD</license>
 
-  <!-- Dependencies which this package needs to build itself. -->
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <!-- Dependencies needed to compile and run this package. -->
-  <depend>roscpp</depend>
+  <depend>rclcpp</depend>
   <depend>nav_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>kr_mav_msgs</depend>
-  <depend>nodelet</depend>
+  <depend>rclcpp_components</depend>
 
   <export>
-    <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
+    <build_type>ament_cmake</build_type>
   </export>
 
 </package>

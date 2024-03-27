@@ -1,7 +1,9 @@
-kp_yaw_rate: 0.1
-c1: -0.6709
-c2: 0.1932
-c3: 13.0652
-so3_cmd_timeout: 0.1
-thrust_pwm_max: 60000
-thrust_pwm_min: 20000
+so3cmd_to_crazyflie:
+  ros__parameters:
+    kp_yaw_rate: 0.1
+    c1: -0.6709
+    c2: 0.1932
+    c3: 13.0652
+    so3_cmd_timeout: 0.1
+    thrust_pwm_max: 60000
+    thrust_pwm_min: 20000
