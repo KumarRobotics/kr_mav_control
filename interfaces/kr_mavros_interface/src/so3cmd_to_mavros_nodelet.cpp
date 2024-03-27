@@ -4,26 +4,35 @@
 #include <nav_msgs/Odometry.h>
 #include <nodelet/nodelet.h>
 #include <ros/ros.h>
+#include <sensor_msgs/BatteryState.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64.h>
 #include <tf/transform_datatypes.h>
 
 #include <Eigen/Geometry>
 
-class SO3CmdToMavros : public nodelet::Nodelet
-{
+enum ThrustModels { TM_KARTIK, TM_MIKE };
+
+class SO3CmdToMavros : public nodelet::Nodelet {
  public:
   void onInit(void);
-
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
  private:
   void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
   void imu_callback(const sensor_msgs::Imu::ConstPtr &pose);
+  void battery_callback(const sensor_msgs::BatteryState::ConstPtr &msg);
+
+  double thrust_model_kartik(double thrust);
+  double thrust_model_mike(double thrust);
 
   bool odom_set_, imu_set_, so3_cmd_set_;
   Eigen::Quaterniond odom_q_, imu_q_;
-  double kf_, lin_cof_a_, lin_int_b_;
-  int num_props_;
+  double num_props_;
+  double thrust_vs_rpm_cof_a_, thrust_vs_rpm_cof_b_, thrust_vs_rpm_cof_c_;
+  double rpm_vs_throttle_coeff_a_, rpm_vs_throttle_coeff_b_;
+
+  double bat_cof_, throttle_cof_, const_cof_;  // for mike model
 
   ros::Publisher attitude_raw_pub_;
   ros::Publisher odom_pose_pub_;  // For sending PoseStamped to firmware
@@ -31,11 +40,21 @@ class SO3CmdToMavros : public nodelet::Nodelet
   ros::Subscriber so3_cmd_sub_;
   ros::Subscriber odom_sub_;
   ros::Subscriber imu_sub_;
+  ros::Subscriber battery_sub_;
 
+  bool check_psi_;
+  double battery_voltage_;
   double so3_cmd_timeout_;
   ros::Time last_so3_cmd_time_;
   kr_mav_msgs::SO3Command last_so3_cmd_;
+
+  ThrustModels thrust_model_{TM_KARTIK};
 };
+
+void SO3CmdToMavros::battery_callback(
+    const sensor_msgs::BatteryState::ConstPtr &msg) {
+  battery_voltage_ = msg->voltage;
+}
 
 void SO3CmdToMavros::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
 {
@@ -62,6 +81,32 @@ void SO3CmdToMavros::imu_callback(const sensor_msgs::Imu::ConstPtr &pose)
 
     so3_cmd_callback(last_so3_cmd_ptr);
   }
+}
+
+
+static std::pair<double, double> solve_quadratic(double a, double b, double c) {
+  const double term1 = -b, term2 = std::sqrt(b * b - 4 * a * c);
+  return std::make_pair((term1 + term2) / (2 * a), (term1 - term2) / (2 * a));
+}
+double SO3CmdToMavros::thrust_model_kartik(double thrust) {
+  double avg_thrust = std::max(0.0, thrust) / num_props_;
+
+  // Scale thrust to individual rotor velocities (RPM)
+  auto rpm_solutions =
+      solve_quadratic(thrust_vs_rpm_cof_a_, thrust_vs_rpm_cof_b_,
+                      thrust_vs_rpm_cof_c_ - avg_thrust);
+  const double omega_avg = std::max(rpm_solutions.first, rpm_solutions.second);
+
+  // Scaling from rotor velocity (RPM) to att_throttle for pixhawk
+  double throttle =
+      (omega_avg - rpm_vs_throttle_coeff_b_) / rpm_vs_throttle_coeff_a_;
+  return throttle;
+}
+double SO3CmdToMavros::thrust_model_mike(double thrust) {
+  // thrust = const_cof_ + bat_cof_*battery_voltage_ + throttle_cof_*throttle
+  double throttle =
+      (thrust - const_cof_ - bat_cof_ * battery_voltage_) / throttle_cof_;
+  return throttle;
 }
 
 void SO3CmdToMavros::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg)
@@ -115,11 +160,25 @@ void SO3CmdToMavros::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &m
                                     R_des(0, 1) * R_cur(0, 1) + R_des(1, 1) * R_cur(1, 1) + R_des(2, 1) * R_cur(2, 1) +
                                     R_des(0, 2) * R_cur(0, 2) + R_des(1, 2) * R_cur(1, 2) + R_des(2, 2) * R_cur(2, 2)));
 
-  if(Psi > 1.0f)  // Position control stability guaranteed only when Psi < 1
+  double thrust = 0.0;
+  if (!check_psi_ ||
+      Psi < 1.0f)  // Position control stability guaranteed only when Psi < 1
   {
-    ROS_WARN_THROTTLE(1, "Psi > 1.0, orientation error is too large!");
+    thrust = f_des(0) * R_cur(0, 2) + f_des(1) * R_cur(1, 2) +
+             f_des(2) * R_cur(2, 2);
+  } else {
+    ROS_WARN_THROTTLE(1, "psi > 1.0, thrust set to 0.0 in mavros_interface.");
   }
 
+  double throttle = 0.0;
+  if (thrust_model_ == TM_KARTIK)
+    throttle = thrust_model_kartik(thrust);
+  else if (thrust_model_ == TM_MIKE)
+    throttle = thrust_model_mike(thrust);
+  else
+    ROS_ERROR_THROTTLE(1, "Unimplemented Thrust Model!!");
+
+  /*
   double throttle = f_des(0) * R_cur(0, 2) + f_des(1) * R_cur(1, 2) + f_des(2) * R_cur(2, 2);
 
   // Scale force to individual rotor velocities (rad/s).
@@ -127,6 +186,8 @@ void SO3CmdToMavros::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &m
 
   // Scaling from rotor velocity (rad/s) to att_throttle for pixhawk
   throttle = lin_cof_a_ * throttle + lin_int_b_;
+  */
+
 
   // failsafe for the error in traj_gen that can lead to nan values
   //prevents throttle from being sent to 1 if it is nan.
@@ -167,6 +228,57 @@ void SO3CmdToMavros::onInit(void)
 {
   ros::NodeHandle priv_nh(getPrivateNodeHandle());
 
+  bool use_kartik_model;
+  priv_nh.param("use_kartik_thrust_model", use_kartik_model, true);
+  if (use_kartik_model) {
+    thrust_model_ = TM_KARTIK;
+    if (priv_nh.getParam("num_props", num_props_))
+      ROS_INFO("Got number of props: %f", num_props_);
+    else
+      ROS_ERROR("Must set num_props param");
+
+    // get thrust scaling parameters
+    if (priv_nh.getParam("thrust_vs_rpm_coeff_a", thrust_vs_rpm_cof_a_) &&
+        priv_nh.getParam("thrust_vs_rpm_coeff_b", thrust_vs_rpm_cof_b_) &&
+        priv_nh.getParam("thrust_vs_rpm_coeff_c", thrust_vs_rpm_cof_c_)) {
+      ROS_ASSERT_MSG(
+          thrust_vs_rpm_cof_a_ > 0,
+          "thrust_vs_rpm_cof_a must be positive. thrust_vs_rpm_cof_a = %g",
+          thrust_vs_rpm_cof_a_);
+
+      ROS_INFO(
+          "Using Thrust = %g*RPM^2 + %g*RPM + %g to scale thrust to prop "
+          "speed.",
+          thrust_vs_rpm_cof_a_, thrust_vs_rpm_cof_b_, thrust_vs_rpm_cof_c_);
+    } else {
+      ROS_ERROR(
+          "Must set coefficients for thrust vs rpm (scaling from rotor "
+          "velocity (RPM) to thrust produced)");
+    }
+
+    if (priv_nh.getParam("rpm_vs_throttle_coeff_a", rpm_vs_throttle_coeff_a_) &&
+        priv_nh.getParam("rpm_vs_throttle_coeff_b", rpm_vs_throttle_coeff_b_))
+
+      ROS_INFO(
+          "Using RPM = %g*throttle + %g to scale prop speed to att_throttle.",
+          rpm_vs_throttle_coeff_a_, rpm_vs_throttle_coeff_b_);
+    else
+      ROS_ERROR(
+          "Must set coefficients for thrust scaling (scaling from rotor "
+          "velocity (RPM) to att_throttle for pixhawk)");
+  } else {
+    thrust_model_ = TM_MIKE;
+    if (priv_nh.getParam("thrust_vs_throttle", throttle_cof_) &&
+        priv_nh.getParam("thrust_vs_battery", bat_cof_) &&
+        priv_nh.getParam("thrust_constant", const_cof_)) {
+      ROS_INFO_STREAM("Using thrust_vs_throttle: "
+                      << throttle_cof_ << ", thrust_vs_battery: " << bat_cof_
+                      << " , thrust_constant: " << const_cof_);
+    } else
+      ROS_ERROR("Must set parameters for thrust");
+  }
+
+  /*
   // get thrust scaling parameters
   if(priv_nh.getParam("num_props", num_props_))
     ROS_INFO("Got number of props: %d", num_props_);
@@ -186,7 +298,7 @@ void SO3CmdToMavros::onInit(void)
   else
     ROS_ERROR("Must set coefficients for thrust scaling (scaling from rotor "
               "velocity (rad/s) to att_throttle for pixhawk)");
-
+  */
   // get param for so3 command timeout duration
   priv_nh.param("so3_cmd_timeout", so3_cmd_timeout_, 0.25);
 
@@ -204,6 +316,8 @@ void SO3CmdToMavros::onInit(void)
   odom_sub_ = priv_nh.subscribe("odom", 10, &SO3CmdToMavros::odom_callback, this, ros::TransportHints().tcpNoDelay());
 
   imu_sub_ = priv_nh.subscribe("imu", 10, &SO3CmdToMavros::imu_callback, this, ros::TransportHints().tcpNoDelay());
+
+  battery_sub_ = priv_nh.subscribe("battery", 10, &SO3CmdToMavros::battery_callback, this, ros::TransportHints().tcpNoDelay());
 }
 
 #include <pluginlib/class_list_macros.h>
