@@ -60,6 +60,7 @@ void TrackersManager::onInit(void)
   ROS_ASSERT(tracker_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
   for(int i = 0; i < tracker_list.size(); i++)
   {
+    ROS_WARN("Reading list of trackers: %s", static_cast<const std::string>(tracker_list[i]).c_str());
     ROS_ASSERT(tracker_list[i].getType() == XmlRpc::XmlRpcValue::TypeString);
     const std::string tracker_name = static_cast<const std::string>(tracker_list[i]);
     try

@@ -42,7 +42,7 @@
     </description>
   </class>
 
-  <class name="kr_trackers/LissajousTracker" type="LissajousTracker" base_class_type="kr_trackers_manager::Tracker">
+  <!-- <class name="kr_trackers/LissajousTracker" type="LissajousTracker" base_class_type="kr_trackers_manager::Tracker">
     <description>
       Follows a complex 3D Lissajous tracjectory
     </description>
@@ -52,7 +52,7 @@
     <description>
       Follows a sum of two Lissajous trajectories
     </description>
-  </class>
+  </class> -->
 
   <class name="kr_trackers/PolyTracker" type="PolyTracker" base_class_type="kr_trackers_manager::Tracker">
     <description>

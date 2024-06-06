@@ -95,7 +95,7 @@ void PolyTracker::Initialize(const ros::NodeHandle &nh)
 
   current_trajectory_.reset(new TrajData);
   next_trajectory_.reset(new TrajData);  
-
+  ROS_WARN("PolyTracker initialized!");
 }
 
 bool PolyTracker::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
@@ -164,7 +164,22 @@ kr_mav_msgs::PositionCommand::ConstPtr PolyTracker::update(const nav_msgs::Odome
 
   Eigen::Vector3d pos(Eigen::Vector3d::Zero()), vel(Eigen::Vector3d::Zero()), acc(Eigen::Vector3d::Zero());
   std::pair<double, double> yaw_yawdot(last_yaw_, 0.0);
-  Eigen::VectorXd wp(current_trajectory_->dim_), dwp(current_trajectory_->dim_), ddwp(current_trajectory_->dim_);
+
+  Eigen::VectorXd wp, dwp, ddwp;  // only
+  int cur_dim = 0;
+  if (next_trajectory_ != NULL)
+  {
+    cur_dim = next_trajectory_->dim_;
+
+  }
+  else
+  {
+    cur_dim = current_trajectory_->dim_;
+  }
+
+  wp.resize(cur_dim);
+  dwp.resize(cur_dim);
+  ddwp.resize(cur_dim);
 
   // safety 
   if(have_last_goal_ && (cur_pos_ - last_goal_).norm() <= 0.3)
@@ -559,7 +574,7 @@ void PolyTracker::goal_callback()
         break;
     }
     traj_set_ = true;
-
+    ROS_WARN("[Poly tracker] Duration: %f", total_duration);
     ROS_INFO("PolyTracker: Set the poly trajectory");
   }
   else if  (msg->vel_pts.size() > 0) 

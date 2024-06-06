@@ -71,6 +71,7 @@ void LineTrackerDistance::Initialize(const ros::NodeHandle &nh)
   tracker_server_->registerPreemptCallback(boost::bind(&LineTrackerDistance::preempt_callback, this));
 
   tracker_server_->start();
+  ROS_WARN("LineTrackerDistance initialized.");
 }
 
 bool LineTrackerDistance::Activate(const kr_mav_msgs::PositionCommand::ConstPtr &cmd)
