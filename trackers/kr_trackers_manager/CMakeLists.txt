@@ -45,4 +45,26 @@ install(
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+install(DIRECTORY config/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config)
+install(DIRECTORY test/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/test)
 install(FILES nodelet_plugin.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+if(CATKIN_ENABLE_TESTING)
+  find_package(catkin REQUIRED COMPONENTS
+    roscpp
+    rostest
+    kr_tracker_msgs
+    kr_mav_msgs
+    nav_msgs
+    actionlib
+  )
+
+  include_directories(include ${catkin_INCLUDE_DIRS})
+  include_directories(${GTEST_INCLUDE_DIRS})
+
+  add_executable(kr_trackers_manager_test test/kr_trackers_manager_test.cpp)
+  target_link_libraries(kr_trackers_manager_test ${catkin_LIBRARIES} ${GTEST_LIBRARIES})
+
+  add_rostest(test/kr_trackers_manager_nodelet.test)
+
+endif()

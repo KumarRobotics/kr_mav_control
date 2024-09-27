@@ -6,6 +6,7 @@
   <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
   <maintainer email="michael.f.watterson@gmail.com">Michael Watterson</maintainer>
   <maintainer email="justinthomas@jtwebs.net">Justin Thomas</maintainer>
+  <maintainer email="pranavpshah2098@gmail.com">Pranav Shah</maintainer>
 
   <license>BSD</license>
 
@@ -13,11 +14,15 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
+  <depend>actionlib</depend>
   <depend>nodelet</depend>
   <depend>pluginlib</depend>
   <depend>kr_mav_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>kr_tracker_msgs</depend>
+
+  <test_depend>rostest</test_depend>
+  <test_depend>gtest</test_depend>
 
   <export>
     <nodelet plugin="${prefix}/nodelet_plugin.xml"/>

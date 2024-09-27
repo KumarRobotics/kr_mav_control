@@ -1,0 +1,9 @@
+<launch>
+  <node pkg="nodelet" type="nodelet" name="kr_trackers_nodelet_manager" args="manager"/>
+  <node pkg="nodelet" type="nodelet" name="trackers_manager" args="load kr_trackers_manager/TrackersManager kr_trackers_nodelet_manager" output="screen">
+  <rosparam file="$(find kr_trackers_manager)/config/trackers.yaml"/>
+	<rosparam file="$(find kr_trackers_manager)/config/tracker_params.yaml"/> 
+  </node>
+
+  <test test-name="kr_trackers_manager_test" pkg="kr_trackers_manager" type="kr_trackers_manager_test" time-limit="60.0"/>
+</launch>

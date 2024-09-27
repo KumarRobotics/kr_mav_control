@@ -1,0 +1,4 @@
+trackers:
+  - kr_trackers/LineTrackerMinJerk
+  - kr_trackers/LineTrackerDistance
+
