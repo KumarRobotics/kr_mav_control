@@ -13,11 +13,15 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
+  <depend>actionlib</depend>
   <depend>nodelet</depend>
   <depend>pluginlib</depend>
   <depend>kr_mav_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>kr_tracker_msgs</depend>
+
+  <test_depend>rostest</test_depend>
+  <test_depend>gtest</test_depend>
 
   <export>
     <nodelet plugin="${prefix}/nodelet_plugin.xml"/>
