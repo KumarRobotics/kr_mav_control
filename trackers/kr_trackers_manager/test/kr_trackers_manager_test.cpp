@@ -9,16 +9,17 @@
 /*
  * @brief Test1: test if the tester connects properly with the trackers_manager.
  */
-TEST(TrackersManagerTest, Test1)
+TEST(TrackersManagerTest, InitializationChecks)
 {
   TrackersManagerTester tester;
   ASSERT_TRUE(tester.initial_checks());
 }
 
 /*
- * @brief Test2: test if any tracker is found or activated using the transition service
+ * @brief Test2: test if any tracker is found or activated using the transition service.
+          No tracker should be activated without any prior odom or goal messages.
  */
-TEST(TrackersManagerTest, Test2)
+TEST(TrackersManagerTest, TrackerTransitionCheck)
 {
   TrackersManagerTester tester;
   Test2Data data;
@@ -34,14 +35,20 @@ TEST(TrackersManagerTest, Test2)
       EXPECT_EQ(tester.srv_response, data.srv_response_success[i]);
       EXPECT_EQ(tester.srv_msg, data.srv_response_msg[i]);
     }
+    tester.reset_flags();
   }
 }
 
 /*
  * @brief Test3: Send a goal, activate tracker and send odom messages to reach goal.
- *        A value of -100 indicates no need to check that value
+ *        A value of -100 indicates no need to check that value/index.
+ *        This test is solely to tests the action client and server communication.
+ *        1. Send a goal
+ *        2. Send a odom message
+ *        3. Send a tracker transition request
+ *        4. Send multiple odom messages until goal is reached.
  */
-TEST(TrackersManagerTest, Test3)
+TEST(TrackersManagerTest, GoalCompletionCheck)
 {
   TrackersManagerTester tester;
   Test3Data data;
@@ -92,21 +99,31 @@ TEST(TrackersManagerTest, Test3)
 
       EXPECT_EQ(tester.status->tracker, data.status_tracker[i]);
       EXPECT_EQ(tester.status->status, data.status_status[i]);
-    }
 
-    if(i == num_samples - 1)
-    {
-      EXPECT_EQ(tester.action_result->x, data.result_x);
-      EXPECT_EQ(tester.action_result->y, data.result_y);
-      EXPECT_EQ(tester.action_result->z, data.result_z);
-      EXPECT_EQ(tester.action_result->yaw, data.result_yaw);
-      EXPECT_EQ(tester.action_result->length, data.result_length);
-      EXPECT_NEAR(tester.action_result->duration, data.result_duration, 1e-4);
+      if(i == num_samples - 1)
+      {
+        EXPECT_EQ(tester.action_result->x, data.result_x);
+        EXPECT_EQ(tester.action_result->y, data.result_y);
+        EXPECT_EQ(tester.action_result->z, data.result_z);
+        EXPECT_EQ(tester.action_result->yaw, data.result_yaw);
+        EXPECT_EQ(tester.action_result->length, data.result_length);
+        EXPECT_NEAR(tester.action_result->duration, data.result_duration, 1e-4);
+      }
     }
+    tester.reset_flags();
   }
 }
 
-TEST(TrackersManagerTest, Test4)
+/*
+ * @brief Test4: Send a goal during an active goal and see if the first goal is cancelled new goal accepted.
+ *        A value of -100 indicates no need to check that value/index.
+ *        This test is solely to tests the action client and server communication.
+ *        1. Send a goal
+ *        2. Send some odom messages
+ *        3. Send another foal
+ *        4. Send odom messages until new goal is reached.
+ */
+TEST(TrackersManagerTest, GoalPreEmptionCheck)
 {
   TrackersManagerTester tester;
   Test4Data data;
@@ -117,6 +134,7 @@ TEST(TrackersManagerTest, Test4)
   int num_samples = 7;
   for(int i = 0; i < num_samples; i++)
   {
+    // sending a new goal while a goal is active
     if(i == 4)
     {
       tester.send_action_goal(tracker_name, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
@@ -129,11 +147,12 @@ TEST(TrackersManagerTest, Test4)
       tester.publish_odom_msg(data.odom_secs[i], data.odom_nsecs[i], data.odom_pos_x[i], data.odom_pos_y[i],
                               data.odom_pos_z[i], data.odom_orient_x[i], data.odom_orient_y[i], data.odom_orient_z[i],
                               data.odom_orient_w[i]);
-      ros::Duration(1.0).sleep();
+      ros::Duration(1.2).sleep();
     }
 
     {
       std::lock_guard<std::mutex> lock(tester.mutex);
+
       if(data.cmd_pos_x[i] != -100.0)
       {
         ASSERT_TRUE(tester.position_cmd_received);
@@ -184,6 +203,7 @@ TEST(TrackersManagerTest, Test4)
         EXPECT_NEAR(tester.action_result->duration, data.result_duration, 1e-4);
       }
     }
+    tester.reset_flags();
   }
 }
 
