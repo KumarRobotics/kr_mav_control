@@ -6,6 +6,7 @@ import rospkg
 import rospy
 from python_qt_binding import loadUi
 from python_qt_binding.QtWidgets import QWidget
+from PyQt5.QtCore import QTimer
 from rqt_gui_py.plugin import Plugin
 
 import kr_mav_manager.srv
@@ -66,11 +67,15 @@ class MavManagerUi(Plugin):
 
   def _on_motors_off_pressed(self):
     try:
+      self._widget.motors_on_push_button.setEnabled(False)
       motors_topic = '/'+self.robot_name+'/'+self.mav_node_name+'/motors'
       rospy.wait_for_service(motors_topic, timeout=1.0)
       motors_off = rospy.ServiceProxy(motors_topic, std_srvs.srv.SetBool)
       resp = motors_off(False)
       print(resp.success)
+      
+      QTimer.singleShot(3000, lambda: self._widget.motors_on_push_button.setEnabled(True))
+   
     except rospy.ServiceException as e:
       print("Service call failed: %s"%e)
     except(rospy.ROSException) as e:

@@ -11,6 +11,8 @@
 #include <nav_msgs/Odometry.h>
 #include <nodelet/nodelet.h>
 #include <ros/ros.h>
+#include <crazyflie_driver/sendPacket.h>  // Service definition for sendPacket
+#include <crazyflie_driver/crtpPacket.h>  // Message definition for crtpPacket
 
 #include <Eigen/Geometry>
 
@@ -25,6 +27,8 @@ class SO3CmdToCrazyflie : public nodelet::Nodelet
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  private:
+  void send_arming_request(bool arm);
+  void reboot();
   void so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr &msg);
   void odom_callback(const nav_msgs::Odometry::ConstPtr &odom);
 
@@ -36,6 +40,8 @@ class SO3CmdToCrazyflie : public nodelet::Nodelet
 
   ros::Subscriber so3_cmd_sub_;
   ros::Subscriber odom_sub_;
+
+  ros::ServiceClient packet_client_;  // Service client to send packets
 
   double so3_cmd_timeout_;
   ros::Time last_so3_cmd_time_;
@@ -51,7 +57,80 @@ class SO3CmdToCrazyflie : public nodelet::Nodelet
   int thrust_pwm_min_;  // Necessary to overcome stiction
   int thrust_pwm_max_;  // Mapped to PWM
 
+  bool send_ctbr_cmds_;
+  bool is_brushless_;
+
   int motor_status_;
+  bool armed_;
+  int arm_status_;
+};
+
+void SO3CmdToCrazyflie::send_arming_request(bool arm)
+{
+  ROS_INFO("Setting arm to: %d", arm);
+  
+  // Create a custom packet for arming/disarming
+  // https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/functional-areas/crtp/crtp_platform/
+  crazyflie_driver::crtpPacket packet;
+  packet.header = 220;  // Port 13 but byteshifted following https://github.com/bitcraze/crazyflie-lib-python/blob/master/cflib/crtp/crtpstack.py#L120-L132
+  packet.size = 2;      // Payload length
+  packet.data[0] = 1;   // Channel 0 -- Platform commands
+  packet.data[1] = arm ? 1 : 0;  // Arm message (bool).
+
+  // Call the sendPacket service to send the packet
+  crazyflie_driver::sendPacket srv;
+  srv.request.packet = packet;
+
+  if (packet_client_.call(srv))
+  {
+    ROS_INFO("Arming request sent successfully, arm: %d", arm);
+  }
+  else
+  {
+    ROS_ERROR("Failed to send arming request");
+  }
+};
+
+void SO3CmdToCrazyflie::reboot()
+{
+  ROS_INFO("Attempting to reboot Crazyflie...");
+  
+  // Create custom packet for rebooting. 
+  crazyflie_driver::crtpPacket packet;
+  packet.header = 255;  // 
+  packet.size = 2;      // Payload length
+  packet.data[0] = 0xFE;  
+  packet.data[1] = 0x02;  // SYSOFF command. 
+
+  // Call the sendPacket service to send the packet
+  crazyflie_driver::sendPacket srv;
+  srv.request.packet = packet;
+
+  if (packet_client_.call(srv))
+  {
+    ROS_INFO("Powering down.");
+  }
+  else
+  {
+    ROS_ERROR("Failed to power down");
+  }
+
+  // Wait a little bit. 
+  ros::Duration(0.5).sleep();  // Sleep for a short time.
+
+  // Now send boot up command. 
+  packet.data[1] = 0x03;        // SYSON command.
+  srv.request.packet = packet;
+
+  if (packet_client_.call(srv))
+  {
+    ROS_INFO("Powering up.");
+  }
+  else
+  {
+    ROS_ERROR("Failed to power up.");
+  }
+
 };
 
 void SO3CmdToCrazyflie::odom_callback(const nav_msgs::Odometry::ConstPtr &odom)
@@ -80,6 +159,20 @@ void SO3CmdToCrazyflie::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr
   // switch on motors
   if(msg->aux.enable_motors)
   {
+
+    // First try to arm the drone.
+    if(is_brushless_) // Only do so if CF is brushless (rosparam)
+    { 
+      if(!armed_)
+      {
+        for(int i=0; i<1; i++)
+        {
+        send_arming_request(true);
+        }
+        armed_ = true;
+      };
+    };
+
     // If the crazyflie motors are timed out, we need to send a zero message in order to get them to start
     if(motor_status_ < 3)
     {
@@ -106,6 +199,21 @@ void SO3CmdToCrazyflie::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr
     crazy_cmd_vel_pub_.publish(motors_vel_cmd);
     last_so3_cmd_ = *msg;
     last_so3_cmd_time_ = msg->header.stamp;
+
+    // Disarm motors
+    if(is_brushless_)
+    {
+      if(armed_)
+      {
+        for(int i=0; i<1; i++)
+        {
+        send_arming_request(false);
+        }
+        armed_ = false;
+        // Reboot Crazyflie to be armed again. 
+        reboot();
+      };
+    };
     return;
   }
 
@@ -165,8 +273,13 @@ void SO3CmdToCrazyflie::so3_cmd_callback(const kr_mav_msgs::SO3Command::ConstPtr
   // TODO change this check to be a param
   // throttle the publish rate
   // if ((ros::Time::now() - last_so3_cmd_time_).toSec() > 1.0/30.0){
-  crazy_vel_cmd->linear.y = roll_des + msg->aux.angle_corrections[0];
-  crazy_vel_cmd->linear.x = pitch_des + msg->aux.angle_corrections[1];
+  if (send_ctbr_cmds_) {
+    crazy_vel_cmd->linear.y = msg->angular_velocity.x;  // ctbr_cmd->angular_velocity.x = roll rate
+    crazy_vel_cmd->linear.x = msg->angular_velocity.y;  // ctbr_cmd->angular_velocity.y = pitch rate
+  } else {
+    crazy_vel_cmd->linear.y = roll_des + msg->aux.angle_corrections[0];
+    crazy_vel_cmd->linear.x = pitch_des + msg->aux.angle_corrections[1];
+  }
   crazy_vel_cmd->linear.z = CLAMP(thrust_pwm, thrust_pwm_min_, thrust_pwm_max_);
 
   // ROS_INFO("commanded thrust is %2.2f", CLAMP(thrust_pwm, thrust_pwm_min_, thrust_pwm_max_));
@@ -208,12 +321,38 @@ void SO3CmdToCrazyflie::onInit(void)
   // get param for so3 command timeout duration
   priv_nh.param("so3_cmd_timeout", so3_cmd_timeout_, 0.1);
 
+  // get param for whether or not the crazyflie is of type brushless.
+  priv_nh.param("is_brushless", is_brushless_, false);
+
+  // get param for sending ctbr cmds, default is to send TRPY commands as attitude
+  priv_nh.param("send_ctbr_cmds", send_ctbr_cmds_, false);
+
   priv_nh.param("thrust_pwm_max", thrust_pwm_max_, 60000);
   priv_nh.param("thrust_pwm_min", thrust_pwm_min_, 10000);
 
   odom_set_ = false;
   so3_cmd_set_ = false;
   motor_status_ = 0;
+  armed_ = false;
+  arm_status_ = 0;
+
+  // Retrieve mav_name parameter
+  std::string mav_name;
+  if (!priv_nh.getParam("mav_name", mav_name))
+  {
+    ROS_FATAL("mav_name parameter not found.");
+    return;
+  }
+
+  // Construct the full service name
+  std::string service_name = "/" + mav_name + "/send_packet";
+
+  // Arming packet client. 
+  packet_client_ = priv_nh.serviceClient<crazyflie_driver::sendPacket>(service_name);
+
+  ROS_INFO("Waiting for send_packet service...");
+  packet_client_.waitForExistence();
+  ROS_INFO("send_packet service is available.");
 
   // TODO make sure this is publishing to the right place
   crazy_fast_cmd_vel_pub_ = priv_nh.advertise<geometry_msgs::Twist>("cmd_vel_fast", 10);

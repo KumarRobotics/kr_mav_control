@@ -17,7 +17,8 @@ find_package(
              nav_msgs
              geometry_msgs
              kr_mav_msgs
-             nodelet)
+             nodelet
+             crazyflie_driver)
 find_package(Eigen3 REQUIRED)
 
 include_directories(${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
@@ -31,6 +32,7 @@ catkin_package(
   geometry_msgs
   kr_mav_msgs
   nodelet
+  crazyflie_driver
   DEPENDS
   EIGEN3)
 
