@@ -579,6 +579,7 @@ void PolyTracker::goal_callback()
   }
   else if  (msg->vel_pts.size() > 0) 
   {
+    next_trajectory_.reset(new TrajData);  
 
     double interval = msg->dt;
     int Num = msg->N;
