@@ -327,7 +327,7 @@ class DiscreteStates
 
       double tau =  t - index * dt;
 
-      std::cout << "  index  " << index << std::endl;
+      //std::cout << "  index  " << index << std::endl;
 
       if(is_linear_cut)
       {
