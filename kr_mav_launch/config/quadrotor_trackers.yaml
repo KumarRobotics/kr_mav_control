@@ -1,0 +1,11 @@
+ /**/trackers_manager:
+  ros__parameters:
+    # Corrected trackers list: each tracker must be a separate string element
+    trackers: ["NullTracker", "LineTrackerDistance", "LineTrackerMinJerk", "PolyTracker"]
+    line_tracker_distance/default_v_des: 0.2
+    line_tracker_distance/default_a_des: 0.2
+    line_tracker_distance/epsilon: 0.1
+    line_tracker_min_jerk/default_v_des: 1.0
+    line_tracker_min_jerk/default_a_des: 0.5
+    line_tracker_min_jerk/default_yaw_v_des: 0.4
+    line_tracker_min_jerk/default_yaw_a_des: 0.3

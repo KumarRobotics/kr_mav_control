@@ -1,23 +1,29 @@
-<package format="2">
-  <name>kr_mav_launch</name>
-  <version>1.0.0</version>
-  <description>kr_mav_launch</description>
-  <maintainer email="tdinesh@seas.upenn.edu">Dinesh Thakur</maintainer>
+<?xml version="1.0"?>
+<package format="3">
+    <name>kr_mav_launch</name>
+    <version>0.0.0</version>
+    <description>The kr_mav_launch package</description>
 
-  <license>BSD</license>
+    <maintainer email="dexterong94@gmail.com">Dexter Ong</maintainer>
+    <license>TBD</license>
 
-  <author>Dinesh Thakur</author>
+    <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <!-- Dependencies which this package needs to build itself. -->
-  <buildtool_depend>catkin</buildtool_depend>
+    <!-- runtime dependencies referenced by the launch files -->
+    <exec_depend>launch</exec_depend>
+    <exec_depend>launch_ros</exec_depend>
+    <exec_depend>launch_testing</exec_depend>
+    <exec_depend>rclcpp_components</exec_depend>
+    <exec_depend>robot_state_publisher</exec_depend>
+    <exec_depend>tf2_ros</exec_depend>
 
-  <exec_depend>kr_mav_manager</exec_depend>
-  <exec_depend>kr_mesh_visualization</exec_depend>
-  <exec_depend>kr_quadrotor_simulator</exec_depend>
-  <exec_depend>kr_mav_controllers</exec_depend>
-  <exec_depend>kr_trackers</exec_depend>
-  <exec_depend>kr_trackers_manager</exec_depend>
-  <exec_depend>nodelet</exec_depend>
-  <exec_depend>rviz</exec_depend>
+    <!-- package-specific dependencies used by included launch files and nodes -->
+    <exec_depend>kr_mav_manager</exec_depend>
+    <exec_depend>kr_trackers_manager</exec_depend>
+    <exec_depend>kr_mav_controllers</exec_depend>
+
+    <export>
+    <build_type>ament_cmake</build_type>
+    </export>
 
 </package>

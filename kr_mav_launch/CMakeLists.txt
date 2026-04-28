@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
 project(kr_mav_launch)
 
-# set default build type
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RelWithDebInfo)
-endif()
+# Use ament for ROS 2 packages
+find_package(ament_cmake REQUIRED)
 
-find_package(catkin REQUIRED)
-catkin_package()
+# Install launch files to the package share directory
+install(DIRECTORY launch/
+	DESTINATION share/${PROJECT_NAME}/launch
+)
+install(DIRECTORY config/
+	DESTINATION share/${PROJECT_NAME}/config
+)
 
-install(DIRECTORY config/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config)
-install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
-# install(DIRECTORY scripts/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts)
+ament_package()
