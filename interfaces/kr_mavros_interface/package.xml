@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>kr_mavros_interface</name>
+  <version>1.0.0</version>
+  <description>kr_mavros_interface - ROS2 interface for SO3 commands to Mavros</description>
+  <maintainer email="anurag.makineni@gmail.com">Anurag Makineni</maintainer>
+  <maintainer email="JustinThomas@jtwebs.net">Justin Thomas</maintainer>
+  <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
+
+  <license>BSD</license>
+
+  <!-- Build tools -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Dependencies -->
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>kr_mav_msgs</depend>
+  <depend>mavros_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>Eigen3</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <rclcpp_components>
+      <library>kr_mavros_interface</library>
+    </rclcpp_components>
+  </export>
+
+</package>

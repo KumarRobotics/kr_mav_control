@@ -5,7 +5,7 @@
     <description>The kr_mav_launch package</description>
 
     <maintainer email="dexterong94@gmail.com">Dexter Ong</maintainer>
-    <license>TBD</license>
+    <license>BSD-3-Clause</license>
 
     <buildtool_depend>ament_cmake</buildtool_depend>
 
