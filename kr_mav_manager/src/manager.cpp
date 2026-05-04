@@ -511,9 +511,26 @@ bool MAVManager::circle(float Ax, float Ay, float T, float duration)
   auto options = rclcpp_action::Client<CircleTracker>::SendGoalOptions();
   options.result_callback = std::bind(&MAVManager::circle_tracker_done_callback, this, _1);
 
+  // Ensure the tracker transition only happens after the goal is accepted by the tracker server.
+  options.goal_response_callback =
+      [this](rclcpp_action::ClientGoalHandle<CircleTracker>::SharedPtr goal_handle) {
+        if (!goal_handle)
+        {
+          RCLCPP_WARN(this->get_logger(), "CircleTracker goal was rejected by the server");
+          return;
+        }
+
+        // Goal accepted; request transition to CircleTracker
+        if (!this->transition(circle_tracker_str))
+        {
+          RCLCPP_WARN(this->get_logger(), "Transition to CircleTracker failed after goal acceptance");
+        }
+      };
+
   circle_tracker_client_->async_send_goal(goal, options);
 
-  return this->transition(circle_tracker_str);
+  // Goal successfully sent (async). Actual transition will occur in the goal response callback.
+  return true;
 }
 
 bool MAVManager::lissajous(float x_amp, float y_amp, float z_amp, float yaw_amp, float x_num_periods,
@@ -542,9 +559,23 @@ bool MAVManager::lissajous(float x_amp, float y_amp, float z_amp, float yaw_amp,
   auto options = rclcpp_action::Client<LissajousTracker>::SendGoalOptions();
   options.result_callback = std::bind(&MAVManager::lissajous_tracker_done_callback, this, _1);
 
+  options.goal_response_callback =
+      [this](rclcpp_action::ClientGoalHandle<LissajousTracker>::SharedPtr goal_handle) {
+        if (!goal_handle)
+        {
+          RCLCPP_WARN(this->get_logger(), "LissajousTracker goal was rejected by the server");
+          return;
+        }
+
+        if (!this->transition(lissajous_tracker_str))
+        {
+          RCLCPP_WARN(this->get_logger(), "Transition to LissajousTracker failed after goal acceptance");
+        }
+      };
+
   lissajous_tracker_client_->async_send_goal(goal, options);
 
-  return this->transition(lissajous_tracker_str);
+  return true;
 }
 
 bool MAVManager::compound_lissajous(float x_amp[2], float y_amp[2], float z_amp[2], float yaw_amp[2],
@@ -584,9 +615,23 @@ bool MAVManager::compound_lissajous(float x_amp[2], float y_amp[2], float z_amp[
   auto options = rclcpp_action::Client<LissajousAdder>::SendGoalOptions();
   options.result_callback = std::bind(&MAVManager::lissajous_adder_done_callback, this, _1);
 
+  options.goal_response_callback =
+      [this](rclcpp_action::ClientGoalHandle<LissajousAdder>::SharedPtr goal_handle) {
+        if (!goal_handle)
+        {
+          RCLCPP_WARN(this->get_logger(), "LissajousAdder goal was rejected by the server");
+          return;
+        }
+
+        if (!this->transition(lissajous_adder_str))
+        {
+          RCLCPP_WARN(this->get_logger(), "Transition to LissajousAdder failed after goal acceptance");
+        }
+      };
+
   lissajous_adder_client_->async_send_goal(goal, options);
 
-  return this->transition(lissajous_adder_str);
+  return true;
 }
 
 // World Velocity Commands

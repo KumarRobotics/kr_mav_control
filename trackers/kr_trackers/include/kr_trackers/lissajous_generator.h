@@ -1,39 +1,35 @@
-// TODO: convert to hpp and compatible with ros2
+#pragma once
 
-#ifndef _LISSAJOUS_GENERATOR_H_
-#define _LISSAJOUS_GENERATOR_H_
-
-#include <geometry_msgs/Point.h>
-#include <kr_mav_msgs/PositionCommand.h>
-#include <kr_tracker_msgs/LissajousAdderAction.h>
-#include <kr_tracker_msgs/LissajousTrackerAction.h>
-#include <nav_msgs/Path.h>
-#include <ros/ros.h>
+#include "geometry_msgs/msg/point.hpp"
+#include "kr_mav_msgs/msg/position_command.hpp"
+#include "kr_tracker_msgs/action/lissajous_adder.hpp"
+#include "kr_tracker_msgs/action/lissajous_tracker.hpp"
+#include "nav_msgs/msg/path.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 class LissajousGenerator
 {
  public:
-  LissajousGenerator(void);
-  void setParams(const kr_tracker_msgs::LissajousTrackerGoal::ConstPtr &msg);
-  void setParams(const kr_tracker_msgs::LissajousAdderGoal::ConstPtr &msg, int num);
-  void generatePath(nav_msgs::Path &path, geometry_msgs::Point &initial_pt, double dt);
-  const kr_mav_msgs::PositionCommand::Ptr getPositionCmd(void);
-  bool activate(void);
-  void deactivate(void);
-  bool isActive(void);
-  bool goalIsSet(void);
-  bool status(void) const;
-  float timeRemaining(void);
-  float timeElapsed(void);
+  LissajousGenerator();
+  void setParams(const std::shared_ptr<const kr_tracker_msgs::action::LissajousTracker::Goal> &msg);
+  void setParams(const std::shared_ptr<const kr_tracker_msgs::action::LissajousAdder::Goal> &msg, int num);
+  void generatePath(nav_msgs::msg::Path &path, const geometry_msgs::msg::Point &initial_pt, double dt);
+  kr_mav_msgs::msg::PositionCommand::SharedPtr getPositionCmd();
+  bool activate();
+  void deactivate();
+  bool isActive() const;
+  bool goalIsSet() const;
+  bool status() const;
+  float timeRemaining() const;
+  float timeElapsed() const;
 
  private:
-  double lissajous_period_, ramp_time_, total_time_, ramp_s_, total_s_, const_time_, period_;
+  double ramp_time_, total_time_, ramp_s_, total_s_, const_time_, period_;
   double x_amp_, y_amp_, z_amp_, yaw_amp_;
   double x_num_periods_, y_num_periods_, z_num_periods_, yaw_num_periods_;
   double a7_, a6_, a5_, a4_;
   double num_cycles_;
   bool active_, goal_set_, goal_reached_;
-  ros::Time start_time_;
+  rclcpp::Time start_time_;
+  rclcpp::Clock::SharedPtr clock_;
 };
-
-#endif

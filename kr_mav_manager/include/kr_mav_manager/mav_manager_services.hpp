@@ -109,7 +109,7 @@ class MAVManagerServices
                     const kr_mav_manager::srv::Lissajous::Response::SharedPtr res)
   {
     res->success =
-        mav->lissajous(req->x_amp, req->y_amp, req->z_amp, req->y_amp, req->x_num_periods, req->y_num_periods,
+        mav->lissajous(req->x_amp, req->y_amp, req->z_amp, req->yaw_amp, req->x_num_periods, req->y_num_periods,
                        req->z_num_periods, req->yaw_num_periods, req->period, req->num_cycles, req->ramp_time);
     res->message = "Lissajous motion";
     if(res->success)

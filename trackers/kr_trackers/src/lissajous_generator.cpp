@@ -1,7 +1,5 @@
-// TODO: convert to ros2 compatible format
-
-#include <kr_tracker_msgs/TrackerStatus.h>
-#include <kr_trackers/lissajous_generator.h>
+#include "kr_tracker_msgs/msg/tracker_status.hpp"
+#include "kr_trackers/lissajous_generator.h"
 
 #include <Eigen/Geometry>
 #include <cmath>
@@ -12,9 +10,11 @@ LissajousGenerator::LissajousGenerator()
   active_ = false;
   goal_reached_ = false;
   goal_set_ = false;
+  clock_ = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
+  start_time_ = clock_->now();
 }
 
-void LissajousGenerator::setParams(const kr_tracker_msgs::LissajousTrackerGoal::ConstPtr &msg)
+void LissajousGenerator::setParams(const std::shared_ptr<const kr_tracker_msgs::action::LissajousTracker::Goal> &msg)
 {
   x_amp_ = msg->x_amp;
   y_amp_ = msg->y_amp;
@@ -56,7 +56,8 @@ void LissajousGenerator::setParams(const kr_tracker_msgs::LissajousTrackerGoal::
   goal_reached_ = false;
 }
 
-void LissajousGenerator::setParams(const kr_tracker_msgs::LissajousAdderGoal::ConstPtr &msg, int num)
+void LissajousGenerator::setParams(const std::shared_ptr<const kr_tracker_msgs::action::LissajousAdder::Goal> &msg,
+                                  int num)
 {
   x_amp_ = msg->x_amp[num];
   y_amp_ = msg->y_amp[num];
@@ -98,20 +99,19 @@ void LissajousGenerator::setParams(const kr_tracker_msgs::LissajousAdderGoal::Co
   goal_reached_ = false;
 }
 
-const kr_mav_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(void)
+kr_mav_msgs::msg::PositionCommand::SharedPtr LissajousGenerator::getPositionCmd()
 {
   if(!active_)
   {
-    return kr_mav_msgs::PositionCommand::Ptr();
+    return kr_mav_msgs::msg::PositionCommand::SharedPtr();
   }
 
   // Set gains
-  kr_mav_msgs::PositionCommand::Ptr cmd(new kr_mav_msgs::PositionCommand);
+  auto cmd = std::make_shared<kr_mav_msgs::msg::PositionCommand>();
 
   // Get elapsed time
-  ros::Time current_time = ros::Time::now();
-  ros::Duration elapsed_time = current_time - start_time_;
-  double t = elapsed_time.toSec();
+  const rclcpp::Time current_time = clock_->now();
+  const double t = (current_time - start_time_).seconds();
   double t2 = t * t;
   double t3 = t2 * t;
   double t4 = t3 * t;
@@ -171,15 +171,15 @@ const kr_mav_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(void)
     double T = period_;
     double T2 = T * T;
     double T3 = T2 * T;
-    pos(0) = x_amp_ * (1 - std::cos(2 * M_PI * x_num_periods_ * s / T));
+    pos(0) = x_amp_ * std::sin(2 * M_PI * x_num_periods_ * s / T);
     pos(1) = y_amp_ * std::sin(2 * M_PI * y_num_periods_ * s / T);
     pos(2) = z_amp_ * std::sin(2 * M_PI * z_num_periods_ * s / T);
-    vel(0) = x_amp_ * 2 * M_PI * x_num_periods_ * std::sin(2 * M_PI * x_num_periods_ * s / T) * sdot / T;
+    vel(0) = x_amp_ * 2 * M_PI * x_num_periods_ * std::cos(2 * M_PI * x_num_periods_ * s / T) * sdot / T;
     vel(1) = y_amp_ * 2 * M_PI * y_num_periods_ * std::cos(2 * M_PI * y_num_periods_ * s / T) * sdot / T;
     vel(2) = z_amp_ * 2 * M_PI * z_num_periods_ * std::cos(2 * M_PI * z_num_periods_ * s / T) * sdot / T;
-    acc(0) = x_amp_ * (4 * M_PI * M_PI * x_num_periods_ * x_num_periods_ * std::cos(2 * M_PI * x_num_periods_ * s / T) *
-                           sdot * sdot / T2 +
-                       2 * M_PI * x_num_periods_ * std::sin(2 * M_PI * x_num_periods_ * s / T) * sddot / T);
+    acc(0) = x_amp_ * (-4 * M_PI * M_PI * x_num_periods_ * x_num_periods_ *
+                 std::sin(2 * M_PI * x_num_periods_ * s / T) * sdot * sdot / T2 +
+               2 * M_PI * x_num_periods_ * std::cos(2 * M_PI * x_num_periods_ * s / T) * sddot / T);
     acc(1) = y_amp_ * (-4 * M_PI * M_PI * y_num_periods_ * y_num_periods_ *
                            std::sin(2 * M_PI * y_num_periods_ * s / T) * sdot * sdot / T2 +
                        2 * M_PI * y_num_periods_ * std::cos(2 * M_PI * y_num_periods_ * s / T) * sddot / T);
@@ -187,10 +187,10 @@ const kr_mav_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(void)
                            std::sin(2 * M_PI * z_num_periods_ * s / T) * sdot * sdot / T2 +
                        2 * M_PI * z_num_periods_ * std::cos(2 * M_PI * z_num_periods_ * s / T) * sddot / T);
     jrk(0) = x_amp_ * (-8 * M_PI * M_PI * M_PI * x_num_periods_ * x_num_periods_ * x_num_periods_ *
-                           std::sin(2 * M_PI * x_num_periods_ * s / T) * sdot * sdot * sdot / T3 +
-                       4 * M_PI * M_PI * x_num_periods_ * x_num_periods_ * std::cos(2 * M_PI * x_num_periods_ * s / T) *
-                           sdot * sddot / T2 +
-                       2 * M_PI * x_num_periods_ * std::sin(2 * M_PI * x_num_periods_ * s / T) * sdddot / T);
+                 std::cos(2 * M_PI * x_num_periods_ * s / T) * sdot * sdot * sdot / T3 -
+               4 * M_PI * M_PI * x_num_periods_ * x_num_periods_ * std::sin(2 * M_PI * x_num_periods_ * s / T) *
+                 sdot * sddot / T2 +
+               2 * M_PI * x_num_periods_ * std::cos(2 * M_PI * x_num_periods_ * s / T) * sdddot / T);
     jrk(1) = y_amp_ * (-8 * M_PI * M_PI * M_PI * y_num_periods_ * y_num_periods_ * y_num_periods_ *
                            std::cos(2 * M_PI * y_num_periods_ * s / T) * sdot * sdot * sdot / T3 -
                        4 * M_PI * M_PI * y_num_periods_ * y_num_periods_ * std::sin(2 * M_PI * y_num_periods_ * s / T) *
@@ -201,8 +201,8 @@ const kr_mav_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(void)
                        4 * M_PI * M_PI * z_num_periods_ * z_num_periods_ * std::sin(2 * M_PI * z_num_periods_ * s / T) *
                            sdot * sddot / T2 +
                        2 * M_PI * z_num_periods_ * std::cos(2 * M_PI * z_num_periods_ * s / T) * sdddot / T);
-    yaw = yaw_amp_ * (1 - std::cos(2 * M_PI * yaw_num_periods_ * s / T));
-    yaw_dot = yaw_amp_ * 2 * M_PI * yaw_num_periods_ * std::sin(2 * M_PI * yaw_num_periods_ * s / T) * sdot / T;
+    yaw = yaw_amp_ * std::sin(2 * M_PI * yaw_num_periods_ * s / T);
+    yaw_dot = yaw_amp_ * 2 * M_PI * yaw_num_periods_ * std::cos(2 * M_PI * yaw_num_periods_ * s / T) * sdot / T;
     cmd->position.x = pos(0), cmd->position.y = pos(1), cmd->position.z = pos(2);
     cmd->velocity.x = vel(0), cmd->velocity.y = vel(1), cmd->velocity.z = vel(2);
     cmd->acceleration.x = acc(0), cmd->acceleration.y = acc(1), cmd->acceleration.z = acc(2);
@@ -213,7 +213,7 @@ const kr_mav_msgs::PositionCommand::Ptr LissajousGenerator::getPositionCmd(void)
   return cmd;
 }
 
-void LissajousGenerator::generatePath(nav_msgs::Path &path, geometry_msgs::Point &initial_pt, double dt)
+void LissajousGenerator::generatePath(nav_msgs::msg::Path &path, const geometry_msgs::msg::Point &initial_pt, double dt)
 {
   if(goal_set_)
   {
@@ -222,8 +222,8 @@ void LissajousGenerator::generatePath(nav_msgs::Path &path, geometry_msgs::Point
 
     while(s < period_)
     {
-      geometry_msgs::PoseStamped ps;
-      ps.pose.position.x = x_amp_ * (1 - std::cos(2 * M_PI * x_num_periods_ * s / T)) + initial_pt.x;
+      geometry_msgs::msg::PoseStamped ps;
+      ps.pose.position.x = x_amp_ * std::sin(2 * M_PI * x_num_periods_ * s / T) + initial_pt.x;
       ps.pose.position.y = y_amp_ * std::sin(2 * M_PI * y_num_periods_ * s / T) + initial_pt.y;
       ps.pose.position.z = z_amp_ * std::sin(2 * M_PI * z_num_periods_ * s / T) + initial_pt.z;
 
@@ -233,46 +233,46 @@ void LissajousGenerator::generatePath(nav_msgs::Path &path, geometry_msgs::Point
   }
 }
 
-bool LissajousGenerator::activate(void)
+bool LissajousGenerator::activate()
 {
   if(goal_set_)
   {
     active_ = true;
-    start_time_ = ros::Time::now();
+    start_time_ = clock_->now();
   }
   return active_;
 }
 
-void LissajousGenerator::deactivate(void)
+void LissajousGenerator::deactivate()
 {
   goal_set_ = false;
   active_ = false;
 }
 
-bool LissajousGenerator::isActive(void)
+bool LissajousGenerator::isActive() const
 {
   return active_;
 }
 
-bool LissajousGenerator::goalIsSet(void)
+bool LissajousGenerator::goalIsSet() const
 {
   return goal_set_;
 }
 
 bool LissajousGenerator::status() const
 {
-  return goal_reached_ ? kr_tracker_msgs::TrackerStatus::SUCCEEDED : kr_tracker_msgs::TrackerStatus::ACTIVE;
+  return goal_reached_ ? kr_tracker_msgs::msg::TrackerStatus::SUCCEEDED : kr_tracker_msgs::msg::TrackerStatus::ACTIVE;
 }
 
-float LissajousGenerator::timeRemaining(void)
+float LissajousGenerator::timeRemaining() const
 {
-  ros::Time t_now = ros::Time::now();
-  float time_elapsed = (t_now - start_time_).toSec();
-  return total_time_ - time_elapsed;
+  const rclcpp::Time t_now = clock_->now();
+  const float time_elapsed = static_cast<float>((t_now - start_time_).seconds());
+  return std::max(0.0f, static_cast<float>(total_time_) - time_elapsed);
 }
 
-float LissajousGenerator::timeElapsed(void)
+float LissajousGenerator::timeElapsed() const
 {
-  ros::Time t_now = ros::Time::now();
-  return (t_now - start_time_).toSec();
+  const rclcpp::Time t_now = clock_->now();
+  return static_cast<float>((t_now - start_time_).seconds());
 }

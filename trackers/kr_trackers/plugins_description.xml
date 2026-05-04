@@ -25,6 +25,21 @@
            base_class_type="kr_trackers_manager::Tracker">
       <description>This is a tracker which follows a velocity command.</description>
     </class>
+
+    <class type="CircleTracker"
+           base_class_type="kr_trackers_manager::Tracker">
+      <description>This is a tracker which follows an elliptical trajectory defined by amplitudes and period.</description>
+    </class>
+
+    <class type="LissajousTracker"
+           base_class_type="kr_trackers_manager::Tracker">
+      <description>This is a tracker which follows a Lissajous trajectory.</description>
+    </class>
+
+    <class type="LissajousAdder"
+           base_class_type="kr_trackers_manager::Tracker">
+      <description>This is a tracker which follows a sum of two Lissajous trajectories.</description>
+    </class>
     
   </library>
 </class_libraries>

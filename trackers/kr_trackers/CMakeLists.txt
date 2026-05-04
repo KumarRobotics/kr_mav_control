@@ -49,7 +49,11 @@ add_library(${PROJECT_NAME}_plugins SHARED
   src/null_tracker.cpp
   src/poly_tracker.cpp
   src/velocity_tracker.cpp
-  src/initial_conditions.cpp)
+  src/initial_conditions.cpp
+  src/circle_tracker_server.cpp
+  src/lissajous_generator.cpp
+  src/lissajous_tracker_server.cpp
+  src/lissajous_adder_server.cpp)
 ament_target_dependencies(${PROJECT_NAME}_plugins ${node_dependencies})
 
 

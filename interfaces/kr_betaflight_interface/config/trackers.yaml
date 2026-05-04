@@ -1,6 +1,7 @@
 /neurofly1/trackers_manager:
   ros__parameters:
-    trackers: ["NullTracker", "LineTrackerDistance", "LineTrackerMinJerk", "PolyTracker"]
+    trackers: ["NullTracker", "LineTrackerDistance", "LineTrackerMinJerk", "PolyTracker", "CircleTracker", "LissajousTracker", "LissajousAdder"]
+    circle_tracker/ramp_up_time: 2.0
     line_tracker_distance/default_v_des: 0.2
     line_tracker_distance/default_a_des: 0.2
     line_tracker_distance/epsilon: 0.1
@@ -8,3 +9,5 @@
     line_tracker_min_jerk/default_a_des: 0.5
     line_tracker_min_jerk/default_yaw_v_des: 0.4
     line_tracker_min_jerk/default_yaw_a_des: 0.3
+    lissajous_tracker/frame_id: odom
+    lissajous_adder/frame_id: odom

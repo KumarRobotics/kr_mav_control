@@ -3,21 +3,22 @@ protocol_type: crsf # crsf, sbus
 control_command_timeout: 0.5 # [s] (Must be larger than 'state_estimate_timeout'
 # set in the 'flight_controller'!)
 rc_timeout: 0.1 # [s]
+mass: 0.68 # [kg]
 disable_thrust_mapping: true
 use_body_rates: false
 
-## fpvcycle 2206 motors 4S
-# thrust_vs_rpm_cof_a_: 1.755e-06 # gf
-# thrust_vs_rpm_cof_b_: -6.521e-03 # gf
-# thrust_vs_rpm_cof_c_: 1.388e+01 # gf
-thrust_vs_rpm_cof_a_: 1.72106707e-8 # N
-thrust_vs_rpm_cof_b_: -0.00006394916 # N
-thrust_vs_rpm_cof_c_: 0.136116302 # N
-rpm_vs_throttle_linear_coeff_a_: 2.89518953e+01
-rpm_vs_throttle_linear_coeff_b_: -3.04658581e+04
-rpm_vs_throttle_quadratic_coeff_a_: -2.13455563e-02
-rpm_vs_throttle_quadratic_coeff_b_: 9.61348839e+01
-rpm_vs_throttle_quadratic_coeff_c_: -8.20339135e+04
+## hyperlite 1804 motors 4S
+# thrust_vs_rpm_cof_a_: 1.338e-06 # gf
+# thrust_vs_rpm_cof_b_: -4.472e-3 # gf
+# thrust_vs_rpm_cof_c_: 8.051 # gf
+thrust_vs_rpm_cof_a_: 1.31212977e-08 # N
+thrust_vs_rpm_cof_b_: -4.38553e-05 # N
+thrust_vs_rpm_cof_c_: 7.89533392e-02 # N
+rpm_vs_throttle_linear_coeff_a_: 17.6
+rpm_vs_throttle_linear_coeff_b_: -15875.0
+rpm_vs_throttle_quadratic_coeff_a_: -30169.81
+rpm_vs_throttle_quadratic_coeff_b_: 35.43775
+rpm_vs_throttle_quadratic_coeff_c_: -0.004962819
 
 # Maximum values for body rates and roll and pitch angles as they are set
 # on the Flight Controller. The max roll an pitch angles are only active
