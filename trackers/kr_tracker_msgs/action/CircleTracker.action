@@ -3,6 +3,7 @@ float64 ax
 float64 ay
 float64 t
 float64 duration
+float64 ramp_time
 ---
 #result definition
 # time duration of the trajectory

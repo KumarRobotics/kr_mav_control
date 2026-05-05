@@ -65,6 +65,7 @@ class CircleTracker : public kr_trackers_manager::Tracker
   float traj_duration_{0.0f};
   float omega_{0.0f};
     float ramp_up_time_{2.0f};
+  float ramp_down_time_{2.0f};
 
   Eigen::Vector3f offset_pos_{Eigen::Vector3f::Zero()};
   Eigen::Vector3f final_pos_{Eigen::Vector3f::Zero()};
@@ -81,6 +82,7 @@ void CircleTracker::Initialize(rclcpp_lifecycle::LifecycleNode::WeakPtr &parent)
 
   node->declare_parameter("circle_tracker/ramp_up_time", 2.0);
   ramp_up_time_ = static_cast<float>(node->get_parameter("circle_tracker/ramp_up_time").as_double());
+  ramp_down_time_ = ramp_up_time_;
 
   pub_start_ = node->create_publisher<std_msgs::msg::Empty>("~/circle_tracker/traj_start", 10);
   pub_end_ = node->create_publisher<std_msgs::msg::Empty>("~/circle_tracker/traj_end", 10);
@@ -179,24 +181,39 @@ kr_mav_msgs::msg::PositionCommand::ConstSharedPtr CircleTracker::update(const na
   const float t = std::max(0.0f, static_cast<float>((clock_->now() - traj_start_time_).seconds()));
   const float t_eval = std::min(t, traj_duration_);
 
-  const float ramp_t = std::max(0.0f, std::min(ramp_up_time_, traj_duration_));
+  const float ramp_t_up = std::max(0.0f, std::min(ramp_up_time_, traj_duration_));
+  const float ramp_t_down = std::max(0.0f, std::min(ramp_down_time_, traj_duration_));
   float s = 1.0f;
   float s_dot = 0.0f;
   float s_ddot = 0.0f;
   float s_dddot = 0.0f;
 
-  if(ramp_t > 1e-4f && t_eval < ramp_t)
+  if(ramp_t_up > 1e-4f && t_eval < ramp_t_up)
   {
-    const float tau = std::max(0.0f, std::min(1.0f, t_eval / ramp_t));
+    const float tau = std::max(0.0f, std::min(1.0f, t_eval / ramp_t_up));
     const float tau2 = tau * tau;
     const float tau3 = tau2 * tau;
     const float tau4 = tau3 * tau;
 
     // smooth ramp up
     s = 10.0f * tau3 - 15.0f * tau4 + 6.0f * tau4 * tau;
-    s_dot = (30.0f * tau2 - 60.0f * tau3 + 30.0f * tau4) / ramp_t;
-    s_ddot = (60.0f * tau - 180.0f * tau2 + 120.0f * tau3) / (ramp_t * ramp_t);
-    s_dddot = (60.0f - 360.0f * tau + 360.0f * tau2) / (ramp_t * ramp_t * ramp_t);
+    s_dot = (30.0f * tau2 - 60.0f * tau3 + 30.0f * tau4) / ramp_t_up;
+    s_ddot = (60.0f * tau - 180.0f * tau2 + 120.0f * tau3) / (ramp_t_up * ramp_t_up);
+    s_dddot = (60.0f - 360.0f * tau + 360.0f * tau2) / (ramp_t_up * ramp_t_up * ramp_t_up);
+  }
+  else if(ramp_t_down > 1e-4f && t_eval > (traj_duration_ - ramp_t_down))
+  {
+    const float t_remain = traj_duration_ - t_eval;
+    const float tau = std::max(0.0f, std::min(1.0f, t_remain / ramp_t_down));
+    const float tau2 = tau * tau;
+    const float tau3 = tau2 * tau;
+    const float tau4 = tau3 * tau;
+
+    // smooth ramp down: s goes from 1.0 -> 0.0
+    s = 10.0f * tau3 - 15.0f * tau4 + 6.0f * tau4 * tau;
+    s_dot = -(30.0f * tau2 - 60.0f * tau3 + 30.0f * tau4) / ramp_t_down;
+    s_ddot = -(60.0f * tau - 180.0f * tau2 + 120.0f * tau3) / (ramp_t_down * ramp_t_down);
+    s_dddot = -(60.0f - 360.0f * tau + 360.0f * tau2) / (ramp_t_down * ramp_t_down * ramp_t_down);
   }
 
   const float theta = omega_ * t_eval;
@@ -359,6 +376,13 @@ void CircleTracker::handle_accepted_callback(const std::shared_ptr<CircleTracker
   period_ = static_cast<float>(goal->t);
   traj_duration_ = static_cast<float>(goal->duration);
   omega_ = static_cast<float>(2.0 * M_PI / period_);
+
+  // Use ramp_time from goal if provided (> 0), otherwise keep the parameter default
+  if(goal->ramp_time > 0.0)
+  {
+    ramp_up_time_ = static_cast<float>(goal->ramp_time);
+    ramp_down_time_ = ramp_up_time_;
+  }
 
   current_goal_handle_ = goal_handle;
   traj_started_ = false;

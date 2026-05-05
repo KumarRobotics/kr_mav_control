@@ -2,6 +2,7 @@ float32 ax
 float32 ay
 float32 t
 float32 duration
+float32 ramp_time
 ---
 bool success
 string message

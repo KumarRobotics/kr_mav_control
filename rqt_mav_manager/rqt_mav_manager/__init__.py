@@ -104,6 +104,11 @@ class MavManagerUi(Plugin):
     self.circle_duration_spinbox.setSingleStep(0.5)
     self.circle_duration_spinbox.setValue(20.0)
 
+    self.circle_ramp_spinbox = QDoubleSpinBox()
+    self.circle_ramp_spinbox.setRange(0.0, 60.0)
+    self.circle_ramp_spinbox.setSingleStep(0.1)
+    self.circle_ramp_spinbox.setValue(2.0)
+
     self.circle_send_button = QPushButton('Start Circle')
 
     circle_layout.addWidget(QLabel('Ax'), 0, 0)
@@ -114,7 +119,9 @@ class MavManagerUi(Plugin):
     circle_layout.addWidget(self.circle_period_spinbox, 1, 1)
     circle_layout.addWidget(QLabel('Duration [s]'), 1, 2)
     circle_layout.addWidget(self.circle_duration_spinbox, 1, 3)
-    circle_layout.addWidget(self.circle_send_button, 2, 0, 1, 4)
+    circle_layout.addWidget(QLabel('ramp_time [s]'), 2, 0)
+    circle_layout.addWidget(self.circle_ramp_spinbox, 2, 1)
+    circle_layout.addWidget(self.circle_send_button, 3, 0, 1, 4)
 
     lissajous_group = QGroupBox('Lissajous Trajectory')
     lissajous_layout = QGridLayout(lissajous_group)
@@ -430,6 +437,7 @@ class MavManagerUi(Plugin):
     request.ay = self.circle_ay_spinbox.value()
     request.t = self.circle_period_spinbox.value()
     request.duration = self.circle_duration_spinbox.value()
+    request.ramp_time = self.circle_ramp_spinbox.value()
 
     circle_topic = '/' + self.robot_name + '/' + self.mav_node_name + '/circle'
     response = self._call_service(kr_mav_manager.srv.Circle, circle_topic, request)

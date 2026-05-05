@@ -207,6 +207,23 @@ void MAVManager::tracker_done_callback(const LineTrackerGoalHandle::WrappedResul
 void MAVManager::circle_tracker_done_callback(const CircleTrackerGoalHandle::WrappedResult &result)
 {
   RCLCPP_INFO(this->get_logger(), "Circle tracking completed after %2.2f seconds", result.result->duration);
+  
+  // Send LineTracker goal to hold final position
+  auto goal = LineTracker::Goal();
+  goal.x = pos_(0);
+  goal.y = pos_(1);
+  goal.z = pos_(2);
+  goal.yaw = yaw_;
+  goal.relative = false;
+  
+  auto options = rclcpp_action::Client<LineTracker>::SendGoalOptions();
+  options.result_callback = std::bind(&MAVManager::tracker_done_callback, this, _1);
+  line_tracker_min_jerk_client_->async_send_goal(goal, options);
+  
+  if(!this->transition(line_tracker_min_jerk))
+  {
+    RCLCPP_WARN(this->get_logger(), "Failed to transition to LineTrackerMinJerk after circle completion");
+  }
 }
 
 void MAVManager::lissajous_tracker_done_callback(const LissajousTrackerGoalHandle::WrappedResult &result)
@@ -216,6 +233,23 @@ void MAVManager::lissajous_tracker_done_callback(const LissajousTrackerGoalHandl
               "%2.2f, %2.2f).",
               result.result->duration, result.result->length, result.result->x, result.result->y, result.result->z,
               result.result->yaw);
+  
+  // Send LineTracker goal to hold final position
+  auto goal = LineTracker::Goal();
+  goal.x = result.result->x;
+  goal.y = result.result->y;
+  goal.z = result.result->z;
+  goal.yaw = result.result->yaw;
+  goal.relative = false;
+  
+  auto options = rclcpp_action::Client<LineTracker>::SendGoalOptions();
+  options.result_callback = std::bind(&MAVManager::tracker_done_callback, this, _1);
+  line_tracker_min_jerk_client_->async_send_goal(goal, options);
+  
+  if(!this->transition(line_tracker_min_jerk))
+  {
+    RCLCPP_WARN(this->get_logger(), "Failed to transition to LineTrackerMinJerk after lissajous completion");
+  }
 }
 
 void MAVManager::lissajous_adder_done_callback(const LissajousAdderGoalHandle::WrappedResult &result)
@@ -225,6 +259,23 @@ void MAVManager::lissajous_adder_done_callback(const LissajousAdderGoalHandle::W
               "%2.2f, %2.2f).",
               result.result->duration, result.result->length, result.result->x, result.result->y, result.result->z,
               result.result->yaw);
+  
+  // Send LineTracker goal to hold final position
+  auto goal = LineTracker::Goal();
+  goal.x = result.result->x;
+  goal.y = result.result->y;
+  goal.z = result.result->z;
+  goal.yaw = result.result->yaw;
+  goal.relative = false;
+  
+  auto options = rclcpp_action::Client<LineTracker>::SendGoalOptions();
+  options.result_callback = std::bind(&MAVManager::tracker_done_callback, this, _1);
+  line_tracker_min_jerk_client_->async_send_goal(goal, options);
+  
+  if(!this->transition(line_tracker_min_jerk))
+  {
+    RCLCPP_WARN(this->get_logger(), "Failed to transition to LineTrackerMinJerk after lissajous adder completion");
+  }
 }
 
 void MAVManager::poly_tracker_done_callback(const PolyTrackerGoalHandle::WrappedResult &result)
@@ -404,6 +455,7 @@ bool MAVManager::land()
   auto options = rclcpp_action::Client<LineTracker>::SendGoalOptions();
   options.result_callback = std::bind(&MAVManager::tracker_done_callback, this, _1);
   line_tracker_distance_client_->async_send_goal(goal, options);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
 
   return this->transition(line_tracker_distance);
 }
@@ -494,7 +546,7 @@ bool MAVManager::goToYaw(float yaw)
   return this->goTo(pos_(0), pos_(1), pos_(2), yaw);
 }
 
-bool MAVManager::circle(float Ax, float Ay, float T, float duration)
+bool MAVManager::circle(float Ax, float Ay, float T, float duration, float ramp_time)
 {
   if(!this->motors() || status_ != FLYING)
   {
@@ -507,6 +559,7 @@ bool MAVManager::circle(float Ax, float Ay, float T, float duration)
   goal.ay = Ay;
   goal.t = T;
   goal.duration = duration;
+  goal.ramp_time = ramp_time;
 
   auto options = rclcpp_action::Client<CircleTracker>::SendGoalOptions();
   options.result_callback = std::bind(&MAVManager::circle_tracker_done_callback, this, _1);

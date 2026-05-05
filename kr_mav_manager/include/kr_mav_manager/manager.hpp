@@ -105,7 +105,7 @@ class MAVManager : public rclcpp::Node
   // Yaw Control
   bool goToYaw(float);
 
-  bool circle(float Ax, float Ay, float T, float duration);
+  bool circle(float Ax, float Ay, float T, float duration, float ramp_time = 2.0f);
 
   // Lissajous Control
   bool lissajous(float x_amp, float y_amp, float z_amp, float yaw_amp, float x_num_periods, float y_num_periods,

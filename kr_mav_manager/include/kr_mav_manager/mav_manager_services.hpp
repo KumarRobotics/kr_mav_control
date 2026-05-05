@@ -99,7 +99,7 @@ class MAVManagerServices
   void circle_cb(const kr_mav_manager::srv::Circle::Request::SharedPtr req,
                  const kr_mav_manager::srv::Circle::Response::SharedPtr res)
   {
-    res->success = mav->circle(req->ax, req->ay, req->t, req->duration);
+    res->success = mav->circle(req->ax, req->ay, req->t, req->duration, req->ramp_time);
     res->message = "Circling motion";
     if(res->success)
       last_cb_ = "circle";
