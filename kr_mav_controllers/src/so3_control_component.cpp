@@ -79,9 +79,23 @@ void SO3ControlComponent::publishSO3Command()
 
   const Eigen::Vector3f &force = controller_.getComputedForce();
   const Eigen::Quaternionf &orientation = controller_.getComputedOrientation();
-  const Eigen::Vector3f &ang_vel = controller_.getComputedAngularVelocity();
+  const Eigen::Vector3f &ang_vel_ff = controller_.getComputedAngularVelocity();
 
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "desired_yaw_rate: %2.3f", ang_vel(2));
+  // Close the yaw attitude loop: SO3Control only computes feedforward angular velocity
+  // (R_des^T * R_des_dot), which is ~0 when des_yaw_dot=0. Add proportional yaw error
+  // feedback here to correct for this.
+  float e_yaw = des_yaw_ - current_yaw_;
+  if(e_yaw > static_cast<float>(M_PI))
+    e_yaw -= 2.0f * static_cast<float>(M_PI);
+  else if(e_yaw < -static_cast<float>(M_PI))
+    e_yaw += 2.0f * static_cast<float>(M_PI);
+
+  Eigen::Vector3f ang_vel = ang_vel_ff;
+  ang_vel(2) += kr_[2] * e_yaw;  // kr_[2] is rot_z, proportional yaw attitude gain
+
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
+                        "yaw_rate: %2.3f (ff: %2.3f, fb: %2.3f, e_yaw: %2.3f)",
+                        ang_vel(2), ang_vel_ff(2), kr_[2] * e_yaw, e_yaw);
 
   auto so3_command = std::make_unique<kr_mav_msgs::msg::SO3Command>();
   so3_command->header.stamp = this->now();

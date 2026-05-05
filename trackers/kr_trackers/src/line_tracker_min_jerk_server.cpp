@@ -493,8 +493,6 @@ void LineTrackerMinJerk::handle_accepted_callback(const std::shared_ptr<LineTrac
 
   // Pointer to the goal received
   current_goal_handle_ = goal_handle;
-
-  RCLCPP_INFO_STREAM(logger_, "Out of HAC: ");
   // auto msg = goal_handle->get_goal();
 }
 

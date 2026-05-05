@@ -398,12 +398,16 @@ bool MAVManager::takeoff()
     return false;
   }
 
+  double takeoff_vel = 0.2f;
+  double takeoff_accel = 0.1f;
+
   RCLCPP_INFO(this->get_logger(), "Initiating launch sequence...");
 
   auto goal = LineTracker::Goal();
   goal.z = takeoff_height_;
   goal.relative = true;
-  
+  goal.v_des = takeoff_vel;
+  goal.a_des = takeoff_accel;
   auto options = rclcpp_action::Client<LineTracker>::SendGoalOptions();
   options.result_callback = std::bind(&MAVManager::tracker_done_callback, this, _1);
   line_tracker_distance_client_->async_send_goal(goal, options);

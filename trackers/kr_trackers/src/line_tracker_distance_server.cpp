@@ -393,8 +393,6 @@ void LineTrackerDistance::handle_accepted_callback(const std::shared_ptr<LineTra
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   
   current_goal_handle_ = goal_handle;
-  
-  RCLCPP_INFO_STREAM(logger_, "Out of HAC: ");
 }
 
 uint8_t LineTrackerDistance::status()
