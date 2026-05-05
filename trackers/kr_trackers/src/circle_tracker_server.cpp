@@ -64,7 +64,7 @@ class CircleTracker : public kr_trackers_manager::Tracker
   float period_{1.0f};
   float traj_duration_{0.0f};
   float omega_{0.0f};
-    float ramp_up_time_{2.0f};
+  float ramp_up_time_{2.0f};
   float ramp_down_time_{2.0f};
 
   Eigen::Vector3f offset_pos_{Eigen::Vector3f::Zero()};

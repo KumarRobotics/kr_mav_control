@@ -218,12 +218,19 @@ void MAVManager::circle_tracker_done_callback(const CircleTrackerGoalHandle::Wra
   
   auto options = rclcpp_action::Client<LineTracker>::SendGoalOptions();
   options.result_callback = std::bind(&MAVManager::tracker_done_callback, this, _1);
+  options.goal_response_callback =
+      [this](rclcpp_action::ClientGoalHandle<LineTracker>::SharedPtr goal_handle) {
+        if (!goal_handle)
+        {
+          RCLCPP_WARN(this->get_logger(), "LineTrackerMinJerk goal was rejected after circle completion");
+          return;
+        }
+        if (!this->transition(line_tracker_min_jerk))
+        {
+          RCLCPP_WARN(this->get_logger(), "Failed to transition to LineTrackerMinJerk after circle completion");
+        }
+      };
   line_tracker_min_jerk_client_->async_send_goal(goal, options);
-  
-  if(!this->transition(line_tracker_min_jerk))
-  {
-    RCLCPP_WARN(this->get_logger(), "Failed to transition to LineTrackerMinJerk after circle completion");
-  }
 }
 
 void MAVManager::lissajous_tracker_done_callback(const LissajousTrackerGoalHandle::WrappedResult &result)
@@ -244,12 +251,19 @@ void MAVManager::lissajous_tracker_done_callback(const LissajousTrackerGoalHandl
   
   auto options = rclcpp_action::Client<LineTracker>::SendGoalOptions();
   options.result_callback = std::bind(&MAVManager::tracker_done_callback, this, _1);
+  options.goal_response_callback =
+      [this](rclcpp_action::ClientGoalHandle<LineTracker>::SharedPtr goal_handle) {
+        if (!goal_handle)
+        {
+          RCLCPP_WARN(this->get_logger(), "LineTrackerMinJerk goal was rejected after lissajous completion");
+          return;
+        }
+        if (!this->transition(line_tracker_min_jerk))
+        {
+          RCLCPP_WARN(this->get_logger(), "Failed to transition to LineTrackerMinJerk after lissajous completion");
+        }
+      };
   line_tracker_min_jerk_client_->async_send_goal(goal, options);
-  
-  if(!this->transition(line_tracker_min_jerk))
-  {
-    RCLCPP_WARN(this->get_logger(), "Failed to transition to LineTrackerMinJerk after lissajous completion");
-  }
 }
 
 void MAVManager::lissajous_adder_done_callback(const LissajousAdderGoalHandle::WrappedResult &result)
@@ -270,12 +284,19 @@ void MAVManager::lissajous_adder_done_callback(const LissajousAdderGoalHandle::W
   
   auto options = rclcpp_action::Client<LineTracker>::SendGoalOptions();
   options.result_callback = std::bind(&MAVManager::tracker_done_callback, this, _1);
+  options.goal_response_callback =
+      [this](rclcpp_action::ClientGoalHandle<LineTracker>::SharedPtr goal_handle) {
+        if (!goal_handle)
+        {
+          RCLCPP_WARN(this->get_logger(), "LineTrackerMinJerk goal was rejected after lissajous adder completion");
+          return;
+        }
+        if (!this->transition(line_tracker_min_jerk))
+        {
+          RCLCPP_WARN(this->get_logger(), "Failed to transition to LineTrackerMinJerk after lissajous adder completion");
+        }
+      };
   line_tracker_min_jerk_client_->async_send_goal(goal, options);
-  
-  if(!this->transition(line_tracker_min_jerk))
-  {
-    RCLCPP_WARN(this->get_logger(), "Failed to transition to LineTrackerMinJerk after lissajous adder completion");
-  }
 }
 
 void MAVManager::poly_tracker_done_callback(const PolyTrackerGoalHandle::WrappedResult &result)
@@ -454,10 +475,21 @@ bool MAVManager::land()
   std::cout << " landing at " << goal.x << " " << goal.y << " " << goal.z << std::endl;
   auto options = rclcpp_action::Client<LineTracker>::SendGoalOptions();
   options.result_callback = std::bind(&MAVManager::tracker_done_callback, this, _1);
+  options.goal_response_callback =
+      [this](rclcpp_action::ClientGoalHandle<LineTracker>::SharedPtr goal_handle) {
+        if (!goal_handle)
+        {
+          RCLCPP_WARN(this->get_logger(), "LineTrackerDistance goal was rejected for landing");
+          return;
+        }
+        if (!this->transition(line_tracker_distance))
+        {
+          RCLCPP_WARN(this->get_logger(), "Failed to transition to LineTrackerDistance for landing");
+        }
+      };
   line_tracker_distance_client_->async_send_goal(goal, options);
-  std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  return this->transition(line_tracker_distance);
+  return true;
 }
 
 bool MAVManager::goTo(float x, float y, float z, float yaw, float v_des, float a_des, bool relative)
