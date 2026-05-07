@@ -69,11 +69,11 @@ void SO3ControlComponent::publishSO3Command()
   // RCLCPP_INFO_STREAM(this->get_logger(), "des_pos_: " << des_acc_);
   // RCLCPP_INFO_STREAM(this->get_logger(), "des_jrk_: " << des_jrk_);
   // RCLCPP_INFO_STREAM(this->get_logger(), "des_yaw_: " << des_yaw_);
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "des_pos_: %2.3f, %2.3f, %2.3f", des_pos_(0), des_pos_(1), des_pos_(2));
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "des_yaw_: %2.3f", des_yaw_);
+//   RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "des_pos_: %2.3f, %2.3f, %2.3f", des_pos_(0), des_pos_(1), des_pos_(2));
+//   RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "des_yaw_: %2.3f", des_yaw_);
 
   // print current yaw
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "current_yaw_: %2.3f", current_yaw_);
+//   RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "current_yaw_: %2.3f", current_yaw_);
 
   controller_.calculateControl(des_pos_, des_vel_, des_acc_, des_jrk_, des_yaw_, des_yaw_dot_, kx_, kv_, ki, kib);
 
@@ -93,9 +93,9 @@ void SO3ControlComponent::publishSO3Command()
   Eigen::Vector3f ang_vel = ang_vel_ff;
   ang_vel(2) += kr_[2] * e_yaw;  // kr_[2] is rot_z, proportional yaw attitude gain
 
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
-                        "yaw_rate: %2.3f (ff: %2.3f, fb: %2.3f, e_yaw: %2.3f)",
-                        ang_vel(2), ang_vel_ff(2), kr_[2] * e_yaw, e_yaw);
+//   RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
+//                         "yaw_rate: %2.3f (ff: %2.3f, fb: %2.3f, e_yaw: %2.3f)",
+//                         ang_vel(2), ang_vel_ff(2), kr_[2] * e_yaw, e_yaw);
 
   auto so3_command = std::make_unique<kr_mav_msgs::msg::SO3Command>();
   so3_command->header.stamp = this->now();

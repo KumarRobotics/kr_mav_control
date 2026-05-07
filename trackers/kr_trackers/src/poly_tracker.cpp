@@ -355,29 +355,45 @@ rclcpp_action::GoalResponse PolyTracker::goal_callback(const rclcpp_action::Goal
 {
   (void)uuid;
   std::lock_guard<std::recursive_mutex> lock(mutex_);
-  // If another goal is already active, reject new goal unless we want to preempt
+  // If another goal is already active, we will preempt it by accepting the new goal
   if(current_goal_handle_ && current_goal_handle_->is_active())
   {
-    RCLCPP_INFO(logger_, "PolyTracker: rejecting new goal because another is active");
-    return rclcpp_action::GoalResponse::REJECT;
+    RCLCPP_INFO(logger_, "PolyTracker: accepting new goal and will preempt current goal");
   }
 
-  // Accept all other goals
+  // Accept all goals (preemption will be handled in handle_accepted_callback)
   return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
 }
 
 rclcpp_action::CancelResponse PolyTracker::cancel_callback(const std::shared_ptr<PolyTrackerGoalHandle> goal_handle)
 {
-  (void)goal_handle;
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   RCLCPP_INFO(logger_, "PolyTracker goal cancel requested");
-  // allow cancel
+  
+  // If this is the current active goal, abort it
+  if(goal_handle == current_goal_handle_ && current_goal_handle_->is_active())
+  {
+    RCLCPP_INFO(logger_, "PolyTracker: aborting current goal due to cancel request");
+    goal_set_ = false;
+    goal_reached_ = true;
+    active_ = false;
+  }
+  
+  // Allow cancellation
   return rclcpp_action::CancelResponse::ACCEPT;
 }
 
 void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoalHandle> goal_handle)
 {
   std::lock_guard<std::recursive_mutex> lock(mutex_);
+  
+  // If another goal is already active, abort it before accepting the new one
+  if(current_goal_handle_ && current_goal_handle_->is_active())
+  {
+    RCLCPP_INFO(logger_, "PolyTracker: aborting previous goal");
+    current_goal_handle_->abort(std::make_shared<PolyTrackerAction::Result>());
+  }
+  
   // Store the current goal handle so update/activate can reference it
   current_goal_handle_ = goal_handle;
   // The goal payload can be accessed via goal_handle->get_goal()

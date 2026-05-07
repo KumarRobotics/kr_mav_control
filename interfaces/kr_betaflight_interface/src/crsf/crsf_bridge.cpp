@@ -348,10 +348,10 @@ CrsfMsg CrsfBridge::generateCrsfMessageFromSO3Command(const kr_mav_msgs::msg::SO
 
   // remap throttle (1000 to 2000) to crsf (kMinCmd to kMaxCmd)
   uint16_t throttle_cmd = round(((throttle - 1000) / 1000) * (CrsfMsg::kMaxCmd - CrsfMsg::kMinCmd) + CrsfMsg::kMinCmd);
-  RCLCPP_INFO_THROTTLE(
-      logger_, *node_->get_clock(), 1000,
-      "AUTONOMOUS MODE: thrust: %f throttle: %f throttle_cmd: %d",
-      thrust, throttle, throttle_cmd);
+//   RCLCPP_INFO_THROTTLE(
+//       logger_, *node_->get_clock(), 1000,
+//       "AUTONOMOUS MODE: thrust: %f throttle: %f throttle_cmd: %d",
+//       thrust, throttle, throttle_cmd);
   crsf_msg.setThrottleCommand(throttle_cmd);
 
   // convert quaternion to euler
