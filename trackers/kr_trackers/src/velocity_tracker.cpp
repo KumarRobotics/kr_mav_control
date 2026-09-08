@@ -8,6 +8,7 @@
 #include "kr_tracker_msgs/msg/tracker_status.hpp"
 #include "kr_trackers/Tracker.hpp"
 #include "tf2/utils.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include <memory>
 
 class VelocityTracker : public kr_trackers_manager::Tracker

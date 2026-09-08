@@ -56,7 +56,7 @@ class LineTrackerDistance : public kr_trackers_manager::Tracker
   // Distance traveled to get to last goal.
   float current_traj_length_;
 
-  std::shared_ptr<kr_tracker_msgs::action::LineTracker::Result> result_;
+  std::shared_ptr<kr_tracker_msgs::action::LineTracker::Result> result_ = std::make_shared<kr_tracker_msgs::action::LineTracker::Result>();
 };
 
 LineTrackerDistance::LineTrackerDistance() 

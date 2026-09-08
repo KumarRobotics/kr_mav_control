@@ -116,7 +116,7 @@ MAVManager::MAVManager()
   // Publishers
   pub_motors_ = this->create_publisher<std_msgs::msg::Bool>("motors", 10);
   pub_estop_ = this->create_publisher<std_msgs::msg::Empty>("estop", 10);
-  pub_so3_command_ = this->create_publisher<kr_mav_msgs::msg::SO3Command>("so3_controller/so3_cmd", 10);
+  pub_so3_command_ = this->create_publisher<kr_mav_msgs::msg::SO3Command>("so3_cmd", 10);
   pub_trpy_command_ = this->create_publisher<kr_mav_msgs::msg::TRPYCommand>("trpy_cmd", 10);
   pub_position_command_ = this->create_publisher<kr_mav_msgs::msg::PositionCommand>("trackers_manager/cmd", 10);
   pub_status_ = this->create_publisher<std_msgs::msg::UInt8>("~/status", 10);
@@ -127,9 +127,11 @@ MAVManager::MAVManager()
   rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
   auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, 10), qos_profile);
 
-  // Subscribers
-  odom_sub_ =
-      this->create_subscription<nav_msgs::msg::Odometry>("control_odom", qos, std::bind(&MAVManager::odometry_cb, this, _1));
+  odom_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  rclcpp::SubscriptionOptions odom_options;
+  odom_options.callback_group = odom_cb_group_;
+  odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+      "control_odom", qos, std::bind(&MAVManager::odometry_cb, this, _1), odom_options);
   heartbeat_sub_ =
       this->create_subscription<std_msgs::msg::Empty>("heartbeat", qos, std::bind(&MAVManager::heartbeat_cb, this, _1));
   tracker_status_sub_ = this->create_subscription<kr_tracker_msgs::msg::TrackerStatus>(
@@ -167,10 +169,18 @@ MAVManager::MAVManager()
         "quad_decode_msg/output_data", 10, std::bind(&MAVManager::output_data_cb, this, _1));
   }
 
-  if(!this->get_parameter("use_attitide_safety_catch", use_attitude_safety_catch_))
+  if(!this->get_parameter("use_attitude_safety_catch", use_attitude_safety_catch_))
   {
     RCLCPP_WARN(this->get_logger(), "Couldn't find use_attitude_safety_catch param");
   }
+
+  double max_att_angle;
+  if(this->get_parameter("max_attitude_angle", max_att_angle))
+  {
+    max_attitude_angle_ = static_cast<float>(max_att_angle);
+  }
+  RCLCPP_INFO(this->get_logger(), "Attitude safety catch %s, max attitude angle %2.1f deg",
+              use_attitude_safety_catch_ ? "enabled" : "disabled", max_attitude_angle_ * 180.0 / M_PI);
 
   double m;
   if(!this->get_parameter("mass", m))
@@ -193,6 +203,9 @@ MAVManager::MAVManager()
     RCLCPP_ERROR(this->get_logger(), "Could not disable motors");
   }
   construction_done = true;
+  watchdog_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  heartbeat_timer_ =
+      this->create_wall_timer(std::chrono::milliseconds(50), [this]() { this->heartbeat(); }, watchdog_cb_group_);
 }
 
 void MAVManager::tracker_done_callback(const LineTrackerGoalHandle::WrappedResult &result)
@@ -337,6 +350,8 @@ bool MAVManager::sendPolyGoal(const PolyTracker::Goal &goal_msg)
 
 void MAVManager::odometry_cb(nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(odom_state_mutex_);
+
   pos_(0) = msg->pose.pose.position.x;
   pos_(1) = msg->pose.pose.position.y;
   pos_(2) = msg->pose.pose.position.z;
@@ -353,8 +368,6 @@ void MAVManager::odometry_cb(nav_msgs::msg::Odometry::ConstSharedPtr msg)
   yaw_dot_ = msg->twist.twist.angular.z;
 
   last_odom_t_ = this->now();
-
-  this->heartbeat();
 }
 
 bool MAVManager::takeoff()
@@ -945,13 +958,19 @@ void MAVManager::heartbeat()
   // Only need to do monitoring at the specified frequency
   rclcpp::Time t = this->now();
 
-  if (!last_heartbeat_t_initialized_) {
+  if(!last_heartbeat_t_initialized_)
+  {
     last_heartbeat_t_ = t;
+    last_heartbeat_t_initialized_ = true;
     return;
   }
 
+  // 10% tolerance: heartbeat_timer_ fires every 50 ms against a 100 ms budget, so
+  // an exact comparison aliases -- a tick landing at 99 ms is skipped and the next
+  // lands at ~150 ms, yielding ~8 Hz with 150 ms gaps instead of a steady 10 Hz.
+  // The gap sets the watchdog's detection granularity, so keep it tight.
   float dt = (t - last_heartbeat_t_).seconds();
-  if(dt < 1 / freq)
+  if(dt < 0.9f / freq)
     return;
   else
     last_heartbeat_t_ = t;
@@ -961,17 +980,18 @@ void MAVManager::heartbeat()
   status_msg.data = status_;
   pub_status_->publish(status_msg);
 
-  // Checking for odom
+  // Checking for odom. Throttled -- this re-evaluates at 10 Hz and the fault
+  // usually persists for many cycles.
   if(this->motors() && need_odom_ && !this->have_recent_odom())
   {
-    RCLCPP_WARN(this->get_logger(), "No recent odometry!");
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "No recent odometry!");
     this->eland();
   }
 
   // Checking for imu
   if(this->motors() && need_imu_ && !this->have_recent_imu())
   {
-    RCLCPP_WARN(this->get_logger(), "No recent imu!");
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "No recent imu!");
     this->eland();
   }
 
@@ -981,9 +1001,18 @@ void MAVManager::heartbeat()
     // position commands. Maybe put a timeout, but it could be dangerous? Maybe
     // require a call to hover before exiting a safety catch mode?
 
+    // Snapshot the odom-derived attitude under the lock; a torn read here would
+    // produce a garbage geodesic and could trigger a spurious ehover.
+    Quat imu_q_snapshot, odom_q_snapshot;
+    {
+      std::lock_guard<std::mutex> lock(odom_state_mutex_);
+      imu_q_snapshot = imu_q_;
+      odom_q_snapshot = odom_q_;
+    }
+
     // Convert quaternions to tf so we can compute Euler angles, etc
-    tf2::Quaternion imu_q(imu_q_.x(), imu_q_.y(), imu_q_.z(), imu_q_.w());
-    tf2::Quaternion odom_q(odom_q_.x(), odom_q_.y(), odom_q_.z(), odom_q_.w());
+    tf2::Quaternion imu_q(imu_q_snapshot.x(), imu_q_snapshot.y(), imu_q_snapshot.z(), imu_q_snapshot.w());
+    tf2::Quaternion odom_q(odom_q_snapshot.x(), odom_q_snapshot.y(), odom_q_snapshot.z(), odom_q_snapshot.w());
 
     // determine a geodesic angle from hover at the same yaw
     double yaw, pitch, roll;
@@ -1056,11 +1085,27 @@ bool MAVManager::eland()
   // left the ground, we don't want them to spin up faster.
   if(this->motors() && (status_ == FLYING || status_ == ELAND))
   {
-    RCLCPP_WARN(this->get_logger(), "Emergency Land");
+    // Throttled: heartbeat() re-enters this at 10 Hz for as long as the fault
+    // persists, and an unthrottled WARN here buries everything else in the log.
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Emergency Land");
 
     auto goal = kr_mav_msgs::msg::PositionCommand();
     goal.acceleration.z = -0.45f;
-    goal.yaw = yaw_;
+    {
+      std::lock_guard<std::mutex> lock(odom_state_mutex_);
+      // Hold the CURRENT horizontal position. These were previously left at their
+      // default of 0, and SO3ControlComponent uses cmd->position directly as
+      // des_pos_ (there is no ignore-position flag in PositionCommand). So an eland
+      // while hovering away from the origin commanded a flight *to* the origin: in
+      // a recorded flight the vehicle was hovering at y=9.0 m, elanded, and was told
+      // to go to y=0 -- it saturated at the tilt limit and flew 5.5 m across the
+      // room before the pilot took over.
+      goal.position.x = pos_(0);
+      goal.position.y = pos_(1);
+      goal.yaw = yaw_;
+    }
+    // position.z is deliberately left at 0: the resulting negative z error is what
+    // drives the descent, together with acceleration.z above. Unchanged behaviour.
 
     if(this->setPositionCommand(goal))
     {
@@ -1206,6 +1251,7 @@ bool MAVManager::send_transition_request(std::shared_ptr<kr_tracker_msgs::srv::T
 
 bool MAVManager::have_recent_odom()
 {
+  std::lock_guard<std::mutex> lock(odom_state_mutex_);
   return (this->now() - last_odom_t_).seconds() < odom_timeout_;
 }
 

@@ -3,6 +3,7 @@
 // Standard C++ Libraries
 #include <Eigen/Geometry>
 #include <array>
+#include <mutex>
 #include <string>
 
 // ROS2 related
@@ -175,6 +176,12 @@ class MAVManager : public rclcpp::Node
 
   rclcpp::Time last_odom_t_, last_imu_t_, last_output_data_t_, last_heartbeat_t_;
 
+  // Guards the odom-derived state below. odometry_cb runs in odom_cb_group_ while
+  // heartbeat() runs in watchdog_cb_group_, so these are genuinely concurrent.
+  // Only ever held for plain field copies -- never across a blocking service or
+  // action call, which would deadlock the watchdog against the odom stream.
+  mutable std::mutex odom_state_mutex_;
+
   Vec3 pos_, vel_;
   float mass_;
   Quat odom_q_, imu_q_;
@@ -209,6 +216,14 @@ class MAVManager : public rclcpp::Node
   rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr pub_status_;
   rclcpp::Publisher<kr_tracker_msgs::msg::VelocityGoal>::SharedPtr pub_goal_velocity_;
   // pub_goal_yaw_ and pub_pwm_command_ defined in ros1 package but not being used
+
+  // Drives heartbeat() from the wall clock so the odom/imu watchdogs are not
+  // clocked by the very data they are checking for. Both of these live in their
+  // own callback groups so a blocking service/action callback cannot starve the
+  // odom path, and so eland() blocking inside the watchdog cannot starve it either.
+  rclcpp::TimerBase::SharedPtr heartbeat_timer_;
+  rclcpp::CallbackGroup::SharedPtr odom_cb_group_;
+  rclcpp::CallbackGroup::SharedPtr watchdog_cb_group_;
 
   // Subscribers
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;                        // odometry_cb

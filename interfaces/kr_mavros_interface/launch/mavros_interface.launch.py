@@ -1,19 +1,31 @@
+import os
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
 
 def generate_launch_description():
+    # Airframe properties (thrust curve, timeouts, vision_pose rate) live in the
+    # config file rather than being duplicated as launch arguments here and in
+    # neurofly_interface/launch/system_launch.launch.py. Override the file with
+    # config_file:= to fly a different airframe.
+    default_config_file = os.path.join(
+        get_package_share_directory("kr_mavros_interface"),
+        "config",
+        "neurofly.yaml",
+    )
+
     # Declare launch arguments
     robot_arg = DeclareLaunchArgument("robot", default_value="/", description="Robot namespace")
     odom_arg = DeclareLaunchArgument("odom", default_value="odom", description="Odometry topic")
     so3_cmd_arg = DeclareLaunchArgument("so3_cmd", default_value="so3_cmd", description="SO3 command topic")
-    num_props_arg = DeclareLaunchArgument("num_props", default_value="4", description="Number of propellers")
-    kf_arg = DeclareLaunchArgument("kf", default_value="2.137145e-6", description="Thrust coefficient")
-    lin_cof_a_arg = DeclareLaunchArgument("lin_cof_a", default_value="0.0015", description="Linear coefficient A")
-    lin_int_b_arg = DeclareLaunchArgument("lin_int_b", default_value="-1.5334", description="Linear intercept B")
+    config_file_arg = DeclareLaunchArgument(
+        "config_file", default_value=default_config_file, description="SO3CmdToMavros parameter file"
+    )
 
     # Create composable node
     so3_cmd_to_mavros_node = ComposableNode(
@@ -21,15 +33,7 @@ def generate_launch_description():
         plugin="SO3CmdToMavros",
         name="so3cmd_to_mavros",
         namespace=LaunchConfiguration("robot"),
-        parameters=[
-            {
-                "num_props": LaunchConfiguration("num_props"),
-                "kf": LaunchConfiguration("kf"),
-                "lin_cof_a": LaunchConfiguration("lin_cof_a"),
-                "lin_int_b": LaunchConfiguration("lin_int_b"),
-                "so3_cmd_timeout": 0.25,
-            }
-        ],
+        parameters=[LaunchConfiguration("config_file")],
         remappings=[
             ("~/odom", LaunchConfiguration("odom")),
             ("~/so3_cmd", LaunchConfiguration("so3_cmd")),
@@ -54,10 +58,7 @@ def generate_launch_description():
             robot_arg,
             odom_arg,
             so3_cmd_arg,
-            num_props_arg,
-            kf_arg,
-            lin_cof_a_arg,
-            lin_int_b_arg,
+            config_file_arg,
             container,
         ]
     )

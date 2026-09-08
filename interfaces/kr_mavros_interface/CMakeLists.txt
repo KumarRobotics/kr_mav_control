@@ -48,7 +48,7 @@ else()
     $<INSTALL_INTERFACE:include>)
 
   # Register component
-  rclcpp_components_register_nodes(${PROJECT_NAME} "kr_mavros_interface::SO3CmdToMavros")
+  rclcpp_components_register_nodes(${PROJECT_NAME} "SO3CmdToMavros")
 
   # Install
   install(TARGETS ${PROJECT_NAME}
@@ -57,6 +57,7 @@ else()
     RUNTIME DESTINATION bin)
 
   install(DIRECTORY launch/ DESTINATION share/${PROJECT_NAME}/launch)
+  install(DIRECTORY config/ DESTINATION share/${PROJECT_NAME}/config)
 endif()
 
 ament_package()

@@ -64,7 +64,7 @@ class LineTrackerMinJerk : public kr_trackers_manager::Tracker
   float goal_yaw_, yaw_coeffs_[4];
 
   float current_traj_length_;
-  std::shared_ptr<kr_tracker_msgs::action::LineTracker::Result> result_;
+  std::shared_ptr<kr_tracker_msgs::action::LineTracker::Result> result_ = std::make_shared<kr_tracker_msgs::action::LineTracker::Result>();
 };
 
 LineTrackerMinJerk::LineTrackerMinJerk(void)

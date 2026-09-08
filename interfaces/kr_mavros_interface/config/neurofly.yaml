@@ -1,0 +1,17 @@
+/**/so3cmd_to_mavros:
+  ros__parameters:
+
+    num_props: 4
+    thrust_vs_rpm_cof_a: 1.31212977e-08
+    thrust_vs_rpm_cof_b: -4.38553e-05
+    thrust_vs_rpm_cof_c: 7.89533392e-02
+
+    lin_cof_a: 5.681818181818182e-05
+    lin_int_b: -0.09801136363636374
+
+    so3_cmd_timeout: 0.25    
+    odom_timeout: 1.0
+
+    idle_hold_max_force: 1.0
+    
+    vision_pose_rate: 50.0
