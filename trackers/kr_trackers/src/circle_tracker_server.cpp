@@ -213,7 +213,7 @@ kr_mav_msgs::msg::PositionCommand::ConstSharedPtr CircleTracker::update(const na
     // smooth ramp down: s goes from 1.0 -> 0.0
     s = 10.0f * tau3 - 15.0f * tau4 + 6.0f * tau4 * tau;
     s_dot = -(30.0f * tau2 - 60.0f * tau3 + 30.0f * tau4) / ramp_t_down;
-    s_ddot = -(60.0f * tau - 180.0f * tau2 + 120.0f * tau3) / (ramp_t_down * ramp_t_down);
+    s_ddot = (60.0f * tau - 180.0f * tau2 + 120.0f * tau3) / (ramp_t_down * ramp_t_down);
     s_dddot = -(60.0f - 360.0f * tau + 360.0f * tau2) / (ramp_t_down * ramp_t_down * ramp_t_down);
   }
 
