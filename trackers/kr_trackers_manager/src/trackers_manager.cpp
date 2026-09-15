@@ -164,9 +164,9 @@ void TrackersManager::transition_callback(const kr_tracker_msgs::srv::Transition
   // TODO: change arguments of Activate function to take in a ConstSharedPtr
   if(!it->second->Activate(cmd_))
   {
-    res->success = true;
+    res->success = false;
     res->message = std::string("Failed to activate tracker ") + req->tracker + std::string(", cannot transition");
-    RCLCPP_INFO_STREAM(this->get_logger(), res->message);
+    RCLCPP_WARN_STREAM(this->get_logger(), res->message);
     return;
   }
   RCLCPP_INFO(this->get_logger(), "TRANSITION CALLBACK 2:");

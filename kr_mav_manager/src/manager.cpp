@@ -343,9 +343,24 @@ bool MAVManager::sendPolyGoal(const PolyTracker::Goal &goal_msg)
   auto options = rclcpp_action::Client<PolyTracker>::SendGoalOptions();
   options.result_callback = std::bind(&MAVManager::poly_tracker_done_callback, this, _1);
 
+  // Transition only AFTER the goal is accepted
+  options.goal_response_callback =
+      [this](rclcpp_action::ClientGoalHandle<PolyTracker>::SharedPtr goal_handle) {
+        if(!goal_handle)
+        {
+          RCLCPP_WARN(this->get_logger(), "PolyTracker goal was rejected");
+          return;
+        }
+        if(!this->transition(poly_tracker_str))
+        {
+          RCLCPP_WARN(this->get_logger(), "Failed to transition to PolyTracker after goal acceptance");
+        }
+      };
+
   poly_tracker_client_->async_send_goal(goal, options);
 
-  return this->transition(poly_tracker_str);
+  // The goal is on its way; the transition is reported by the callback above.
+  return true;
 }
 
 void MAVManager::odometry_cb(nav_msgs::msg::Odometry::ConstSharedPtr msg)
