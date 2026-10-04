@@ -473,9 +473,14 @@ class MavManagerUi(Plugin):
     self.route_status_label.setText(response.message or (
       'Route started' if response.success else 'Route start failed'
     ))
-    log = (self._context.node.get_logger().info if response.success
-           else self._context.node.get_logger().warning)
-    log(f'Start route: success={response.success}, message={response.message}')
+    if response.success:
+      self._context.node.get_logger().info(
+        f'Start route: success=True, message={response.message}'
+      )
+    else:
+      self._context.node.get_logger().warning(
+        f'Start route: success=False, message={response.message}'
+      )
 
   def _on_lissajous_pressed(self):
     request = kr_mav_manager.srv.Lissajous.Request()
