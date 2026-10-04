@@ -77,9 +77,20 @@ class MavManagerUi(Plugin):
     self.circle_send_button.pressed.connect(self._on_circle_pressed)
     self.lissajous_send_button.pressed.connect(self._on_lissajous_pressed)
     self.stop_traj_button.pressed.connect(self._on_hover_pressed)
+    self.route_start_button.pressed.connect(self._on_route_start_pressed)
 
   def _build_trajectory_tab(self, parent_widget):
     root_layout = QVBoxLayout(parent_widget)
+
+    route_group = QGroupBox('Planner Route')
+    route_layout = QVBoxLayout(route_group)
+    route_layout.addWidget(QLabel(
+      'Start the route configured in plan_manage with obstacle-aware replanning.'
+    ))
+    self.route_start_button = QPushButton('Start Configured Route')
+    self.route_status_label = QLabel('Ready')
+    route_layout.addWidget(self.route_start_button)
+    route_layout.addWidget(self.route_status_label)
 
     circle_group = QGroupBox('Circle Trajectory')
     circle_layout = QGridLayout(circle_group)
@@ -212,6 +223,7 @@ class MavManagerUi(Plugin):
     lissajous_layout.addWidget(self.lissajous_send_button, 4, 0, 1, 6)
     lissajous_layout.addWidget(self.stop_traj_button, 5, 0, 1, 6)
 
+    root_layout.addWidget(route_group)
     root_layout.addWidget(circle_group)
     root_layout.addWidget(lissajous_group)
 
@@ -444,6 +456,27 @@ class MavManagerUi(Plugin):
     if response is not None:
       print('Circle: ', response.success, response.message)
 
+  def _on_route_start_pressed(self):
+    robot_namespace = self.robot_name.strip('/')
+    route_topic = f'/{robot_namespace}/start_route' if robot_namespace else '/start_route'
+    self.route_status_label.setText(f'Calling {route_topic}...')
+
+    response = self._call_service(
+      std_srvs.srv.Trigger,
+      route_topic,
+      std_srvs.srv.Trigger.Request(),
+    )
+    if response is None:
+      self.route_status_label.setText(f'Service unavailable: {route_topic}')
+      return
+
+    self.route_status_label.setText(response.message or (
+      'Route started' if response.success else 'Route start failed'
+    ))
+    log = (self._context.node.get_logger().info if response.success
+           else self._context.node.get_logger().warning)
+    log(f'Start route: success={response.success}, message={response.message}')
+
   def _on_lissajous_pressed(self):
     request = kr_mav_manager.srv.Lissajous.Request()
     request.x_amp = self.liss_x_amp_spinbox.value()
@@ -482,4 +515,3 @@ class MavManagerUi(Plugin):
     value = instance_settings.value('node_name', "mav_services")
     self.mav_node_name = value
     self._widget.node_name_line_edit.setText(value)
-
