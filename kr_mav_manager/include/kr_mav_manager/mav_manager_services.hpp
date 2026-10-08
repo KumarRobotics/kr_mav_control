@@ -211,7 +211,18 @@ class MAVManagerServices
   {
     latest_poly_goal_ = *goal;
     have_poly_goal_ = true;
-    RCLCPP_DEBUG(mav->get_logger(), "Received PolyTracker goal (stored)");
+    // Forward exactly the goal delivered by this subscription callback. The
+    // previous publish-then-Trigger handshake could run the service before
+    // this callback and resend the preceding trajectory during rapid replans.
+    if(mav->sendPolyGoal(*goal))
+    {
+      last_cb_ = "poly_tracker";
+      RCLCPP_DEBUG(mav->get_logger(), "Received and forwarded PolyTracker goal");
+    }
+    else
+    {
+      RCLCPP_WARN(mav->get_logger(), "Received PolyTracker goal but could not forward it");
+    }
   }
 
   // Constructor
@@ -251,7 +262,8 @@ class MAVManagerServices
     estop_srv_ =
         mav->create_service<std_srvs::srv::Trigger>("~/estop", std::bind(&MAVManagerServices::estop_cb, this, _1, _2));
 
-    // Subscribe to planner published PolyTracker goals (published on topic "tracker_cmd")
+    // Planner goals are forwarded immediately by the callback. The Trigger
+    // service remains available for manually retrying the most recent goal.
     poly_goal_sub_ = mav->create_subscription<kr_tracker_msgs::action::PolyTracker::Goal>(
         "tracker_cmd", 10, std::bind(&MAVManagerServices::poly_goal_cb, this, std::placeholders::_1));
     have_poly_goal_ = false;

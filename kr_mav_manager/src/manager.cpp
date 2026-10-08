@@ -335,7 +335,15 @@ bool MAVManager::sendPolyGoal(const PolyTracker::Goal &goal_msg)
 {
   if(!this->motors() || status_ != FLYING)
   {
-    RCLCPP_WARN(this->get_logger(), "The robot must be flying before sending a PolyTracker goal.");
+    RCLCPP_WARN(this->get_logger(),
+                "Cannot send PolyTracker goal: motors=%s, flight_status=%u (FLYING=%u)",
+                this->motors() ? "on" : "off", static_cast<unsigned>(status_),
+                static_cast<unsigned>(FLYING));
+    return false;
+  }
+  if(!poly_tracker_client_->action_server_is_ready())
+  {
+    RCLCPP_WARN(this->get_logger(), "Cannot send PolyTracker goal: action server is not ready");
     return false;
   }
 

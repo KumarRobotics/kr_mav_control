@@ -10,6 +10,8 @@
 
 #include <Eigen/Eigen>
 #include <traj_data.hpp>
+#include <algorithm>
+#include <cmath>
 #include <memory>
 #include <mutex>
 
@@ -19,7 +21,7 @@ struct TrajData
   /* info of generated traj */
   double traj_dur_ = 0, traj_yaw_dur_ = 0;
   rclcpp::Time start_time_;
-  int dim_;
+  int dim_ = 0;
 
 
   traj_opt::Trajectory2D traj_2d_;
@@ -66,6 +68,7 @@ class PolyTracker : public kr_trackers_manager::Tracker
   std::recursive_mutex mutex_;
 
   bool pos_set_, goal_set_, goal_reached_, active_;
+  bool goal_accept_pending_ = false;
   bool traj_set_ = false;
   bool yaw_set_  = false;
 
@@ -73,7 +76,7 @@ class PolyTracker : public kr_trackers_manager::Tracker
 
   /*** yaw set up ***/
   // intial rotation
-  double init_final_yaw_, init_dyaw_, init_yaw_time_;
+  double init_final_yaw_;
   rclcpp::Time time_last_;
 
 
@@ -81,6 +84,7 @@ class PolyTracker : public kr_trackers_manager::Tracker
   double time_forward_ = 1.5;
   double max_dyaw_ = 0.5 * M_PI;
   double max_ddyaw_ = M_PI;
+  double initial_yaw_tolerance_ = 0.1;
 
   std::pair<double, double> calculate_yaw(Eigen::Vector3d &dir, double dt);
   double range(double angle);
@@ -98,6 +102,32 @@ void PolyTracker::Initialize(rclcpp_lifecycle::LifecycleNode::WeakPtr &parent)
   logger_ = node->get_logger();
   clock_ = node->get_clock();
 
+  node->declare_parameter("poly_tracker/yaw_lookahead", 1.5);
+  node->declare_parameter("poly_tracker/max_yaw_rate", 0.5 * M_PI);
+  node->declare_parameter("poly_tracker/max_yaw_acceleration", M_PI);
+  node->declare_parameter("poly_tracker/initial_yaw_tolerance", 0.1);
+
+  time_forward_ = node->get_parameter("poly_tracker/yaw_lookahead").as_double();
+  max_dyaw_ = node->get_parameter("poly_tracker/max_yaw_rate").as_double();
+  max_ddyaw_ = node->get_parameter("poly_tracker/max_yaw_acceleration").as_double();
+  initial_yaw_tolerance_ = node->get_parameter("poly_tracker/initial_yaw_tolerance").as_double();
+  if(!std::isfinite(initial_yaw_tolerance_) || initial_yaw_tolerance_ <= 0.0 ||
+     initial_yaw_tolerance_ > M_PI)
+  {
+    RCLCPP_WARN(logger_, "Invalid initial yaw tolerance; using 0.1 rad");
+    initial_yaw_tolerance_ = 0.1;
+  }
+  if(time_forward_ <= 0.0 || max_dyaw_ <= 0.0 || max_ddyaw_ <= 0.0)
+  {
+    RCLCPP_WARN(logger_, "Invalid PolyTracker yaw limits; using built-in defaults");
+    time_forward_ = 1.5;
+    max_dyaw_ = 0.5 * M_PI;
+    max_ddyaw_ = M_PI;
+  }
+  RCLCPP_INFO(logger_,
+              "PolyTracker yaw settings: lookahead=%.2f s, max_rate=%.2f rad/s, max_acceleration=%.2f rad/s^2",
+              time_forward_, max_dyaw_, max_ddyaw_);
+
   // Set up the action server.
   tracker_server_ = rclcpp_action::create_server<PolyTrackerAction>(
     node,
@@ -108,18 +138,24 @@ void PolyTracker::Initialize(rclcpp_lifecycle::LifecycleNode::WeakPtr &parent)
   );
 
   current_trajectory_.reset(new TrajData);
-  next_trajectory_.reset(new TrajData);
+  next_trajectory_.reset();
   RCLCPP_WARN(logger_, "PolyTracker initialized!");
 }
 
 bool PolyTracker::Activate(const kr_mav_msgs::msg::PositionCommand::ConstSharedPtr cmd)
 {
+  (void)cmd;
+  std::lock_guard<std::recursive_mutex> lock(mutex_);
   // Only allow activation if a goal has been set
   if(pos_set_)
   {
-    if(!current_goal_handle_ || !current_goal_handle_->is_active())
+    // The action client can receive its acceptance response just before the
+    // server's accepted callback installs current_goal_handle_. Allow that
+    // short pending window; update() will hold position until parsing finishes.
+    if((!current_goal_handle_ || !current_goal_handle_->is_active()) &&
+       !goal_accept_pending_)
     {
-      RCLCPP_WARN(logger_, "TrajectoryTracker::Activate: goal_set_ is true but action server has no active goal - not activating.");
+      RCLCPP_WARN(logger_, "PolyTracker::Activate: no active or pending goal");
       active_ = false;
       return false;
     }
@@ -140,6 +176,7 @@ void PolyTracker::Deactivate(void)
   }
 
   goal_set_ = false;
+  goal_accept_pending_ = false;
   active_ = false;
 }
 
@@ -160,6 +197,7 @@ double PolyTracker::range(double angle)
 
 kr_mav_msgs::msg::PositionCommand::ConstSharedPtr PolyTracker::update(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
+  std::lock_guard<std::recursive_mutex> lock(mutex_);
   pos_set_ = true;
 
   cur_pos_(0) = msg->pose.pose.position.x;
@@ -211,22 +249,21 @@ kr_mav_msgs::msg::PositionCommand::ConstSharedPtr PolyTracker::update(const nav_
   {
     double dyaw = range(init_final_yaw_ - cur_yaw_);
 
-    if(std::abs(dyaw) < 0.5 || init_yaw_time_ > 2.0)
+    if(std::abs(dyaw) < initial_yaw_tolerance_)
     {
       yaw_set_ = false;
-      // ROS_INFO(" yaw_set finished ");
-      time_last_ = time_now;
-      return std::make_shared<kr_mav_msgs::msg::PositionCommand>(position_cmd_);
+      yaw_yawdot = {init_final_yaw_, 0.0};
+      RCLCPP_INFO(logger_, "Initial yaw aligned (error %.3f rad)", dyaw);
     }
-
-    double yaw_temp = cur_yaw_ + (time_now - time_last_).seconds() * init_dyaw_;
-    double desired_yaw =
-        init_final_yaw_ - cur_yaw_ >= 0 ? std::min(yaw_temp, init_final_yaw_) : std::max(yaw_temp, init_final_yaw_);
-
-    yaw_yawdot.first = desired_yaw;
-    yaw_yawdot.second = init_dyaw_;
-
-    init_yaw_time_ += (time_now - time_last_).seconds();
+    else
+    {
+      // Use the measured shortest-angle error on every update. Clamping in
+      // wrapped angle space avoids choosing the wrong direction across +/-pi.
+      const double dt = std::max(0.0, (time_now - time_last_).seconds());
+      const double yaw_rate = std::clamp(dyaw, -max_dyaw_, max_dyaw_);
+      const double yaw_step = std::clamp(dt * yaw_rate, -std::abs(dyaw), std::abs(dyaw));
+      yaw_yawdot = {range(cur_yaw_ + yaw_step), yaw_rate};
+    }
   }
   else if(traj_set_)
   {
@@ -354,6 +391,7 @@ kr_mav_msgs::msg::PositionCommand::ConstSharedPtr PolyTracker::update(const nav_
 rclcpp_action::GoalResponse PolyTracker::goal_callback(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const PolyTrackerAction::Goal> goal)
 {
   (void)uuid;
+  (void)goal;
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   // If another goal is already active, we will preempt it by accepting the new goal
   if(current_goal_handle_ && current_goal_handle_->is_active())
@@ -361,6 +399,9 @@ rclcpp_action::GoalResponse PolyTracker::goal_callback(const rclcpp_action::Goal
     RCLCPP_INFO(logger_, "PolyTracker: accepting new goal and will preempt current goal");
   }
 
+  // Mark the acceptance window before returning the response. MAV Manager may
+  // request tracker activation before handle_accepted_callback() runs.
+  goal_accept_pending_ = true;
   // Accept all goals (preemption will be handled in handle_accepted_callback)
   return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
 }
@@ -375,6 +416,7 @@ rclcpp_action::CancelResponse PolyTracker::cancel_callback(const std::shared_ptr
   {
     RCLCPP_INFO(logger_, "PolyTracker: aborting current goal due to cancel request");
     goal_set_ = false;
+    goal_accept_pending_ = false;
     goal_reached_ = true;
     active_ = false;
   }
@@ -396,6 +438,7 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
   
   // Store the current goal handle so update/activate can reference it
   current_goal_handle_ = goal_handle;
+  goal_accept_pending_ = false;
   // The goal payload can be accessed via goal_handle->get_goal()
   auto goal = goal_handle->get_goal();
 
@@ -404,24 +447,19 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
   {
     goal_set_ = true;
     goal_reached_ = false;
-    init_final_yaw_ = goal->final_yaw;
-    init_dyaw_ = goal->final_yaw - cur_yaw_;
-    if(goal->final_yaw < 0 && std::abs(init_dyaw_ + 2 * M_PI) < std::abs(init_dyaw_))
-    {
-      init_dyaw_ = init_dyaw_ + 2 * M_PI;
-    }
-    else if(cur_yaw_ < 0 && std::abs(init_dyaw_ - 2 * M_PI) < std::abs(init_dyaw_))
-    {
-      init_dyaw_ = init_dyaw_ - 2 * M_PI;
-    }
-    init_dyaw_ = range(init_dyaw_);
-    if(init_dyaw_ > max_dyaw_) init_dyaw_ = max_dyaw_;
-    else if(init_dyaw_ < -max_dyaw_) init_dyaw_ = -max_dyaw_;
+    init_final_yaw_ = range(goal->final_yaw);
+    // A new yaw-only goal holds here, and must not resume an old trajectory.
+    traj_set_ = false;
+    next_trajectory_.reset();
+    have_last_goal_ = false;
+    last_pos_ = cur_pos_;
+    time_last_ = clock_->now();
     yaw_set_ = true;
-    init_yaw_time_ = 0.0;
   }
   else if(goal->seg_x.size() > 0 || goal->knots.size() > 0)
   {
+    // The planner has measured yaw alignment before sending translation.
+    yaw_set_ = false;
     // continuous trajectory: reuse original parsing logic but with goal message
     goal_set_ = true;
     goal_reached_ = false;
@@ -559,6 +597,14 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
 
     next_trajectory_->start_time_ = goal->t_start;
     next_trajectory_->traj_dur_ = total_duration;
+    const rclcpp::Time receive_time = clock_->now();
+    if(next_trajectory_->start_time_.nanoseconds() == 0 ||
+       (receive_time - next_trajectory_->start_time_).seconds() >= total_duration)
+    {
+      RCLCPP_WARN(logger_,
+                  "PolyTracker received an expired trajectory start time; rebasing it to receipt time");
+      next_trajectory_->start_time_ = receive_time;
+    }
     switch(next_trajectory_->dim_)
     {
       case 2:
@@ -577,6 +623,7 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
   }
   else if(goal->vel_pts.size() > 0)
   {
+    yaw_set_ = false;
     double interval = goal->dt;
     int Num = goal->n;
     std::vector<Eigen::VectorXd> discrete_states;
@@ -593,6 +640,14 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
     next_trajectory_->dim_ = 1;
     next_trajectory_->start_time_ = goal->t_start;
     next_trajectory_->traj_dur_ = interval * (Num - 1);
+    const rclcpp::Time receive_time = clock_->now();
+    if(next_trajectory_->start_time_.nanoseconds() == 0 ||
+       (receive_time - next_trajectory_->start_time_).seconds() >= next_trajectory_->traj_dur_)
+    {
+      RCLCPP_WARN(logger_,
+                  "PolyTracker received expired discrete states; rebasing them to receipt time");
+      next_trajectory_->start_time_ = receive_time;
+    }
     traj_set_ = true;
     RCLCPP_INFO(logger_, "PolyTracker: Set the discrete trajectory");
   }
@@ -605,6 +660,13 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
 /////////   some helper functions
 std::pair<double, double> PolyTracker::calculate_yaw(Eigen::Vector3d &dir, double dt)
 {
+  if(!std::isfinite(dt) || dt <= 1.0e-6)
+  {
+    return std::make_pair(last_yaw_, last_yawdot_);
+  }
+  // A delayed odometry callback should not become one large heading step.
+  if(dt > 0.1) dt = 0.1;
+
   std::pair<double, double> yaw_yawdot(0, 0);
   double yaw_temp = dir.norm() > 0.1 ? atan2(dir(1), dir(0)) : last_yaw_;
   double yawdot = 0;
