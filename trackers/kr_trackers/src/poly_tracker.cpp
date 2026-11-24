@@ -197,6 +197,8 @@ double PolyTracker::range(double angle)
 
 kr_mav_msgs::msg::PositionCommand::ConstSharedPtr PolyTracker::update(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
+  // The goal callbacks run on other threads: hold the lock while reading the
+  // trajectories.
   std::lock_guard<std::recursive_mutex> lock(mutex_);
   pos_set_ = true;
 
@@ -469,7 +471,9 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
     std::vector<traj_opt::Piece<2>> segs_2d;
     std::vector<traj_opt::Piece<3>> segs_3d;
     std::vector<traj_opt::Piece<4>> segs_4d;
-    next_trajectory_.reset(new TrajData);
+    // Built aside and published whole below: update() must never see a
+    // half-built trajectory.
+    auto next = std::make_shared<TrajData>();
 
     if(goal->cpts_status == 1)
     {
@@ -480,18 +484,18 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
     {
       if(goal->yaw_pts.size() <= 0)
       {
-        next_trajectory_->dim_ = 3;
+        next->dim_ = 3;
       }
       else
       {
-        next_trajectory_->dim_ = 4;
+        next->dim_ = 4;
       }
 
       size_t N = goal->pos_pts.size() - 1;
       size_t M = goal->knots.size();
       size_t degree = M - N - 1;
 
-      Eigen::MatrixXd pos_pts(N + 1, next_trajectory_->dim_);
+      Eigen::MatrixXd pos_pts(N + 1, next->dim_);
       Eigen::VectorXd knots(M);
       for(size_t i = 0; i < M; ++i) knots(i) = goal->knots[i];
       for(size_t i = 0; i <= N; ++i)
@@ -501,11 +505,11 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
         pos_pts(i, 2) = goal->pos_pts[i].z;
       }
 
-      if(next_trajectory_->dim_ == 3)
+      if(next->dim_ == 3)
       {
         for(size_t i = 0; i < M - 2 * degree; i++)
         {
-          Eigen::MatrixXd cpts(degree + 1, next_trajectory_->dim_);
+          Eigen::MatrixXd cpts(degree + 1, next->dim_);
           for(size_t j = 0; j <= degree; j++) cpts.row(j) = pos_pts.row(i + j);
           double dt = knots(degree + i + 1) - knots(degree + i);
           traj_opt::Piece<3> seg(traj_opt::BEZIER, cpts, dt, degree);
@@ -513,12 +517,12 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
           total_duration += dt;
         }
       }
-      if(next_trajectory_->dim_ == 4)
+      if(next->dim_ == 4)
       {
         for(size_t i = 0; i < goal->yaw_pts.size(); ++i) pos_pts(i, 3) = goal->yaw_pts[i];
         for(size_t i = 0; i < M - 2 * degree; i++)
         {
-          Eigen::MatrixXd cpts(degree + 1, next_trajectory_->dim_);
+          Eigen::MatrixXd cpts(degree + 1, next->dim_);
           for(size_t j = 0; j <= degree; j++) cpts.row(j) = pos_pts.row(i + j);
           double dt = knots(degree + i + 1) - knots(degree + i);
           traj_opt::Piece<4> seg(traj_opt::BEZIER, cpts, dt, degree);
@@ -532,16 +536,16 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
       size_t deg = goal->seg_x[0].degree;
       if(goal->seg_z.size() <= 0)
       {
-        next_trajectory_->dim_ = 2;
+        next->dim_ = 2;
       }
       else if(goal->seg_yaw.size() <= 0)
       {
-        next_trajectory_->dim_ = 3;
+        next->dim_ = 3;
       }
       else if(goal->separate_yaw)
       {
-        next_trajectory_->dim_ = 3;
-        next_trajectory_->has_solo_yaw_traj_ = true;
+        next->dim_ = 3;
+        next->has_solo_yaw_traj_ = true;
         for(size_t i = 0; i < goal->seg_yaw.size(); ++i)
         {
           Eigen::MatrixXd Coeffs_yaw(1, deg + 1);
@@ -551,13 +555,17 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
           traj_opt::Piece<1> seg(traj_opt::STANDARD, Coeffs_yaw, dt);
           segs_1d.push_back(seg);
         }
-        next_trajectory_->traj_yaw_ = traj_opt::Trajectory1D(segs_1d, total_yaw_duration);
-        next_trajectory_->traj_yaw_dur_ = total_yaw_duration;
+        next->traj_yaw_ = traj_opt::Trajectory1D(segs_1d, total_yaw_duration);
+        next->traj_yaw_dur_ = total_yaw_duration;
+      }
+      else
+      {
+        next->dim_ = 4;  // x, y, z, yaw on the same pieces
       }
 
       for(size_t i = 0; i < goal->seg_x.size(); ++i)
       {
-        Eigen::MatrixXd Coeffs(next_trajectory_->dim_, deg + 1);
+        Eigen::MatrixXd Coeffs(next->dim_, deg + 1);
         float dt = goal->seg_x[i].dt;
         total_duration += dt;
         for(size_t j = 0; j < deg + 1; ++j)
@@ -565,7 +573,7 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
           Coeffs(0, j) = goal->seg_x[i].coeffs[j];
           Coeffs(1, j) = goal->seg_y[i].coeffs[j];
         }
-        switch(next_trajectory_->dim_)
+        switch(next->dim_)
         {
           case 2:
           {
@@ -595,28 +603,29 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
       }
     }
 
-    next_trajectory_->start_time_ = goal->t_start;
-    next_trajectory_->traj_dur_ = total_duration;
+    next->start_time_ = goal->t_start;
+    next->traj_dur_ = total_duration;
     const rclcpp::Time receive_time = clock_->now();
-    if(next_trajectory_->start_time_.nanoseconds() == 0 ||
-       (receive_time - next_trajectory_->start_time_).seconds() >= total_duration)
+    if(next->start_time_.nanoseconds() == 0 ||
+       (receive_time - next->start_time_).seconds() >= total_duration)
     {
       RCLCPP_WARN(logger_,
                   "PolyTracker received an expired trajectory start time; rebasing it to receipt time");
-      next_trajectory_->start_time_ = receive_time;
+      next->start_time_ = receive_time;
     }
-    switch(next_trajectory_->dim_)
+    switch(next->dim_)
     {
       case 2:
-        next_trajectory_->traj_2d_ = traj_opt::Trajectory2D(segs_2d, total_duration);
+        next->traj_2d_ = traj_opt::Trajectory2D(segs_2d, total_duration);
         break;
       case 3:
-        next_trajectory_->traj_3d_ = traj_opt::Trajectory3D(segs_3d, total_duration);
+        next->traj_3d_ = traj_opt::Trajectory3D(segs_3d, total_duration);
         break;
       case 4:
-        next_trajectory_->traj_with_yaw_ = traj_opt::Trajectory4D(segs_4d, total_duration);
+        next->traj_with_yaw_ = traj_opt::Trajectory4D(segs_4d, total_duration);
         break;
     }
+    next_trajectory_ = next;
     traj_set_ = true;
     RCLCPP_WARN(logger_, "[Poly tracker] Duration: %f", total_duration);
     RCLCPP_INFO(logger_, "PolyTracker: Set the poly trajectory");
@@ -627,6 +636,7 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
     double interval = goal->dt;
     int Num = goal->n;
     std::vector<Eigen::VectorXd> discrete_states;
+    auto next = std::make_shared<TrajData>();
     for(size_t j = 0; j < static_cast<size_t>(Num); ++j)
     {
       Eigen::VectorXd state(9);
@@ -636,18 +646,19 @@ void PolyTracker::handle_accepted_callback(const std::shared_ptr<PolyTrackerGoal
       discrete_states.push_back(state);
     }
 
-    next_trajectory_->traj_discrete_ = traj_opt::DiscreteStates(interval, Num, discrete_states);
-    next_trajectory_->dim_ = 1;
-    next_trajectory_->start_time_ = goal->t_start;
-    next_trajectory_->traj_dur_ = interval * (Num - 1);
+    next->traj_discrete_ = traj_opt::DiscreteStates(interval, Num, discrete_states);
+    next->dim_ = 1;
+    next->start_time_ = goal->t_start;
+    next->traj_dur_ = interval * (Num - 1);
     const rclcpp::Time receive_time = clock_->now();
-    if(next_trajectory_->start_time_.nanoseconds() == 0 ||
-       (receive_time - next_trajectory_->start_time_).seconds() >= next_trajectory_->traj_dur_)
+    if(next->start_time_.nanoseconds() == 0 ||
+       (receive_time - next->start_time_).seconds() >= next->traj_dur_)
     {
       RCLCPP_WARN(logger_,
                   "PolyTracker received expired discrete states; rebasing them to receipt time");
-      next_trajectory_->start_time_ = receive_time;
+      next->start_time_ = receive_time;
     }
+    next_trajectory_ = next;
     traj_set_ = true;
     RCLCPP_INFO(logger_, "PolyTracker: Set the discrete trajectory");
   }
