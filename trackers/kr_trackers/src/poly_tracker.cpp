@@ -363,7 +363,10 @@ kr_mav_msgs::msg::PositionCommand::ConstSharedPtr PolyTracker::update(const nav_
       {
         yaw_yawdot.first = last_yaw_;
         yaw_yawdot.second = 0.0;
-        traj_set_ = false;
+        // Done, unless a trajectory waits for its start time: it takes over
+        // above once that comes (clearing traj_set_ would hold here for good)
+        if(next_trajectory_ == NULL)
+          traj_set_ = false;
       }
     }
 
