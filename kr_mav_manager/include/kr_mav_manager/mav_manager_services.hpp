@@ -40,6 +40,15 @@ class MAVManagerServices
       last_cb_ = "takeoff";
   }
 
+  void engage_cb(const std_srvs::srv::Trigger::Request::SharedPtr req,
+                 const std_srvs::srv::Trigger::Response::SharedPtr res)
+  {
+    (void)req;
+    res->success = mav->engage(res->message);
+    if(res->success)
+      last_cb_ = "engage";
+  }
+
   void goHome_cb(const std_srvs::srv::Trigger::Request::SharedPtr req,
                  const std_srvs::srv::Trigger::Response::SharedPtr res)
   {
@@ -53,7 +62,7 @@ class MAVManagerServices
   void goTo_cb(const kr_mav_manager::srv::Vec4::Request::SharedPtr req,
                const kr_mav_manager::srv::Vec4::Response::SharedPtr res)
   {
-    res->success = mav->goTo(req->goal[0], req->goal[1], req->goal[2], req->goal[4]);
+    res->success = mav->goTo(req->goal[0], req->goal[1], req->goal[2], req->goal[3]);  // (was goal[4]: past the end)
     res->message = "Going To...";
     if(res->success)
       last_cb_ = "goTo";
@@ -233,6 +242,8 @@ class MAVManagerServices
                                                               std::bind(&MAVManagerServices::motors_cb, this, _1, _2));
     takeoff_srv_ = mav->create_service<std_srvs::srv::Trigger>(
         "~/takeoff", std::bind(&MAVManagerServices::takeoff_cb, this, _1, _2));
+    engage_srv_ = mav->create_service<std_srvs::srv::Trigger>("~/engage",
+                                                              std::bind(&MAVManagerServices::engage_cb, this, _1, _2));
     goHome_srv_ = mav->create_service<std_srvs::srv::Trigger>("~/goHome",
                                                               std::bind(&MAVManagerServices::goHome_cb, this, _1, _2));
     goTo_srv_ =
@@ -282,6 +293,7 @@ class MAVManagerServices
   // Creating Servers
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr motors_srv_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr takeoff_srv_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr engage_srv_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr goHome_srv_;
   rclcpp::Service<kr_mav_manager::srv::Vec4>::SharedPtr goTo_srv_;
   rclcpp::Service<kr_mav_manager::srv::GoalTimed>::SharedPtr goToTimed_srv_;

@@ -53,6 +53,7 @@ MAVManager::MAVManager()
   this->declare_parameter("mass", rclcpp::PARAMETER_DOUBLE);
   this->declare_parameter("odom_timeout", 0.1f);
   this->declare_parameter("takeoff_height", 0.5);
+  this->declare_parameter("engage_home_z", 0.15);  // engage: z of home (the floor), where land descends to
   this->declare_parameter("robot", "quadrotor");
 
   std::string robot_name = this->get_parameter("robot").as_string();
@@ -440,15 +441,21 @@ bool MAVManager::takeoff()
   RCLCPP_INFO(this->get_logger(), "Initiating launch sequence...");
 
   auto goal = LineTracker::Goal();
-  goal.z = takeoff_height_;
-  goal.relative = true;
+  {
+    std::lock_guard<std::mutex> lock(odom_state_mutex_);
+    goal.x = pos_(0);
+    goal.y = pos_(1);
+    goal.z = pos_(2) + takeoff_height_;
+    goal.yaw = yaw_;
+  }
+  goal.relative = false;
   goal.v_des = takeoff_vel;
   goal.a_des = takeoff_accel;
   auto options = rclcpp_action::Client<LineTracker>::SendGoalOptions();
   options.result_callback = std::bind(&MAVManager::tracker_done_callback, this, _1);
-  line_tracker_distance_client_->async_send_goal(goal, options);
+  line_tracker_min_jerk_client_->async_send_goal(goal, options);
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  if(this->transition(line_tracker_distance))
+  if(this->transition(line_tracker_min_jerk))
   {
     status_ = FLYING;
     return true;
@@ -457,6 +464,71 @@ bool MAVManager::takeoff()
     return false;
   return true;
 
+}
+
+bool MAVManager::engage(std::string &message)
+{
+  RCLCPP_INFO(this->get_logger(), "Received ENGAGE");
+  static const char *kStatusNames[] = {"INIT", "MOTORS_OFF", "IDLE", "ELAND", "ESTOP", "FLYING"};
+  if(!this->motors() || status_ != IDLE)
+    message = "Cannot engage: needs the motors on and status IDLE (motors " +
+              std::string(this->motors() ? "on" : "off") + ", status " + kStatusNames[status_] + ")";
+  else if(!this->have_recent_odom())
+    message = "Cannot engage without recent odometry";
+  else if(active_tracker_.compare(null_tracker_str) != 0)
+    message = "Cannot engage: the Null Tracker must be active (active: " + active_tracker_ + ")";
+  else if(engage_pending_)
+    message = "Cannot engage: an engage is already in progress";
+  if(!message.empty())
+  {
+    RCLCPP_WARN(this->get_logger(), "%s", message.c_str());
+    return false;
+  }
+
+  auto goal = LineTracker::Goal();
+  {
+    std::lock_guard<std::mutex> lock(odom_state_mutex_);
+    goal.x = pos_(0);
+    goal.y = pos_(1);
+    goal.z = pos_(2);
+    goal.yaw = yaw_;
+    // Home below the hold point, on the floor: land and goHome descend there, not to the engage height
+    home_ = Vec3(pos_(0), pos_(1), static_cast<float>(this->get_parameter("engage_home_z").as_double()));
+    home_yaw_ = yaw_;
+    home_set_ = true;
+  }
+  goal.relative = false;
+
+  engage_pending_ = true;
+  auto options = rclcpp_action::Client<LineTracker>::SendGoalOptions();
+  options.result_callback = std::bind(&MAVManager::tracker_done_callback, this, _1);
+  options.goal_response_callback =
+      [this](rclcpp_action::ClientGoalHandle<LineTracker>::SharedPtr goal_handle) {
+        engage_pending_ = false;
+        if(!goal_handle)
+        {
+          RCLCPP_WARN(this->get_logger(), "LineTrackerDistance goal was rejected for engage: still IDLE");
+          return;
+        }
+        if(!this->motors() || status_ != IDLE)
+        {
+          RCLCPP_WARN(this->get_logger(), "Engage dropped: the motors or the status changed meanwhile");
+          return;
+        }
+        if(!this->transition(line_tracker_distance))
+        {
+          RCLCPP_WARN(this->get_logger(), "Failed to transition to LineTrackerDistance for engage: still IDLE");
+          return;
+        }
+        status_ = FLYING;
+        RCLCPP_INFO(this->get_logger(), "Engaged: holding on LineTrackerDistance, FLYING");
+      };
+  line_tracker_distance_client_->async_send_goal(goal, options);
+
+  message = "Engaging: holding (" + std::to_string(goal.x) + ", " + std::to_string(goal.y) + ", " +
+            std::to_string(goal.z) + "), home z " + std::to_string(home_(2)) + "; FLYING once the hold is active";
+  RCLCPP_INFO(this->get_logger(), "%s", message.c_str());
+  return true;
 }
 
 bool MAVManager::set_mass(float m)

@@ -47,6 +47,7 @@ class SO3CmdToMavros : public rclcpp::Node
   double so3_cmd_timeout_;
   double odom_timeout_;
   double idle_hold_max_force_;
+  bool setpoints_when_motors_off_;
   double vision_pose_period_;
   rclcpp::Time next_vision_pose_time_;
   rclcpp::Time last_so3_cmd_time_;
@@ -256,7 +257,17 @@ void SO3CmdToMavros::publish_attitude_target(const kr_mav_msgs::msg::SO3Command 
   throttle = std::max(0.0, throttle);
 
   if(!msg->aux.enable_motors)
+  {
+    // Motors off: no setpoint at all (default), so PX4 has no OFFBOARD stream and refuses a switch to OFFBOARD.
+    // A zero-thrust stream would let a pilot's switch to OFFBOARD cut the motors in the air.
+    if(!setpoints_when_motors_off_)
+    {
+      RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 10000,
+                           "motors off: sending no setpoints (PX4 refuses OFFBOARD)");
+      return;
+    }
     throttle = 0;
+  }
 
   // publish messages
   auto setpoint_msg = std::make_shared<mavros_msgs::msg::AttitudeTarget>();
@@ -344,6 +355,13 @@ SO3CmdToMavros::SO3CmdToMavros(const rclcpp::NodeOptions &options) : rclcpp::Nod
   // FLT_MIN); hover for this airframe is ~7.6 N, so 1 N separates them cleanly.
   this->declare_parameter("idle_hold_max_force", 1.0);
   this->get_parameter("idle_hold_max_force", idle_hold_max_force_);
+
+  // With the motors off (aux.enable_motors false): false sends no attitude setpoints, so PX4 refuses OFFBOARD and
+  // an E-STOP / motors-off in OFFBOARD ends in PX4's offboard-loss failsafe; true streams zero-thrust setpoints
+  // (the old behaviour: a switch to OFFBOARD then cuts the motors, in the air too).
+  this->declare_parameter("setpoints_when_motors_off", false);
+  setpoints_when_motors_off_ = this->get_parameter("setpoints_when_motors_off").as_bool();
+  RCLCPP_INFO(this->get_logger(), "motors off: %s", setpoints_when_motors_off_ ? "zero-thrust setpoints" : "no setpoints");
 
   // Max rate for the vision_pose stream to the FCU, in Hz. 0 = unthrottled
   // (the old behaviour, which overflowed the serial TX queue at ~114 Hz).
